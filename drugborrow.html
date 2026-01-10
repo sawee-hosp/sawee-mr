@@ -12,26 +12,29 @@
   
   <style>
     body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; padding-bottom: 80px; }
-    /* UI คงที่ สีน้ำเงิน รพ. */
-    .header-main { background-color: #0056b3; color: white; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    /* Hospital Blue Theme */
+    .header-main { background-color: #0056b3; color: white; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .hidden { display: none !important; }
-    label { font-weight: 600; font-size: 0.9rem; margin-top: 8px; color: #444; }
-    .form-control, .form-select { font-size: 0.95rem; }
+    label { font-weight: 600; font-size: 0.95rem; margin-top: 10px; color: #333; }
+    .btn-main { background-color: #0d6efd; color: white; }
     
-    /* Drug Row Item */
-    .drug-item { background: #eef2f7; border: 1px solid #ced4da; padding: 10px; margin-bottom: 10px; border-radius: 6px; position: relative; }
-    .remove-btn { position: absolute; top: 5px; right: 5px; color: #dc3545; cursor: pointer; font-size: 1.1rem; }
+    /* Dynamic Row Style */
+    .drug-row { background: #f8f9fa; border: 1px solid #dee2e6; border-left: 5px solid #0056b3; padding: 15px; margin-bottom: 10px; border-radius: 8px; position: relative; }
+    .remove-btn { position: absolute; top: 10px; right: 10px; color: #dc3545; cursor: pointer; font-size: 1.2rem; }
     
-    #sig-canvas { border: 2px dashed #999; border-radius: 5px; background: #fff; width: 100%; cursor: crosshair; }
-    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.85); z-index:9999; display:flex; justify-content:center; align-items:center; }
+    #sig-canvas { border: 2px dashed #bbb; border-radius: 8px; background: #fff; width: 100%; cursor: crosshair; }
+    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; display:flex; justify-content:center; align-items:center; }
+    
+    .form-check-label { font-weight: normal; }
   </style>
 </head>
 <body>
 
 <div id="loading" class="hidden">
   <div class="text-center">
-    <div class="spinner-border text-primary"></div>
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
     <div class="mt-2 fw-bold text-primary">กำลังโหลด...</div>
   </div>
 </div>
@@ -40,61 +43,68 @@
   <div class="container d-flex justify-content-between align-items-center">
     <div class="fw-bold fs-5"><i class="bi bi-hospital"></i> ระบบขอใช้ยานอกฯ รพ.สวี</div>
     <div class="d-flex gap-2">
-       <button class="btn btn-sm btn-outline-light" onclick="app.openHelp()">วิธีใช้</button>
-       <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold hidden" onclick="app.login()">Login LINE</button>
+       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">วิธีใช้งาน</button>
+       <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login LINE</button>
     </div>
   </div>
 </div>
 
 <div class="container mt-3">
   <ul class="nav nav-pills nav-fill mb-3 bg-white p-2 rounded shadow-sm">
-    <li class="nav-item"><button class="nav-link active" onclick="app.show('doctor')">แพทย์ขอใช้ยา</button></li>
-    <li class="nav-item"><button class="nav-link" onclick="app.show('pharmacy')">เภสัชกรพิมพ์ใบยืมยา</button></li>
-    <li class="nav-item"><button class="nav-link" onclick="app.show('receive')">ลงชื่อรับยา</button></li>
-    <li class="nav-item"><button class="nav-link" onclick="app.show('history')">ข้อมูลยาสนับสนุนทั้งหมด</button></li>
+    <li class="nav-item"><button class="nav-link active fw-bold" onclick="app.show('doctor')">1. แพทย์ขอใช้ยา</button></li>
+    <li class="nav-item"><button class="nav-link fw-bold" onclick="app.show('pharmacy')">2. เภสัชกรพิมพ์ใบยืมยา</button></li>
+    <li class="nav-item"><button class="nav-link fw-bold" onclick="app.show('receive')">3. ลงชื่อรับยา</button></li>
+    <li class="nav-item"><button class="nav-link fw-bold" onclick="app.show('history')">4. ข้อมูลยาสนับสนุนทั้งหมด</button></li>
   </ul>
 
   <div id="doctor" class="section">
-    <h5 class="text-primary border-bottom pb-2">แบบฟอร์มแพทย์</h5>
+    <h5 class="text-primary border-bottom pb-2 mb-3">แบบฟอร์มขอใช้ยา</h5>
     <form id="reqForm">
-      <label>ชื่อแพทย์ผู้ขอใช้ยา</label><input type="text" class="form-control" id="doctorName">
+      <div class="row">
+        <div class="col-12"><label>ชื่อแพทย์ผู้ขอใช้ยา</label><input type="text" class="form-control" id="doctorName"></div>
+      </div>
 
-      <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
-         <label class="m-0 text-dark">รายการยา (ระบุแยกรายการ)</label>
-         <button type="button" class="btn btn-sm btn-primary" onclick="app.addDrugRow()">+ เพิ่มยา</button>
+      <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+         <label class="m-0 text-dark">รายการยา (กดเพิ่มได้)</label>
+         <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm" onclick="app.addDrugRow()">+ เพิ่มยาอีก</button>
       </div>
       <div id="drugListContainer"></div>
       
-      <hr>
+      <div class="alert alert-secondary mt-2 small p-2">
+        <i class="bi bi-info-circle"></i> ระบุหมายเหตุ หากแพทย์ไม่มั่นใจรูปแบบหรือความแรงของยาให้เว้นว่างไว้
+      </div>
+
+      <hr class="my-4">
+
       <div class="row">
-         <div class="col-6"><label>ผู้ป่วย</label><input type="text" class="form-control" id="patientName"></div>
+         <div class="col-6"><label>รายละเอียดผู้ป่วย (ระบุชื่อ)</label><input type="text" class="form-control" id="patientName"></div>
          <div class="col-6"><label>HN</label><input type="text" class="form-control" id="hn"></div>
       </div>
-      <label>วินิจฉัย</label><input type="text" class="form-control" id="diagnosis">
-      <label>Indication</label><input type="text" class="form-control" id="indication">
+      <label>ผลการวินิจฉัย</label><input type="text" class="form-control" id="diagnosis">
+      <label>ข้อบ่งใช้/ความจำเป็น/ข้อมูลสนับสนุน</label><input type="text" class="form-control" id="indication">
       <label>แพทย์ที่ปรึกษา</label><input type="text" class="form-control" id="staffName">
       <label>ข้อเสนอแนะ</label><input type="text" class="form-control" id="suggestion">
 
-      <label class="mt-3 bg-light p-2 rounded w-100 border">เหตุผล (เลือก 1 ข้อ)</label>
-      <div class="ps-2">
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="A" id="rA"><label class="form-check-label" for="rA">A. อาการไม่พึงประสงค์/แพ้ยาในบัญชี</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="B" id="rB"><label class="form-check-label" for="rB">B. รักษาไม่บรรลุเป้าหมาย</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="C" id="rC"><label class="form-check-label" for="rC">C. ไม่มีกลุ่มยาให้ใช้</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="D" id="rD"><label class="form-check-label" for="rD">D. Contraindication / Drug Interaction</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="E" id="rE"><label class="form-check-label" for="rE">E. ยาในบัญชีแพงกว่า (ความคุ้มค่า)</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="F" id="rF"><label class="form-check-label" for="rF">F. อื่นๆ (ระบุ)</label></div>
-        <input type="text" class="form-control mt-1" id="reasonText" placeholder="ระบุเพิ่มเติม">
+      <label class="mt-4 bg-light p-2 rounded w-100 fw-bold border">เหตุผล (เลือก 1 ข้อ)</label>
+      <div class="ps-1">
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="A" id="rA"><label class="form-check-label" for="rA">A. เกิดอาการไม่พึงประสงค์จากยา/แพ้ยา ซึ่งอยู่ในบัญชียาหลักแห่งชาติ</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="B" id="rB"><label class="form-check-label" for="rB">B. ผลการรักษาไม่บรรลุเป้าหมาย แม้ว่าได้ใช้ยาในบัญชีของโรงพยาบาลจนครบตามมาตรฐานการรักษาแล้ว</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="C" id="rC"><label class="form-check-label" for="rC">C. ไม่มีกลุ่มยาในบัญชียาโรงพยาบาลให้ใช้ แต่ผู้ป่วยมีความจำเป็นในการใช้ยานี้ตามข้อบ่งใช้ที่ได้ขึ้นทะเบียนไว้กับ อย.</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="D" id="rD"><label class="form-check-label" for="rD">D. มี contraindication หรือ Drug Interaction กับยาในบัญชียาหลักแห่งชาติในบัญชียาโรงพยาบาล</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="E" id="rE"><label class="form-check-label" for="rE">E. ยาในบัญชียาโรงพยาบาลมีราคาแพงกว่า (ในแง่ความคุ้มค่า)</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="F" id="rF"><label class="form-check-label" for="rF">F. อื่นๆ (ระบุ)</label></div>
+        <input type="text" class="form-control mt-1" id="reasonText" placeholder="ระบุเหตุผลอื่นๆ เพิ่มเติม">
       </div>
 
-      <label class="mt-3">ลงชื่อแพทย์</label>
-      <div class="border p-1 bg-white rounded"><canvas id="sig-canvas" height="150"></canvas></div>
+      <label class="mt-4">ลงชื่อแพทย์ (300 x 150 px)</label>
+      <div class="border p-1 bg-white rounded shadow-sm"><canvas id="sig-canvas" height="150"></canvas></div>
       <button type="button" class="btn btn-secondary btn-sm mt-1" onclick="app.clearSig()">ล้างลายเซ็น</button>
 
-      <label class="mt-3">รูปใบสั่งยา (ถ้ามี)</label>
+      <label class="mt-3">แนบรูปใบสั่งยา (ถ้ามี)</label>
       <input type="file" class="form-control" id="imageFile" accept="image/*">
 
-      <button type="button" class="btn btn-primary w-100 mt-4 py-3 fw-bold shadow-sm" onclick="app.submitData()">
-         บันทึกข้อมูล
+      <button type="button" class="btn btn-primary w-100 mt-5 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()">
+         <i class="bi bi-save"></i> บันทึกข้อมูล
       </button>
     </form>
   </div>
@@ -108,29 +118,30 @@
   </div>
 
   <div id="history" class="section hidden">
-    <div class="row mb-3">
+    <h5 class="text-primary mb-3">ข้อมูลยาสนับสนุนทั้งหมด</h5>
+    <div class="row mb-3 g-2">
         <div class="col-5"><input type="date" id="filterStart" class="form-control"></div>
         <div class="col-5"><input type="date" id="filterEnd" class="form-control"></div>
-        <div class="col-2"><button class="btn btn-primary w-100" onclick="app.loadHistory()">🔍</button></div>
+        <div class="col-2"><button class="btn btn-primary w-100" onclick="app.loadHistory()"><i class="bi bi-search"></i></button></div>
     </div>
     <div class="table-responsive">
       <table class="table table-striped align-middle">
-        <thead><tr><th>วันที่</th><th>รายการ</th><th>สถานะ</th></tr></thead>
+        <thead class="table-primary"><tr><th>วันที่</th><th>รายการ</th><th>สถานะ</th></tr></thead>
         <tbody id="historyTableBody"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">วิธีใช้งาน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><h6>1. แพทย์</h6><ul><li>ระบุรายการยา (กดเพิ่มได้หลายรายการ)</li><li>กรอกจำนวน/วิธีใช้ในแต่ละรายการให้ครบ</li><li>เซ็นชื่อแล้วกดบันทึก</li></ul><hr><h6>2. เภสัชกร</h6><ul><li>เลือกรายการรออนุมัติ</li><li><b>สามารถแก้ไขรายละเอียดของยาแต่ละรายการได้</b></li><li>เลือกชื่อเภสัชกร แล้วกด "ยืนยัน"</li></ul></div></div></div></div>
+<div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">วิธีใช้งาน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><h6>1. แพทย์ขอใช้ยา</h6><ul><li>กรอกชื่อแพทย์ ผู้ป่วย</li><li>กด <b>+ เพิ่มยาอีก</b> เพื่อเพิ่มรายการยา (แยกจำนวน/วิธีใช้แต่ละตัว)</li><li>เลือกเหตุผลความจำเป็น</li><li>เซ็นชื่อแล้วกดบันทึก</li></ul><hr><h6>2. เภสัชกร</h6><ul><li>เลือกรายการรออนุมัติ</li><li><b>สามารถแก้ไขรายละเอียดของยาแต่ละรายการได้</b></li><li>เลือกชื่อเภสัชกร แล้วกด "ยืนยัน"</li><li>ระบบจะสร้าง PDF และแชร์เข้า LINE ได้</li></ul><hr><h6>3. รับยา</h6><ul><li>กดรับยา ระบุราคาและหมายเหตุ</li></ul></div></div></div></div>
 
-<div class="modal fade" id="approveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title">เภสัชกรตรวจสอบ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ap_reqId"><div id="ap_drugInputs"></div><label>ชื่อเภสัชกร</label><select class="form-select" id="ap_pharmacistName"><option value="">Loading...</option></select></div><div class="modal-footer justify-content-between"><button type="button" class="btn btn-outline-danger" onclick="app.deleteRequest()">ลบ</button><button type="button" class="btn btn-success" onclick="app.confirmApprove()">ยืนยัน</button></div></div></div></div>
+<div class="modal fade" id="approveModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title">เภสัชกรตรวจสอบ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ap_reqId"><div id="ap_drugInputs"></div><label class="mt-3">ชื่อเภสัชกรผู้พิมพ์ใบยืม</label><select class="form-select" id="ap_pharmacistName"><option value="">Loading...</option></select></div><div class="modal-footer justify-content-between"><button type="button" class="btn btn-outline-danger" onclick="app.deleteRequest()">ลบรายการ</button><button type="button" class="btn btn-success" onclick="app.confirmApprove()">ยืนยัน & พิมพ์ PDF</button></div></div></div></div>
 
-<div class="modal fade" id="receiveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกรับยา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="rc_reqId"><p id="rc_display" class="fw-bold text-primary"></p><label>ราคา (บาท)</label><input type="number" class="form-control" id="rc_cost"><label>หมายเหตุ</label><input type="text" class="form-control" id="rc_note"></div><div class="modal-footer"><button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึก</button></div></div></div></div>
+<div class="modal fade" id="receiveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกรับยา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="rc_reqId"><p id="rc_display" class="fw-bold text-primary"></p><label>ราคา (บาท)</label><input type="number" class="form-control" id="rc_cost"><label>หมายเหตุ</label><input type="text" class="form-control" id="rc_note" placeholder="เช่น จ่ายผู้ป่วยแล้ว"></div><div class="modal-footer"><button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึก</button></div></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ⚠️ ใส่ URL ใหม่จากการ Deploy รอบล่าสุดที่นี่
+// ⚠️ ใส่ URL ที่ได้จากการ Deploy ใหม่ที่นี่ (ห้ามลืมเปลี่ยน!)
 const API_URL = "https://script.google.com/macros/s/AKfycbxwYS5eJYtTgKikbQ3_8LyuuG1Byw--1ojCUVRafpk3_yY9ncW9AD12XFUcYyn-i9mY/exec";
 const LIFF_ID = "2008862022-AUe9BjR5";
 
@@ -138,7 +149,7 @@ var app = {};
 var pendingData = [];
 var helpModal, approveModal, receiveModal;
 
-// --- API FETCH ---
+// --- API FETCH (Fix CORS) ---
 app.callApi = async function(action, payload = {}) {
     document.getElementById('loading').classList.remove('hidden');
     try {
@@ -164,15 +175,20 @@ app.show = function(id) {
     document.getElementById(id).classList.remove('hidden');
     document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
     
+    // Highlight
+    const btns = document.querySelectorAll('.nav-link');
+    if(id==='doctor') btns[0].classList.add('active');
+    if(id==='pharmacy') { btns[1].classList.add('active'); app.loadPending(); }
+    if(id==='receive') { btns[2].classList.add('active'); app.loadApproved(); }
+    if(id==='history') { btns[3].classList.add('active'); app.loadHistory(); }
+    
     if(id==='doctor') app.checkRows();
-    if(id==='pharmacy') app.loadPending();
-    if(id==='receive') app.loadApproved();
-    if(id==='history') app.loadHistory();
 };
 
 app.openHelp = function() { helpModal.show(); };
 app.login = function() { if(liff) liff.login(); };
 
+// 🔥 SHARE TARGET PICKER
 app.share = function(text, url) {
     if(!liff.isLoggedIn()) return alert("กรุณา Login LINE");
     if(liff.isApiAvailable('shareTargetPicker')) {
@@ -182,7 +198,7 @@ app.share = function(text, url) {
                 { type: "text", text: text, weight: "bold", color: "#1DB446" },
                 { type: "button", action: { type: "uri", label: "เปิด PDF", uri: url }, style: "primary", margin: "md" }
             ]}} 
-        }]);
+        }]).catch(e => alert("แชร์ไม่ได้: " + e));
     } else {
         window.open('https://line.me/R/msg/text/?' + encodeURIComponent(text + " " + url));
     }
@@ -192,14 +208,14 @@ app.share = function(text, url) {
 app.addDrugRow = function(data = {}) {
     const id = 'row_' + Date.now() + Math.random().toString(16).slice(2);
     const html = `
-    <div class="drug-item" id="${id}">
-        <i class="bi bi-x-circle-fill remove-btn" onclick="document.getElementById('${id}').remove()"></i>
+    <div class="drug-row" id="${id}">
+        <i class="bi bi-trash remove-btn" onclick="document.getElementById('${id}').remove()"></i>
         <div class="row g-2">
-            <div class="col-8"><label class="m-0 small">ชื่อยา</label><input type="text" class="form-control form-control-sm d-name" value="${data.name||''}"></div>
+            <div class="col-8"><label class="m-0 small">ชื่อยา (ชื่อ+Dosage)</label><input type="text" class="form-control form-control-sm d-name" value="${data.name||''}"></div>
             <div class="col-4"><label class="m-0 small">ความแรง</label><input type="text" class="form-control form-control-sm d-strength" value="${data.strength||''}"></div>
-            <div class="col-4"><label class="m-0 small">จำนวน</label><input type="text" class="form-control form-control-sm d-qty" value="${data.qty||''}"></div>
+            <div class="col-4"><label class="m-0 small">จำนวน (ระบุหน่วย)</label><input type="text" class="form-control form-control-sm d-quantity" value="${data.quantity||''}"></div>
             <div class="col-4"><label class="m-0 small">วิธีใช้</label><input type="text" class="form-control form-control-sm d-regimen" value="${data.regimen||''}"></div>
-            <div class="col-4"><label class="m-0 small">ระยะเวลา</label><input type="text" class="form-control form-control-sm d-duration" value="${data.duration||''}"></div>
+            <div class="col-4"><label class="m-0 small">ระยะเวลา (วัน)</label><input type="text" class="form-control form-control-sm d-duration" value="${data.duration||''}"></div>
         </div>
     </div>`;
     document.getElementById('drugListContainer').insertAdjacentHTML('beforeend', html);
@@ -211,13 +227,13 @@ app.checkRows = function() {
 
 app.submitData = async function() {
     let drugs = [];
-    document.querySelectorAll('.drug-item').forEach(r => {
+    document.querySelectorAll('.drug-row').forEach(r => {
         let name = r.querySelector('.d-name').value;
         if(name) {
             drugs.push({
                 name: name,
                 strength: r.querySelector('.d-strength').value,
-                qty: r.querySelector('.d-qty').value,
+                quantity: r.querySelector('.d-quantity').value, // Qty linked to item
                 regimen: r.querySelector('.d-regimen').value,
                 duration: r.querySelector('.d-duration').value
             });
@@ -231,7 +247,7 @@ app.submitData = async function() {
 
     const payload = {
         doctorName: document.getElementById('doctorName').value,
-        drugs: drugs, // Send Array of Objects!
+        drugs: drugs, // Send Array
         staffName: document.getElementById('staffName').value,
         patientName: document.getElementById('patientName').value,
         hn: document.getElementById('hn').value,
@@ -285,23 +301,22 @@ app.loadPending = async function() {
         
         let html = '';
         pendingData.forEach((item, i) => {
-            // Parse JSON back to list display
-            let drugListDisplay = "";
+            // Display Logic for JSON
+            let drugDisplay = "";
             try {
                 const dList = JSON.parse(item.drugJson);
-                drugListDisplay = dList.map(d => `- ${d.name} (${d.qty})`).join('<br>');
-            } catch(e) { drugListDisplay = "Error loading drugs"; }
+                drugDisplay = dList.map(d => `- ${d.name} (${d.quantity})`).join('<br>');
+            } catch(e) { drugDisplay = "Error parsing drugs"; }
 
             html += `<div class="card p-3 mb-3 shadow-sm border-start border-4 border-warning">
                <div class="fw-bold text-primary">${item.doctorName}</div>
                <div class="small text-muted mb-2">${item.patientName} (${item.hn})</div>
-               <div class="bg-light p-2 rounded mb-2 small">${drugListDisplay}</div>
+               <div class="bg-light p-2 rounded mb-2 small">${drugDisplay}</div>
                <button class="btn btn-outline-primary w-100 btn-sm" onclick="app.openApprove(${i})">ตรวจสอบ / อนุมัติ</button>
             </div>`;
         });
         document.getElementById('pendingList').innerHTML = html;
         
-        // Load Pharmacist List
         const list = await app.callApi('getPharmacistList');
         const sel = document.getElementById('ap_pharmacistName');
         sel.innerHTML = '<option value="">เลือก...</option>';
@@ -312,8 +327,6 @@ app.loadPending = async function() {
 app.openApprove = function(i) {
     const item = pendingData[i];
     document.getElementById('ap_reqId').value = item.reqId;
-    
-    // Create Inputs for EACH Drug item
     const container = document.getElementById('ap_drugInputs');
     container.innerHTML = "";
     
@@ -325,7 +338,7 @@ app.openApprove = function(i) {
                 <div class="fw-bold small text-primary mb-1">รายการที่ ${idx+1}</div>
                 <div class="row g-1">
                     <div class="col-8"><input type="text" class="form-control form-control-sm ap-name" value="${d.name}"></div>
-                    <div class="col-4"><input type="text" class="form-control form-control-sm ap-qty" value="${d.qty}"></div>
+                    <div class="col-4"><input type="text" class="form-control form-control-sm ap-qty" value="${d.quantity}"></div>
                     <div class="col-6"><input type="text" class="form-control form-control-sm ap-strength" value="${d.strength}"></div>
                     <div class="col-6"><input type="text" class="form-control form-control-sm ap-regimen" value="${d.regimen}"></div>
                     <div class="col-6"><input type="text" class="form-control form-control-sm ap-duration" value="${d.duration}"></div>
@@ -333,7 +346,7 @@ app.openApprove = function(i) {
             </div>`;
             container.insertAdjacentHTML('beforeend', html);
         });
-    } catch(e) { container.innerHTML = "Error parsing data"; }
+    } catch(e) { container.innerHTML = "Error data"; }
     
     approveModal.show();
 };
@@ -351,12 +364,11 @@ app.confirmApprove = async function() {
     const phar = document.getElementById('ap_pharmacistName').value;
     if(!phar) return alert("เลือกเภสัชกร");
     
-    // Collect Edited Drugs
     let editedDrugs = [];
     document.querySelectorAll('.drug-edit-row').forEach(row => {
         editedDrugs.push({
             name: row.querySelector('.ap-name').value,
-            qty: row.querySelector('.ap-qty').value,
+            quantity: row.querySelector('.ap-qty').value,
             strength: row.querySelector('.ap-strength').value,
             regimen: row.querySelector('.ap-regimen').value,
             duration: row.querySelector('.ap-duration').value
@@ -366,7 +378,7 @@ app.confirmApprove = async function() {
     const org = pendingData.find(x => x.reqId == document.getElementById('ap_reqId').value);
     const payload = {
         reqId: org.reqId,
-        drugs: editedDrugs, // Send Array back
+        drugs: editedDrugs, // Send Array Back
         pharmacistName: phar,
         reason: org.reason, reasonCode: org.reasonCode, imageId: org.imageId, signatureId: org.signatureId
     };
@@ -375,12 +387,15 @@ app.confirmApprove = async function() {
     try {
         const res = await app.callApi('approveAndGeneratePDF', payload);
         alert("✅ อนุมัติแล้ว: " + res.docNum);
-        app.share("อนุมัติยาเรียบร้อย (" + res.drugName + ")", res.pdfUrl);
+        
+        if(liff.isLoggedIn() && confirm("แชร์เข้า LINE?")) {
+            app.share("อนุมัติยาเรียบร้อย (" + res.drugName + ")", res.pdfUrl);
+        }
         app.loadPending();
     } catch(e) {}
 };
 
-// --- RECEIVE & HISTORY (No change in logic, just fix errors) ---
+// --- RECEIVE & HISTORY ---
 app.loadApproved = async function() {
     document.getElementById('approvedList').innerHTML = "Loading...";
     try {
@@ -391,16 +406,23 @@ app.loadApproved = async function() {
             data.forEach(item => {
                 html += `<div class="card p-3 mb-3 shadow-sm border-start border-4 border-success">
                    <div class="fw-bold text-success">${item.docNum}</div>
-                   <div class="small my-1">${item.drug}</div>
+                   <div class="small my-1 text-truncate">${item.drug}</div>
                    <div class="d-flex gap-2 mt-2">
                       <button class="btn btn-sm btn-secondary flex-fill" onclick="app.openPdf('${item.pdfUrl}')">PDF</button>
                       <button class="btn btn-sm btn-success flex-fill" onclick="app.openReceive('${item.reqId}', '${item.drug}')">รับยา</button>
+                      <button class="btn btn-sm btn-outline-success" onclick="app.share('รายการยา', '${item.pdfUrl}')">Share</button>
                    </div>
                 </div>`;
             });
         }
         document.getElementById('approvedList').innerHTML = html;
     } catch(e) {}
+};
+
+app.openPdf = function(url) {
+    if(!url) return alert("No PDF");
+    if(liff.isInClient()) liff.openWindow({ url: url, external: true });
+    else window.open(url, '_blank');
 };
 
 app.openReceive = function(id, name) {
@@ -410,14 +432,13 @@ app.openReceive = function(id, name) {
 };
 
 app.confirmReceive = async function() {
-    const payload = {
-        reqId: document.getElementById('rc_reqId').value,
-        cost: document.getElementById('rc_cost').value,
-        note: document.getElementById('rc_note').value
-    };
     receiveModal.hide();
     try {
-        await app.callApi('completeRequest', payload);
+        await app.callApi('completeRequest', {
+            reqId: document.getElementById('rc_reqId').value,
+            cost: document.getElementById('rc_cost').value,
+            note: document.getElementById('rc_note').value
+        });
         alert("✅ รับยาแล้ว");
         app.loadApproved();
     } catch(e) {}
@@ -431,14 +452,14 @@ app.loadHistory = async function() {
         const data = await app.callApi('getAllHistory', {startDate:s, endDate:e});
         let html = '';
         data.forEach(d => {
-            let pdf = d.pdfUrl ? `<a href="#" onclick="app.openPdf('${d.pdfUrl}')"><i class="bi bi-file-pdf text-danger"></i></a>` : '';
-            html += `<tr><td>${d.date}</td><td><div class="text-truncate" style="max-width:120px">${d.drug}</div>${pdf}</td><td>${d.status}</td></tr>`;
+            let pdf = d.pdfUrl ? `<button class="btn btn-sm btn-link p-0 me-2" onclick="app.openPdf('${d.pdfUrl}')"><i class="bi bi-file-pdf text-danger"></i></button>` : '';
+            let share = d.pdfUrl ? `<button class="btn btn-sm btn-link p-0" onclick="app.share('${d.drug}', '${d.pdfUrl}')"><i class="bi bi-share text-success"></i></button>` : '';
+            html += `<tr><td>${d.date}</td><td><div class="text-truncate" style="max-width:150px">${d.drug}</div>${pdf}${share}</td><td>${d.status}</td></tr>`;
         });
         document.getElementById('historyTableBody').innerHTML = html;
     } catch(e) {}
 };
 
-// INIT
 window.onload = function() {
     helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
     approveModal = new bootstrap.Modal(document.getElementById('approveModal'));
