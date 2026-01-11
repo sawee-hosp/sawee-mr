@@ -12,18 +12,14 @@
   
   <style>
     body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; padding-bottom: 80px; font-size: 16px; }
-    
     .header-glam { background: linear-gradient(135deg, #0056b3 0%, #004494 100%); color: white; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .hidden { display: none !important; }
     label { font-weight: 600; color: #2c3e50; margin-top: 10px; font-size: 1rem; }
-    
     .drug-row { background: #f8f9fa; border-left: 5px solid #0056b3; padding: 15px; margin-bottom: 10px; border-radius: 8px; position: relative; }
     .remove-btn { position: absolute; top: 10px; right: 10px; color: #dc3545; cursor: pointer; font-size: 1.2rem; }
-    
     #sig-canvas { border: 2px dashed #bbb; border-radius: 8px; background: #fff; width: 100%; cursor: crosshair; }
     #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; }
-    
     .form-check-label { font-weight: normal; font-size: 0.95rem; }
     .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
   </style>
@@ -42,16 +38,13 @@
     <div class="fw-bold fs-5"><i class="bi bi-hospital"></i> ระบบขอใช้ยานอกฯ รพ.สวี</div>
     <div class="d-flex align-items-center gap-2">
        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">วิธีใช้งาน</button>
-       
-       <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login LINE</button>
-       
+       <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login</button>
        <div id="userProfile" class="hidden d-flex align-items-center gap-2 text-white">
-           <span id="userName" class="small fw-bold"></span>
+           <span class="small fw-bold">Login แล้ว: <span id="userName"></span></span>
            <img id="userPic" class="profile-img" src="">
        </div>
     </div>
   </div>
-  
   <div id="alertReg" class="container mt-2 hidden">
       <div class="alert alert-warning py-1 small mb-0 text-center pointer" onclick="registerModal.show()">⚠️ กรุณาบันทึกชื่อ/ตำแหน่ง เพื่อใช้งาน (คลิก)</div>
   </div>
@@ -88,26 +81,10 @@
         <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="F" id="rF"><label class="form-check-label" for="rF">F อื่นๆ (ระบุ)</label></div>
         <input type="text" class="form-control mt-1 ms-4 w-75" id="reasonText" placeholder="ระบุเพิ่มเติม...">
       </div>
-      
       <label class="mt-4">ลงชื่อแพทย์ * (เซ็น หรือ ถ่ายรูป)</label>
-      <ul class="nav nav-tabs" id="sigTab">
-          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-draw">วาดลายเซ็น</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-upload">ถ่ายรูป</a></li>
-      </ul>
-      <div class="tab-content border border-top-0 p-3 bg-white mb-3">
-          <div class="tab-pane active" id="tab-draw">
-              <div class="border p-1 bg-white rounded shadow-sm"><canvas id="sig-canvas" height="150"></canvas></div>
-              <button type="button" class="btn btn-secondary btn-sm mt-1" onclick="app.clearSig()">ล้าง</button>
-          </div>
-          <div class="tab-pane" id="tab-upload">
-              <input type="file" class="form-control" id="sigFile" accept="image/*">
-              <div class="small text-muted mt-1">ถ่ายรูปจากกระดาษจริง</div>
-          </div>
-      </div>
-
-      <button type="button" class="btn btn-glam w-100 mt-4 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()">
-         <i class="bi bi-save"></i> บันทึกข้อมูล
-      </button>
+      <ul class="nav nav-tabs" id="sigTab"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-draw">วาดลายเซ็น</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-upload">ถ่ายรูป</a></li></ul>
+      <div class="tab-content border border-top-0 p-3 bg-white mb-3"><div class="tab-pane active" id="tab-draw"><div class="border p-1 bg-white rounded shadow-sm"><canvas id="sig-canvas" height="150"></canvas></div><button type="button" class="btn btn-secondary btn-sm mt-1" onclick="app.clearSig()">ล้าง</button></div><div class="tab-pane" id="tab-upload"><input type="file" class="form-control" id="sigFile" accept="image/*"><div class="small text-muted mt-1">ถ่ายรูปจากกระดาษจริง</div></div></div>
+      <button type="button" class="btn btn-primary w-100 mt-4 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()"><i class="bi bi-save"></i> บันทึกข้อมูล</button>
     </form>
   </div>
 
@@ -131,11 +108,50 @@
 <div class="modal fade" id="summaryModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกสำเร็จ</h5></div><div class="modal-body"><p id="summaryText"></p><div class="alert alert-warning">ส่งข้อมูลไปห้องยาเรียบร้อยแล้ว กรุณา Notify ห้องยาอีกครั้งให้ทำการขอสนับสนุนยาให้</div></div><div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="window.location.reload()">รับทราบ</button></div></div></div></div>
 <div class="modal fade" id="approveModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title">เภสัชกรตรวจสอบ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ap_reqId"><div id="ap_drugInputs"></div><label class="mt-3">แนบรูปใบสั่งยา</label><input type="file" class="form-control" id="ap_imageFile" accept="image/*"><label class="mt-3">ชื่อเภสัชกร</label><select class="form-select" id="ap_pharmacistName"><option value="">Loading...</option></select></div><div class="modal-footer justify-content-between"><button type="button" class="btn btn-secondary" onclick="app.cancelRequest()">ยกเลิกใบยืม</button><button type="button" class="btn btn-success" onclick="app.confirmApprove()">บันทึก & พิมพ์ PDF</button></div></div></div></div>
 <div class="modal fade" id="receiveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">ลงชื่อรับยา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="rc_reqId"><p id="rc_display" class="fw-bold text-primary"></p><label>ราคา (บาท)</label><input type="number" class="form-control mb-3" id="rc_cost"><label class="fw-bold">หมายเหตุ</label><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="รพ.ต้นทางไม่อนุมัติ"><label class="form-check-label">รพ.ต้นทางไม่อนุมัติ</label></div></div><div class="modal-footer" id="rc_footer"><button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button></div></div></div></div>
-<div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">วิธีใช้งาน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">...</div></div></div></div>
+
+<div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">📖 คู่มือการใช้งานระบบ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <h6>1. การลงทะเบียน (ครั้งแรก)</h6>
+    <ul><li>เมื่อเข้าใช้งานครั้งแรก ระบบจะให้ระบุ <b>ชื่อ-สกุล (พร้อมคำนำหน้า)</b> และ <b>ตำแหน่ง</b></li><li>ข้อมูลนี้จะถูกจดจำไว้และเติมให้อัตโนมัติในครั้งถัดไป</li></ul>
+    <hr>
+    <h6>2. แพทย์ขอใช้ยา</h6>
+    <ul>
+        <li>กรอกข้อมูลแพทย์ ผู้ป่วย และรายละเอียดการวินิจฉัยให้ครบถ้วน</li>
+        <li><b>รายการยา:</b> กดปุ่ม "+ เพิ่มยาอีก" เพื่อระบุยาแต่ละรายการ (ชื่อ, ความแรง, จำนวน, วิธีใช้)</li>
+        <li><b>เหตุผล:</b> เลือกข้อบ่งชี้ตามจริง (ข้อ F สามารถระบุข้อความเพิ่มได้)</li>
+        <li><b>ลงชื่อ:</b> สามารถ "วาดลายเซ็น" บนหน้าจอ หรือ "ถ่ายรูป" ลายเซ็นจากกระดาษแล้วอัปโหลดได้</li>
+        <li>กดบันทึก ระบบจะแจ้งเตือนสำเร็จ ให้ท่านแจ้งห้องยาเพื่อดำเนินการต่อ</li>
+    </ul>
+    <hr>
+    <h6>3. เภสัชกรพิมพ์ใบยืมยา</h6>
+    <ul>
+        <li>รายการที่แพทย์ขอมาจะแสดงในหน้านี้ (สถานะ Pending)</li>
+        <li>กด <b>"ตรวจสอบ/อนุมัติ"</b> เพื่อดูรายละเอียด</li>
+        <li>เภสัชกรสามารถ <b>แก้ไข</b> รายการยา จำนวน หรือวิธีใช้ได้ หากข้อมูลไม่ถูกต้อง</li>
+        <li>สามารถ <b>แนบรูปใบสั่งยา</b> เพิ่มเติมได้ในขั้นตอนนี้</li>
+        <li>เลือกชื่อเภสัชกรผู้ดำเนินการ แล้วกด <b>"บันทึก & พิมพ์ PDF"</b></li>
+        <li>ระบบจะออกเลขหนังสือ (ชพ...) และสร้าง PDF ให้อัตโนมัติ</li>
+        <li>กดปุ่ม <b>"แชร์เข้าไลน์กลุ่ม"</b> เพื่อส่งไฟล์ PDF ให้ผู้เกี่ยวข้อง</li>
+        <li>หากต้องการยกเลิก ให้กด "ยกเลิกใบยืม" (สถานะจะเปลี่ยนเป็น Cancelled)</li>
+    </ul>
+    <hr>
+    <h6>4. ลงชื่อรับยา</h6>
+    <ul>
+        <li>เมื่อยามาถึง ให้เข้าเมนูนี้เพื่อยืนยันการรับ</li>
+        <li>กดปุ่ม <b>"รับยา"</b> ระบุราคาต้นทุน และหมายเหตุ (เช่น จ่ายผู้ป่วยแล้ว, เก็บไว้ที่ตึก...)</li>
+        <li>เมื่อบันทึกเสร็จ สามารถกดแชร์แจ้งเตือนเข้าไลน์ได้ทันทีว่า "ได้รับยาแล้ว"</li>
+    </ul>
+    <hr>
+    <h6>5. ข้อมูลยาสนับสนุนทั้งหมด</h6>
+    <ul>
+        <li>ดูประวัติการขอใช้ยาทั้งหมด สามารถค้นหาตามช่วงวันที่ได้</li>
+        <li>แสดงสถานะปัจจุบัน และยอดเงินรวม</li>
+        <li>สามารถกดดูไฟล์ PDF ย้อนหลังได้</li>
+    </ul>
+</div></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ⚠️ ใส่ URL ใหม่
+// ⚠️ Update URL
 const API_URL = "https://script.google.com/macros/s/AKfycbxwYS5eJYtTgKikbQ3_8LyuuG1Byw--1ojCUVRafpk3_yY9ncW9AD12XFUcYyn-i9mY/exec";
 const LIFF_ID = "2008862022-AUe9BjR5";
 
