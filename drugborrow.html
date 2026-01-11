@@ -12,50 +12,50 @@
   
   <style>
     body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; padding-bottom: 80px; font-size: 16px; }
-    
-    /* Theme Color */
-    .header-glam, .btn-main { background: linear-gradient(135deg, #0056b3 0%, #004494 100%); color: white; border: none; }
-    .btn-main:hover { opacity: 0.9; color: white; }
-    
+    .header-glam { background: linear-gradient(135deg, #0056b3 0%, #004494 100%); color: white; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .hidden { display: none !important; }
     label { font-weight: 600; color: #2c3e50; margin-top: 10px; font-size: 1rem; }
     .drug-row { background: #f8f9fa; border-left: 5px solid #0056b3; padding: 15px; margin-bottom: 10px; border-radius: 8px; position: relative; }
     .remove-btn { position: absolute; top: 10px; right: 10px; color: #dc3545; cursor: pointer; font-size: 1.2rem; }
-    
-    /* Canvas */
-    #sig-canvas { border: 2px dashed #bbb; border-radius: 8px; background: #fff; width: 100%; cursor: crosshair; }
-    #car-sig-canvas { border: 2px dashed #bbb; border-radius: 8px; background: #fff; width: 100%; cursor: crosshair; }
-    
+    #sig-canvas, #car-sig-canvas { border: 2px dashed #bbb; border-radius: 8px; background: #fff; width: 100%; cursor: crosshair; }
     #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; }
     .form-check-label { font-weight: normal; font-size: 0.95rem; }
-    .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; object-fit: cover; cursor: pointer; }
+    .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
     .text-green-glam { color: #198754; font-weight: bold; font-size: 1.1rem; }
     
-    /* Tab Arrow & Badge */
-    .nav-item { position: relative; display: flex; align-items: center; }
-    .nav-item:not(:last-child)::after {
-        content: "\F285"; /* Chevron Right */
-        font-family: "bootstrap-icons";
-        font-size: 1.2rem;
-        color: #6ea8fe;
-        font-weight: bold;
-        margin: 0 5px;
-    }
+    /* 🔥 New Badge Style: Inside Button */
+    .nav-link { position: relative; }
     .badge-notify {
         position: absolute;
         top: 2px;
-        right: 2px;
+        right: 5px;
         background-color: #dc3545;
         color: white;
         border-radius: 50%;
-        padding: 3px 6px;
-        font-size: 0.7rem;
+        padding: 2px 6px;
+        font-size: 0.65rem;
         display: none;
-        z-index: 10;
         box-shadow: 0 0 2px white;
     }
-    .pointer { cursor: pointer; }
+    
+    /* Animation Ambulance */
+    @keyframes drive {
+        from { transform: translateX(100%); }
+        to { transform: translateX(-100%); }
+    }
+    .ambulance-anim { animation: drive 4s linear infinite; display: inline-block; font-size: 2rem; color: #dc3545; }
+    
+    /* Phone Box */
+    .phone-box {
+        border: 2px solid #0d6efd;
+        border-radius: 15px;
+        padding: 10px;
+        text-align: center;
+        margin-top: 15px;
+        background-color: #f0f8ff;
+    }
+    .phone-number { font-size: 1.5rem; font-weight: bold; color: #0d6efd; }
   </style>
 </head>
 <body>
@@ -68,19 +68,19 @@
 </div>
 
 <div class="header-glam sticky-top">
-  <div class="container d-flex justify-content-between align-items-center" style="padding-top: 10px; padding-bottom: 10px;">
+  <div class="container d-flex justify-content-between align-items-center">
     <div class="fw-bold fs-5"><i class="bi bi-hospital"></i> ระบบขอใช้ยานอกฯ รพ.สวี</div>
     <div class="d-flex align-items-center gap-2">
        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">วิธีใช้งาน</button>
        <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login</button>
-       <div id="userProfile" class="hidden d-flex align-items-center gap-2 text-white pointer" onclick="registerModal.show()">
+       <div id="userProfile" class="hidden d-flex align-items-center gap-2 text-white pointer" onclick="app.openRegisterModal(true)">
            <span class="small fw-bold">Login: <span id="userName"></span></span>
            <img id="userPic" class="profile-img" src="">
        </div>
     </div>
   </div>
   <div id="alertReg" class="container mt-2 hidden">
-      <div class="alert alert-warning py-1 small mb-0 text-center pointer" onclick="registerModal.show()">⚠️ กรุณาบันทึกชื่อ/ตำแหน่ง เพื่อใช้งาน (คลิก)</div>
+      <div class="alert alert-warning py-1 small mb-0 text-center pointer" onclick="app.openRegisterModal()">⚠️ กรุณาบันทึกชื่อ/ตำแหน่ง เพื่อใช้งาน (คลิก)</div>
   </div>
 </div>
 
@@ -89,13 +89,17 @@
     <li class="nav-item">
         <button class="nav-link active fw-bold" onclick="app.show('doctor')">แพทย์ขอใช้ยา</button>
     </li>
-    <li class="nav-item position-relative">
-        <button class="nav-link fw-bold" onclick="app.show('pharmacy')">เภสัชกรพิมพ์ใบยืมยา</button>
-        <span id="badge-phar" class="badge-notify">0</span>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" onclick="app.show('pharmacy')">
+            เภสัชกรพิมพ์ใบยืมยา
+            <span id="badge-phar" class="badge-notify">0</span>
+        </button>
     </li>
-    <li class="nav-item position-relative">
-        <button class="nav-link fw-bold" onclick="app.show('receive')">ลงรับยา</button>
-        <span id="badge-rcv" class="badge-notify">0</span>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" onclick="app.show('receive')">
+            ลงรับยา
+            <span id="badge-rcv" class="badge-notify">0</span>
+        </button>
     </li>
     <li class="nav-item">
         <button class="nav-link fw-bold" onclick="app.show('history')">ข้อมูลยาสนับสนุนทั้งหมด</button>
@@ -125,14 +129,10 @@
         <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="F" id="rF"><label class="form-check-label" for="rF">F อื่นๆ (ระบุ)</label></div>
         <input type="text" class="form-control mt-1 ms-4 w-75" id="reasonText" placeholder="ระบุเพิ่มเติม...">
       </div>
-      
       <label class="mt-4">ลงชื่อแพทย์ * (เซ็น หรือ ถ่ายรูป)</label>
       <ul class="nav nav-tabs" id="sigTab"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-draw">วาดลายเซ็น</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-upload">ถ่ายรูป</a></li></ul>
       <div class="tab-content border border-top-0 p-3 bg-white mb-3"><div class="tab-pane active" id="tab-draw"><div class="border p-1 bg-white rounded shadow-sm"><canvas id="sig-canvas" height="150"></canvas></div><button type="button" class="btn btn-secondary btn-sm mt-1" onclick="app.clearSig()">ล้าง</button></div><div class="tab-pane" id="tab-upload"><input type="file" class="form-control" id="sigFile" accept="image/*"><div class="small text-muted mt-1">ถ่ายรูปจากกระดาษจริง</div></div></div>
-      
-      <button type="button" class="btn btn-main w-100 mt-4 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()">
-         <i class="bi bi-save"></i> บันทึกข้อมูล
-      </button>
+      <button type="button" class="btn btn-glam w-100 mt-4 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()"><i class="bi bi-save"></i> บันทึกข้อมูล</button>
     </form>
   </div>
 
@@ -152,11 +152,48 @@
   </div>
 </div>
 
-<div class="modal fade" id="registerModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">ลงทะเบียนใช้งาน</h5></div><div class="modal-body"><label>ชื่อ-สกุล (พร้อมคำนำหน้า)</label><input type="text" id="regName" class="form-control" placeholder="ใส่เต็มยศ เช่น นพ.ใจดี รักสวี"><label>ตำแหน่ง</label><input type="text" id="regJob" class="form-control" placeholder="เช่น นายแพทย์ปฏิบัติการ"></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="app.register()">บันทึก</button></div></div></div></div>
-<div class="modal fade" id="summaryModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกสำเร็จ</h5></div><div class="modal-body"><p id="summaryText"></p><div class="alert alert-warning">ส่งข้อมูลไปห้องยาเรียบร้อยแล้ว กรุณา Notify ห้องยาอีกครั้งให้ทำการขอสนับสนุนยาให้</div></div><div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="window.location.reload()">รับทราบ</button></div></div></div></div>
+<div class="modal fade" id="registerModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">ลงทะเบียนใช้งาน</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+          <label>ชื่อ-สกุล (พร้อมคำนำหน้า)</label>
+          <input type="text" id="regName" class="form-control" placeholder="ใส่เต็มยศ เช่น นพ.ใจดี รักสวี">
+          <label>ตำแหน่ง</label>
+          <input type="text" id="regJob" class="form-control" placeholder="เช่น นายแพทย์ปฏิบัติการ">
+          <label>เบอร์โทรศัพท์ (ถ้ามี)</label>
+          <input type="text" id="regPhone" class="form-control" placeholder="08x-xxxxxxx">
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary w-100" onclick="app.register()">บันทึก</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="summaryModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกสำเร็จ</h5></div>
+      <div class="modal-body">
+        <p id="summaryText"></p>
+        <div class="phone-box">
+            <div class="small text-muted">เบอร์โทรฝ่ายเภสัชกรรม</div>
+            <div class="phone-number">#113</div>
+            <div class="small mt-2">เภสัชกรจะประสานงานกับโรงพยาบาลที่มียา<br>และจะแจ้งผลกลับไปยังแพทย์</div>
+        </div>
+        <div class="text-center mt-3" style="overflow:hidden">
+            <i class="bi bi-truck ambulance-anim"></i>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="window.location.reload()">รับทราบ</button></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="approveModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title">เภสัชกรตรวจสอบ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ap_reqId"><div id="ap_drugInputs"></div><label class="mt-3">แนบรูปใบสั่งยา</label><input type="file" class="form-control" id="ap_imageFile" accept="image/*"><label class="mt-3">ชื่อเภสัชกร</label><select class="form-select" id="ap_pharmacistName"><option value="">Loading...</option></select></div><div class="modal-footer justify-content-between"><button type="button" class="btn btn-secondary" onclick="app.cancelRequest()">ยกเลิกใบยืม</button><button type="button" class="btn btn-success" onclick="app.confirmApprove()">บันทึก & พิมพ์ PDF</button></div></div></div></div>
 <div class="modal fade" id="receiveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">ลงรับยา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="rc_reqId"><p id="rc_display" class="text-green-glam"></p><label>ราคา (บาท)</label><input type="number" class="form-control mb-3" id="rc_cost"><label class="fw-bold">หมายเหตุ</label><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="รพ.ต้นทางไม่อนุมัติ"><label class="form-check-label">รพ.ต้นทางไม่อนุมัติ</label></div></div><div class="modal-footer" id="rc_footer"><button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button></div></div></div></div>
-<div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">วิธีใช้งาน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">...</div></div></div></div>
 
 <div class="modal fade" id="carModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="bi bi-ambulance"></i> พิมพ์ใบขอรถ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
     <input type="hidden" id="car_ref_reqId">
@@ -173,6 +210,20 @@
     <div class="border p-1 bg-white rounded"><canvas id="car-sig-canvas" height="300"></canvas></div>
     <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="app.clearCarSig()">ล้าง</button>
 </div><div class="modal-footer"><button class="btn btn-success w-100" onclick="app.submitCarRequest()">สร้างใบขอรถ</button></div></div></div></div>
+
+<div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">📖 คู่มือการใช้งาน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <h6>1. ลงทะเบียน</h6>
+    <ul><li>คลิกที่รูปโปรไฟล์ หรือปุ่ม Login เพื่อตั้งค่าชื่อ/ตำแหน่ง (ระบบจะจดจำไว้)</li></ul>
+    <hr>
+    <h6>2. แพทย์ขอใช้ยา</h6>
+    <ul><li>กรอกข้อมูลผู้ป่วย/ยา -> เซ็นชื่อ -> กดบันทึก</li><li>ระบบจะแจ้งเตือนให้ติดต่อห้องยา (#113)</li></ul>
+    <hr>
+    <h6>3. เภสัชกร</h6>
+    <ul><li>ตรวจสอบรายการใน Tab 2 (มีจุดแดงแจ้งเตือน)</li><li>แก้ไขรายการได้ -> กดอนุมัติ -> แชร์ PDF</li><li>สามารถกดปุ่ม <b>"ขอรถ"</b> เพื่อสร้างใบขอรถยนต์ได้ทันที</li></ul>
+    <hr>
+    <h6>4. รับยา</h6>
+    <ul><li>เมื่อยามาถึง เข้า Tab 3 -> กดรับยา -> ระบุราคา -> แชร์แจ้งกลุ่ม</li></ul>
+</div></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -221,10 +272,9 @@ app.checkUser = async function() {
             if(document.getElementById('doctorName')) document.getElementById('doctorName').value = user.name;
         } else {
             document.getElementById('alertReg').classList.remove('hidden');
-            registerModal.show();
+            app.openRegisterModal();
         }
     }
-    // Load Badges
     app.updateBadges();
 };
 
@@ -233,23 +283,31 @@ app.updateBadges = async function() {
         const counts = await app.callApi('getBadgeCounts');
         const bPhar = document.getElementById('badge-phar');
         const bRcv = document.getElementById('badge-rcv');
-        
-        if(counts.pending > 0) { bPhar.innerText = counts.pending; bPhar.style.display = 'inline-block'; } 
+        if(counts.pending > 0) { bPhar.innerText = counts.pending; bPhar.style.display = 'block'; } 
         else bPhar.style.display = 'none';
-        
-        if(counts.approved > 0) { bRcv.innerText = counts.approved; bRcv.style.display = 'inline-block'; } 
+        if(counts.approved > 0) { bRcv.innerText = counts.approved; bRcv.style.display = 'block'; } 
         else bRcv.style.display = 'none';
     } catch(e) {}
+};
+
+app.openRegisterModal = function(isEdit = false) {
+    if(currentUser) {
+        document.getElementById('regName').value = currentUser.name;
+        document.getElementById('regJob').value = currentUser.job;
+        document.getElementById('regPhone').value = currentUser.phone || "";
+    }
+    registerModal.show();
 };
 
 app.register = async function() {
     const name = document.getElementById('regName').value;
     const job = document.getElementById('regJob').value;
+    const phone = document.getElementById('regPhone').value;
     if(!name) return alert("กรุณาระบุชื่อ");
     let uid = "browser_user";
     if(liff.isLoggedIn()) { const p = await liff.getProfile(); uid = p.userId; }
     
-    const res = await app.callApi('registerUser', { userId: uid, name: name, job: job });
+    const res = await app.callApi('registerUser', { userId: uid, name: name, job: job, phone: phone });
     currentUser = res;
     registerModal.hide();
     document.getElementById('alertReg').classList.add('hidden');
@@ -269,10 +327,7 @@ app.show = function(id) {
 };
 
 app.openHelp = function() { helpModal.show(); };
-app.login = function() { 
-    if(!liff.isLoggedIn()) liff.login(); 
-    else app.checkUser();
-};
+app.login = function() { if(!liff.isLoggedIn()) liff.login(); else app.checkUser(); };
 
 app.share = function(text, url) {
     if(!liff.isLoggedIn()) return alert("กรุณา Login LINE");
@@ -285,7 +340,6 @@ app.share = function(text, url) {
 
 app.getDrugs = function(json) { try { const d = JSON.parse(json); return Array.isArray(d) ? d : [{name: json, strength:"", quantity:""}]; } catch(e) { return [{name: json, strength:"", quantity:""}]; } };
 
-// DOCTOR
 app.addDrugRow = function() {
     const id = 'row_' + Date.now();
     const html = `<div class="drug-row" id="${id}"><i class="bi bi-x-circle-fill remove-btn" onclick="document.getElementById('${id}').remove()"></i><div class="row g-2"><div class="col-8"><label class="m-0 small">ชื่อยา</label><input type="text" class="form-control form-control-sm d-name" placeholder="เช่น Levofloxacin injection"></div><div class="col-4"><label class="m-0 small">ความแรง(+หน่วย)</label><input type="text" class="form-control form-control-sm d-strength" placeholder="เช่น 750mg"></div><div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm d-qty" placeholder="เช่น 20 vials"></div><div class="col-4"><label class="m-0 small">วิธีใช้</label><input type="text" class="form-control form-control-sm d-regimen"></div><div class="col-4"><label class="m-0 small">ระยะเวลา(วัน)</label><input type="number" class="form-control form-control-sm d-duration" placeholder="เช่น 15"></div></div></div>`;
@@ -312,7 +366,6 @@ app.submitData = async function() {
 };
 app.clearSig = function() { const ctx = document.getElementById('sig-canvas').getContext('2d'); ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); document.getElementById('sigFile').value = ""; };
 
-// PHARMACY
 app.loadPharmacy = async function() {
     document.getElementById('pharmacy-loader').classList.remove('hidden');
     document.getElementById('pendingList').innerHTML = "";
@@ -333,7 +386,7 @@ app.loadPharmacy = async function() {
             html += `<div class="card p-3 mb-3 shadow-sm border-start border-4 ${item.status==='Pending'?'border-warning':'border-success'}"><div class="d-flex justify-content-between"><span class="fw-bold text-primary">${item.doctorName}</span><span class="badge badge-status ${item.status==='Pending'?'bg-warning text-dark':'bg-success'}">${item.status}</span></div><div class="small text-muted mb-2">${item.patientName} (${item.hn})</div><div class="bg-light p-2 rounded mb-2 small">${drugDisplay}</div>${buttons}</div>`;
         });
         document.getElementById('pendingList').innerHTML = html;
-        const list = await app.callApi('getUserList'); // All Users
+        const list = await app.callApi('getUserList');
         const sel = document.getElementById('ap_pharmacistName');
         sel.innerHTML = '<option value="">เลือก...</option>';
         list.forEach(p => sel.add(new Option(p, p)));
@@ -368,17 +421,19 @@ app.openCarModal = function(i) {
     const drugs = app.getDrugs(item.drugJson);
     const firstDrug = drugs[0] ? drugs[0].name : "ยา";
     document.getElementById('car_ref_reqId').value = item.reqId;
-    document.getElementById('car_date').valueAsDate = new Date(); // Default Today
+    document.getElementById('car_date').valueAsDate = new Date();
     if(currentUser) {
         document.getElementById('car_requester').value = currentUser.name;
         document.getElementById('car_job').value = currentUser.job;
     }
     document.getElementById('car_reason').value = `ไปรับยา ${firstDrug} เพื่อใช้กับผู้ป่วย ชื่อ ${item.patientName}`;
-    const cvs = document.getElementById('car-sig-canvas');
-    const ctx = cvs.getContext('2d');
-    ctx.clearRect(0,0,cvs.width,cvs.height);
     carModal.show();
 };
+// 🔥 Car Canvas Resize Logic
+document.getElementById('carModal').addEventListener('shown.bs.modal', function () {
+    const cvs = document.getElementById('car-sig-canvas');
+    cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight;
+});
 app.clearCarSig = function() { const ctx = document.getElementById('car-sig-canvas').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); };
 app.submitCarRequest = async function() {
     const req = document.getElementById('car_requester').value;
@@ -460,11 +515,8 @@ window.onload = function() {
     carModal = new bootstrap.Modal(document.getElementById('carModal'));
 
     const cvs = document.getElementById('sig-canvas');
-    const ctx = cvs.getContext('2d');
-    const cvs2 = document.getElementById('car-sig-canvas');
-    const ctx2 = cvs2.getContext('2d');
     
-    [cvs, cvs2].forEach(c => {
+    [cvs].forEach(c => {
         let isD = false;
         const resize = () => { c.width = c.offsetWidth; c.height = c.offsetHeight; };
         setTimeout(resize, 500);
@@ -476,6 +528,18 @@ window.onload = function() {
         ['mousemove','touchmove'].forEach(ev => c.addEventListener(ev, move, {passive:false}));
         ['mouseup','touchend'].forEach(ev => c.addEventListener(ev, end));
     });
+
+    // Add Signature Logic to Car Canvas
+    const carCvs = document.getElementById('car-sig-canvas');
+    // Using same logic for simplicity (duplicated for clarity inside loop above if wanted, or specific here)
+    let isD2 = false;
+    const getP2 = (e) => { const r = carCvs.getBoundingClientRect(); return {x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top}; };
+    const start2 = (e) => { isD2=true; const p=getP2(e); const cx = carCvs.getContext('2d'); cx.beginPath(); cx.moveTo(p.x,p.y); e.preventDefault(); };
+    const move2 = (e) => { if(!isD2)return; const p=getP2(e); const cx = carCvs.getContext('2d'); cx.lineWidth=2; cx.lineTo(p.x,p.y); cx.stroke(); e.preventDefault(); };
+    const end2 = () => { isD2=false; };
+    ['mousedown','touchstart'].forEach(ev => carCvs.addEventListener(ev, start2, {passive:false}));
+    ['mousemove','touchmove'].forEach(ev => carCvs.addEventListener(ev, move2, {passive:false}));
+    ['mouseup','touchend'].forEach(ev => carCvs.addEventListener(ev, end2));
 
     liff.init({ liffId: LIFF_ID }).then(() => { 
         if(!liff.isLoggedIn()) { document.getElementById('btnLogin').classList.remove('hidden'); }
