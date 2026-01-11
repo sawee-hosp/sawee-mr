@@ -22,7 +22,7 @@
     #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; }
     .form-check-label { font-weight: normal; font-size: 0.95rem; }
     .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
-    .text-green-glam { color: #198754; font-weight: bold; }
+    .text-success-bold { color: #198754; font-weight: 700; font-size: 1.1rem; }
   </style>
 </head>
 <body>
@@ -108,15 +108,19 @@
 <div class="modal fade" id="registerModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">ลงทะเบียนใช้งาน</h5></div><div class="modal-body"><label>ชื่อ-สกุล (พร้อมคำนำหน้า)</label><input type="text" id="regName" class="form-control" placeholder="ใส่เต็มยศ เช่น นพ.ใจดี รักสวี"><label>ตำแหน่ง</label><input type="text" id="regJob" class="form-control" placeholder="เช่น นายแพทย์ปฏิบัติการ"></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="app.register()">บันทึก</button></div></div></div></div>
 <div class="modal fade" id="summaryModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกสำเร็จ</h5></div><div class="modal-body"><p id="summaryText"></p><div class="alert alert-warning">ส่งข้อมูลไปห้องยาเรียบร้อยแล้ว กรุณา Notify ห้องยาอีกครั้งให้ทำการขอสนับสนุนยาให้</div></div><div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="window.location.reload()">รับทราบ</button></div></div></div></div>
 <div class="modal fade" id="approveModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-warning"><h5 class="modal-title">เภสัชกรตรวจสอบ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ap_reqId"><div id="ap_drugInputs"></div><label class="mt-3">แนบรูปใบสั่งยา</label><input type="file" class="form-control" id="ap_imageFile" accept="image/*"><label class="mt-3">ชื่อเภสัชกร</label><select class="form-select" id="ap_pharmacistName"><option value="">Loading...</option></select></div><div class="modal-footer justify-content-between"><button type="button" class="btn btn-secondary" onclick="app.cancelRequest()">ยกเลิกใบยืม</button><button type="button" class="btn btn-success" onclick="app.confirmApprove()">บันทึก & พิมพ์ PDF</button></div></div></div></div>
-<div class="modal fade" id="receiveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">ลงชื่อรับยา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="rc_reqId"><p id="rc_display" class="fw-bold text-primary"></p><label>ราคา (บาท)</label><input type="number" class="form-control mb-3" id="rc_cost"><label class="fw-bold">หมายเหตุ</label><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="รพ.ต้นทางไม่อนุมัติ"><label class="form-check-label">รพ.ต้นทางไม่อนุมัติ</label></div></div><div class="modal-footer" id="rc_footer"><button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button></div></div></div></div>
+<div class="modal fade" id="receiveModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title">ลงรับยา</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="rc_reqId"><p id="rc_display" class="fw-bold text-primary"></p><label>ราคา (บาท)</label><input type="number" class="form-control mb-3" id="rc_cost"><label class="fw-bold">หมายเหตุ</label><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div><div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="รพ.ต้นทางไม่อนุมัติ"><label class="form-check-label">รพ.ต้นทางไม่อนุมัติ</label></div></div><div class="modal-footer" id="rc_footer"><button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button></div></div></div></div>
 <div class="modal fade" id="helpModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-info text-white"><h5 class="modal-title">วิธีใช้งาน</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">...</div></div></div></div>
 
 <div class="modal fade" id="carModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="bi bi-ambulance"></i> พิมพ์ใบขอรถ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
-    <label>ชื่อผู้ขอ (แก้ไขได้)</label><input type="text" id="car_requester" class="form-control">
-    <label>วันที่และเวลาใช้รถ</label><input type="datetime-local" id="car_datetime" class="form-control">
-    <label>สถานที่ไป</label><input type="text" id="car_place" class="form-control">
-    <label>เหตุผล</label><textarea id="car_reason" class="form-control" rows="3"></textarea>
-    <label class="mt-3">ลงชื่อ (E-Signature)</label><div class="border p-1 bg-white rounded"><canvas id="car-sig-canvas" height="150"></canvas></div><button type="button" class="btn btn-sm btn-secondary mt-1" onclick="app.clearCarSig()">ล้าง</button>
+    <label>ชื่อผู้ขอ</label><input type="text" id="car_requester" class="form-control">
+    <div class="row">
+        <div class="col-6"><label>วันที่ใช้</label><input type="date" id="car_date" class="form-control"></div>
+        <div class="col-3"><label>เวลาเริ่ม</label><input type="time" id="car_start" class="form-control"></div>
+        <div class="col-3"><label>เวลาสิ้นสุด</label><input type="time" id="car_end" class="form-control"></div>
+    </div>
+    <label>สถานที่</label><input type="text" id="car_place" class="form-control">
+    <label>เหตุผล</label><textarea id="car_reason" class="form-control" rows="2"></textarea>
+    <label class="mt-3">ลงชื่อ</label><div class="border p-1 bg-white rounded"><canvas id="car-sig-canvas" height="150"></canvas></div><button type="button" class="btn btn-sm btn-secondary mt-1" onclick="app.clearCarSig()">ล้าง</button>
 </div><div class="modal-footer"><button class="btn btn-success w-100" onclick="app.submitCarRequest()">สร้างใบขอรถ</button></div></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -146,7 +150,7 @@ app.callApi = async function(action, payload = {}) {
     }
 };
 
-// USER
+// USER & AUTO FILL
 app.checkUser = async function() {
     if(!liff.isLoggedIn()) return;
     try {
@@ -159,7 +163,8 @@ app.checkUser = async function() {
         const user = await app.callApi('checkUser', { userId: profile.userId });
         if(user) {
             currentUser = user;
-            if(user.job === 'doctor') document.getElementById('doctorName').value = user.name;
+            // Auto-fill logic
+            if(document.getElementById('doctorName')) document.getElementById('doctorName').value = user.name;
         } else {
             document.getElementById('alertReg').classList.remove('hidden');
             registerModal.show();
@@ -177,7 +182,7 @@ app.register = async function() {
     registerModal.hide();
     document.getElementById('alertReg').classList.add('hidden');
     alert("ลงทะเบียนสำเร็จ");
-    if(job === 'doctor') document.getElementById('doctorName').value = name;
+    if(document.getElementById('doctorName')) document.getElementById('doctorName').value = name;
 };
 
 // NAV
@@ -193,7 +198,10 @@ app.show = function(id) {
 };
 
 app.openHelp = function() { helpModal.show(); };
-app.login = function() { if(liff) liff.login(); };
+app.login = function() { 
+    if(!liff.isLoggedIn()) liff.login(); 
+    else app.checkUser(); // Re-check if already logged in
+};
 
 app.share = function(text, url) {
     if(!liff.isLoggedIn()) return alert("กรุณา Login LINE");
@@ -371,15 +379,11 @@ app.openCarModal = function(i) {
     const drugs = app.getDrugs(item.drugJson);
     const firstDrug = drugs[0] ? drugs[0].name : "ยา";
     
-    // Auto fill
     if(currentUser) document.getElementById('car_requester').value = currentUser.name;
     document.getElementById('car_reason').value = `ไปรับยา ${firstDrug} เพื่อใช้กับผู้ป่วย ชื่อ ${item.patientName}`;
-    
-    // Reset Canvas
     const cvs = document.getElementById('car-sig-canvas');
     const ctx = cvs.getContext('2d');
     ctx.clearRect(0,0,cvs.width,cvs.height);
-    
     carModal.show();
 };
 
@@ -390,22 +394,24 @@ app.clearCarSig = function() {
 
 app.submitCarRequest = async function() {
     const req = document.getElementById('car_requester').value;
-    const date = document.getElementById('car_datetime').value;
+    const date = document.getElementById('car_date').value;
+    const start = document.getElementById('car_start').value;
+    const end = document.getElementById('car_end').value;
     const place = document.getElementById('car_place').value;
     const reason = document.getElementById('car_reason').value;
     
-    if(!req || !date || !place || !reason) return alert("กรอกข้อมูลให้ครบ");
-    
+    if(!req || !date || !start || !end || !place || !reason) return alert("กรอกข้อมูลให้ครบ");
     const cvs = document.getElementById('car-sig-canvas');
     if(cvs.toDataURL() === document.createElement('canvas').toDataURL()) return alert("กรุณาลงลายเซ็น");
     
-    const payload = { requester: req, useDate: date, place: place, reason: reason, signatureData: cvs.toDataURL("image/png") };
+    // Combine Date+Time
+    const payload = { requester: req, useDate: date, timeStart: start, timeEnd: end, place: place, reason: reason, signatureData: cvs.toDataURL("image/png") };
     carModal.hide();
     
     try {
         const res = await app.callApi('submitCarRequest', payload);
         alert("สร้างใบขอรถสำเร็จ");
-        if(confirm("แชร์ใบขอรถ?")) app.share("ใบขอรถรับยา (" + req + ")", res.pdfUrl);
+        if(confirm("แชร์ใบขอรถ?")) app.share("ใบขอรถรับยา (" + res.requester + ")", res.pdfUrl);
     } catch(e) {}
 };
 
@@ -421,8 +427,8 @@ app.loadApproved = async function() {
         let html = '';
         approvedData.forEach((item, i) => { 
             html += `<div class="card p-3 mb-3 shadow-sm border-start border-4 border-success">
-               <div class="fw-bold text-dark" style="font-weight:normal">${item.docNum} (${item.date})</div>
-               <div class="small my-1 text-green-glam fs-6">${item.drug}</div>
+               <div class="fw-bold" style="font-weight:normal">${item.docNum} (${item.date})</div>
+               <div class="small my-1 text-success-bold fs-6">${item.drug}</div>
                <div class="d-flex gap-2 mt-2">
                   <button class="btn btn-sm btn-secondary flex-fill" onclick="app.openPdf('${item.pdfUrl}')">PDF</button>
                   <button class="btn btn-sm btn-success flex-fill" onclick="app.openReceive(${i})">รับยา</button>
@@ -496,7 +502,6 @@ window.onload = function() {
     const cvs2 = document.getElementById('car-sig-canvas');
     const ctx2 = cvs2.getContext('2d');
     
-    // Drawing Logic
     [cvs, cvs2].forEach(c => {
         let isD = false;
         const ctx = c.getContext('2d');
