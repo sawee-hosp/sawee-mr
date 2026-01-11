@@ -372,6 +372,8 @@
       <div class="modal-body">
           <input type="hidden" id="rc_reqId">
           <p id="rc_display" class="text-green-glam"></p>
+          <label>จำนวนที่รับ</label>
+    <input type="text" class="form-control mb-2" id="rc_amount">
           <label>ราคา (บาท)</label><input type="number" class="form-control mb-3" id="rc_cost">
           <label class="fw-bold">หมายเหตุ</label>
           <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div>
@@ -405,10 +407,10 @@
           <label>สถานที่</label><input type="text" id="car_place" class="form-control" value="คลังยา รพ.ชุมพรเขตรอุดมศักดิ์">
           <label>เหตุผล</label><textarea id="car_reason" class="form-control" rows="2"></textarea>
           
-          <label class="mt-3">ลงชื่อ (เซ็น)</label>
-          <div class="border p-1 bg-white rounded">
-              <canvas id="car-sig-canvas" height="300"></canvas>
-          </div>
+<label class="mt-3">ลงชื่อ (เซ็น)</label>
+<div class="border p-1 bg-white rounded">
+    <canvas id="car-sig-canvas" style="width: 100%; height: 300px;"></canvas>
+</div>
           <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="app.clearCarSig()">ล้าง</button>
       </div>
       <div class="modal-footer">
@@ -680,9 +682,16 @@ app.openCarModal = function(i) {
     document.getElementById('car_reason').value = `ไปรับยา ${firstDrug} เพื่อใช้กับผู้ป่วย ชื่อ ${item.patientName}`;
     carModal.show();
 };
+// 🔥 Code แก้ลายเซ็นแบนใน Modal (ต้องใส่ชุดนี้ครับ)
 document.getElementById('carModal').addEventListener('shown.bs.modal', function () {
     const cvs = document.getElementById('car-sig-canvas');
-    cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight;
+    // ตั้งค่าความละเอียดภายใน (Attribute) ให้เท่ากับขนาดที่แสดงผล (Offset)
+    cvs.width = cvs.offsetWidth;
+    cvs.height = cvs.offsetHeight; 
+    
+    // รีเซ็ต Context เพื่อให้เส้นไม่เพี้ยน
+    const ctx = cvs.getContext('2d');
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
 });
 app.clearCarSig = function() { const ctx = document.getElementById('car-sig-canvas').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); };
 app.submitCarRequest = async function() {
@@ -723,20 +732,42 @@ app.openReceive = function(index) {
     const item = approvedData[index];
     document.getElementById('rc_reqId').value = item.reqId;
     document.getElementById('rc_display').innerText = item.drug;
+    
+    // 🔥 เพิ่ม: ดึงจำนวนเดิมมาใส่ (ถ้ามี)
+    document.getElementById('rc_amount').value = item.qty || "";
+    
     document.getElementById('rc_cost').value = "";
     document.querySelector('input[name="rc_note_opt"][value="จ่ายแก่ผู้ป่วยแล้ว"]').checked = true;
+    // ... (ส่วน footer เหมือนเดิม) ...
     document.getElementById('rc_footer').innerHTML = `<button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button>`;
     receiveModal.show();
 };
 app.confirmReceive = async function() {
     const cost = document.getElementById('rc_cost').value;
+    const amount = document.getElementById('rc_amount').value; // 🔥 รับค่าจำนวน
+    
     let note = "";
     const radio = document.querySelector('input[name="rc_note_opt"]:checked');
     if(radio.value === 'storage') note = "จัดเก็บไว้ที่ " + document.getElementById('rc_note_storage').value;
     else if(radio.value === 'incomplete') note = "ได้รับไม่ครบถ้วน " + document.getElementById('rc_note_incomplete').value;
     else note = radio.value;
-    const payload = { reqId: document.getElementById('rc_reqId').value, amount: "", cost: cost, note: note };
-    try { await app.callApi('completeRequest', payload); const msg = `ได้รับยา ${document.getElementById('rc_display').innerText} (${note}) แล้ว`; document.getElementById('rc_footer').innerHTML = `<div class="w-100 text-center text-success mb-2 fw-bold">บันทึกสำเร็จ!</div><button class="btn btn-primary w-100" onclick="app.share('${msg}', '')">แชร์เข้าไลน์กลุ่ม</button>`; app.loadApproved(); app.updateBadges(); } catch(e) {}
+
+    // 🔥 เพิ่ม field amount ส่งไป
+    const payload = { 
+        reqId: document.getElementById('rc_reqId').value, 
+        amount: amount, 
+        cost: cost, 
+        note: note 
+    };
+    
+    try {
+        await app.callApi('completeRequest', payload);
+        // ... (ส่วนแสดงผลสำเร็จ เหมือนเดิม) ...
+        const msg = `ได้รับยา ${document.getElementById('rc_display').innerText} จำนวน ${amount} (${note}) แล้ว`;
+        document.getElementById('rc_footer').innerHTML = `<div class="w-100 text-center text-success mb-2 fw-bold">บันทึกสำเร็จ!</div><button class="btn btn-primary w-100" onclick="app.share('${msg}', '')">แชร์เข้าไลน์กลุ่ม</button>`;
+        app.loadApproved();
+        app.updateBadges();
+    } catch(e) {}
 };
 
 // --- HISTORY ---
