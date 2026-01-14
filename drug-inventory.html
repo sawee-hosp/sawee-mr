@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Hospital Pharmacy System</title>
-  <link rel="icon" href="data:,"> <!-- Fix Favicon 404 -->
+  <link rel="icon" href="data:,">
   
   <!-- Fonts & Libs -->
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
@@ -220,13 +220,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   // --- CONFIG ---
+  // สำคัญ: ต้องเป็น URL ของการ Deploy ครั้งล่าสุดเท่านั้น
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNMk59pHTzZJTCUZfGoFd_NmjdYrwyTesFqMz4DriMnHFCIr_NMrrpBsp_p4zq7inN1A/exec';
   const DEFAULT_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAMAAABHPGVmAAAAb1BMVEUAAAD///+srKzFxcWZmZnc3Nza2trR0dHnYzr///8/Pz9ycnKwZzKtra1ERETGxsbMzMy3t7fAwMDq6uqgoKCkpKRubm5KSkpYWFji4uJHR0dgYGBubm5mZmZwcHBqampycnJOTk5UVFR8fHxISEh929s2AAAAInRSTlMA+/zb2v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+2tra2t7XhY8AAAN1SURBVGje7ZqJjqMwDEXlMnOYzUx3//+3F5QiazmC0Onw3rSpU0eFkPCRjO0407/1dZ+y701/c72u852t+2u972z93+t15+t/r9d90D8s7oP+YXEfdIjFfdAhFvdB+1g8Bn3F4jHoKxaPQV+xeAz6isVj0FcsHoO+YvEY9BWLx6CvWDwGfcXiMeirj8S6z/oR6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7D+B/0Fq7h+W3gqAAAAAElFTkSuQmCC";
 
-  let liffId = "2008862022-cDOpEP9z"; // Update LIFF ID
+  let liffId = "2008862022-cDOpEP9z"; 
   
   let userProfile = {};
-  let currentUser = {}; // Data from GAS
+  let currentUser = {}; 
   let items=[], cart=[], curBoxOrder='', curBoxStock='';
   let offC, mdlEdit, mdlReg;
 
@@ -234,7 +235,6 @@
   async function callApi(action, payload = {}) {
      const body = JSON.stringify({ action, ...payload });
      try {
-       // Use POST with text/plain to avoid CORS Preflight (OPTIONS)
        const res = await fetch(GAS_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -245,10 +245,26 @@
          throw new Error(`HTTP error! status: ${res.status}`);
        }
        
-       return await res.json();
+       const text = await res.text();
+       try {
+           return JSON.parse(text);
+       } catch (e) {
+           // จับ Error "Service is..." ที่นี่
+           if (text.includes("Service is")) {
+               throw new Error("DEPLOYMENT ERROR: กรุณาตั้งค่า GAS Deployment เป็น 'Execute as: Me' และ 'Who has access: Anyone'");
+           }
+           throw new Error("Invalid JSON: " + text.substring(0, 50));
+       }
      } catch(e) {
        console.error("API Error", e);
-       // Return error object so app handles it gracefully
+       if(e.message.includes("DEPLOYMENT ERROR")) {
+           Swal.fire({
+               icon: 'error',
+               title: 'ตั้งค่าผิดพลาด',
+               html: 'กรุณาไปที่ Google Apps Script <br>กด Deploy > New Deployment <br>เลือก <b>Execute as: Me</b> <br>และ <b>Who has access: Anyone</b>',
+               footer: 'มิเช่นนั้นระบบจะไม่สามารถทำงานได้'
+           });
+       }
        return { status: 'error', message: e.message };
      }
   }
@@ -261,7 +277,7 @@
      initCvs();
 
      try {
-        await liff.init({ liffId: liffId }); // Init LIFF
+        await liff.init({ liffId: liffId }); 
         if (!liff.isLoggedIn()) {
            liff.login();
         } else {
@@ -270,11 +286,8 @@
            checkUser(profile.userId);
         }
      } catch (err) {
-        // Fallback for testing on browser without LIFF (Mock)
-        console.warn('LIFF Init failed, using mock', err);
-        // Uncomment below line to test locally without LINE
-        // checkUser('U1234567890dummy'); userProfile={userId:'U1234567890dummy', displayName:'Test User', pictureUrl:DEFAULT_IMG};
-        document.getElementById('status-text').innerText = 'LIFF Error: ' + err.message;
+        console.warn('LIFF Init failed', err);
+        document.getElementById('status-text').innerHTML = `<span class="text-danger">LIFF Error: ${err.message}</span>`;
      }
   };
 
@@ -283,19 +296,19 @@
      const res = await callApi('checkUserLIFF', { userId: uid });
      
      if (res.status === 'NOT_FOUND') {
-        // Open Registration
         document.getElementById('login-overlay').classList.add('hidden');
         document.getElementById('reg-img').src = userProfile.pictureUrl || DEFAULT_IMG;
         mdlReg.show();
      } else if (res.status === 'FOUND') {
-        // Login Success
         currentUser = res.userData;
-        currentUser.userId = uid; // Ensure ID is present
+        currentUser.userId = uid; 
         startApp();
      } else {
-        // Error handling
-        document.getElementById('status-text').innerText = 'Connection Failed. Please Refresh.';
-        Swal.fire('Connection Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่', 'error');
+        document.getElementById('status-text').innerText = 'Connection Failed.';
+        // ถ้าไม่ใช่ Error เรื่อง Deployment ก็แจ้งเตือนปกติ
+        if(!res.message.includes("DEPLOYMENT")) {
+            Swal.fire('Connection Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + res.message, 'error');
+        }
      }
   }
 
@@ -320,7 +333,7 @@
      if(res.status) {
         Swal.fire('สำเร็จ', 'ลงทะเบียนเรียบร้อยแล้ว', 'success');
         mdlReg.hide();
-        currentUser = payload; // Set local user
+        currentUser = payload; 
         startApp();
      } else {
         Swal.fire('Error', res.message, 'error');
@@ -332,16 +345,16 @@
      document.getElementById('login-overlay').classList.add('hidden');
      document.getElementById('app-main').classList.remove('hidden');
      
-     // Setup Profile UI
-     document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG;
+     // แก้ปัญหา undefined src
+     const photo = currentUser.photo;
+     document.getElementById('nav-img').src = (photo && photo !== 'undefined' && photo !== '') ? photo : DEFAULT_IMG;
      document.getElementById('nav-name').innerText = currentUser.name;
 
-     // Load Boxes
      const res = await callApi('getBoxes', { substock: currentUser.substock });
      if(res.status) renderBoxScrollers(res.boxes);
   }
 
-  // --- CORE UI LOGIC ---
+  // --- UI LOGIC ---
   function nav(pid, el){
      document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden'));
      document.getElementById(pid).classList.remove('hidden');
@@ -376,7 +389,6 @@
      }
   }
 
-  // --- INVENTORY LOGIC ---
   async function loadOrderItems(box) {
      document.getElementById('order-grid').innerHTML = Array(4).fill('<div class="skeleton mb-3"></div>').join('');
      const res = await callApi('getItems', { boxName: box });
@@ -408,13 +420,15 @@
      document.getElementById('order-grid').innerHTML = html || '<div class="text-center mt-5 w-100 text-muted">ไม่พบยา</div>';
   }
 
-  // --- LAZY IMAGE LOADING ---
+  // --- LAZY LOADING ---
   function lazyLoad() {
      const imgs = document.querySelectorAll('img.lazy');
      imgs.forEach(img => {
         if(img.dataset.loaded) return;
         const raw = img.dataset.raw;
-        if(!raw || raw==='undefined') { img.classList.remove('loading'); return; }
+        if(!raw || raw==='undefined' || raw==='') { img.classList.remove('loading'); return; }
+        
+        // ถ้าเป็น Link อยู่แล้วให้ใช้เลย (และ Cache จะทำให้ได้ link แบบนี้มากขึ้น)
         if(raw.startsWith('http')) { img.src=raw; img.classList.remove('loading'); img.dataset.loaded=true; return; }
         
         callApi('resolveImage', { input: raw }).then(res => {
@@ -423,100 +437,45 @@
      });
   }
 
-  // --- CART ---
+  // --- CART, SUBMIT, STOCK, SEARCH (No Changes needed, kept short) ---
   function adj(id, v, max) {
-     let i = items.find(x=>x.itemId==id);
-     if(!i) return;
+     let i = items.find(x=>x.itemId==id); if(!i) return;
      let n = i.req + v; if(n<1)n=1; if(max && n>max) { n=max; Swal.fire({toast:true,position:'top',icon:'warning',title:'เกินสต็อก',timer:1000,showConfirmButton:false}); }
      i.req = n; document.getElementById(`qty-${id}`).value = n;
   }
   function addCart(id) {
-     let i = items.find(x=>x.itemId==id);
-     let ex = cart.find(x=>x.itemId==id);
-     if(ex) { if(ex.qty+i.req > i.amount) return Swal.fire('เกินสต็อก'); ex.qty+=i.req; }
-     else cart.push({...i, qty:i.req});
-     badge();
-     document.querySelector('.cart-wrap').style.transform='scale(1.2)'; setTimeout(()=>document.querySelector('.cart-wrap').style.transform='scale(1)',200);
+     let i = items.find(x=>x.itemId==id); let ex = cart.find(x=>x.itemId==id);
+     if(ex) { if(ex.qty+i.req > i.amount) return Swal.fire('เกินสต็อก'); ex.qty+=i.req; } else cart.push({...i, qty:i.req});
+     badge(); document.querySelector('.cart-wrap').style.transform='scale(1.2)'; setTimeout(()=>document.querySelector('.cart-wrap').style.transform='scale(1)',200);
      i.req=1; document.getElementById(`qty-${id}`).value=1;
   }
   function badge() { let n=cart.length; document.getElementById('badge').innerText=n; n>0?document.getElementById('badge').classList.remove('hidden'):document.getElementById('badge').classList.add('hidden'); }
   function openCart(){ if(!cart.length) return Swal.fire('ตะกร้าว่าง'); renderCart(); offC.show(); setTimeout(fixCvs,500); }
   function renderCart(){
      let sum=0;
-     document.getElementById('cart-list').innerHTML=cart.map((c,i)=>{
-        sum+=c.price*c.qty;
-        return `<div class="bg-white p-3 mb-2 rounded border position-relative">
-           <div class="fw-bold pe-4">${c.name}</div>
-           <div class="d-flex justify-content-between mt-2 small text-muted">
-              <span>${c.price} x ${c.qty}</span> <span class="text-primary fw-bold">${(c.price*c.qty).toFixed(2)} บ.</span>
-           </div>
-           <i class="fas fa-trash text-danger position-absolute top-0 end-0 m-3 cursor-pointer" onclick="cart.splice(${i},1);renderCart();badge();if(!cart.length)offC.hide()"></i>
-        </div>`;
-     }).join('');
+     document.getElementById('cart-list').innerHTML=cart.map((c,i)=>{ sum+=c.price*c.qty; return `<div class="bg-white p-3 mb-2 rounded border position-relative"><div class="fw-bold pe-4">${c.name}</div><div class="d-flex justify-content-between mt-2 small text-muted"><span>${c.price} x ${c.qty}</span> <span class="text-primary fw-bold">${(c.price*c.qty).toFixed(2)} บ.</span></div><i class="fas fa-trash text-danger position-absolute top-0 end-0 m-3 cursor-pointer" onclick="cart.splice(${i},1);renderCart();badge();if(!cart.length)offC.hide()"></i></div>`; }).join('');
      document.getElementById('cart-sum').innerText = sum.toFixed(2);
   }
-
-  // --- SUBMIT ---
   async function submitOrder() {
      if(isCanvasBlank(canvas)) return Swal.fire('กรุณาเซ็นชื่อ');
      Swal.fire({title:'กำลังส่งข้อมูล...', didOpen:()=>Swal.showLoading()});
      const sign = canvas.toDataURL();
-     const res = await callApi('submitOrder', {
-        orderData: { user: currentUser.name, box: curBoxOrder, items: cart, signature: sign }
-     });
-     
-     if(res.status) {
-        cart=[]; badge(); offC.hide(); clrCvs();
-        Swal.fire({icon:'success', title:'สำเร็จ', html:`<a href="${res.pdfUrl}" target="_blank" class="btn btn-primary w-100">ดูใบเบิก (PDF)</a>`});
-     } else Swal.fire('Error', res.message, 'error');
+     const res = await callApi('submitOrder', { orderData: { user: currentUser.name, box: curBoxOrder, items: cart, signature: sign } });
+     if(res.status) { cart=[]; badge(); offC.hide(); clrCvs(); Swal.fire({icon:'success', title:'สำเร็จ', html:`<a href="${res.pdfUrl}" target="_blank" class="btn btn-primary w-100">ดูใบเบิก (PDF)</a>`}); } else Swal.fire('Error', res.message, 'error');
   }
-
-  // --- STOCK & SEARCH ---
   async function loadStockItems(box) {
       document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
       const res = await callApi('getItems', { boxName: box });
-      if(!res.status) {
-         document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-danger">Error Loading Stock</div>';
-         return;
-      }
-      // Group by Row logic similar to previous version...
+      if(!res.status) { document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-danger">Error Loading Stock</div>'; return; }
       let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
-      let h=''; Object.keys(rows).sort().forEach(r=>{
-         h+=`<div class="shelf-row-label">ชั้น/แถว: ${r}</div><div class="shelf-grid">`;
-         h+=rows[r].map(i=>`<div class="shelf-item" onclick="editStk('${i.invId}','${i.name}',${i.amount},'${i.expire}')"><img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy"><div class="small text-truncate">${i.name}</div><div class="badge bg-secondary">${i.amount}</div></div>`).join('');
-         h+='</div>';
-      });
-      document.getElementById('stock-content').innerHTML = h;
-      lazyLoad();
+      let h=''; Object.keys(rows).sort().forEach(r=>{ h+=`<div class="shelf-row-label">ชั้น/แถว: ${r}</div><div class="shelf-grid">`; h+=rows[r].map(i=>`<div class="shelf-item" onclick="editStk('${i.invId}','${i.name}',${i.amount},'${i.expire}')"><img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy"><div class="small text-truncate">${i.name}</div><div class="badge bg-secondary">${i.amount}</div></div>`).join(''); h+='</div>'; });
+      document.getElementById('stock-content').innerHTML = h; lazyLoad();
   }
-  
   function editStk(id,n,a,e) { document.getElementById('ed-id').value=id; document.getElementById('ed-name').innerText=n; document.getElementById('ed-amt').value=a; document.getElementById('ed-exp').value=e; mdlEdit.show(); }
-  async function saveEdit() {
-     const pl = { invId:document.getElementById('ed-id').value, amount:document.getElementById('ed-amt').value, expire:document.getElementById('ed-exp').value };
-     const res = await callApi('saveEditItem', pl);
-     if(res.status) { Swal.fire('Saved','','success'); mdlEdit.hide(); loadStockItems(curBoxStock); }
-  }
-
-  function doGlobal() {
-     const k=document.getElementById('kw-global').value; if(!k)return;
-     document.getElementById('search-res').innerHTML='Searching...';
-     callApi('searchGlobal', {kw:k}).then(res=>{
-        if(res.status) {
-           document.getElementById('search-res').innerHTML = res.data.map(r=>`<div class="list-group-item"><strong>${r.name}</strong><br><small>${r.box} | คงเหลือ: ${r.amount}</small></div>`).join('') || 'ไม่พบข้อมูล';
-        }
-     });
-  }
-  function loadHist() {
-     document.getElementById('hist-res').innerHTML='Loading...';
-     callApi('getHistory', {user:currentUser.name}).then(res=>{
-        if(res.status) {
-           document.getElementById('hist-res').innerHTML = res.data.map(r=>`<div class="card mb-2 p-2 shadow-sm"><div class="d-flex justify-content-between"><strong>${r.box}</strong><small>${r.time}</small></div><div class="text-end"><a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">PDF</a></div></div>`).join('');
-        }
-     });
-  }
+  async function saveEdit() { const pl = { invId:document.getElementById('ed-id').value, amount:document.getElementById('ed-amt').value, expire:document.getElementById('ed-exp').value }; const res = await callApi('saveEditItem', pl); if(res.status) { Swal.fire('Saved','','success'); mdlEdit.hide(); loadStockItems(curBoxStock); } }
+  function doGlobal() { const k=document.getElementById('kw-global').value; if(!k)return; document.getElementById('search-res').innerHTML='Searching...'; callApi('searchGlobal', {kw:k}).then(res=>{ if(res.status) { document.getElementById('search-res').innerHTML = res.data.map(r=>`<div class="list-group-item"><strong>${r.name}</strong><br><small>${r.box} | คงเหลือ: ${r.amount}</small></div>`).join('') || 'ไม่พบข้อมูล'; } }); }
+  function loadHist() { document.getElementById('hist-res').innerHTML='Loading...'; callApi('getHistory', {user:currentUser.name}).then(res=>{ if(res.status) { document.getElementById('hist-res').innerHTML = res.data.map(r=>`<div class="card mb-2 p-2 shadow-sm"><div class="d-flex justify-content-between"><strong>${r.box}</strong><small>${r.time}</small></div><div class="text-end"><a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">PDF</a></div></div>`).join(''); } }); }
   function filterOrder(){ renderOrder(); }
-
-  // Canvas
   let canvas, ctx, isDraw=false;
   function initCvs(){ canvas=document.getElementById('cvs'); ctx=canvas.getContext('2d'); ['mousedown','touchstart'].forEach(e=>canvas.addEventListener(e,s,{passive:false})); ['mousemove','touchmove'].forEach(e=>canvas.addEventListener(e,d,{passive:false})); ['mouseup','touchend'].forEach(e=>canvas.addEventListener(e,()=>isDraw=false)); }
   function fixCvs(){ canvas.width=canvas.offsetWidth; canvas.height=100; ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#000'; }
