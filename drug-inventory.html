@@ -51,7 +51,7 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     .box-icon { font-size: 2.2rem; margin-bottom: 0px; display: block; line-height: 1; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); }
-    .badge-exp { position: absolute; top: -5px; right: -5px; font-size: 9px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; }
+    .box-btn .badge-exp { position: absolute; top: -5px; right: -5px; font-size: 9px; padding: 2px 4px; border-radius: 4px; background: red; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; }
 
     /* Grid & Cards */
     .drug-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; }
@@ -60,7 +60,6 @@
         width: 100%; aspect-ratio: 1/1; 
         background: #bebdbe; /* Gray Fallback */
         display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; 
-        position: relative;
     }
     .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: white; }
     .drug-img.loading { opacity: 0.5; filter: blur(2px); }
@@ -75,7 +74,7 @@
 
     /* Stock View */
     .shelf-row-label { 
-        font-weight: bold; margin: 15px 0 10px 0; padding-left: 10px; 
+        font-weight: bold; margin: 10px 0; padding-left: 10px; 
         border-left: 4px solid var(--primary); color: #333; 
         width: 100%; border-bottom: 2px solid #555; padding-bottom: 5px; 
     }
@@ -91,7 +90,7 @@
     /* Tables & Search */
     .table-custom th { background: #f8f9fa; font-size: 0.8rem; }
     .table-custom td { vertical-align: middle; font-size: 0.85rem; }
-    .row-expired { background-color: #ffebee; border-left: 3px solid red; }
+    .row-expired { background-color: #ffebee; border-left: 3px solid red; color: red; font-weight: bold; }
     
     .fab-print { position: fixed; bottom: 70px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 900; cursor: pointer; }
     .fab-edit-lg { position: fixed; bottom: 70px; right: 15px; background: var(--primary); color: white; border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 900; cursor: pointer; }
@@ -101,6 +100,11 @@
     .nav-tabs .nav-link.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); }
     .tab-badge { background: #eee; color: #333; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 5px; }
     .nav-link.active .tab-badge { background: var(--primary); color: white; }
+
+    /* History Cards */
+    .card-wait { background-color: #fffde7; border-left: 4px solid #fbc02d; }
+    .card-done { background-color: #e8f5e9; border-left: 4px solid #4caf50; }
+    .card-recv { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
 
     /* Qty Button */
     .qty-wrap { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #eee; border-radius: 20px; padding: 2px; margin-top: auto; }
@@ -276,9 +280,15 @@
      const resGroups = await callApi('getBoxGroups');
      if(resGroups.status) { document.getElementById('group-filter').innerHTML = `<div class="badge rounded-pill bg-primary cursor-pointer p-2" onclick="filterStockBox('ALL',this)">ทั้งหมด</div>` + resGroups.groups.map(g=>`<div class="badge rounded-pill bg-white text-dark border cursor-pointer p-2" onclick="filterStockBox('${g}',this)">${g}</div>`).join(''); }
      
+     // Auto-load history badge
+     loadHist(); 
+
      if(boxParam) {
-        const box = allBoxes.find(b=>b.id===boxParam);
-        if(box) { nav('tab-stock', document.querySelectorAll('.nav-item')[1]); selBox(box.name, null, 'stock', box.imageRaw); }
+        // Wait for allBoxes to be populated
+        if(allBoxes.length) {
+            const box = allBoxes.find(b=>b.id===boxParam);
+            if(box) { nav('tab-stock', document.querySelectorAll('.nav-item')[1]); selBox(box.name, null, 'stock', box.imageRaw); }
+        }
      }
   }
 
@@ -354,8 +364,17 @@
       const res = await callApi('getItems', { boxName: box });
       if(!res.status) return el.innerHTML = 'Error';
       
+      // Calculate Header info
+      let totalChanges = 0;
+      let lastCheck = '-';
+      // Find box in allBoxes if possible, or calculate from items (items have changeCount)
+      const boxObj = allBoxes.find(b=>b.name === box);
+      if(boxObj) { lastCheck = boxObj.lastCheck; }
+      res.data.forEach(i => totalChanges += (i.changeCount || 0));
+
       // Add Box Name Header
-      let h = `<div class="h5 fw-bold text-primary mb-3"><i class="fas fa-box"></i> ${box}</div>`;
+      let h = `<div class="h5 fw-bold text-dark mb-1"><i class="fas fa-box"></i> ${box}</div>
+               <div class="small text-muted mb-3 border-bottom pb-2">จำนวนครั้ง: ${totalChanges} | ตรวจล่าสุด: ${lastCheck}</div>`;
       
       let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
       Object.keys(rows).sort((a,b)=> a.localeCompare(b, undefined, {numeric:true})).forEach(r=>{
@@ -466,7 +485,7 @@
   }
   async function removeBoxItem(invId) { if(!confirm('ลบยานี้?')) return; const res = await callApi('removeBoxItem', { invId }); if(res.status) loadStockItems(curBoxStock); }
   function adj(id, v, max) { let i = items.find(x=>x.itemId==id); if(!i) return; let n = i.req + v; if(n<1)n=1; if(max && n>max) { n=max; Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); } i.req = n; document.getElementById(`qty-${id}`).value = n; }
-  function addCart(id) { let i = items.find(x=>x.itemId==id); let ex = cart.find(x=>x.itemId==id); if(ex) { if(ex.qty+i.req > i.amount) return Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); ex.qty+=i.req; } else cart.push({...i, qty:i.req}); badge(); const b=document.querySelector('.fa-shopping-basket'); b.style.transform='scale(1.4)'; setTimeout(()=>b.style.transform='scale(1)',200); i.req=1; document.getElementById(`qty-${id}`).value=1; }
+  function addCart(id) { let i = items.find(x=>x.itemId==id); let ex = cart.find(x=>x.itemId==id); if(ex) { if(ex.qty+i.req > i.amount) return Swal.fire('เกินสต็อก'); ex.qty+=i.req; } else cart.push({...i, qty:i.req}); badge(); const b=document.querySelector('.fa-shopping-basket'); b.style.transform='scale(1.4)'; setTimeout(()=>b.style.transform='scale(1)',200); i.req=1; document.getElementById(`qty-${id}`).value=1; }
   function badge() { let n=cart.length; document.getElementById('badge').innerText=n; n>0?document.getElementById('badge').classList.remove('hidden'):document.getElementById('badge').classList.add('hidden'); }
   function openCart(){ if(!cart.length) return Swal.fire('ตะกร้าว่าง'); renderCart(); offC.show(); setTimeout(fixCvs,500); }
   function renderCart(){ let sum=0; document.getElementById('cart-list').innerHTML=cart.map((c,i)=>{ sum+=c.price*c.qty; return `<div class="bg-white p-3 mb-2 rounded border position-relative"><div class="fw-bold pe-4">${c.name}</div><div class="d-flex justify-content-between mt-2 small text-muted"><span>${c.price} x ${c.qty}</span> <span class="text-primary fw-bold">${(c.price*c.qty).toFixed(2)} บ.</span></div><i class="fas fa-trash text-danger position-absolute top-0 end-0 m-3 cursor-pointer" onclick="cart.splice(${i},1);renderCart();badge();if(!cart.length)offC.hide()"></i></div>`; }).join(''); document.getElementById('cart-sum').innerText = sum.toFixed(2); }
@@ -483,7 +502,7 @@
      Swal.fire({
          icon:'success',
          title: 'ส่งใบเบิกเรียบร้อย',
-         text: 'ข้อมูลถูกส่งไปห้องยาแล้ว ไม่ต้องรอ PDF',
+         text: 'โปรดติดตามสถานะเปิดยาได้ที่ "รายการเบิก"',
          showConfirmButton: true
      });
   }
@@ -500,7 +519,7 @@
   async function saveEdit() { const pl = { invId:document.getElementById('ed-id').value, amount:document.getElementById('ed-amt').value, expire:document.getElementById('ed-exp').value }; const res = await callApi('saveEditItem', pl); if(res.status) { mdlEdit.hide(); loadStockItems(curBoxStock); } }
   
   function loadHist() { 
-     document.getElementById('hist-res').innerHTML='Loading...'; 
+     //document.getElementById('hist-res').innerHTML='Loading...'; 
      callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
          if(res.status) { 
              allHistory = res.data; 
@@ -508,7 +527,7 @@
              const done = allHistory.filter(r=>r.status.includes('เสร็จ')).length;
              const recv = allHistory.filter(r=>r.status.includes('รับ')).length;
              document.getElementById('bg-wait').innerText = wait; document.getElementById('bg-done').innerText = done; document.getElementById('bg-recv').innerText = recv;
-             if(done > 0) { document.getElementById('nav-badge-hist').classList.remove('hidden'); } else { document.getElementById('nav-badge-hist').classList.add('hidden'); }
+             if(done > 0) { document.getElementById('nav-badge-hist').classList.remove('hidden'); document.getElementById('nav-badge-hist').innerText = done; } else { document.getElementById('nav-badge-hist').classList.add('hidden'); }
              renderHist('รอการจัดยา'); 
          } 
      }); 
@@ -527,10 +546,11 @@
      document.getElementById('hist-msg').innerText = msg; document.getElementById('hist-msg').classList.toggle('hidden', msg === "");
 
      document.getElementById('hist-res').innerHTML = filtered.map(r=>{
-        let action = ''; if(r.status.includes('จัดยาเสร็จ')) action = `<button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="receiveOrder('${r.id}')">กดรับยา</button>`;
+        let action = ''; if(r.status.includes('จัดยาเสร็จ')) action = `<button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" style="font-size:1rem;" onclick="receiveOrder('${r.id}')">กดรับยา</button>`;
         let itemList = r.items.map(i=> `<li>${i.name} (${i.qty}) - ${i.price}</li>`).join('').slice(0, 200) + (r.items.length > 5 ? '...' : '');
+        let cardClass = r.status.includes('รอ') ? 'card-wait' : (r.status.includes('รับ') ? 'card-recv' : 'card-done');
         
-        return `<div class="card mb-2 p-2 shadow-sm border-start border-4 border-${r.status.includes('รอ')?'warning':(r.status.includes('รับ')?'primary':'success')}"><div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${r.id}</strong><small class="text-muted" style="font-size:10px">${r.time}</small></div><div class="small text-muted my-1"><i class="fas fa-box"></i> ${r.box}</div><ul class="small text-muted ps-3 mb-1" style="max-height:100px;overflow-y:auto">${itemList}</ul><div class="d-flex justify-content-between mt-2 align-items-center"><small class="badge bg-light text-dark border">${r.status}</small><div class="d-flex gap-1 align-items-center">${action}<a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i></a></div></div></div>`;
+        return `<div class="card mb-2 p-2 shadow-sm ${cardClass}"><div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${r.id}</strong><small class="text-muted" style="font-size:10px">${r.time}</small></div><div class="small text-muted my-1"><i class="fas fa-box"></i> ${r.box}</div><ul class="small text-muted ps-3 mb-1" style="max-height:100px;overflow-y:auto">${itemList}</ul><div class="d-flex justify-content-between mt-2 align-items-center"><small class="badge bg-light text-dark border">${r.status}</small><div class="d-flex gap-1 align-items-center">${action}<a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i></a></div></div></div>`;
      }).join('') || '<div class="text-center text-muted mt-3">ไม่มีรายการ</div>';
   }
   async function receiveOrder(oid) {
