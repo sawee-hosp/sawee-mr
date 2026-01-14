@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Hospital Pharmacy System</title>
+  <link rel="icon" href="data:,"> <!-- Fix Favicon 404 -->
   
   <!-- Fonts & Libs -->
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
@@ -222,8 +223,7 @@
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNMk59pHTzZJTCUZfGoFd_NmjdYrwyTesFqMz4DriMnHFCIr_NMrrpBsp_p4zq7inN1A/exec';
   const DEFAULT_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAMAAABHPGVmAAAAb1BMVEUAAAD///+srKzFxcWZmZnc3Nza2trR0dHnYzr///8/Pz9ycnKwZzKtra1ERETGxsbMzMy3t7fAwMDq6uqgoKCkpKRubm5KSkpYWFji4uJHR0dgYGBubm5mZmZwcHBqampycnJOTk5UVFR8fHxISEh929s2AAAAInRSTlMA+/zb2v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+2tra2t7XhY8AAAN1SURBVGje7ZqJjqMwDEXlMnOYzUx3//+3F5QiazmC0Onw3rSpU0eFkPCRjO0407/1dZ+y701/c72u852t+2u972z93+t15+t/r9d90D8s7oP+YXEfdIjFfdAhFvdB+1g8Bn3F4jHoKxaPQV+xeAz6isVj0FcsHoO+YvEY9BWLx6CvWDwGfcXiMeirj8S6z/oR6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7D+B/0Fq7h+W3gqAAAAAElFTkSuQmCC";
 
-  let liffId = "2008862022-cDOpEP9z"; // คุณต้องใส่ LIFF ID ของคุณที่นี่ (ถ้ายังไม่มีต้องสร้างใน LINE Developers)
-  // เนื่องจากคุณบอกว่ามี URL แล้ว ผมสมมติว่าคุณจัดการ LIFF ID ใน GitHub Page แล้ว หรือถ้ายังไม่มีให้ใส่ LIFF ID จริงลงไป
+  let liffId = "2008862022-cDOpEP9z"; // Update LIFF ID
   
   let userProfile = {};
   let currentUser = {}; // Data from GAS
@@ -233,13 +233,24 @@
   // --- API HELPER (CORS WORKAROUND) ---
   async function callApi(action, payload = {}) {
      const body = JSON.stringify({ action, ...payload });
-     // Use POST with text/plain to avoid CORS Preflight (OPTIONS)
-     const res = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: body
-     });
-     return await res.json();
+     try {
+       // Use POST with text/plain to avoid CORS Preflight (OPTIONS)
+       const res = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: body
+       });
+       
+       if (!res.ok) {
+         throw new Error(`HTTP error! status: ${res.status}`);
+       }
+       
+       return await res.json();
+     } catch(e) {
+       console.error("API Error", e);
+       // Return error object so app handles it gracefully
+       return { status: 'error', message: e.message };
+     }
   }
 
   // --- INITIALIZATION ---
@@ -263,6 +274,7 @@
         console.warn('LIFF Init failed, using mock', err);
         // Uncomment below line to test locally without LINE
         // checkUser('U1234567890dummy'); userProfile={userId:'U1234567890dummy', displayName:'Test User', pictureUrl:DEFAULT_IMG};
+        document.getElementById('status-text').innerText = 'LIFF Error: ' + err.message;
      }
   };
 
@@ -275,11 +287,15 @@
         document.getElementById('login-overlay').classList.add('hidden');
         document.getElementById('reg-img').src = userProfile.pictureUrl || DEFAULT_IMG;
         mdlReg.show();
-     } else {
+     } else if (res.status === 'FOUND') {
         // Login Success
         currentUser = res.userData;
         currentUser.userId = uid; // Ensure ID is present
         startApp();
+     } else {
+        // Error handling
+        document.getElementById('status-text').innerText = 'Connection Failed. Please Refresh.';
+        Swal.fire('Connection Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่', 'error');
      }
   }
 
@@ -322,7 +338,7 @@
 
      // Load Boxes
      const res = await callApi('getBoxes', { substock: currentUser.substock });
-     renderBoxScrollers(res.boxes);
+     if(res.status) renderBoxScrollers(res.boxes);
   }
 
   // --- CORE UI LOGIC ---
@@ -364,9 +380,13 @@
   async function loadOrderItems(box) {
      document.getElementById('order-grid').innerHTML = Array(4).fill('<div class="skeleton mb-3"></div>').join('');
      const res = await callApi('getItems', { boxName: box });
-     items = res.data.map(x=>({...x, req:1}));
-     renderOrder();
-     lazyLoad();
+     if(res.status) {
+       items = res.data.map(x=>({...x, req:1}));
+       renderOrder();
+       lazyLoad();
+     } else {
+       document.getElementById('order-grid').innerHTML = '<div class="text-center mt-5 text-danger">Error Loading Items</div>';
+     }
   }
 
   function renderOrder() {
@@ -455,6 +475,10 @@
   async function loadStockItems(box) {
       document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
       const res = await callApi('getItems', { boxName: box });
+      if(!res.status) {
+         document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-danger">Error Loading Stock</div>';
+         return;
+      }
       // Group by Row logic similar to previous version...
       let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
       let h=''; Object.keys(rows).sort().forEach(r=>{
@@ -477,13 +501,17 @@
      const k=document.getElementById('kw-global').value; if(!k)return;
      document.getElementById('search-res').innerHTML='Searching...';
      callApi('searchGlobal', {kw:k}).then(res=>{
-        document.getElementById('search-res').innerHTML = res.data.map(r=>`<div class="list-group-item"><strong>${r.name}</strong><br><small>${r.box} | คงเหลือ: ${r.amount}</small></div>`).join('') || 'ไม่พบข้อมูล';
+        if(res.status) {
+           document.getElementById('search-res').innerHTML = res.data.map(r=>`<div class="list-group-item"><strong>${r.name}</strong><br><small>${r.box} | คงเหลือ: ${r.amount}</small></div>`).join('') || 'ไม่พบข้อมูล';
+        }
      });
   }
   function loadHist() {
      document.getElementById('hist-res').innerHTML='Loading...';
      callApi('getHistory', {user:currentUser.name}).then(res=>{
-        document.getElementById('hist-res').innerHTML = res.data.map(r=>`<div class="card mb-2 p-2 shadow-sm"><div class="d-flex justify-content-between"><strong>${r.box}</strong><small>${r.time}</small></div><div class="text-end"><a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">PDF</a></div></div>`).join('');
+        if(res.status) {
+           document.getElementById('hist-res').innerHTML = res.data.map(r=>`<div class="card mb-2 p-2 shadow-sm"><div class="d-flex justify-content-between"><strong>${r.box}</strong><small>${r.time}</small></div><div class="text-end"><a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">PDF</a></div></div>`).join('');
+        }
      });
   }
   function filterOrder(){ renderOrder(); }
