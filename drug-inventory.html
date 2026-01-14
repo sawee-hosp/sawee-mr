@@ -5,20 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Hospital Pharmacy System</title>
   <link rel="icon" href="data:,">
-  
-  <!-- Fonts & Libs -->
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <style>
     :root {
       --font-main: "Sarabun", sans-serif;
-      --primary: #008163; /* Medical Green */
-      --secondary: #e0f2f1;
+      /* เปลี่ยนธีมเป็นสีฟ้า */
+      --primary: #0d6efd; 
+      --primary-dark: #0a58ca;
+      --secondary: #e7f1ff;
       --bg: #f8f9fa;
       --text: #2c3e50;
     }
@@ -28,33 +27,43 @@
     .fade-in { animation: fadeIn 0.4s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Loading / Login Overlay */
+    /* Loading Overlay */
     #login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%); z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-    .loader-box { text-align: center; }
 
-    /* Registration Modal Custom */
-    .reg-check-group { text-align: left; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 8px; max-height: 150px; overflow-y: auto; }
-
-    /* Navbar & Profile */
+    /* Navbar */
     .app-nav { position: fixed; top: 0; left: 0; right: 0; height: 65px; background: white; z-index: 1000; box-shadow: 0 1px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
     .nav-brand { font-weight: 600; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-    .profile-mini { display: flex; align-items: center; gap: 8px; background: var(--secondary); padding: 4px 10px; border-radius: 20px; }
+    .profile-mini { display: flex; align-items: center; gap: 8px; background: var(--secondary); padding: 4px 10px; border-radius: 20px; color: var(--primary-dark); }
     .profile-mini img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
-    .cart-wrap { position: relative; padding: 5px; cursor: pointer; transition: 0.2s; }
-    .cart-badge { position: absolute; top: -2px; right: -2px; background: #d32f2f; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; border: 2px solid white; }
-
-    /* UI Components (Reused) */
+    
+    /* Box Scroller (Carousel) - Blue Theme */
     .box-scroller { display: flex; overflow-x: auto; padding: 15px; gap: 12px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .box-scroller::-webkit-scrollbar { display: none; }
-    .box-btn { min-width: 90px; padding: 10px; background: white; border: 1px solid #eee; border-radius: 16px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; }
-    .box-btn img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-bottom: 6px; background: #f5f5f5; }
-    .box-btn.active { border-color: var(--primary); background: var(--secondary); color: var(--primary); box-shadow: 0 4px 8px rgba(0,129,99,0.15); }
+    .box-btn { 
+      min-width: 90px; padding: 10px; background: white; border: 1px solid #dee2e6; border-radius: 16px; 
+      text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; 
+      color: #555;
+    }
+    /* Square Image Fit */
+    .box-btn img { 
+      width: 50px; height: 50px; border-radius: 8px; /* Square with slight radius */
+      object-fit: cover; margin-bottom: 6px; background: #f5f5f5; border: 1px solid #eee;
+    }
+    .box-btn.active { 
+      border: 2px solid var(--primary-dark); background: var(--secondary); color: var(--primary-dark); 
+      transform: translateY(-2px); box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2); 
+    }
 
+    /* Grid & Cards */
     .drug-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 15px; }
     .drug-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f0f0f0; display: flex; flex-direction: column; position: relative; }
-    .drug-img-wrap { height: 120px; background: #fff; display: flex; align-items: center; justify-content: center; padding: 10px; }
-    .drug-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .drug-img-wrap { 
+      width: 100%; aspect-ratio: 1/1; /* Force Square */
+      background: #fff; display: flex; align-items: center; justify-content: center; padding: 10px; border-bottom: 1px solid #f8f8f8;
+    }
+    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; } /* Crop Fit */
     .drug-img.loading { opacity: 0.5; filter: blur(2px); }
+    
     .drug-info { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; background: white; }
     .drug-name { font-size: 0.9rem; font-weight: 600; line-height: 1.3; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 8px; }
 
@@ -64,12 +73,28 @@
     .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 4px; }
     .nav-item.active { color: var(--primary); font-weight: 600; }
 
-    /* Shelf View */
-    .shelf-row-label { font-weight: bold; margin: 15px; padding-left: 10px; border-left: 4px solid var(--primary); color: #555; }
-    .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; padding: 0 15px; }
-    .shelf-item { background: white; border: 1px solid #eee; border-radius: 8px; padding: 8px; text-align: center; position: relative; }
-    .shelf-item img { width: 50px; height: 50px; object-fit: contain; }
+    /* Stock UI Extras */
+    .filter-bar { display: flex; gap: 8px; padding: 0 15px 10px 15px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+    .filter-pill { 
+      padding: 5px 12px; border-radius: 20px; background: white; border: 1px solid #ddd; font-size: 0.8rem; color: #666; cursor: pointer; 
+    }
+    .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
     
+    .fab-edit {
+      position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px;
+      background: var(--primary); color: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 1.5rem; z-index: 900;
+      transition: transform 0.2s;
+    }
+    .fab-edit:active { transform: scale(0.9); }
+
+    /* Shelf View */
+    .shelf-item { position: relative; border:1px solid #eee; border-radius:8px; padding:5px; text-align:center; }
+    .shelf-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+    .btn-del-item { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; background: red; color: white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; display: none; }
+    .shelf-item.editing .btn-del-item { display: flex; }
+
     /* Helpers */
     .qty-wrap { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #eee; border-radius: 20px; padding: 2px; margin-top: auto; }
     .btn-qty { width: 30px; height: 30px; background: white; border: 1px solid #ddd; border-radius: 50%; color: var(--primary); font-weight: bold; display: flex; align-items: center; justify-content: center; }
@@ -80,94 +105,60 @@
 </head>
 <body>
 
-  <!-- 1. LOADING & LOGIN SCREEN -->
+  <!-- LOADING & LOGIN -->
   <div id="login-overlay">
-    <div class="loader-box fade-in">
-      <div style="font-size:3.5rem;color:var(--primary);margin-bottom:15px"><i class="fa-solid fa-staff-snake fa-beat"></i></div>
+    <div class="text-center fade-in">
+      <div style="font-size:3.5rem;color:var(--primary);margin-bottom:15px"><i class="fa-solid fa-hospital-user fa-beat"></i></div>
       <h4 class="fw-bold mb-1" style="color:#333">กำลังเชื่อมต่อ...</h4>
-      <p class="text-muted small">Hospital Pharmacy System</p>
-      <div id="status-text" class="text-primary small mt-3 fw-bold">Connecting to LIFF...</div>
+      <div id="status-text" class="text-primary small mt-3 fw-bold">Connecting...</div>
     </div>
   </div>
 
-  <!-- 2. REGISTRATION MODAL (Bootstrap Modal) -->
-  <div class="modal fade" id="mdlRegister" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-       <div class="modal-content border-0 shadow-lg rounded-4">
-          <div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary"><i class="fas fa-user-plus me-2"></i>ลงทะเบียนผู้ใช้งาน</h5></div>
-          <div class="modal-body p-4">
-             <div class="text-center mb-3">
-                <img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)">
-             </div>
-             <form id="form-reg">
-                <div class="mb-3"><input id="reg-username" class="form-control rounded-pill" placeholder="ชื่อผู้ใช้งาน (Username) *" required></div>
-                <div class="mb-3"><input id="reg-name" class="form-control rounded-pill" placeholder="ชื่อ-สกุล จริง *" required></div>
-                <div class="mb-3"><input id="reg-email" type="email" class="form-control rounded-pill" placeholder="อีเมล"></div>
-                
-                <div class="mb-3">
-                   <label class="form-label small fw-bold text-muted ms-2">สิทธิ์การเบิก (เลือกได้หลายข้อ)</label>
-                   <div class="reg-check-group">
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาER"> <label class="form-check-label">เบิกยาER</label></div>
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาLR"> <label class="form-check-label">เบิกยาLR</label></div>
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDชาย"> <label class="form-check-label">เบิกยาWARDชาย</label></div>
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDหญิง"> <label class="form-check-label">เบิกยาWARDหญิง</label></div>
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาห้องฟัน"> <label class="form-check-label">เบิกยาห้องฟัน</label></div>
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาANC"> <label class="form-check-label">เบิกยาANC</label></div>
-                      <div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาฝ่ายเวชฯ"> <label class="form-check-label">เบิกยาฝ่ายเวชฯ</label></div>
-                   </div>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm">ลงทะเบียน</button>
-             </form>
-          </div>
-       </div>
-    </div>
-  </div>
+  <!-- REGISTRATION MODAL -->
+  <div class="modal fade" id="mdlRegister" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg rounded-4"><div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary">ลงทะเบียน</h5></div><div class="modal-body p-4"><div class="text-center mb-3"><img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div><form id="form-reg"><input id="reg-username" class="form-control mb-3" placeholder="Username *" required><input id="reg-name" class="form-control mb-3" placeholder="ชื่อ-สกุล *" required><input id="reg-email" class="form-control mb-3" placeholder="Email"><div class="mb-3"><label class="small fw-bold text-muted">สิทธิ์การเบิก</label><div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto"><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาER"><label>เบิกยาER</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาLR"><label>เบิกยาLR</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDชาย"><label>เบิกยาWARDชาย</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDหญิง"><label>เบิกยาWARDหญิง</label></div></div></div><button type="submit" class="btn btn-primary w-100 rounded-pill">ลงทะเบียน</button></form></div></div></div></div>
 
-  <!-- 3. MAIN APP -->
+  <!-- APP MAIN -->
   <div id="app-main" class="hidden">
     <nav class="app-nav">
       <div class="nav-brand"><i class="fa-solid fa-prescription-bottle-medical"></i> Pharmacy</div>
       <div class="d-flex align-items-center gap-2">
-         <div class="profile-mini">
-            <img id="nav-img" src="">
-            <span id="nav-name" style="font-size:0.8rem;font-weight:600;max-width:80px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">User</span>
-         </div>
-         <div class="cart-wrap" onclick="openCart()">
+         <div class="profile-mini"><img id="nav-img" src=""><span id="nav-name" style="font-size:0.8rem;font-weight:600;">User</span></div>
+         <div style="position:relative;padding:5px;" onclick="openCart()">
             <i class="fas fa-shopping-basket" style="font-size:1.4rem;color:#555"></i>
-            <div id="badge" class="cart-badge hidden">0</div>
+            <div id="badge" class="badge bg-danger rounded-circle position-absolute top-0 end-0 hidden" style="font-size:10px">0</div>
          </div>
       </div>
     </nav>
 
     <div class="tab-content" style="padding-top:70px">
-      <!-- Order Tab -->
+      <!-- 1. ORDER -->
       <div id="tab-order" class="page-sec">
         <div id="box-scroller-order" class="box-scroller"></div>
         <div class="px-3 py-2 sticky-top bg-white shadow-sm" style="top:65px;z-index:900">
            <input type="text" id="order-search" class="form-control rounded-pill border-0 bg-light" placeholder="🔍 ค้นหายา..." onkeyup="filterOrder()">
         </div>
-        <div id="order-grid" class="drug-grid">
-           <div class="text-center w-100 mt-5 text-muted"><i class="fas fa-box-open fa-3x mb-3 text-light"></i><br>เลือกกล่องยาด้านบน</div>
-        </div>
+        <div id="order-grid" class="drug-grid"><div class="text-center w-100 mt-5 text-muted">เลือกกล่องด้านบน</div></div>
       </div>
 
-      <!-- Stock Tab -->
+      <!-- 2. STOCK -->
       <div id="tab-stock" class="page-sec hidden">
+        <div id="group-filter" class="filter-bar"></div>
         <div id="box-scroller-stock" class="box-scroller"></div>
-        <div id="stock-content" class="pb-5"><div class="text-center mt-5 text-muted">เลือกกล่องเพื่อเช็คสต็อก</div></div>
+        <div id="stock-content" class="pb-5 px-3">
+           <div class="text-center mt-5 text-muted">เลือกกล่องเพื่อดูสต็อก/แก้ไข</div>
+        </div>
+        <!-- Edit FAB -->
+        <div id="fab-edit" class="fab-edit hidden" onclick="openBoxEditor()"><i class="fas fa-edit"></i></div>
       </div>
 
-      <!-- Search Tab -->
+      <!-- 3. SEARCH -->
       <div id="tab-search" class="page-sec hidden container pt-3">
          <h5 class="fw-bold text-primary mb-3">ค้นหายาทั่ว รพ.</h5>
-         <div class="input-group mb-3 shadow-sm rounded-pill overflow-hidden">
-            <input id="kw-global" class="form-control border-0 ps-4" placeholder="ระบุชื่อยา...">
-            <button onclick="doGlobal()" class="btn btn-primary px-4"><i class="fas fa-search"></i></button>
-         </div>
+         <div class="input-group mb-3 shadow-sm rounded-pill"><input id="kw-global" class="form-control border-0 ps-4" placeholder="ระบุชื่อยา..."><button onclick="doGlobal()" class="btn btn-primary px-4"><i class="fas fa-search"></i></button></div>
          <div id="search-res" class="list-group list-group-flush rounded-3"></div>
       </div>
 
-      <!-- History Tab -->
+      <!-- 4. HISTORY -->
       <div id="tab-hist" class="page-sec hidden container pt-3">
          <h5 class="fw-bold text-secondary mb-3">ประวัติการเบิก</h5>
          <div id="hist-res"></div>
@@ -175,15 +166,15 @@
     </div>
   </div>
 
-  <!-- Bottom Nav -->
+  <!-- BOTTOM NAV -->
   <div class="btm-nav">
     <div class="nav-item active" onclick="nav('tab-order', this)"><i class="fas fa-pills"></i>เบิกยา</div>
     <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-cubes"></i>สต็อก</div>
     <div class="nav-item" onclick="nav('tab-search', this)"><i class="fas fa-search"></i>ค้นหา</div>
-    <div class="nav-item" onclick="nav('tab-hist', this); loadHist()"><i class="fas fa-clipboard-list"></i>ประวัติ</div>
+    <div class="nav-item" onclick="nav('tab-hist', this); loadHist()"><i class="fas fa-history"></i>ประวัติ</div>
   </div>
 
-  <!-- Cart Drawer -->
+  <!-- CART DRAWER -->
   <div class="offcanvas offcanvas-bottom rounded-top-4" id="cartSheet" style="height:85vh;z-index:2000">
     <div class="offcanvas-header border-bottom"><h5 class="fw-bold text-primary">รายการเบิก</h5><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
     <div class="offcanvas-body d-flex flex-column p-0 bg-light">
@@ -191,25 +182,63 @@
        <div class="p-3 bg-white shadow-lg mt-auto">
           <div class="d-flex justify-content-between fw-bold mb-2"><span>รวมสุทธิ</span><span class="text-primary" id="cart-sum">0.00</span></div>
           <div class="border rounded p-2 mb-3 bg-white">
-             <small class="text-muted d-block">ลายเซ็น: <span class="text-danger cursor-pointer float-end" onclick="clrCvs()">ล้าง</span></small>
+             <small class="text-muted d-block">ลายเซ็น:</small>
              <canvas id="cvs" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas>
+             <div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvs()">ล้าง</small></div>
           </div>
           <button onclick="submitOrder()" class="btn btn-primary w-100 rounded-pill py-3 fw-bold">ยืนยัน</button>
        </div>
     </div>
   </div>
 
-  <!-- Edit Modal -->
+  <!-- BOX EDITOR MODAL -->
+  <div class="modal fade" id="mdlBoxEdit" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">แก้ไขกล่อง</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body bg-light">
+           <div class="card p-3 mb-3 border-0 shadow-sm">
+              <label class="small text-muted">ชื่อกล่อง</label>
+              <input id="edit-box-name" class="form-control fw-bold mb-2">
+              <label class="small text-muted">รูปภาพ (Drive path/link)</label>
+              <input id="edit-box-img" class="form-control text-muted" style="font-size:0.8rem">
+              <button class="btn btn-sm btn-outline-primary mt-2" onclick="saveBoxInfo()">บันทึกชื่อ/รูป</button>
+           </div>
+           
+           <h6 class="fw-bold mt-4">รายการยาในกล่อง</h6>
+           <button class="btn btn-sm btn-success mb-2" onclick="mdlAddItem.show()"><i class="fas fa-plus"></i> เพิ่มยาเข้ากล่อง</button>
+           <div id="edit-box-items" class="row g-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD ITEM MODAL -->
+  <div class="modal fade" id="mdlAddItem" style="z-index:2100">
+     <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+           <div class="modal-header"><h6 class="fw-bold">ค้นหา Master Items</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+           <div class="modal-body">
+              <div class="input-group mb-2"><input id="search-master" class="form-control" placeholder="ชื่อยา..."><button class="btn btn-primary" onclick="searchMaster()">ค้นหา</button></div>
+              <div id="master-res" class="list-group" style="max-height:200px;overflow-y:auto"></div>
+           </div>
+        </div>
+     </div>
+  </div>
+
+  <!-- EDIT STOCK ITEM MODAL -->
   <div class="modal fade" id="mdlEdit">
      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow rounded-4">
-           <div class="modal-header border-0 pb-0"><h5 class="fw-bold">แก้ไขสต็อก</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-           <div class="modal-body text-center pt-2">
+        <div class="modal-content rounded-4 border-0 shadow">
+           <div class="modal-body text-center p-4">
               <input type="hidden" id="ed-id">
               <h6 id="ed-name" class="mb-3 text-primary fw-bold text-start"></h6>
               <div class="row g-2">
                  <div class="col-6"><label class="small text-muted">คงเหลือ</label><input type="number" id="ed-amt" class="form-control fw-bold text-center text-primary"></div>
-                 <div class="col-6"><label class="small text-muted">วันหมดอายุ</label><input type="date" id="ed-exp" class="form-control text-center"></div>
+                 <div class="col-6"><label class="small text-muted">หมดอายุ</label><input type="date" id="ed-exp" class="form-control text-center"></div>
               </div>
               <button onclick="saveEdit()" class="btn btn-primary w-100 rounded-pill mt-4">บันทึก</button>
            </div>
@@ -220,141 +249,127 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   // --- CONFIG ---
-  // สำคัญ: ต้องเป็น URL ของการ Deploy ครั้งล่าสุดเท่านั้น
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNMk59pHTzZJTCUZfGoFd_NmjdYrwyTesFqMz4DriMnHFCIr_NMrrpBsp_p4zq7inN1A/exec';
   const DEFAULT_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAMAAABHPGVmAAAAb1BMVEUAAAD///+srKzFxcWZmZnc3Nza2trR0dHnYzr///8/Pz9ycnKwZzKtra1ERETGxsbMzMy3t7fAwMDq6uqgoKCkpKRubm5KSkpYWFji4uJHR0dgYGBubm5mZmZwcHBqampycnJOTk5UVFR8fHxISEh929s2AAAAInRSTlMA+/zb2v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+2tra2t7XhY8AAAN1SURBVGje7ZqJjqMwDEXlMnOYzUx3//+3F5QiazmC0Onw3rSpU0eFkPCRjO0407/1dZ+y701/c72u852t+2u972z93+t15+t/r9d90D8s7oP+YXEfdIjFfdAhFvdB+1g8Bn3F4jHoKxaPQV+xeAz6isVj0FcsHoO+YvEY9BWLx6CvWDwGfcXiMeirj8S6z/oR6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7B+wvoJ6yesn7D+B/0Fq7h+W3gqAAAAAElFTkSuQmCC";
 
-  let liffId = "2008862022-cDOpEP9z"; 
+  let liffId = "2008862022-cDOpEP9z";
   
-  let userProfile = {};
-  let currentUser = {}; 
-  let items=[], cart=[], curBoxOrder='', curBoxStock='';
-  let offC, mdlEdit, mdlReg;
+  let currentUser = {}, items=[], cart=[], curBoxOrder='', curBoxStock='';
+  let allBoxes = []; // Store for filtering
+  let offC, mdlEdit, mdlReg, mdlBoxEdit, mdlAddItem;
 
-  // --- API HELPER (CORS WORKAROUND) ---
+  // --- API ---
   async function callApi(action, payload = {}) {
-     const body = JSON.stringify({ action, ...payload });
      try {
        const res = await fetch(GAS_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: body
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({ action, ...payload })
        });
-       
-       if (!res.ok) {
-         throw new Error(`HTTP error! status: ${res.status}`);
-       }
-       
        const text = await res.text();
-       try {
-           return JSON.parse(text);
-       } catch (e) {
-           // จับ Error "Service is..." ที่นี่
-           if (text.includes("Service is")) {
-               throw new Error("DEPLOYMENT ERROR: กรุณาตั้งค่า GAS Deployment เป็น 'Execute as: Me' และ 'Who has access: Anyone'");
-           }
-           throw new Error("Invalid JSON: " + text.substring(0, 50));
+       try { return JSON.parse(text); } 
+       catch(e) { 
+           if(text.includes("Service is")) throw new Error("DEPLOYMENT_ERR");
+           throw new Error(text.substr(0,50)); 
        }
      } catch(e) {
-       console.error("API Error", e);
-       if(e.message.includes("DEPLOYMENT ERROR")) {
-           Swal.fire({
-               icon: 'error',
-               title: 'ตั้งค่าผิดพลาด',
-               html: 'กรุณาไปที่ Google Apps Script <br>กด Deploy > New Deployment <br>เลือก <b>Execute as: Me</b> <br>และ <b>Who has access: Anyone</b>',
-               footer: 'มิเช่นนั้นระบบจะไม่สามารถทำงานได้'
-           });
-       }
+       console.error(e);
+       if(e.message=="DEPLOYMENT_ERR") Swal.fire('Error','Deploy ผิดวิธี! ต้องเลือก Execute as Me / Anyone','error');
        return { status: 'error', message: e.message };
      }
   }
 
-  // --- INITIALIZATION ---
+  // --- INIT ---
   window.onload = async () => {
      offC = new bootstrap.Offcanvas('#cartSheet');
      mdlEdit = new bootstrap.Modal('#mdlEdit');
      mdlReg = new bootstrap.Modal('#mdlRegister');
+     mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit');
+     mdlAddItem = new bootstrap.Modal('#mdlAddItem');
      initCvs();
 
      try {
-        await liff.init({ liffId: liffId }); 
-        if (!liff.isLoggedIn()) {
-           liff.login();
-        } else {
+        await liff.init({ liffId }); 
+        if(!liff.isLoggedIn()) liff.login();
+        else {
            const profile = await liff.getProfile();
-           userProfile = profile;
+           currentUser.photo = profile.pictureUrl;
            checkUser(profile.userId);
         }
-     } catch (err) {
-        console.warn('LIFF Init failed', err);
-        document.getElementById('status-text').innerHTML = `<span class="text-danger">LIFF Error: ${err.message}</span>`;
+     } catch(e) {
+        document.getElementById('status-text').innerHTML = `<span class="text-danger">${e.message}</span>`;
      }
   };
 
   async function checkUser(uid) {
-     document.getElementById('status-text').innerText = 'Checking User Database...';
      const res = await callApi('checkUserLIFF', { userId: uid });
-     
      if (res.status === 'NOT_FOUND') {
         document.getElementById('login-overlay').classList.add('hidden');
-        document.getElementById('reg-img').src = userProfile.pictureUrl || DEFAULT_IMG;
+        document.getElementById('reg-img').src = currentUser.photo || DEFAULT_IMG;
         mdlReg.show();
      } else if (res.status === 'FOUND') {
-        currentUser = res.userData;
-        currentUser.userId = uid; 
+        currentUser = { ...res.userData, userId: uid };
         startApp();
-     } else {
-        document.getElementById('status-text').innerText = 'Connection Failed.';
-        // ถ้าไม่ใช่ Error เรื่อง Deployment ก็แจ้งเตือนปกติ
-        if(!res.message.includes("DEPLOYMENT")) {
-            Swal.fire('Connection Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + res.message, 'error');
-        }
      }
   }
 
-  // --- REGISTRATION ---
   document.getElementById('form-reg').onsubmit = async (e) => {
      e.preventDefault();
      const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value);
-     if(subs.length === 0) return Swal.fire('กรุณาเลือกสิทธิ์การเบิกอย่างน้อย 1 รายการ');
-
-     const payload = {
+     if(!subs.length) return Swal.fire('เลือกสิทธิ์การเบิก');
+     Swal.showLoading();
+     const res = await callApi('registerUser', {
         username: document.getElementById('reg-username').value,
         name: document.getElementById('reg-name').value,
         email: document.getElementById('reg-email').value,
-        substock: subs,
-        userId: userProfile.userId,
-        photo: userProfile.pictureUrl || ''
-     };
-
-     Swal.fire({title:'กำลังบันทึก...', didOpen:()=>Swal.showLoading()});
-     const res = await callApi('registerUser', payload);
-     
-     if(res.status) {
-        Swal.fire('สำเร็จ', 'ลงทะเบียนเรียบร้อยแล้ว', 'success');
-        mdlReg.hide();
-        currentUser = payload; 
-        startApp();
-     } else {
-        Swal.fire('Error', res.message, 'error');
-     }
+        substock: subs, userId: currentUser.userId, photo: currentUser.photo
+     });
+     if(res.status) location.reload(); else Swal.fire(res.message);
   };
 
-  // --- APP START ---
   async function startApp() {
      document.getElementById('login-overlay').classList.add('hidden');
      document.getElementById('app-main').classList.remove('hidden');
-     
-     // แก้ปัญหา undefined src
-     const photo = currentUser.photo;
-     document.getElementById('nav-img').src = (photo && photo !== 'undefined' && photo !== '') ? photo : DEFAULT_IMG;
+     document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG;
      document.getElementById('nav-name').innerText = currentUser.name;
 
-     const res = await callApi('getBoxes', { substock: currentUser.substock });
-     if(res.status) renderBoxScrollers(res.boxes);
+     // Load Boxes for Order (Filtered)
+     const resOrder = await callApi('getBoxes', { substock: currentUser.substock, showAll: false });
+     if(resOrder.status) renderBoxScroller('order', resOrder.boxes);
+
+     // Load All Boxes for Stock (Unfiltered) & Groups
+     const resStock = await callApi('getBoxes', { showAll: true });
+     if(resStock.status) {
+         allBoxes = resStock.boxes;
+         renderBoxScroller('stock', allBoxes);
+     }
+     
+     const resGroups = await callApi('getBoxGroups');
+     if(resGroups.status) {
+         document.getElementById('group-filter').innerHTML = 
+            `<div class="filter-pill active" onclick="filterStockBox('ALL',this)">ทั้งหมด</div>` + 
+            resGroups.groups.map(g=>`<div class="filter-pill" onclick="filterStockBox('${g}',this)">${g}</div>`).join('');
+     }
   }
 
-  // --- UI LOGIC ---
+  // --- UI RENDER ---
+  function renderBoxScroller(mode, boxes) {
+     const el = document.getElementById(`box-scroller-${mode}`);
+     el.innerHTML = boxes.map(b=>`
+       <div class="box-btn" onclick="selBox('${b.name}', this, '${mode}', '${b.imageRaw}')">
+          <img src="${DEFAULT_IMG}" class="lazy" data-raw="${b.imageRaw}">
+          <span style="font-size:0.75rem;line-height:1.1;font-weight:600">${b.name}</span>
+       </div>`).join('');
+     lazyLoad();
+  }
+
+  function filterStockBox(group, el) {
+      document.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      const filtered = (group==='ALL') ? allBoxes : allBoxes.filter(b=>b.group===group);
+      renderBoxScroller('stock', filtered);
+  }
+
   function nav(pid, el){
      document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden'));
      document.getElementById(pid).classList.remove('hidden');
@@ -362,45 +377,34 @@
      el.classList.add('active');
   }
 
-  function renderBoxScrollers(bs){
-     const mk = (m) => bs.map(b=>`
-       <div class="box-btn" onclick="selBox('${b.name}', this, '${m}')">
-          <img src="${DEFAULT_IMG}" class="lazy" data-raw="${b.imageRaw}">
-          <span style="font-size:0.75rem;line-height:1.1;font-weight:600">${b.name}</span>
-       </div>`).join('');
-     document.getElementById('box-scroller-order').innerHTML = mk('order');
-     document.getElementById('box-scroller-stock').innerHTML = mk('stock');
-     lazyLoad();
-  }
-
-  async function selBox(name, el, mode) {
+  async function selBox(name, el, mode, imgRaw) {
+     document.querySelectorAll(`#box-scroller-${mode} .box-btn`).forEach(x=>x.classList.remove('active'));
+     el.classList.add('active');
+     
      if(mode==='order') {
         if(cart.length && curBoxOrder!=name && !confirm('เปลี่ยนกล่อง ตะกร้าจะถูกล้าง?')) return;
         if(cart.length && curBoxOrder!=name) { cart=[]; badge(); }
         curBoxOrder = name;
-        document.querySelectorAll('#box-scroller-order .box-btn').forEach(x=>x.classList.remove('active'));
-        el.classList.add('active');
         loadOrderItems(name);
      } else {
         curBoxStock = name;
-        document.querySelectorAll('#box-scroller-stock .box-btn').forEach(x=>x.classList.remove('active'));
-        el.classList.add('active');
+        document.getElementById('fab-edit').classList.remove('hidden');
+        // Pre-fill edit modal
+        document.getElementById('edit-box-name').value = name;
+        document.getElementById('edit-box-img').value = imgRaw;
         loadStockItems(name);
      }
   }
 
+  // --- INVENTORY ---
   async function loadOrderItems(box) {
-     document.getElementById('order-grid').innerHTML = Array(4).fill('<div class="skeleton mb-3"></div>').join('');
+     document.getElementById('order-grid').innerHTML = Array(4).fill('<div class="skeleton mb-2"></div>').join('');
      const res = await callApi('getItems', { boxName: box });
-     if(res.status) {
-       items = res.data.map(x=>({...x, req:1}));
-       renderOrder();
-       lazyLoad();
-     } else {
-       document.getElementById('order-grid').innerHTML = '<div class="text-center mt-5 text-danger">Error Loading Items</div>';
-     }
+     items = res.status ? res.data.map(x=>({...x, req:1})) : [];
+     renderOrder();
+     lazyLoad();
   }
-
+  
   function renderOrder() {
      const kw = document.getElementById('order-search').value.toLowerCase();
      const html = items.filter(i=>i.name.toLowerCase().includes(kw)).map(i=>`
@@ -417,36 +421,86 @@
               <button class="btn btn-sm btn-primary w-100 mt-2 rounded-pill fw-bold" onclick="addCart('${i.itemId}')">ใส่ตะกร้า</button>
            </div>
         </div>`).join('');
-     document.getElementById('order-grid').innerHTML = html || '<div class="text-center mt-5 w-100 text-muted">ไม่พบยา</div>';
+     document.getElementById('order-grid').innerHTML = html || '<div class="text-center mt-5 text-muted">ไม่พบยา</div>';
   }
 
-  // --- LAZY LOADING ---
-  function lazyLoad() {
-     const imgs = document.querySelectorAll('img.lazy');
-     imgs.forEach(img => {
-        if(img.dataset.loaded) return;
-        const raw = img.dataset.raw;
-        if(!raw || raw==='undefined' || raw==='') { img.classList.remove('loading'); return; }
-        
-        // ถ้าเป็น Link อยู่แล้วให้ใช้เลย (และ Cache จะทำให้ได้ link แบบนี้มากขึ้น)
-        if(raw.startsWith('http')) { img.src=raw; img.classList.remove('loading'); img.dataset.loaded=true; return; }
-        
-        callApi('resolveImage', { input: raw }).then(res => {
-           if(res.status) { img.src = res.src; img.classList.remove('loading'); img.dataset.loaded=true; }
-        });
-     });
+  // --- STOCK & EDIT BOX ---
+  async function loadStockItems(box) {
+      const el = document.getElementById('stock-content');
+      el.innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
+      const res = await callApi('getItems', { boxName: box });
+      if(!res.status) return el.innerHTML = 'Error';
+      
+      let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
+      let h=''; 
+      // Stock View
+      Object.keys(rows).sort().forEach(r=>{
+         h+=`<div class="fw-bold mt-3 border-start border-4 border-primary ps-2 text-muted">ชั้น/แถว: ${r}</div><div class="d-flex flex-wrap gap-2 mt-2">`;
+         h+=rows[r].map(i=>`
+           <div class="shelf-item" style="width:100px" onclick="editStk('${i.invId}','${i.name}',${i.amount},'${i.expire}')">
+             <img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy">
+             <div class="small text-truncate mt-1">${i.name}</div>
+             <span class="badge bg-secondary">${i.amount}</span>
+           </div>`).join('');
+         h+='</div>';
+      });
+      el.innerHTML = h;
+
+      // Render Edit Box Items List
+      const editHtml = res.data.map(i=>`
+         <div class="col-12 d-flex align-items-center bg-white border p-2 rounded">
+             <img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" style="width:40px;height:40px;object-fit:cover;border-radius:4px">
+             <div class="flex-grow-1 ms-2 small text-truncate">${i.name}</div>
+             <button class="btn btn-sm btn-outline-danger" onclick="removeBoxItem('${i.invId}')"><i class="fas fa-trash"></i></button>
+         </div>`).join('');
+      document.getElementById('edit-box-items').innerHTML = editHtml;
+      
+      lazyLoad();
   }
 
-  // --- CART, SUBMIT, STOCK, SEARCH (No Changes needed, kept short) ---
+  function openBoxEditor() { mdlBoxEdit.show(); }
+  
+  async function saveBoxInfo() {
+     if(!confirm('ยืนยันแก้ไขชื่อ/รูปกล่อง?')) return;
+     const newN = document.getElementById('edit-box-name').value;
+     const newI = document.getElementById('edit-box-img').value;
+     const res = await callApi('updateBoxInfo', { oldName: curBoxStock, newName: newN, newImage: newI });
+     if(res.status) { Swal.fire('Saved'); curBoxStock=newN; location.reload(); }
+  }
+
+  async function searchMaster() {
+     const k = document.getElementById('search-master').value;
+     const res = await callApi('searchMasterItems', { kw: k });
+     document.getElementById('master-res').innerHTML = res.data.map(i=>`
+        <button class="list-group-item list-group-item-action d-flex justify-content-between" onclick="addItemToBox('${i.id}')">
+           <span>${i.name}</span> <i class="fas fa-plus-circle text-success"></i>
+        </button>`).join('');
+  }
+
+  async function addItemToBox(itemId) {
+     const amt = prompt('ระบุจำนวนเริ่มต้น:', '1');
+     if(!amt) return;
+     const res = await callApi('addBoxItem', { boxName: curBoxStock, itemId, amount: amt });
+     if(res.status) { loadStockItems(curBoxStock); mdlAddItem.hide(); }
+  }
+
+  async function removeBoxItem(invId) {
+     if(!confirm('ลบยานี้ออกจากกล่อง?')) return;
+     const res = await callApi('removeBoxItem', { invId });
+     if(res.status) loadStockItems(curBoxStock);
+  }
+
+  // --- CART, SUBMIT ---
   function adj(id, v, max) {
      let i = items.find(x=>x.itemId==id); if(!i) return;
-     let n = i.req + v; if(n<1)n=1; if(max && n>max) { n=max; Swal.fire({toast:true,position:'top',icon:'warning',title:'เกินสต็อก',timer:1000,showConfirmButton:false}); }
+     let n = i.req + v; if(n<1)n=1; if(max && n>max) { n=max; Swal.fire({toast:true,position:'top',icon:'warning',title:'เกินสต็อก'}); }
      i.req = n; document.getElementById(`qty-${id}`).value = n;
   }
   function addCart(id) {
      let i = items.find(x=>x.itemId==id); let ex = cart.find(x=>x.itemId==id);
      if(ex) { if(ex.qty+i.req > i.amount) return Swal.fire('เกินสต็อก'); ex.qty+=i.req; } else cart.push({...i, qty:i.req});
-     badge(); document.querySelector('.cart-wrap').style.transform='scale(1.2)'; setTimeout(()=>document.querySelector('.cart-wrap').style.transform='scale(1)',200);
+     badge(); 
+     const b=document.querySelector('.fa-shopping-basket'); b.style.transform='scale(1.4)'; setTimeout(()=>b.style.transform='scale(1)',200);
      i.req=1; document.getElementById(`qty-${id}`).value=1;
   }
   function badge() { let n=cart.length; document.getElementById('badge').innerText=n; n>0?document.getElementById('badge').classList.remove('hidden'):document.getElementById('badge').classList.add('hidden'); }
@@ -456,26 +510,32 @@
      document.getElementById('cart-list').innerHTML=cart.map((c,i)=>{ sum+=c.price*c.qty; return `<div class="bg-white p-3 mb-2 rounded border position-relative"><div class="fw-bold pe-4">${c.name}</div><div class="d-flex justify-content-between mt-2 small text-muted"><span>${c.price} x ${c.qty}</span> <span class="text-primary fw-bold">${(c.price*c.qty).toFixed(2)} บ.</span></div><i class="fas fa-trash text-danger position-absolute top-0 end-0 m-3 cursor-pointer" onclick="cart.splice(${i},1);renderCart();badge();if(!cart.length)offC.hide()"></i></div>`; }).join('');
      document.getElementById('cart-sum').innerText = sum.toFixed(2);
   }
+  
   async function submitOrder() {
      if(isCanvasBlank(canvas)) return Swal.fire('กรุณาเซ็นชื่อ');
      Swal.fire({title:'กำลังส่งข้อมูล...', didOpen:()=>Swal.showLoading()});
      const sign = canvas.toDataURL();
      const res = await callApi('submitOrder', { orderData: { user: currentUser.name, box: curBoxOrder, items: cart, signature: sign } });
-     if(res.status) { cart=[]; badge(); offC.hide(); clrCvs(); Swal.fire({icon:'success', title:'สำเร็จ', html:`<a href="${res.pdfUrl}" target="_blank" class="btn btn-primary w-100">ดูใบเบิก (PDF)</a>`}); } else Swal.fire('Error', res.message, 'error');
+     if(res.status) { cart=[]; badge(); offC.hide(); clrCvs(); Swal.fire({icon:'success', html:`<a href="${res.pdfUrl}" target="_blank" class="btn btn-primary w-100">ดูสติ๊กเกอร์ (PDF)</a>`}); } else Swal.fire('Error', res.message, 'error');
   }
-  async function loadStockItems(box) {
-      document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
-      const res = await callApi('getItems', { boxName: box });
-      if(!res.status) { document.getElementById('stock-content').innerHTML = '<div class="text-center mt-5 text-danger">Error Loading Stock</div>'; return; }
-      let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
-      let h=''; Object.keys(rows).sort().forEach(r=>{ h+=`<div class="shelf-row-label">ชั้น/แถว: ${r}</div><div class="shelf-grid">`; h+=rows[r].map(i=>`<div class="shelf-item" onclick="editStk('${i.invId}','${i.name}',${i.amount},'${i.expire}')"><img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy"><div class="small text-truncate">${i.name}</div><div class="badge bg-secondary">${i.amount}</div></div>`).join(''); h+='</div>'; });
-      document.getElementById('stock-content').innerHTML = h; lazyLoad();
-  }
+
+  // --- HELPERS ---
   function editStk(id,n,a,e) { document.getElementById('ed-id').value=id; document.getElementById('ed-name').innerText=n; document.getElementById('ed-amt').value=a; document.getElementById('ed-exp').value=e; mdlEdit.show(); }
-  async function saveEdit() { const pl = { invId:document.getElementById('ed-id').value, amount:document.getElementById('ed-amt').value, expire:document.getElementById('ed-exp').value }; const res = await callApi('saveEditItem', pl); if(res.status) { Swal.fire('Saved','','success'); mdlEdit.hide(); loadStockItems(curBoxStock); } }
+  async function saveEdit() { const pl = { invId:document.getElementById('ed-id').value, amount:document.getElementById('ed-amt').value, expire:document.getElementById('ed-exp').value }; const res = await callApi('saveEditItem', pl); if(res.status) { mdlEdit.hide(); loadStockItems(curBoxStock); } }
   function doGlobal() { const k=document.getElementById('kw-global').value; if(!k)return; document.getElementById('search-res').innerHTML='Searching...'; callApi('searchGlobal', {kw:k}).then(res=>{ if(res.status) { document.getElementById('search-res').innerHTML = res.data.map(r=>`<div class="list-group-item"><strong>${r.name}</strong><br><small>${r.box} | คงเหลือ: ${r.amount}</small></div>`).join('') || 'ไม่พบข้อมูล'; } }); }
   function loadHist() { document.getElementById('hist-res').innerHTML='Loading...'; callApi('getHistory', {user:currentUser.name}).then(res=>{ if(res.status) { document.getElementById('hist-res').innerHTML = res.data.map(r=>`<div class="card mb-2 p-2 shadow-sm"><div class="d-flex justify-content-between"><strong>${r.box}</strong><small>${r.time}</small></div><div class="text-end"><a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">PDF</a></div></div>`).join(''); } }); }
   function filterOrder(){ renderOrder(); }
+  
+  function lazyLoad() {
+     document.querySelectorAll('img.lazy').forEach(img => {
+        if(img.dataset.loaded) return;
+        const raw = img.dataset.raw;
+        if(!raw || raw==='undefined' || raw==='') { img.classList.remove('loading'); return; }
+        if(raw.startsWith('http')) { img.src=raw; img.classList.remove('loading'); img.dataset.loaded=true; return; }
+        callApi('resolveImage', { input: raw }).then(res => { if(res.status) { img.src = res.src; img.classList.remove('loading'); img.dataset.loaded=true; } });
+     });
+  }
+
   let canvas, ctx, isDraw=false;
   function initCvs(){ canvas=document.getElementById('cvs'); ctx=canvas.getContext('2d'); ['mousedown','touchstart'].forEach(e=>canvas.addEventListener(e,s,{passive:false})); ['mousemove','touchmove'].forEach(e=>canvas.addEventListener(e,d,{passive:false})); ['mouseup','touchend'].forEach(e=>canvas.addEventListener(e,()=>isDraw=false)); }
   function fixCvs(){ canvas.width=canvas.offsetWidth; canvas.height=100; ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#000'; }
