@@ -8,10 +8,8 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Main Sarabun Font Link -->
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Updated FontAwesome Link -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -140,7 +138,6 @@
 
   <div id="login-overlay"><div class="text-center fade-in"><div style="font-size:3rem;color:var(--primary);margin-bottom:10px">💊</div><h4 class="fw-bold mb-1">Sawee Rxfill 2.0</h4><div id="status-text" class="text-primary small mt-3 fw-bold">Connecting...</div></div></div>
 
-  <!-- Profile Modal -->
   <div class="modal fade" id="mdlProfile"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">แก้ไขข้อมูลส่วนตัว</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
     <div class="mb-2"><label class="small">Username</label><input id="pf-user" class="form-control"></div>
     <div class="mb-2"><label class="small">ชื่อ-สกุล</label><input id="pf-name" class="form-control"></div>
@@ -150,7 +147,6 @@
     <button onclick="saveProfile()" class="btn btn-primary w-100 mt-2">บันทึก</button>
   </div></div></div></div>
 
-  <!-- App Main -->
   <div id="app-main" class="hidden">
     <nav class="app-nav">
       <div class="nav-brand">Sawee Rxfill 2.0</div>
@@ -168,7 +164,6 @@
     </nav>
 
     <div class="tab-content" style="padding-top:60px">
-      <!-- Order Tab -->
       <div id="tab-order" class="page-sec">
         <div id="box-scroller-order" class="box-scroller"></div>
         <div class="px-3 py-2 sticky-top bg-white shadow-sm" style="top:50px;z-index:900">
@@ -180,7 +175,6 @@
         </div>
       </div>
 
-      <!-- Stock Tab -->
       <div id="tab-stock" class="page-sec hidden">
         <div id="group-filter" class="d-flex gap-2 px-3 pb-2 overflow-auto" style="white-space:nowrap"></div>
         <div id="box-scroller-stock" class="box-scroller"></div>
@@ -191,7 +185,6 @@
         <div id="fab-edit" class="fab-edit-lg hidden" onclick="openBoxEditor()"><i class="fas fa-edit"></i> ปรับปรุงกล่อง</div>
       </div>
 
-      <!-- Search Tab -->
       <div id="tab-search" class="page-sec hidden container pt-3">
          <h5 class="fw-bold text-primary mb-3">จัดการฐานข้อมูลยา</h5>
          <div class="d-flex gap-2 mb-3 position-relative">
@@ -201,7 +194,6 @@
              </div>
              <button class="btn btn-primary rounded-pill px-3" onclick="doFullSearch(document.getElementById('kw-realtime').value)">ค้นหา</button>
              
-             <!-- Suggestion Dropdown -->
              <div id="search-suggestions" class="hidden"></div>
          </div>
          <div class="d-flex justify-content-between align-items-center mb-2">
@@ -221,9 +213,7 @@
          <div class="fab-edit-lg" onclick="openMasterEdit({isNew:true})"><i class="fas fa-plus"></i> เพิ่มยาใหม่</div>
       </div>
 
-      <!-- History Tab -->
       <div id="tab-hist" class="page-sec hidden container pt-2">
-         <!-- Added Carousel for History Filter -->
          <div id="box-scroller-hist" class="box-scroller mb-2"></div>
 
          <ul class="nav nav-tabs nav-fill mb-3">
@@ -233,7 +223,6 @@
             <li class="nav-item"><a class="nav-link" onclick="filterHist('STATS',this)">ประวัติการเบิก</a></li>
          </ul>
          
-         <!-- Stats Date Filter -->
          <div id="stats-filter" class="card p-3 mb-3 border-0 bg-light hidden">
              <div class="d-flex gap-2 align-items-center mb-2">
                  <input type="date" id="stat-start" class="form-control">
@@ -250,36 +239,32 @@
     </div>
   </div>
 
-  <!-- Bottom Nav -->
   <div class="btm-nav">
     <div class="nav-item active" onclick="nav('tab-order', this)"><i class="fas fa-pills"></i>เบิกยา</div>
     <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-cubes"></i>สต็อก</div>
     <div class="nav-item" onclick="nav('tab-search', this)"><i class="fas fa-search"></i>ค้นหา</div>
     <div class="nav-item" style="position:relative" onclick="nav('tab-hist', this)">
         <i class="fas fa-history"></i>รายการเบิก
-        <!-- Updated Badge Style -->
         <div id="nav-badge-hist" class="nav-badge-large hidden"></div>
     </div>
   </div>
 
-  <!-- Cart Offcanvas -->
   <div class="offcanvas offcanvas-bottom rounded-top-4" id="cartSheet" style="height:85vh;z-index:2000"><div class="offcanvas-header border-bottom"><h5 class="fw-bold text-primary">รายการเบิก</h5><button class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body d-flex flex-column p-0 bg-light"><div id="cart-list" class="flex-grow-1 overflow-auto p-3"></div><div class="p-3 bg-white shadow-lg mt-auto"><div class="d-flex justify-content-between fw-bold mb-2"><span>รวมสุทธิ</span><span class="text-primary" id="cart-sum">0.00</span></div><div class="border rounded p-2 mb-1 bg-white"><small class="text-muted d-block">ลายเซ็นผู้เบิก:</small><canvas id="cvs" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas><div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvs()">ล้าง</small></div></div><div class="text-center text-primary fw-bold mb-3 small" id="cart-user-name"></div><button id="btn-submit-order" onclick="submitOrder()" class="btn btn-primary w-100 rounded-pill py-3 fw-bold">ยืนยันการเบิก</button></div></div></div>
 
-  <!-- Sticker Modal -->
-  <div class="modal fade" id="mdlSticker"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">พิมพ์ฉลากยา (Sticker Pool)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
-      <div id="sticker-list" class="list-group mb-3"></div>
-      <button onclick="generateStickerPdf()" class="btn btn-warning w-100 text-dark fw-bold"><i class="fas fa-print"></i> สร้าง PDF</button>
+  <div class="modal fade" id="mdlSticker"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">Sticker Pool</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+      <ul class="nav nav-pills nav-fill mb-3"><li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pool-cart">รายการพิมพ์</a></li><li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#pool-hist" onclick="loadPoolHist()">ประวัติ (5 ล่าสุด)</a></li></ul>
+      <div class="tab-content">
+          <div id="pool-cart" class="tab-pane active"><div id="sticker-list" class="list-group mb-3"></div><button onclick="generateStickerPdf()" class="btn btn-warning w-100 text-dark fw-bold"><i class="fas fa-print"></i> สร้าง PDF</button></div>
+          <div id="pool-hist" class="tab-pane"><div id="pool-list" class="list-group"></div></div>
+      </div>
   </div></div></div></div>
 
-  <!-- Check Order Modal (Pharmacist Sign) -->
   <div class="modal fade" id="mdlCheckOrder" style="z-index:2200"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">ยืนยันการจัดยา</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><small class="text-muted d-block">ผู้จัดยา (เภสัชกร):</small><div id="check-user-name" class="fw-bold text-primary mb-2"></div><canvas id="cvs-check" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas><div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvsCheck()">ล้าง</small></div><button onclick="confirmCheckOrder()" class="btn btn-success w-100 mt-2 rounded-pill fw-bold">ยืนยันและพิมพ์ใบจัดยา</button></div></div></div></div>
 
-  <!-- MODALS -->
   <div class="modal fade" id="mdlRegister" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg rounded-4"><div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary">ลงทะเบียน</h5></div><div class="modal-body p-4"><div class="text-center mb-3"><img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div><form id="form-reg"><input id="reg-username" class="form-control mb-3" placeholder="Username *" required><input id="reg-name" class="form-control mb-3" placeholder="ชื่อ-สกุล *" required><input id="reg-email" class="form-control mb-3" placeholder="Email"><div class="mb-3"><label class="small fw-bold text-muted">สิทธิ์การเบิก</label><div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto" id="reg-substock-list">Loading...</div></div><button type="submit" class="btn btn-primary w-100 rounded-pill">ลงทะเบียน</button></form></div></div></div></div>
   <div class="modal fade" id="mdlBoxEdit" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">ปรับปรุงกล่องยา</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body bg-light"><div class="card p-3 mb-3 border-0 shadow-sm"><label class="small text-muted">ชื่อกล่อง</label><input id="edit-box-name" class="form-control fw-bold mb-2"><label class="small text-muted">รูปภาพกล่อง</label><div class="d-flex gap-2"><input type="file" id="inp-box-file" class="form-control" accept="image/*" onchange="uploadBoxImg(this)"><input id="edit-box-img" type="hidden"><img id="preview-box-img" src="" referrerpolicy="no-referrer" style="width:40px;height:40px;border-radius:4px;object-fit:cover;border:1px solid #ddd"></div><button class="btn btn-sm btn-primary w-100 mt-2" onclick="saveBoxInfo()">บันทึกข้อมูลกล่อง</button></div><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold m-0">รายการยาในกล่อง</h6><button class="btn btn-sm btn-success rounded-pill" onclick="mdlAddItem.show()"><i class="fas fa-plus"></i> เพิ่มยา</button></div><div id="edit-box-items" class="row g-2"></div></div></div></div></div>
   <div class="modal fade" id="mdlMasterEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h6 class="fw-bold m-0">ข้อมูลยา (Master)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="mst-isnew"><div class="mb-2"><label class="small">Item ID</label><input id="mst-id" class="form-control fw-bold"></div><div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:transparent"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div><div class="mb-2"><label class="small">ชื่อยา</label><input id="mst-name" class="form-control"></div><div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit</label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-ha"><label class="form-check-label text-danger fw-bold">High Alert</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-pl"><label class="form-check-label text-warning fw-bold">Protect Light</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-kc"><label class="form-check-label text-info fw-bold">Keep Cool (2-8°C)</label></div><div class="d-flex gap-2 mt-3"><button class="btn btn-primary w-100" onclick="saveMasterItem()">บันทึก</button><button class="btn btn-outline-dark w-100" onclick="openLabelEdit()">แก้ไขฉลาก</button></div></div></div></div></div>
-  
-  <!-- Label Edit Modal -->
+   
   <div class="modal fade" id="mdlLabelEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-info text-white"><h6 class="fw-bold m-0">แก้ไขฉลากยา</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
       <div class="mb-2"><label class="small">ชื่อยา (บนฉลาก)</label><input id="lbl-name" class="form-control"></div>
       <div class="row g-2 mb-2"><div class="col-6"><label class="small">ปริมาณ</label><input id="lbl-amt" class="form-control"></div><div class="col-6"><label class="small">หน่วย</label><input id="lbl-unit" class="form-control"></div></div>
@@ -292,8 +277,7 @@
 
   <div class="modal fade" id="mdlEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-4 border-0 shadow"><div class="modal-body text-center p-4"><input type="hidden" id="ed-id"><input type="hidden" id="ed-itemid"><h6 id="ed-name" class="mb-3 text-primary fw-bold text-start"></h6><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted">คงเหลือ</label><input type="number" id="ed-amt" class="form-control fw-bold text-center text-primary"></div><div class="col-6"><label class="small text-muted">หมดอายุ</label><input type="date" id="ed-exp" class="form-control text-center" onchange="calcExpDays()"></div></div><div class="mt-2 text-center" id="ed-days-left"></div><div class="mt-2 small text-muted text-center">ใช้งาน <span id="ed-change" class="fw-bold">0</span> ครั้ง (ล่าสุด: <span id="ed-time">-</span>)</div><button onclick="saveEdit()" class="btn btn-primary w-100 rounded-pill mt-3">บันทึก</button><div class="border-top mt-3 pt-3"><label class="small mb-1">จำนวนสติกเกอร์ที่ต้องการพิมพ์</label><div class="d-flex gap-2"><div class="qty-wrap mx-auto" style="width:140px"><div class="btn-qty" onclick="adjStk(-1)">-</div><input id="stk-qty" type="number" class="inp-qty" value="1" readonly><div class="btn-qty" onclick="adjStk(1)">+</div></div><button class="btn btn-warning" onclick="addToStickerCartFromEdit()"><i class="fas fa-print"></i> พิมพ์สติกเกอร์</button></div></div></div></div></div></div>
   <div class="modal fade" id="mdlAddItem" style="z-index:2100"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">ค้นหายาเพื่อเพิ่มเข้ากล่อง</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input id="search-master" class="form-control mb-2" placeholder="พิมพ์ชื่อยา..." onkeyup="searchMasterDebounce()"><div id="master-res" class="list-group" style="max-height:250px;overflow-y:auto"></div></div></div></div></div>
-  
-  <!-- Sign Label Modal -->
+   
   <div class="modal fade" id="mdlSignLabel" style="z-index:2200"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">บันทึกการตรวจสอบ</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><small class="text-muted d-block">ลายเซ็นเภสัชกร:</small><canvas id="cvs-label" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas><div class="text-center my-2 text-primary" id="lbl-signer"></div><div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvsLabel()">ล้าง</small></div><button onclick="submitLabel()" class="btn btn-success w-100 mt-2">ยืนยัน & พิมพ์ใบแปะกล่อง</button><button id="btn-prev-label" class="btn btn-outline-secondary w-100 mt-2" style="display:none"></button></div></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -701,14 +685,14 @@
          }
 
          document.getElementById('realtime-detail').innerHTML = res.data.results.map(d => {
-            let rows = d.locations.map(l => {
+           let rows = d.locations.map(l => {
                let cls = ''; 
                let badge = '';
                if(l.isExpired) { cls = 'row-expired'; badge = '<span class="badge-expired ms-1">ยาหมดอายุ</span>'; }
                else if(l.isNearExp) { badge = `<span class="badge-near-exp ms-1">${l.daysLeft} วัน</span>`; }
                return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}${badge}</td></tr>`;
             }).join('');
-            
+           
             return `<div class="mb-3 border rounded shadow-sm p-3 bg-white fade-in">
                       <div class="d-flex gap-2">
                         <div class="drug-img-wrap" style="width:80px;height:80px;flex-shrink:0;">
@@ -1130,6 +1114,23 @@
   function clrCvsLabel(){ ctxLabel.clearRect(0,0,cvsLabel.width,cvsLabel.height); }
   function clrCvsCheck(){ ctxCheck.clearRect(0,0,cvsCheck.width,cvsCheck.height); }
   function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
+
+  // --- Sticker Pool (User Side) - Added Missing Functions ---
+  async function loadPoolHist() {
+      document.getElementById('pool-list').innerHTML = 'Loading...';
+      const res = await callApi('getStickerPools');
+      if(res.status && res.data) {
+          document.getElementById('pool-list').innerHTML = res.data.map((s) => {
+             const btnClass = s.status === 'Yes' ? 'btn-success' : 'btn-secondary';
+             return `<div class="list-group-item"><div class="d-flex justify-content-between align-items-center"><div><div class="fw-bold small">${s.id}</div><div class="small text-muted">${s.time} by ${s.admin}</div></div><div class="d-flex gap-2"><a href="${s.pdf}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-pdf"></i></a><button class="btn btn-sm ${btnClass}" onclick="togglePoolStatus(${s.row}, '${s.status}')">${s.status}</button></div></div></div>`;
+          }).join('');
+      }
+  }
+  async function togglePoolStatus(row, current) {
+      const next = current === 'Yes' ? 'No' : 'Yes';
+      await callApi('updateStickerPoolStatus', { row, status: next });
+      loadPoolHist();
+  }
 </script>
 </body>
 </html>
