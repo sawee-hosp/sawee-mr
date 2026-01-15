@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="referrer" content="no-referrer">
   <title>Sawee Rxfill 2.0</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -31,6 +31,7 @@
     .blink { animation: blink 1s linear infinite; }
     .badge-expired { background: red; color: white; border-radius: 4px; padding: 2px 4px; font-weight: bold; animation: blink 1s linear infinite; }
     .badge-near-exp { background: #ffc107; color: black; border-radius: 4px; padding: 2px 4px; font-weight: bold; }
+    .badge-ha { position: absolute; top: 0; left: 0; background: red; color: white; font-size: 10px; padding: 2px 4px; border-bottom-right-radius: 8px; font-weight: bold; z-index: 5; }
 
     #login-overlay { position: fixed; inset: 0; background: #e9ecef; z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     #status-text { animation: pulse 1.5s infinite; }
@@ -60,15 +61,13 @@
 
     /* Grid & Cards */
     .drug-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; }
-    .drug-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; display: flex; flex-direction: column; }
+    .drug-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; display: flex; flex-direction: column; position: relative; }
     .drug-img-wrap { 
         width: 100%; aspect-ratio: 1/1; 
         background: #e0e0e0; /* Grey Background */
         display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; 
     }
-    /* Updated image style to be simpler like stock */
-    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-    
+    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; } /* Removed lazy load effects that might hide img */
     .drug-info { padding: 8px; flex-grow: 1; display: flex; flex-direction: column; background: white; }
     
     /* Bottom Nav */
@@ -224,7 +223,19 @@
             <li class="nav-item"><a class="nav-link active" onclick="filterHist('รอการจัดยา',this)">รอจัดยา <span id="bg-wait" class="tab-badge">0</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="filterHist('จัดยาเสร็จแล้ว',this)">จัดเสร็จ <span id="bg-done" class="tab-badge">0</span></a></li>
             <li class="nav-item"><a class="nav-link" onclick="filterHist('ได้รับยาแล้ว',this)">รับแล้ว <span id="bg-recv" class="tab-badge">0</span></a></li>
+            <li class="nav-item"><a class="nav-link" onclick="filterHist('STATS',this)">ประวัติการเบิก</a></li>
          </ul>
+         
+         <!-- Stats Date Filter -->
+         <div id="stats-filter" class="card p-3 mb-3 border-0 bg-light hidden">
+             <div class="d-flex gap-2 align-items-center mb-2">
+                 <input type="date" id="stat-start" class="form-control">
+                 <span>ถึง</span>
+                 <input type="date" id="stat-end" class="form-control">
+             </div>
+             <button class="btn btn-primary w-100 rounded-pill" onclick="loadStats()">ดูข้อมูล</button>
+         </div>
+
          <div id="hist-msg" class="alert alert-info text-center small py-2 mb-2"></div>
          <div id="hist-loader" class="text-center my-4 hidden"><div class="spinner-border text-primary"></div> กำลังโหลด...</div>
          <div id="hist-res"></div>
@@ -305,6 +316,12 @@
       mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
       mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
       mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
+
+      // Set default dates for stats
+      const d = new Date();
+      document.getElementById('stat-end').valueAsDate = d;
+      d.setMonth(d.getMonth() - 1);
+      document.getElementById('stat-start').valueAsDate = d;
 
       if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
           e.preventDefault(); 
@@ -507,7 +524,9 @@
                   expTag = '<span class="exp-badge-stock badge-near-exp">ใกล้หมด</span>';
               }
            }
-           return `<div class="shelf-item ${cls} ${expiredClass}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name}','${i.itemId}',${i.amount},'${i.expire}',${i.changeCount},'${i.lastChange}')">${i.highAlert ? '<div class="badge-ha">HA</div>' : ''}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${i.amount}</span><span class="text-muted" style="font-size:9px">${i.expire || '-'} ${icon}</span></div></div>`
+           let haBadge = i.highAlert ? '<div class="badge-ha">HAD</div>' : '';
+           
+           return `<div class="shelf-item ${cls} ${expiredClass}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name}','${i.itemId}',${i.amount},'${i.expire}',${i.changeCount},'${i.lastChange}')">${haBadge}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${i.amount}</span><span class="text-muted" style="font-size:9px">${i.expire || '-'} ${icon}</span></div></div>`
           }).join('');
           h+='</div>';
       });
@@ -874,11 +893,27 @@
           } 
       }); 
   }
+  
   function filterHist(status, el) {
       curHistStatus = status;
       document.querySelectorAll('.nav-tabs .nav-link').forEach(x=>x.classList.remove('active')); el.classList.add('active');
-      renderHist(status);
+      
+      // Hide/Show Box Scroller & Stats Filter
+      const scroller = document.getElementById('box-scroller-hist');
+      const statsFilter = document.getElementById('stats-filter');
+      
+      if(status === 'STATS') {
+          scroller.classList.add('hidden');
+          statsFilter.classList.remove('hidden');
+          // Load default stats if empty
+          if(document.getElementById('hist-res').innerHTML === '') loadStats();
+      } else {
+          scroller.classList.remove('hidden');
+          statsFilter.classList.add('hidden');
+          renderHist(status);
+      }
   }
+
   function renderHist(status) {
       // 1. Calculate Badges based on TOTAL (regardless of box filter)
       const totalWait = allHistory.filter(r => r.status.includes('รอ')).length;
@@ -943,6 +978,51 @@
       }
 
       document.getElementById('hist-res').innerHTML = html + moreBtn || '<div class="text-center text-muted mt-3">ไม่มีรายการ</div>';
+  }
+
+  // --- STATS LOGIC ---
+  async function loadStats() {
+      const start = document.getElementById('stat-start').value;
+      const end = document.getElementById('stat-end').value;
+      
+      document.getElementById('hist-res').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2">กำลังคำนวณสถิติ...</div></div>';
+      document.getElementById('hist-msg').classList.add('hidden');
+
+      const res = await callApi('getStatData', { 
+          user: currentUser.name, 
+          substock: currentUser.substock,
+          start: start,
+          end: end
+      });
+
+      if(res.status) {
+          renderStats(res.data);
+      } else {
+          document.getElementById('hist-res').innerHTML = '<div class="alert alert-danger">Error loading stats</div>';
+      }
+  }
+
+  function renderStats(data) {
+      if(!data || data.length === 0) {
+          document.getElementById('hist-res').innerHTML = '<div class="text-center text-muted mt-5">ไม่พบข้อมูลการเบิกในช่วงเวลานี้</div>';
+          return;
+      }
+
+      const html = data.map((item, idx) => `
+        <div class="d-flex align-items-center bg-white p-2 mb-2 rounded shadow-sm border">
+            <div class="me-3 fw-bold text-muted" style="width:20px">${idx+1}</div>
+            <div class="flex-grow-1">
+                <div class="fw-bold text-primary">${item.name}</div>
+                <div class="small text-muted">เบิกไป ${item.count} ครั้ง</div>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold fs-5">${item.qty}</div>
+                <div class="small text-muted">${item.price.toFixed(0)} บ.</div>
+            </div>
+        </div>
+      `).join('');
+
+      document.getElementById('hist-res').innerHTML = html;
   }
 
   // --- CHECK ORDER (PHARMACIST) ---
