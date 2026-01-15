@@ -15,7 +15,7 @@
   <style>
     :root {
       --font-main: "Sarabun", sans-serif;
-      --primary: #003d82; 
+      --primary: #003d82; /* Dark Blue */
       --primary-light: #0d6efd; 
       --bg: #f4f6f9;
       --text: #2c3e50;
@@ -30,7 +30,7 @@
     @keyframes blink { 50% { opacity: 0.5; } }
     .blink { animation: blink 1s linear infinite; background: red; color: white; border-radius: 4px; padding: 2px 4px; }
 
-    #login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%); z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    #login-overlay { position: fixed; inset: 0; background: #e9ecef; z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     #status-text { animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
 
@@ -415,7 +415,8 @@
               else if(diff < 30) expTag = '<span class="exp-badge-stock bg-danger">Exp<30d</span>';
               else if(diff < 180) expTag = '<span class="exp-badge-stock bg-warning text-dark">ใกล้หมด</span>';
            }
-           return `<div class="shelf-item ${cls}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name}','${i.itemId}',${i.amount},'${i.expire}',${i.changeCount},'${i.lastChange}')">${i.highAlert ? '<div class="badge-ha">HA</div>' : ''}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${i.amount}</span><span class="text-muted" style="font-size:9px">${i.expire || '-'} ${icon}</span></div></div>`
+           let expiredClass = expTag.includes('หมดอายุ') ? 'border border-danger' : '';
+           return `<div class="shelf-item ${cls} ${expiredClass}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name}','${i.itemId}',${i.amount},'${i.expire}',${i.changeCount},'${i.lastChange}')">${i.highAlert ? '<div class="badge-ha">HA</div>' : ''}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${i.amount}</span><span class="text-muted" style="font-size:9px">${i.expire || '-'} ${icon}</span></div></div>`
          }).join('');
          h+='</div>';
       });
@@ -452,17 +453,17 @@
   function addToStickerCartFromEdit() {
      const id = document.getElementById('ed-itemid').value;
      const name = document.getElementById('ed-name').innerText;
+     const exp = document.getElementById('ed-exp').value; 
      const qty = document.getElementById('stk-qty').value;
      if(!qty || qty <= 0) return Swal.fire('ระบุจำนวน');
      
-     stickerCart.push({ itemId: id, name: name, qty: qty });
+     stickerCart.push({ itemId: id, name: name, qty: qty, expire: exp });
      updateStickerBadge();
      Swal.fire({icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, showConfirmButton:false});
   }
 
   function updateStickerBadge() {
      const b = document.getElementById('badge-sticker');
-     // Count TOTAL items (pages)
      const total = stickerCart.reduce((s,i) => s + Number(i.qty), 0);
      b.innerText = total;
      if(total > 0) b.classList.remove('hidden'); else b.classList.add('hidden');
@@ -473,7 +474,8 @@
      Swal.fire({title:'Generating PDF...', didOpen:()=>Swal.showLoading()});
      let expandList = [];
      stickerCart.forEach(s => {
-         for(let i=0; i<s.qty; i++) expandList.push({ itemId: s.itemId, name: s.name });
+         // Loop by quantity to generate multiple pages
+         for(let i=0; i<s.qty; i++) expandList.push({ itemId: s.itemId, name: s.name, expire: s.expire });
      });
      
      const res = await callApi('generateLabelPdf', { items: expandList });
@@ -491,7 +493,6 @@
      if(res.status) {
         totalPages = res.data.totalPages;
         
-        // Show Pagination Controls if SHOW_ALL
         if(kw === 'SHOW_ALL') {
            document.getElementById('pagination-controls').style.setProperty('display', 'flex', 'important');
            document.getElementById('page-display').innerText = `หน้า ${curPage} / ${totalPages}`;
@@ -502,7 +503,6 @@
         document.getElementById('realtime-res').innerHTML = res.data.results.map(d => {
            let rows = d.locations.map(l => {
               let cls = ''; 
-              // Red row if expired
               if(l.isExpired) cls = 'row-expired';
               return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}</td></tr>`;
            }).join('');
@@ -531,12 +531,6 @@
       const res = await callApi('getLabelInfo', { itemId });
       let data = { itemId };
       if(res.status && res.data) data = res.data;
-      
-      // Populate fields
-      // Using data.xxx from response
-      // Fields: Name, Amount, Unit, Indication, Line1, Line2, Line3
-      // NOTE: Current modal HTML has inputs. We need to fill them.
-      // Re-using same modal, let's clear first
       document.getElementById('lbl-name').value = data.name || '';
       document.getElementById('lbl-amt').value = data.amount || '';
       document.getElementById('lbl-unit').value = data.unit || '';
@@ -544,12 +538,7 @@
       document.getElementById('lbl-l2').value = data.l2 || '';
       document.getElementById('lbl-l3').value = data.l3 || '';
       document.getElementById('lbl-ind').value = data.ind || '';
-      
-      // We need to store itemId somewhere to save
-      // Using a closure or global var, let's use a hidden input or data attrib
-      // Since modal is static, let's add a hidden field in HTML or use simple var
       window.currentLabelItemId = itemId;
-      
       mdlLabelEdit.show();
   }
   
@@ -564,7 +553,6 @@
           l3: document.getElementById('lbl-l3').value,
           ind: document.getElementById('lbl-ind').value
       };
-      
       const res = await callApi('updateLabelInfo', payload);
       if(res.status) { Swal.fire('Saved'); mdlLabelEdit.hide(); }
   }
@@ -649,6 +637,7 @@
       document.getElementById('ed-exp').value=e; 
       document.getElementById('ed-change').innerText=cnt;
       document.getElementById('ed-time').innerText=time;
+      document.getElementById('stk-qty').value = 1; // Reset sticker qty
       calcExpDays();
       mdlEdit.show(); 
   }
