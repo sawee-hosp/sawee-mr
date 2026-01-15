@@ -71,7 +71,7 @@
         background: #e0e0e0; /* Grey Background */
         display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; 
     }
-    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; } /* Removed lazy load effects that might hide img */
+    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; } /* Removed lazy load effects */
     .drug-info { padding: 8px; flex-grow: 1; display: flex; flex-direction: column; background: white; }
     
     /* Bottom Nav */
@@ -698,10 +698,7 @@
                let cls = ''; 
                let badge = '';
                if(l.isExpired) { cls = 'row-expired'; badge = '<span class="badge-expired ms-1">ยาหมดอายุ</span>'; }
-               else if(l.isNearExp) { 
-                   // Updated: Show days remaining in search result as well
-                   badge = `<span class="badge-near-exp ms-1">${l.daysLeft} วัน</span>`; 
-               }
+               else if(l.isNearExp) { badge = `<span class="badge-near-exp ms-1">${l.daysLeft} วัน</span>`; }
                return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}${badge}</td></tr>`;
             }).join('');
             
@@ -853,7 +850,7 @@
       document.getElementById('ed-amt').value=a; 
       document.getElementById('ed-exp').value=e; 
       document.getElementById('ed-change').innerText=cnt;
-      document.getElementById('ed-time').innerText=time;
+      document.getElementById('ed-time').innerText=time; 
       document.getElementById('stk-qty').value = 1; // Reset sticker qty
       calcExpDays();
       mdlEdit.show(); 
@@ -877,6 +874,9 @@
   function loadHist(init = false) { 
       if(!init) document.getElementById('hist-loader').classList.remove('hidden');
       
+      // Clear previous content immediately
+      document.getElementById('hist-res').innerHTML = '';
+
       callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
           document.getElementById('hist-loader').classList.add('hidden');
           if(res.status) { 
@@ -900,7 +900,8 @@
                 }).join('');
               scroller.innerHTML = histScrollerHtml;
 
-              renderHist(curHistStatus); 
+              if (curHistStatus === 'STATS') loadStats();
+              else renderHist(curHistStatus); 
           } 
       }); 
   }
@@ -913,22 +914,25 @@
       const statsFilter = document.getElementById('stats-filter');
       
       if(status === 'STATS') {
-          scroller.classList.add('hidden');
-          statsFilter.classList.remove('hidden');
-          // Load default stats if empty
-          if(document.getElementById('hist-res').innerHTML === '') loadStats();
+          scroller.classList.add('hidden'); statsFilter.classList.remove('hidden');
+          loadStats();
       } else {
-          scroller.classList.remove('hidden');
-          statsFilter.classList.add('hidden');
+          scroller.classList.remove('hidden'); statsFilter.classList.add('hidden');
           renderHist(status);
       }
   }
 
   function renderHist(status) {
-      // 1. Calculate Badges based on TOTAL (regardless of box filter)
-      const totalWait = allHistory.filter(r => r.status.includes('รอ')).length;
-      const totalDone = allHistory.filter(r => r.status.includes('จัดยาเสร็จ')).length;
-      const totalRecv = allHistory.filter(r => r.status.includes('ได้รับ')).length;
+      // 1. First, filter by BOX (Global filter)
+      let boxFiltered = allHistory;
+      if(curHistBox !== 'ALL') {
+          boxFiltered = allHistory.filter(r => r.box === curHistBox);
+      }
+
+      // 2. Calculate Badges based on BOX FILTERED data
+      const totalWait = boxFiltered.filter(r => r.status.includes('รอ')).length;
+      const totalDone = boxFiltered.filter(r => r.status.includes('จัดยาเสร็จ')).length;
+      const totalRecv = boxFiltered.filter(r => r.status.includes('ได้รับ')).length;
       
       document.getElementById('bg-wait').innerText = totalWait; 
       document.getElementById('bg-done').innerText = totalDone; 
@@ -941,21 +945,17 @@
           document.getElementById('nav-badge-hist').classList.add('hidden'); 
       }
 
-      // 2. Filter list by Status AND Selected Box
-      let filtered = allHistory;
+      // 3. Filter by STATUS
+      let finalFiltered = boxFiltered;
       let msg = "";
-      if(status === 'รอการจัดยา') { filtered = filtered.filter(r => r.status.includes('รอ')); msg = "เมื่อห้องยารับ order แล้ว จะเปลี่ยนสถานะเป็น 'จัดยาเสร็จแล้ว'"; }
-      else if(status === 'จัดยาเสร็จแล้ว') { filtered = filtered.filter(r => r.status.includes('จัดยาเสร็จ')); msg = "มารับยาที่ห้องยาได้เลย"; }
-      else { filtered = filtered.filter(r => r.status.includes('ได้รับ')); }
-
-      if(curHistBox !== 'ALL') {
-          filtered = filtered.filter(r => r.box === curHistBox);
-      }
+      if(status === 'รอการจัดยา') { finalFiltered = boxFiltered.filter(r => r.status.includes('รอ')); msg = "เมื่อห้องยารับ order แล้ว จะเปลี่ยนสถานะเป็น 'จัดยาเสร็จแล้ว'"; }
+      else if(status === 'จัดยาเสร็จแล้ว') { finalFiltered = boxFiltered.filter(r => r.status.includes('จัดยาเสร็จ')); msg = "มารับยาที่ห้องยาได้เลย"; }
+      else { finalFiltered = boxFiltered.filter(r => r.status.includes('ได้รับ')); }
       
       document.getElementById('hist-msg').innerText = msg; document.getElementById('hist-msg').classList.toggle('hidden', msg === "");
       
-      // 3. Limit to 10 for display (but keep full filtered list for "Show All")
-      renderHistList(filtered, 10);
+      // 4. Render
+      renderHistList(finalFiltered, 10);
   }
 
   function renderHistList(data, limit) {
@@ -976,6 +976,8 @@
             pdfBtn = `<a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i> PDF</a>`;
         }
 
+        // Updated Item List with Box Name (if needed per item, but here it's per order)
+        // Since the order belongs to one box, we just show item list.
         let itemList = r.items.map(i=> `<li>${i.name} (${i.qty}) - ${i.price}</li>`).join('').slice(0, 200) + (r.items.length > 5 ? '...' : '');
         let cardClass = r.status.includes('รอ') ? 'card-wait' : (r.status.includes('รับ') ? 'card-recv' : 'card-done');
         
