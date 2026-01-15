@@ -66,9 +66,9 @@
         background: #e0e0e0; /* Grey Background */
         display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; 
     }
-    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: white; opacity: 0; transition: opacity 0.3s; }
-    .drug-img.loaded { opacity: 1; }
-    .drug-img.error { display: none; } /* Hide img on error to show grey bg */
+    /* Updated image style to be simpler like stock */
+    .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    
     .drug-info { padding: 8px; flex-grow: 1; display: flex; flex-direction: column; background: white; }
     
     /* Bottom Nav */
@@ -541,7 +541,7 @@
           const html = slice.map(i=>`
             <div class="drug-card">
                 <div class="drug-img-wrap">
-                    <img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer" onerror="this.classList.add('error')">
+                    <img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer">
                 </div>
                 <div class="drug-info">
                     <div class="drug-name">${i.name}</div>
@@ -681,7 +681,7 @@
             return `<div class="mb-3 border rounded shadow-sm p-3 bg-white fade-in">
                       <div class="d-flex gap-2">
                         <div class="drug-img-wrap" style="width:80px;height:80px;flex-shrink:0;">
-                            <img src="${DEFAULT_IMG}" data-raw="${d.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer" onerror="this.classList.add('error')">
+                            <img src="${DEFAULT_IMG}" data-raw="${d.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer">
                         </div>
                         <div class="flex-grow-1">
                            <div class="fw-bold text-primary">${d.name} <span class="badge bg-info text-dark">รวม ${d.totalQty}</span></div>
@@ -966,13 +966,14 @@
       
       if(res.status) {
           mdlCheckOrder.hide(); clrCvsCheck();
+          // Open PDF immediately
+          if(res.pdf) window.open(res.pdf, '_blank');
+          
           Swal.fire({
              icon: 'success',
              title: 'บันทึกการจัดยาแล้ว',
-             html: `<a href="${res.pdf}" target="_blank" class="btn btn-primary w-100 mt-2">เปิดใบจัดยา (PDF)</a>`,
-             showConfirmButton: false,
-             allowOutsideClick: false,
-             showCloseButton: true
+             timer: 1500,
+             showConfirmButton: false
           });
           loadHist(); // Refresh list to update status
       } else {
