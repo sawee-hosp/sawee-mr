@@ -31,6 +31,8 @@
     .blink { animation: blink 1s linear infinite; background: red; color: white; border-radius: 4px; padding: 2px 4px; }
 
     #login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%); z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    #status-text { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
 
     /* Navbar */
     .app-nav { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--primary); color: white; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -42,7 +44,7 @@
     .box-scroller { display: flex; overflow-x: auto; padding: 10px; gap: 8px; scrollbar-width: none; }
     .box-btn { 
       min-width: 85px; padding: 8px; 
-      background: var(--primary); 
+      background: var(--primary); /* Dark Blue */
       color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; 
       text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; position: relative;
     }
@@ -58,7 +60,7 @@
     .drug-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; display: flex; flex-direction: column; }
     .drug-img-wrap { 
         width: 100%; aspect-ratio: 1/1; 
-        background: #bebdbe; 
+        background: #bebdbe; /* Gray Fallback */
         display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; 
     }
     .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; background: white; }
@@ -70,7 +72,7 @@
     .nav-item { text-align: center; color: rgba(255,255,255,0.6); font-size: 0.7rem; width: 25%; cursor: pointer; transition: 0.2s; padding-bottom: 4px; }
     .nav-item i { font-size: 1.4rem; display: block; margin-bottom: 0; }
     .nav-item.active { color: white; font-weight: 600; }
-    .nav-badge { position: absolute; top: 2px; right: 15px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 1px solid white; }
+    .nav-badge { position: absolute; top: 5px; right: 20px; background: red; color: white; border-radius: 50%; width: 10px; height: 10px; }
 
     /* Stock View */
     .shelf-row-label { 
@@ -87,19 +89,33 @@
     .bg-cool { background-color: var(--cool-color); border: 1px solid #2196f3; }
     .exp-badge-stock { position: absolute; top: 0; right: 0; font-size: 10px; padding: 2px 4px; border-radius: 0 8px 0 4px; color: white; font-weight: bold; z-index: 5; }
 
+    /* Tables & Search */
+    .table-custom th { background: #f8f9fa; font-size: 0.8rem; }
+    .table-custom td { vertical-align: middle; font-size: 0.85rem; }
     .row-expired { background-color: #ffebee; border-left: 3px solid red; color: red; font-weight: bold; }
     
     .fab-print { position: fixed; bottom: 70px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 900; cursor: pointer; }
     .fab-edit-lg { position: fixed; bottom: 70px; right: 15px; background: var(--primary); color: white; border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 900; cursor: pointer; }
     
+    /* Tabs */
+    .nav-tabs .nav-link { color: #666; font-size: 0.9rem; }
+    .nav-tabs .nav-link.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); }
+    .tab-badge { background: #eee; color: #333; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 5px; }
+    .nav-link.active .tab-badge { background: var(--primary); color: white; }
+
+    /* History Cards */
     .card-wait { background-color: #fffde7; border-left: 4px solid #fbc02d; }
     .card-done { background-color: #e8f5e9; border-left: 4px solid #4caf50; }
     .card-recv { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
 
+    /* Qty Button */
     .qty-wrap { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #eee; border-radius: 20px; padding: 2px; margin-top: auto; }
     .btn-qty { width: 32px; height: 32px; background: white; border: 1px solid #ddd; border-radius: 50%; color: var(--primary); font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; user-select: none; }
     .btn-qty:active { background: #eee; }
     .inp-qty { width: 40px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.1rem; }
+    
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; height: 180px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
 <body>
@@ -165,6 +181,13 @@
              <button class="btn btn-outline-primary rounded-pill px-3" onclick="doRealtimeSearch('SHOW_ALL')">แสดงทั้งหมด</button>
          </div>
          <div id="realtime-res" class="bg-white rounded shadow-sm p-2"></div>
+         
+         <div class="d-flex justify-content-center mt-2 gap-2" id="pagination-controls" style="display:none !important">
+            <button class="btn btn-sm btn-light border" onclick="prevPage()"><i class="fas fa-chevron-left"></i></button>
+            <span id="page-display" class="small pt-1"></span>
+            <button class="btn btn-sm btn-light border" onclick="nextPage()"><i class="fas fa-chevron-right"></i></button>
+         </div>
+
          <div class="fab-edit-lg" onclick="openMasterEdit({isNew:true})"><i class="fas fa-plus"></i> เพิ่มยาใหม่</div>
       </div>
 
@@ -201,7 +224,19 @@
   <!-- MODALS -->
   <div class="modal fade" id="mdlRegister" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg rounded-4"><div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary">ลงทะเบียน</h5></div><div class="modal-body p-4"><div class="text-center mb-3"><img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div><form id="form-reg"><input id="reg-username" class="form-control mb-3" placeholder="Username *" required><input id="reg-name" class="form-control mb-3" placeholder="ชื่อ-สกุล *" required><input id="reg-email" class="form-control mb-3" placeholder="Email"><div class="mb-3"><label class="small fw-bold text-muted">สิทธิ์การเบิก</label><div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto"><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาER"><label>เบิกยาER</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาLR"><label>เบิกยาLR</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDชาย"><label>เบิกยาWARDชาย</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDหญิง"><label>เบิกยาWARDหญิง</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาแพทย์แผนไทย"><label>เบิกยาแพทย์แผนไทย</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="พิมพ์ฉลาก"><label>พิมพ์ฉลาก</label></div></div></div><button type="submit" class="btn btn-primary w-100 rounded-pill">ลงทะเบียน</button></form></div></div></div></div>
   <div class="modal fade" id="mdlBoxEdit" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">ปรับปรุงกล่องยา</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body bg-light"><div class="card p-3 mb-3 border-0 shadow-sm"><label class="small text-muted">ชื่อกล่อง</label><input id="edit-box-name" class="form-control fw-bold mb-2"><label class="small text-muted">รูปภาพกล่อง</label><div class="d-flex gap-2"><input type="file" id="inp-box-file" class="form-control" accept="image/*" onchange="uploadBoxImg(this)"><input id="edit-box-img" type="hidden"><img id="preview-box-img" src="" referrerpolicy="no-referrer" style="width:40px;height:40px;border-radius:4px;object-fit:cover;border:1px solid #ddd"></div><button class="btn btn-sm btn-primary w-100 mt-2" onclick="saveBoxInfo()">บันทึกข้อมูลกล่อง</button></div><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold m-0">รายการยาในกล่อง</h6><button class="btn btn-sm btn-success rounded-pill" onclick="mdlAddItem.show()"><i class="fas fa-plus"></i> เพิ่มยา</button></div><div id="edit-box-items" class="row g-2"></div></div></div></div></div>
-  <div class="modal fade" id="mdlMasterEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h6 class="fw-bold m-0">ข้อมูลยา (Master)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="mst-isnew"><div class="mb-2"><label class="small">Item ID</label><input id="mst-id" class="form-control fw-bold"></div><div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:#bebdbe"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div><div class="mb-2"><label class="small">ชื่อยา</label><input id="mst-name" class="form-control"></div><div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit</label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-ha"><label class="form-check-label text-danger fw-bold">High Alert</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-pl"><label class="form-check-label text-warning fw-bold">Protect Light</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-kc"><label class="form-check-label text-info fw-bold">Keep Cool (2-8°C)</label></div><button class="btn btn-primary w-100 mt-3" onclick="saveMasterItem()">บันทึก</button></div></div></div></div>
+  <div class="modal fade" id="mdlMasterEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h6 class="fw-bold m-0">ข้อมูลยา (Master)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="mst-isnew"><div class="mb-2"><label class="small">Item ID</label><input id="mst-id" class="form-control fw-bold"></div><div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:#bebdbe"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div><div class="mb-2"><label class="small">ชื่อยา</label><input id="mst-name" class="form-control"></div><div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit</label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-ha"><label class="form-check-label text-danger fw-bold">High Alert</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-pl"><label class="form-check-label text-warning fw-bold">Protect Light</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-kc"><label class="form-check-label text-info fw-bold">Keep Cool (2-8°C)</label></div><div class="d-flex gap-2 mt-3"><button class="btn btn-primary w-100" onclick="saveMasterItem()">บันทึก</button><button class="btn btn-outline-dark w-100" onclick="openLabelEdit()">แก้ไขฉลาก</button></div></div></div></div></div>
+  
+  <!-- Label Edit Modal -->
+  <div class="modal fade" id="mdlLabelEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-info text-white"><h6 class="fw-bold m-0">แก้ไขฉลากยา</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+     <div class="mb-2"><label class="small">ชื่อยา (บนฉลาก)</label><input id="lbl-name" class="form-control"></div>
+     <div class="row g-2 mb-2"><div class="col-6"><label class="small">ปริมาณ</label><input id="lbl-amt" class="form-control"></div><div class="col-6"><label class="small">หน่วย</label><input id="lbl-unit" class="form-control"></div></div>
+     <div class="mb-2"><label class="small">บรรทัด 1</label><input id="lbl-l1" class="form-control"></div>
+     <div class="mb-2"><label class="small">บรรทัด 2</label><input id="lbl-l2" class="form-control"></div>
+     <div class="mb-2"><label class="small">บรรทัด 3</label><input id="lbl-l3" class="form-control"></div>
+     <div class="mb-2"><label class="small">ข้อบ่งใช้</label><input id="lbl-ind" class="form-control"></div>
+     <button class="btn btn-info w-100 mt-2 text-white" onclick="saveLabelInfo()">บันทึกฉลาก</button>
+  </div></div></div></div>
+
   <div class="modal fade" id="mdlEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-4 border-0 shadow"><div class="modal-body text-center p-4"><input type="hidden" id="ed-id"><input type="hidden" id="ed-itemid"><h6 id="ed-name" class="mb-3 text-primary fw-bold text-start"></h6><div class="row g-2 mb-3"><div class="col-6"><label class="small text-muted">คงเหลือ</label><input type="number" id="ed-amt" class="form-control fw-bold text-center text-primary"></div><div class="col-6"><label class="small text-muted">หมดอายุ</label><input type="date" id="ed-exp" class="form-control text-center" onchange="calcExpDays()"></div></div><div class="mt-2 text-center" id="ed-days-left"></div><div class="mt-2 small text-muted text-center">ใช้งาน <span id="ed-change" class="fw-bold">0</span> ครั้ง (ล่าสุด: <span id="ed-time">-</span>)</div><button onclick="saveEdit()" class="btn btn-primary w-100 rounded-pill mt-3">บันทึก</button><div class="border-top mt-3 pt-3"><div class="d-flex gap-2"><input id="stk-qty" type="number" class="form-control" placeholder="จำนวนสติกเกอร์"><button class="btn btn-warning" onclick="addToStickerCartFromEdit()"><i class="fas fa-print"></i> เพิ่ม</button></div></div></div></div></div></div>
   <div class="modal fade" id="mdlAddItem" style="z-index:2100"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">ค้นหายาเพื่อเพิ่มเข้ากล่อง</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input id="search-master" class="form-control mb-2" placeholder="พิมพ์ชื่อยา..." onkeyup="searchMasterDebounce()"><div id="master-res" class="list-group" style="max-height:250px;overflow-y:auto"></div></div></div></div></div>
   
@@ -215,8 +250,9 @@
   let liffId = "2008862022-cDOpEP9z";
   let currentUser = {}, items=[], cart=[], stickerCart=[], curBoxOrder='', curBoxStock='';
   let allBoxes = [], allHistory = [];
-  let offC, mdlEdit, mdlReg, mdlBoxEdit, mdlAddItem, mdlMasterEdit, mdlProfile, mdlSignLabel, mdlSticker;
+  let offC, mdlEdit, mdlReg, mdlBoxEdit, mdlAddItem, mdlMasterEdit, mdlProfile, mdlSignLabel, mdlSticker, mdlLabelEdit;
   let searchTimeout;
+  let curPage = 1, totalPages = 1;
 
   async function callApi(action, payload = {}) {
      try {
@@ -234,7 +270,8 @@
      offC = new bootstrap.Offcanvas('#cartSheet'); mdlEdit = new bootstrap.Modal('#mdlEdit'); mdlReg = new bootstrap.Modal('#mdlRegister'); 
      mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
      mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
-     
+     mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit');
+
      if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { e.preventDefault(); const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); if(!subs.length) return Swal.fire('เลือกสิทธิ์'); Swal.showLoading(); const res = await callApi('registerUser', { username: document.getElementById('reg-username').value, name: document.getElementById('reg-name').value, email: document.getElementById('reg-email').value, substock: subs, userId: currentUser.userId, photo: currentUser.photo }); if(res.status) location.reload(); };
      document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => doRealtimeSearch(e.target.value), 500); });
      initCvs(); initCvsLabel();
@@ -425,17 +462,15 @@
 
   function updateStickerBadge() {
      const b = document.getElementById('badge-sticker');
-     b.innerText = stickerCart.length;
-     if(stickerCart.length > 0) b.classList.remove('hidden'); else b.classList.add('hidden');
+     // Count TOTAL items (pages)
+     const total = stickerCart.reduce((s,i) => s + Number(i.qty), 0);
+     b.innerText = total;
+     if(total > 0) b.classList.remove('hidden'); else b.classList.add('hidden');
   }
 
   async function generateStickerPdf() {
      if(stickerCart.length === 0) return;
      Swal.fire({title:'Generating PDF...', didOpen:()=>Swal.showLoading()});
-     // Expand cart based on qty? Or just pass as list? The requirement implies "1 รายการคือ 1 หน้า"
-     // If user inputs "5", does it mean 5 pages? Or just "Amount: 5" on sticker? 
-     // "เมื่อเพิ่มยาจนพอใจ... 1 ยาอาจมีหลายอัน" -> Likely separate pages. 
-     // We'll pass the list to backend, backend loops.
      let expandList = [];
      stickerCart.forEach(s => {
          for(let i=0; i<s.qty; i++) expandList.push({ itemId: s.itemId, name: s.name });
@@ -448,21 +483,38 @@
      } else Swal.fire('Error', res.message, 'error');
   }
 
-  async function doRealtimeSearch(kw) {
+  async function doRealtimeSearch(kw, page=1) {
+     curPage = page;
      if(!kw) return document.getElementById('realtime-res').innerHTML = '';
-     const res = await callApi('searchDrugDetails', { kw });
+     
+     const res = await callApi('searchDrugDetails', { kw, page });
      if(res.status) {
-        document.getElementById('realtime-res').innerHTML = res.data.map(d => {
+        totalPages = res.data.totalPages;
+        
+        // Show Pagination Controls if SHOW_ALL
+        if(kw === 'SHOW_ALL') {
+           document.getElementById('pagination-controls').style.setProperty('display', 'flex', 'important');
+           document.getElementById('page-display').innerText = `หน้า ${curPage} / ${totalPages}`;
+        } else {
+           document.getElementById('pagination-controls').style.setProperty('display', 'none', 'important');
+        }
+
+        document.getElementById('realtime-res').innerHTML = res.data.results.map(d => {
            let rows = d.locations.map(l => {
-              let cls = ''; const diff = (new Date(l.expire) - new Date())/(1000*3600*24);
-              if(diff < 0) cls = 'row-expired'; 
+              let cls = ''; 
+              // Red row if expired
+              if(l.isExpired) cls = 'row-expired';
               return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}</td></tr>`;
            }).join('');
-           return `<div class="mb-3 border-bottom pb-2"><div class="d-flex gap-2"><img src="${DEFAULT_IMG}" data-raw="${d.imageRaw}" class="lazy" referrerpolicy="no-referrer" style="width:60px;height:60px;border-radius:4px;object-fit:cover;background:#bebdbe"><div class="flex-grow-1"><div class="fw-bold text-primary">${d.name} <span class="badge bg-info text-dark">รวม ${d.totalQty}</span></div><div class="small text-muted mb-1">${d.itemId}</div><table class="table table-sm table-custom mb-0"><thead><tr><th>กล่อง</th><th>จน.</th><th>Exp</th></tr></thead><tbody>${rows}</tbody></table></div><button class="btn btn-sm btn-outline-secondary align-self-start" onclick='openMasterEdit(${JSON.stringify(d).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i></button></div></div>`;
+           
+           return `<div class="mb-3 border-bottom pb-2"><div class="d-flex gap-2"><img src="${DEFAULT_IMG}" data-raw="${d.imageRaw}" class="lazy" referrerpolicy="no-referrer" style="width:60px;height:60px;border-radius:4px;object-fit:cover;background:#bebdbe"><div class="flex-grow-1"><div class="fw-bold text-primary">${d.name} <span class="badge bg-info text-dark">รวม ${d.totalQty}</span></div><div class="small text-muted mb-1">${d.itemId}</div><table class="table table-sm table-custom mb-0"><thead><tr><th>กล่อง</th><th>จน.</th><th>Exp</th></tr></thead><tbody>${rows}</tbody></table></div><div class="d-flex flex-column gap-1"><button class="btn btn-sm btn-outline-secondary" onclick='openMasterEdit(${JSON.stringify(d).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-info" onclick="openLabelEdit('${d.itemId}')"><i class="fas fa-tag"></i></button></div></div></div>`;
         }).join('');
         lazyLoad();
      }
   }
+  
+  function nextPage() { if(curPage < totalPages) doRealtimeSearch('SHOW_ALL', curPage+1); }
+  function prevPage() { if(curPage > 1) doRealtimeSearch('SHOW_ALL', curPage-1); }
 
   function openMasterEdit(item) {
      document.getElementById('mst-isnew').value = item.isNew ? 'true' : 'false';
@@ -472,6 +524,49 @@
      const imgEl = document.getElementById('mst-img-preview'); imgEl.src = DEFAULT_IMG;
      if(item.imageRaw) callApi('resolveImage',{input:item.imageRaw}).then(r=>{if(r.status) imgEl.src=r.src});
      mdlMasterEdit.show();
+  }
+
+  // --- LABEL EDIT ---
+  async function openLabelEdit(itemId) {
+      const res = await callApi('getLabelInfo', { itemId });
+      let data = { itemId };
+      if(res.status && res.data) data = res.data;
+      
+      // Populate fields
+      // Using data.xxx from response
+      // Fields: Name, Amount, Unit, Indication, Line1, Line2, Line3
+      // NOTE: Current modal HTML has inputs. We need to fill them.
+      // Re-using same modal, let's clear first
+      document.getElementById('lbl-name').value = data.name || '';
+      document.getElementById('lbl-amt').value = data.amount || '';
+      document.getElementById('lbl-unit').value = data.unit || '';
+      document.getElementById('lbl-l1').value = data.l1 || '';
+      document.getElementById('lbl-l2').value = data.l2 || '';
+      document.getElementById('lbl-l3').value = data.l3 || '';
+      document.getElementById('lbl-ind').value = data.ind || '';
+      
+      // We need to store itemId somewhere to save
+      // Using a closure or global var, let's use a hidden input or data attrib
+      // Since modal is static, let's add a hidden field in HTML or use simple var
+      window.currentLabelItemId = itemId;
+      
+      mdlLabelEdit.show();
+  }
+  
+  async function saveLabelInfo() {
+      const payload = {
+          itemId: window.currentLabelItemId,
+          name: document.getElementById('lbl-name').value,
+          amount: document.getElementById('lbl-amt').value,
+          unit: document.getElementById('lbl-unit').value,
+          l1: document.getElementById('lbl-l1').value,
+          l2: document.getElementById('lbl-l2').value,
+          l3: document.getElementById('lbl-l3').value,
+          ind: document.getElementById('lbl-ind').value
+      };
+      
+      const res = await callApi('updateLabelInfo', payload);
+      if(res.status) { Swal.fire('Saved'); mdlLabelEdit.hide(); }
   }
 
   async function uploadMasterImg(input) {
