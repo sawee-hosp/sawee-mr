@@ -250,8 +250,11 @@
   <!-- Sticker Modal -->
   <div class="modal fade" id="mdlSticker"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">พิมพ์ฉลากยา (Sticker Pool)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div id="sticker-list" class="list-group mb-3"></div><button onclick="generateStickerPdf()" class="btn btn-warning w-100 text-dark fw-bold"><i class="fas fa-print"></i> สร้าง PDF</button></div></div></div></div>
 
+  <!-- Check Order Modal (Pharmacist Sign) -->
+  <div class="modal fade" id="mdlCheckOrder" style="z-index:2200"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">ยืนยันการจัดยา</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><small class="text-muted d-block">ผู้จัดยา (เภสัชกร):</small><div id="check-user-name" class="fw-bold text-primary mb-2"></div><canvas id="cvs-check" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas><div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvsCheck()">ล้าง</small></div><button onclick="confirmCheckOrder()" class="btn btn-success w-100 mt-2 rounded-pill fw-bold">ยืนยันและพิมพ์ใบจัดยา</button></div></div></div></div>
+
   <!-- MODALS -->
-  <div class="modal fade" id="mdlRegister" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg rounded-4"><div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary">ลงทะเบียน</h5></div><div class="modal-body p-4"><div class="text-center mb-3"><img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div><form id="form-reg"><input id="reg-username" class="form-control mb-3" placeholder="Username *" required><input id="reg-name" class="form-control mb-3" placeholder="ชื่อ-สกุล *" required><input id="reg-email" class="form-control mb-3" placeholder="Email"><div class="mb-3"><label class="small fw-bold text-muted">สิทธิ์การเบิก</label><div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto"><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาER"><label>เบิกยาER</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาLR"><label>เบิกยาLR</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDชาย"><label>เบิกยาWARDชาย</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาWARDหญิง"><label>เบิกยาWARDหญิง</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="เบิกยาแพทย์แผนไทย"><label>เบิกยาแพทย์แผนไทย</label></div><div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="พิมพ์ฉลาก"><label>พิมพ์ฉลาก</label></div></div></div><button type="submit" class="btn btn-primary w-100 rounded-pill">ลงทะเบียน</button></form></div></div></div></div>
+  <div class="modal fade" id="mdlRegister" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg rounded-4"><div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary">ลงทะเบียน</h5></div><div class="modal-body p-4"><div class="text-center mb-3"><img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div><form id="form-reg"><input id="reg-username" class="form-control mb-3" placeholder="Username *" required><input id="reg-name" class="form-control mb-3" placeholder="ชื่อ-สกุล *" required><input id="reg-email" class="form-control mb-3" placeholder="Email"><div class="mb-3"><label class="small fw-bold text-muted">สิทธิ์การเบิก</label><div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto" id="reg-substock-list">Loading...</div></div><button type="submit" class="btn btn-primary w-100 rounded-pill">ลงทะเบียน</button></form></div></div></div></div>
   <div class="modal fade" id="mdlBoxEdit" tabindex="-1"><div class="modal-dialog modal-fullscreen"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title">ปรับปรุงกล่องยา</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body bg-light"><div class="card p-3 mb-3 border-0 shadow-sm"><label class="small text-muted">ชื่อกล่อง</label><input id="edit-box-name" class="form-control fw-bold mb-2"><label class="small text-muted">รูปภาพกล่อง</label><div class="d-flex gap-2"><input type="file" id="inp-box-file" class="form-control" accept="image/*" onchange="uploadBoxImg(this)"><input id="edit-box-img" type="hidden"><img id="preview-box-img" src="" referrerpolicy="no-referrer" style="width:40px;height:40px;border-radius:4px;object-fit:cover;border:1px solid #ddd"></div><button class="btn btn-sm btn-primary w-100 mt-2" onclick="saveBoxInfo()">บันทึกข้อมูลกล่อง</button></div><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold m-0">รายการยาในกล่อง</h6><button class="btn btn-sm btn-success rounded-pill" onclick="mdlAddItem.show()"><i class="fas fa-plus"></i> เพิ่มยา</button></div><div id="edit-box-items" class="row g-2"></div></div></div></div></div>
   <div class="modal fade" id="mdlMasterEdit"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h6 class="fw-bold m-0">ข้อมูลยา (Master)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="mst-isnew"><div class="mb-2"><label class="small">Item ID</label><input id="mst-id" class="form-control fw-bold"></div><div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:transparent"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div><div class="mb-2"><label class="small">ชื่อยา</label><input id="mst-name" class="form-control"></div><div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit</label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-ha"><label class="form-check-label text-danger fw-bold">High Alert</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-pl"><label class="form-check-label text-warning fw-bold">Protect Light</label></div><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-kc"><label class="form-check-label text-info fw-bold">Keep Cool (2-8°C)</label></div><div class="d-flex gap-2 mt-3"><button class="btn btn-primary w-100" onclick="saveMasterItem()">บันทึก</button><button class="btn btn-outline-dark w-100" onclick="openLabelEdit()">แก้ไขฉลาก</button></div></div></div></div></div>
   
@@ -279,10 +282,11 @@
   let liffId = "2008862022-cDOpEP9z";
   let currentUser = {}, items=[], cart=[], stickerCart=[], curBoxOrder='', curBoxStock='';
   let allBoxes = [], allHistory = [];
-  let offC, mdlEdit, mdlReg, mdlBoxEdit, mdlAddItem, mdlMasterEdit, mdlProfile, mdlSignLabel, mdlSticker, mdlLabelEdit;
+  let offC, mdlEdit, mdlReg, mdlBoxEdit, mdlAddItem, mdlMasterEdit, mdlProfile, mdlSignLabel, mdlSticker, mdlLabelEdit, mdlCheckOrder;
   let searchTimeout;
   let curPage = 1, totalPages = 1, totalSearchItems = 0;
   let curHistBox = 'ALL', curHistStatus = 'รอการจัดยา';
+  let tempCheckOrderId = '';
 
   async function callApi(action, payload = {}) {
       try {
@@ -300,7 +304,7 @@
       offC = new bootstrap.Offcanvas('#cartSheet'); mdlEdit = new bootstrap.Modal('#mdlEdit'); mdlReg = new bootstrap.Modal('#mdlRegister'); 
       mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
       mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
-      mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit');
+      mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
 
       if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
           e.preventDefault(); 
@@ -333,7 +337,7 @@
       };
       
       document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
-      initCvs(); initCvsLabel();
+      initCvs(); initCvsLabel(); initCvsCheck();
       
       const params = new URLSearchParams(window.location.search);
       const boxIdParam = params.get('boxId');
@@ -347,6 +351,13 @@
           // Capture userId here for registration form
           currentUser.userId = uid; 
           
+          // Populate Registration Options
+          const opts = await callApi('getRegOptions');
+          if(opts.status) {
+             const list = document.getElementById('reg-substock-list');
+             list.innerHTML = opts.options.map(o => `<div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="${o}"><label>${o}</label></div>`).join('');
+          }
+
           document.getElementById('login-overlay').classList.add('hidden'); 
           document.getElementById('reg-img').src = currentUser.photo || DEFAULT_IMG; 
           mdlReg.show(); 
@@ -906,11 +917,24 @@
       const displayData = limit ? data.slice(0, limit) : data;
       
       const html = displayData.map(r=>{
-        let action = ''; if(r.status.includes('จัดยาเสร็จ')) action = `<button class="btn btn-success w-100 fw-bold py-2 mt-2" style="font-size:1.2rem;" onclick="receiveOrder('${r.id}')">กดรับยา</button>`;
+        let action = ''; 
+        if(r.status.includes('รอการจัดยา')) {
+            // New Button for Waiting Status
+            action = `<button class="btn btn-warning w-100 fw-bold py-2 mt-2" style="font-size:1.1rem;color:#333" onclick="openCheckOrder('${r.id}')"><i class="fas fa-clipboard-check"></i> พิมพ์ใบจัดยา</button>`;
+        } else if(r.status.includes('จัดยาเสร็จ')) {
+            action = `<button class="btn btn-success w-100 fw-bold py-2 mt-2" style="font-size:1.2rem;" onclick="receiveOrder('${r.id}')">กดรับยา</button>`;
+        }
+        
+        let pdfBtn = '';
+        // Hide PDF button if Waiting, show otherwise
+        if(!r.status.includes('รอการจัดยา')) {
+            pdfBtn = `<a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i> PDF</a>`;
+        }
+
         let itemList = r.items.map(i=> `<li>${i.name} (${i.qty}) - ${i.price}</li>`).join('').slice(0, 200) + (r.items.length > 5 ? '...' : '');
         let cardClass = r.status.includes('รอ') ? 'card-wait' : (r.status.includes('รับ') ? 'card-recv' : 'card-done');
         
-        return `<div class="card mb-2 p-2 shadow-sm ${cardClass}"><div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${r.id}</strong><small class="text-muted" style="font-size:10px">${r.time}</small></div><div class="small text-muted my-1"><i class="fas fa-box"></i> ${r.box}</div><ul class="small text-muted ps-3 mb-1" style="max-height:100px;overflow-y:auto">${itemList}</ul><div class="d-flex flex-column align-items-stretch"><div class="d-flex justify-content-between align-items-center"><small class="badge bg-light text-dark border">${r.status}</small><a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i> PDF</a></div>${action}</div></div>`;
+        return `<div class="card mb-2 p-2 shadow-sm ${cardClass}"><div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${r.id}</strong><small class="text-muted" style="font-size:10px">${r.time}</small></div><div class="small text-muted my-1"><i class="fas fa-box"></i> ${r.box}</div><ul class="small text-muted ps-3 mb-1" style="max-height:100px;overflow-y:auto">${itemList}</ul><div class="d-flex flex-column align-items-stretch"><div class="d-flex justify-content-between align-items-center"><small class="badge bg-light text-dark border">${r.status}</small>${pdfBtn}</div>${action}</div></div>`;
       }).join('');
 
       let moreBtn = '';
@@ -919,6 +943,41 @@
       }
 
       document.getElementById('hist-res').innerHTML = html + moreBtn || '<div class="text-center text-muted mt-3">ไม่มีรายการ</div>';
+  }
+
+  // --- CHECK ORDER (PHARMACIST) ---
+  function openCheckOrder(oid) {
+      tempCheckOrderId = oid;
+      document.getElementById('check-user-name').innerText = currentUser.name;
+      mdlCheckOrder.show(); setTimeout(fixCvsCheck, 500);
+  }
+  
+  async function confirmCheckOrder() {
+      if(isCanvasBlank(cvsCheck)) return Swal.fire('กรุณาเซ็นชื่อผู้จัดยา');
+      
+      const btn = document.querySelector('#mdlCheckOrder .btn-success');
+      const originalText = btn.innerText;
+      btn.innerText = 'กำลังบันทึก...'; btn.disabled = true;
+      
+      const sign = cvsCheck.toDataURL();
+      const res = await callApi('confirmOrderCheck', { orderId: tempCheckOrderId, user: currentUser.name, signature: sign });
+      
+      btn.innerText = originalText; btn.disabled = false;
+      
+      if(res.status) {
+          mdlCheckOrder.hide(); clrCvsCheck();
+          Swal.fire({
+             icon: 'success',
+             title: 'บันทึกการจัดยาแล้ว',
+             html: `<a href="${res.pdf}" target="_blank" class="btn btn-primary w-100 mt-2">เปิดใบจัดยา (PDF)</a>`,
+             showConfirmButton: false,
+             allowOutsideClick: false,
+             showCloseButton: true
+          });
+          loadHist(); // Refresh list to update status
+      } else {
+          Swal.fire('Error', res.message, 'error');
+      }
   }
 
   async function receiveOrder(oid) {
@@ -951,18 +1010,26 @@
   
   let canvas, ctx, isDraw=false;
   let cvsLabel, ctxLabel, isDrawLabel=false;
+  let cvsCheck, ctxCheck, isDrawCheck=false;
+  
   function initCvs(){ canvas=document.getElementById('cvs'); ctx=canvas.getContext('2d'); ['mousedown','touchstart'].forEach(e=>canvas.addEventListener(e,s,{passive:false})); ['mousemove','touchmove'].forEach(e=>canvas.addEventListener(e,d,{passive:false})); ['mouseup','touchend'].forEach(e=>canvas.addEventListener(e,()=>isDraw=false)); }
   function initCvsLabel(){ cvsLabel=document.getElementById('cvs-label'); ctxLabel=cvsLabel.getContext('2d'); ['mousedown','touchstart'].forEach(e=>cvsLabel.addEventListener(e,sL,{passive:false})); ['mousemove','touchmove'].forEach(e=>cvsLabel.addEventListener(e,dL,{passive:false})); ['mouseup','touchend'].forEach(e=>cvsLabel.addEventListener(e,()=>isDrawLabel=false)); }
+  function initCvsCheck(){ cvsCheck=document.getElementById('cvs-check'); ctxCheck=cvsCheck.getContext('2d'); ['mousedown','touchstart'].forEach(e=>cvsCheck.addEventListener(e,sC,{passive:false})); ['mousemove','touchmove'].forEach(e=>cvsCheck.addEventListener(e,dC,{passive:false})); ['mouseup','touchend'].forEach(e=>cvsCheck.addEventListener(e,()=>isDrawCheck=false)); }
+  
   function fixCvs(){ canvas.width=canvas.offsetWidth; canvas.height=100; ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#000'; }
   function fixCvsLabel(){ cvsLabel.width=cvsLabel.offsetWidth; cvsLabel.height=100; ctxLabel.lineWidth=2; ctxLabel.lineCap='round'; ctxLabel.strokeStyle='#000'; }
+  function fixCvsCheck(){ cvsCheck.width=cvsCheck.offsetWidth; cvsCheck.height=100; ctxCheck.lineWidth=2; ctxCheck.lineCap='round'; ctxCheck.strokeStyle='#000'; }
   
   function s(e){ e.preventDefault(); isDraw=true; let r=canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); }
   function d(e){ if(!isDraw)return; e.preventDefault(); let r=canvas.getBoundingClientRect(); ctx.lineTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); ctx.stroke(); }
   function sL(e){ e.preventDefault(); isDrawLabel=true; let r=cvsLabel.getBoundingClientRect(); ctxLabel.beginPath(); ctxLabel.moveTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); }
   function dL(e){ if(!isDrawLabel)return; e.preventDefault(); let r=cvsLabel.getBoundingClientRect(); ctxLabel.lineTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); ctxLabel.stroke(); }
+  function sC(e){ e.preventDefault(); isDrawCheck=true; let r=cvsCheck.getBoundingClientRect(); ctxCheck.beginPath(); ctxCheck.moveTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); }
+  function dC(e){ if(!isDrawCheck)return; e.preventDefault(); let r=cvsCheck.getBoundingClientRect(); ctxCheck.lineTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); ctxCheck.stroke(); }
   
   function clrCvs(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
   function clrCvsLabel(){ ctxLabel.clearRect(0,0,cvsLabel.width,cvsLabel.height); }
+  function clrCvsCheck(){ ctxCheck.clearRect(0,0,cvsCheck.width,cvsCheck.height); }
   function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
 </script>
 </body>
