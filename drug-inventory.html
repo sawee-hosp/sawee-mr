@@ -131,6 +131,8 @@
      <h3 class="fw-bold m-0" style="font-size:1.8rem">Sawee Rxfill 2.0</h3>
      <div class="animate-pulse text-primary fw-bold mt-2" style="font-size:0.8rem; letter-spacing: 1px;">CONNECTING...</div>
      <div class="spinner-border text-primary mt-4" style="width: 2rem; height: 2rem;"></div>
+     <!-- Added status-text container for error messages -->
+     <div id="status-text" class="text-danger mt-3 text-center px-4 small"></div>
   </div>
 
   <div id="qr-overlay">
@@ -461,7 +463,13 @@
       const params = new URLSearchParams(window.location.search);
       const boxIdParam = params.get('boxId');
 
-      try { await liff.init({ liffId }); if(!liff.isLoggedIn()) liff.login(); else { const profile = await liff.getProfile(); currentUser.photo = profile.pictureUrl; checkUser(profile.userId, boxIdParam); } } catch(e) { document.getElementById('status-text').innerHTML = `<span class="text-danger">${e.message}</span>`; }
+      try { await liff.init({ liffId }); if(!liff.isLoggedIn()) liff.login(); else { const profile = await liff.getProfile(); currentUser.photo = profile.pictureUrl; checkUser(profile.userId, boxIdParam); } } 
+      catch(e) { 
+          console.error(e);
+          // Show error in the new status text element instead of crashing
+          const statusDiv = document.getElementById('status-text');
+          if(statusDiv) statusDiv.innerHTML = `Error: ${e.message}<br>Please check configuration.`;
+      }
   };
 
   async function checkUser(uid, boxParam) {
