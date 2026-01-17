@@ -422,10 +422,13 @@
       }); 
   }
 
+  // Convert dd/MM/yyyy to yyyy-MM-dd
   function thDateToIso(thDate) {
       if(!thDate) return '';
+      // If it's already ISO format or Date object, return formatted
       if(thDate instanceof Date) return thDate.toISOString().split('T')[0];
       if(String(thDate).match(/^\d{4}-\d{2}-\d{2}$/)) return thDate;
+
       const parts = String(thDate).split('/');
       if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
       return thDate;
@@ -441,64 +444,478 @@
       let str = ""; if(days > 0) str += `${days}วัน `; if(hrs > 0) str += `${hrs}ชม. `; str += `${mins}นาที`; return str;
   }
 
-  // --- HOSXP USER CHECK ---
-  function checkHosUser() {
-      clearTimeout(hosAuthTimeout);
-      const userEl = document.getElementById('hosxp-user');
-      if(!userEl) return;
-      const user = userEl.value.trim();
+  async function authAdmin(callback) {
+      const { value: username } = await Swal.fire({
+          title: 'ยืนยันตัวตน (HosXP)',
+          input: 'text',
+          inputPlaceholder: 'Username',
+          showCancelButton: true
+      });
       
-      const statusEl = document.getElementById('hos-status');
-      const addRow = document.getElementById('hos-add-row');
+      if (username) {
+          Swal.showLoading();
+          const res = await callApi('checkAdmin', { username });
+          Swal.close();
+          
+          if(res.status) {
+              callback(res.name);
+          } else {
+              const { value: newName } = await Swal.fire({
+                  title: 'ไม่พบผู้ใช้',
+                  text: 'กรุณาระบุชื่อ-สกุล เพื่อบันทึก',
+                  input: 'text',
+                  showCancelButton: true
+              });
+              if(newName) {
+                  await callApi('registerAdmin', { username, name: newName });
+                  callback(newName);
+              }
+          }
+      }
+  }
+
+  // --- INITIALIZATION ---
+  window.onload = async () => {
+      try {
+          offC = new bootstrap.Offcanvas('#cartSheet'); mdlEdit = new bootstrap.Modal('#mdlEdit'); mdlReg = new bootstrap.Modal('#mdlRegister'); 
+          mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
+          mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
+          mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
+          mdlScanRes = new bootstrap.Modal('#mdlScanRes');
+          
+          const lastUser = localStorage.getItem('lastHosUser');
+          if(lastUser) {
+              document.getElementById('hosxp-user').value = lastUser;
+              checkHosUser();
+          }
+
+          const d = new Date();
+          document.getElementById('stat-end').valueAsDate = d;
+          d.setMonth(d.getMonth() - 1);
+          document.getElementById('stat-start').valueAsDate = d;
+
+          if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
+              e.preventDefault(); 
+              const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); 
+              const grp = Array.from(document.getElementById('reg-group').selectedOptions).map(o=>o.value);
+              if(!subs.length) return Swal.fire('เลือกสิทธิ์'); 
+              Swal.showLoading(); 
+              
+              const res = await callApi('registerUser', { 
+                  username: document.getElementById('reg-username').value, 
+                  name: document.getElementById('reg-name').value, 
+                  email: document.getElementById('reg-email').value, 
+                  substock: subs, 
+                  boxGroup: grp,
+                  userId: currentUser.userId, 
+                  photo: currentUser.photo 
+              }); 
+              
+              if(res.status) {
+                  currentUser.username = document.getElementById('reg-username').value;
+                  currentUser.name = document.getElementById('reg-name').value;
+                  currentUser.email = document.getElementById('reg-email').value;
+                  currentUser.substock = subs; 
+                  mdlReg.hide();
+                  Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
+                  startApp(); 
+              } else {
+                  Swal.fire('Error', res.message, 'error');
+              }
+          };
+          
+          document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
+          initCvs(); initCvsLabel(); initCvsCheck();
+          
+          const params = new URLSearchParams(window.location.search);
+          const boxIdParam = params.get('boxId');
+
+          await liff.init({ liffId }); 
+          if(!liff.isLoggedIn()) liff.login(); 
+          else { 
+              const profile = await liff.getProfile(); 
+              currentUser.photo = profile.pictureUrl; 
+              checkUser(profile.userId, boxIdParam); 
+          } 
+      } catch(e) { 
+          console.error(e);
+          const statusDiv = document.getElementById('status-text');
+          if(statusDiv) statusDiv.innerHTML = `Error: ${e.message}<br>Please check configuration.`;
+      }
+  };
+
+  // --- CORE APP LOGIC ---
+  async function checkUser(uid, boxParam) {
+      const res = await callApi('checkUserLIFF', { userId: uid });
+      if (res.status === 'NOT_FOUND') { 
+          currentUser.userId = uid; 
+          const opts = await callApi('getRegOptions');
+          if(opts.status) {
+             const list = document.getElementById('reg-substock-list');
+             list.innerHTML = opts.options.map(o => `<div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="${o}"><label>${o}</label></div>`).join('');
+             const grpSel = document.getElementById('reg-group');
+             grpSel.innerHTML = opts.groups.map(g=>`<option value="${g}">${g}</option>`).join('');
+          }
+          document.getElementById('login-overlay').classList.add('hidden'); 
+          document.getElementById('reg-img').src = currentUser.photo || DEFAULT_IMG; 
+          mdlReg.show(); 
+      }
+      else if (res.status === 'FOUND') { currentUser = { ...res.userData, userId: uid }; startApp(boxParam); }
+  }
+
+  function openProfile() {
+      document.getElementById('pf-user').value = currentUser.username;
+      document.getElementById('pf-name').value = currentUser.name;
+      document.getElementById('pf-sub').value = currentUser.substock;
+      document.getElementById('pf-pass').value = currentUser.password;
+      document.getElementById('pf-email').value = currentUser.email;
+      mdlProfile.show();
+  }
+  async function saveProfile() {
+      const pl = { userId: currentUser.userId, username: document.getElementById('pf-user').value, name: document.getElementById('pf-name').value, substock: document.getElementById('pf-sub').value, password: document.getElementById('pf-pass').value, email: document.getElementById('pf-email').value };
+      const res = await callApi('updateUserProfile', pl);
+      if(res.status) location.reload(); else Swal.fire(res.message);
+  }
+
+  async function startApp(boxParam) {
+      document.getElementById('login-overlay').classList.add('hidden'); document.getElementById('app-main').classList.remove('hidden');
+      document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
       
-      hosAuthValid = false;
-      hosAuthName = '';
-      if(addRow) addRow.classList.add('hidden');
+      const resOrder = await callApi('getBoxes', { user: currentUser, showAll: false });
+      if(resOrder.status) renderBoxScroller('order', resOrder.boxes);
+      const resStock = await callApi('getBoxes', { user: currentUser, showAll: true });
+      if(resStock.status) { 
+          allBoxes = resStock.boxes; 
+          renderBoxScroller('stock', allBoxes); 
+          renderStockGroups(); 
+      }
       
-      if(!user) {
-          if(statusEl) statusEl.innerHTML = '';
+      loadHist(true); 
+
+      if(boxParam) {
+          if(allBoxes.length) {
+              const box = allBoxes.find(b=>b.id===boxParam);
+              if(box) { nav('tab-stock', document.querySelectorAll('.nav-item')[1]); selBox(box.name, null, 'stock', box.imageRaw); }
+          }
+      }
+  }
+
+  async function renderStockGroups() {
+      const resGroups = await callApi('getBoxGroups');
+      if(resGroups.status) {
+          const counts = {};
+          allBoxes.forEach(b => {
+             const g = b.group || 'Other';
+             counts[g] = (counts[g] || 0) + 1;
+          });
+
+          document.getElementById('group-filter').innerHTML = 
+            `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
+                ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
+             </div>` + 
+            resGroups.groups.map(g => {
+                const count = counts[g] || 0;
+                return `<div class="badge rounded-pill bg-white text-dark border cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('${g}',this)">
+                          ${g} <span class="badge bg-secondary rounded-circle">${count}</span>
+                        </div>`;
+            }).join('');
+      }
+  }
+
+  function getBoxIcon(type) {
+      const t = (type || "").toLowerCase();
+      if(t.includes('cart') || t.includes('รถ')) return '🛒';
+      if(t.includes('fridge') || t.includes('เย็น')) return '🧊';
+      if(t.includes('carbinet') || t.includes('cabinet') || t.includes('ตู้')) return '🗄️';
+      return '📦';
+  }
+
+  function renderBoxScroller(mode, boxes) {
+      const el = document.getElementById(`box-scroller-${mode}`);
+      el.innerHTML = boxes.map(b=>`
+        <div class="box-btn" onclick="selBox('${b.name}', this, '${mode}', '${b.imageRaw}')">
+          <span class="box-icon">${getBoxIcon(b.type)}</span>
+          <span class="box-name">${b.name}</span>
+          ${b.hasExpired ? '<span class="badge-exp">หมดอายุ</span>' : ''}
+          ${mode === 'hist' ? `<span class="badge-hist-count">${b.count||0}</span>` : ''}
+        </div>`).join('');
+  }
+
+  function filterStockBox(group, el) {
+      const p = el.parentElement; 
+      Array.from(p.children).forEach(x=> { 
+          x.classList.remove('bg-primary','text-white'); 
+          x.classList.add('bg-white','text-dark'); 
+          const badge = x.querySelector('.badge');
+          if(badge) { badge.classList.remove('bg-white', 'text-dark'); badge.classList.add('bg-secondary'); }
+      });
+      el.classList.remove('bg-white','text-dark'); 
+      el.classList.add('bg-primary','text-white');
+      const activeBadge = el.querySelector('.badge');
+      if(activeBadge) { activeBadge.classList.remove('bg-secondary'); activeBadge.classList.add('bg-white', 'text-dark'); }
+
+      const filtered = (group==='ALL') ? allBoxes : allBoxes.filter(b=>b.group===group);
+      renderBoxScroller('stock', filtered);
+  }
+
+  function nav(pid, el){
+      document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
+      if(pid === 'tab-hist') {
+          loadHist();
+      }
+  }
+
+  async function selBox(name, el, mode, imgRaw) {
+      document.querySelectorAll(`#box-scroller-${mode} .box-btn`).forEach(x=>x.classList.remove('active')); 
+      if(el) el.classList.add('active');
+      
+      if(mode==='order') {
+         if(cart.length && curBoxOrder!=name && !confirm('เปลี่ยนกล่อง ตะกร้าจะถูกล้าง?')) return;
+         if(cart.length && curBoxOrder!=name) { cart=[]; badge(); }
+         curBoxOrder = name; loadOrderItems(name);
+      } else if (mode === 'hist') {
+         curHistBox = name;
+         renderHist(curHistStatus); 
+      } else {
+         curBoxStock = name;
+         document.getElementById('fab-edit').classList.remove('hidden');
+         document.getElementById('fab-print').classList.remove('hidden');
+         document.getElementById('edit-box-name').value = name;
+         document.getElementById('edit-box-img').value = imgRaw;
+         document.getElementById('preview-box-img').src = DEFAULT_IMG;
+         if(imgRaw) callApi('resolveImage',{input:imgRaw}).then(r=>{if(r.status) document.getElementById('preview-box-img').src=r.src});
+         
+         const boxObj = allBoxes.find(b=>b.name === name);
+         const prevBtn = document.getElementById('btn-prev-label');
+         if(boxObj && boxObj.lastPdf) {
+            prevBtn.style.display = 'block';
+            prevBtn.onclick = () => window.open(boxObj.lastPdf, '_blank');
+            prevBtn.innerHTML = `ใบแปะกล่องครั้งก่อนหน้า (ล่าสุด ${boxObj.lastCheck || '-'})`;
+         } else { prevBtn.style.display = 'none'; }
+
+         loadStockItems(name);
+      }
+  }
+
+  async function loadOrderItems(box) {
+      document.getElementById('order-start-msg').classList.add('hidden');
+      document.getElementById('order-grid').classList.remove('hidden');
+      document.getElementById('order-grid').innerHTML = Array(4).fill('<div class="skeleton mb-2"></div>').join('');
+      const res = await callApi('getItems', { boxName: box });
+      items = res.status ? res.data.map(x=>({...x, req:1})) : [];
+      renderOrder();
+  }
+  
+  async function loadStockItems(box) {
+      const el = document.getElementById('stock-content'); el.innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
+      const res = await callApi('getItems', { boxName: box });
+      if(!res.status) return el.innerHTML = 'Error';
+      
+      // FIX: Check if res.data exists before iterating
+      if(!res.data || !Array.isArray(res.data)) {
+          el.innerHTML = '<div class="text-center mt-5 text-muted">ไม่พบข้อมูลยาในกล่องนี้</div>';
           return;
       }
       
-      hosAuthTimeout = setTimeout(async () => {
-          if(statusEl) statusEl.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin"></i></span>';
-          const res = await callApi('checkAdmin', { username: user });
-          
-          if(res.status) {
-              if(statusEl) statusEl.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> ${res.name}</span>`;
-              hosAuthValid = true;
-              hosAuthName = res.name;
-              localStorage.setItem('lastHosUser', user);
-          } else {
-              if(statusEl) statusEl.innerHTML = '<span class="text-danger fw-bold"><i class="fas fa-times-circle"></i> ไม่พบผู้ใช้</span>';
-              if(addRow) addRow.classList.remove('hidden');
-          }
-      }, 500);
+      let totalChanges = 0;
+      let lastCheck = '-';
+      const boxObj = allBoxes.find(b=>b.name === box);
+      if(boxObj) { lastCheck = boxObj.lastCheck; }
+      res.data.forEach(i => totalChanges += (i.changeCount || 0));
+
+      let h = `<div class="h5 fw-bold text-dark mb-1 w-100 d-flex align-items-center gap-2"><i class="fas fa-box"></i> ${box} <span class="badge bg-info rounded-pill" style="font-size:0.7rem">${res.data.length} ยา</span></div>
+               <div class="small text-muted mb-3 border-bottom pb-2 w-100">จำนวนครั้ง: ${totalChanges} | ตรวจล่าสุด: ${lastCheck}</div>`;
+      
+      let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
+      Object.keys(rows).sort((a,b)=> a.localeCompare(b, undefined, {numeric:true})).forEach(r=>{
+          h+=`<div class="shelf-row-label">ชั้น/แถว: ${r}</div><div class="d-flex flex-wrap gap-2 mt-2 w-100">`;
+          h+=rows[r].map(i=> {
+           let cls = i.highAlert ? 'bg-ha' : (i.keepCool ? 'bg-cool' : '');
+           let icon = i.protectLight ? '<i class="fas fa-sun icon-protect"></i>' : '';
+           let expTag = '';
+           let expiredClass = '';
+           if(i.expire) {
+              const diff = (new Date(i.expire) - new Date())/(1000*3600*24);
+              if(diff < 0) { 
+                  expTag = '<span class="exp-badge-stock badge-expired">หมดอายุ</span>';
+                  expiredClass = 'border border-danger';
+              }
+              else if(diff < 180) {
+                  expTag = `<span class="exp-badge-stock badge-near-exp">${Math.ceil(diff)} วัน</span>`;
+              }
+           }
+           let haBadge = i.highAlert ? '<div class="badge-ha">HAD</div>' : '';
+           
+           return `<div id="stk-${i.invId}" class="shelf-item ${cls} ${expiredClass}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name}','${i.itemId}',${i.amount},'${i.expire}',${i.changeCount},'${i.lastChange}')">${haBadge}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary qty-val">${i.amount}</span><span class="text-muted exp-val" style="font-size:9px">${i.expire || '-'} ${icon}</span></div></div>`
+          }).join('');
+          h+='</div>';
+      });
+      el.innerHTML = h || '<div class="text-center mt-5 text-muted">กล่องว่าง</div>';
+      
+      const editHtml = res.data.map(i=>`<div class="col-12 d-flex align-items-center bg-white border p-2 rounded mb-1"><img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer" style="width:40px;height:40px;object-fit:cover;border-radius:4px;background:transparent"><div class="flex-grow-1 ms-2 small"><div class="fw-bold text-truncate">${i.name}</div><div class="d-flex gap-2 align-items-center mt-1"><input class="form-control form-control-sm" style="width:70px" type="number" value="${i.amount}" onchange="updateInv('${i.invId}', 'amount', this.value)" placeholder="Qty"><input class="form-control form-control-sm" style="width:120px" value="${i.location}" onchange="updateInv('${i.invId}', 'location', this.value)" placeholder="Loc"></div></div><button class="btn btn-sm btn-outline-danger ms-2" onclick="removeBoxItem('${i.invId}')"><i class="fas fa-trash"></i></button></div>`).join('');
+      document.getElementById('edit-box-items').innerHTML = editHtml;
+      lazyLoad();
   }
 
-  async function registerHosUser() {
-      const user = document.getElementById('hosxp-user').value.trim();
-      const name = document.getElementById('hos-new-name').value.trim();
-      if(!user || !name) return Swal.fire('ระบุข้อมูลให้ครบ');
+  async function updateInv(id, field, val) { let pl = {invId:id}; pl[field]=val; await callApi('updateInventoryDetail', pl); }
+
+  function renderOrder() {
+      const grid = document.getElementById('order-grid');
+      grid.innerHTML = '';
+      const kw = document.getElementById('order-search').value.toLowerCase();
+      const filtered = items.filter(i=>i.name.toLowerCase().includes(kw));
       
-      Swal.showLoading();
-      const res = await callApi('registerAdmin', { username: user, name: name });
-      if(res.status) {
-          Swal.close();
-          document.getElementById('hos-new-name').value = '';
-          checkHosUser(); 
+      if(filtered.length === 0) {
+          grid.innerHTML = '<div class="text-center mt-5 text-muted w-100">ไม่พบยา</div>';
+          return;
+      }
+
+      let idx = 0;
+      const chunk = 20;
+      function nextChunk() {
+          const slice = filtered.slice(idx, idx + chunk);
+          if (slice.length === 0) return;
+          
+          const html = slice.map(i=>`
+            <div class="drug-card">
+                <div class="drug-img-wrap">
+                    <img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer">
+                </div>
+                <div class="drug-info">
+                    <div class="drug-name">${i.name}</div>
+                    <div class="d-flex justify-content-between small text-muted mb-2"><span>จำนวนเบิก : ${i.req}</span><span class="text-primary fw-bold">${i.price} บ.</span></div>
+                    <div class="qty-wrap"><div class="btn-qty" onclick="adj('${i.itemId}',-1)">-</div><input class="inp-qty" id="qty-${i.itemId}" value="${i.req}" readonly><div class="btn-qty" onclick="adj('${i.itemId}',1,${i.amount})">+</div></div>
+                    <button class="btn btn-sm btn-primary w-100 mt-2 rounded-pill fw-bold" onclick="addCart('${i.itemId}')">ใส่ตะกร้า</button>
+                </div>
+            </div>`).join('');
+          
+          grid.insertAdjacentHTML('beforeend', html);
+          idx += chunk;
+          lazyLoad();
+          
+          if(idx < filtered.length) {
+              requestAnimationFrame(nextChunk);
+          }
+      }
+      nextChunk();
+  }
+
+  // --- ACTIONS ---
+  function openBoxEditor() { mdlBoxEdit.show(); }
+  function addCart(id) { 
+      let i = items.find(x=>x.itemId==id); 
+      let ex = cart.find(x=>x.itemId==id); 
+      if(ex) { 
+          if(ex.qty+i.req > i.amount) return Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); 
+          ex.qty+=i.req; 
+      } else {
+          cart.push({...i, qty:i.req}); 
+      }
+      badge(); 
+      const b=document.querySelector('.fa-shopping-basket'); 
+      if(b) { b.style.transform='scale(1.4)'; setTimeout(()=>b.style.transform='scale(1)',200); }
+      i.req=1; 
+      const inp = document.getElementById(`qty-${id}`);
+      if(inp) inp.value=1; 
+  }
+  
+  function badge() { 
+      let n=cart.length; 
+      const b = document.getElementById('badge');
+      if(b) {
+          b.innerText=n; 
+          n>0 ? b.classList.remove('hidden') : b.classList.add('hidden'); 
       }
   }
 
-  // --- HISTORY & STATS ---
+  function adj(id, v, max) { 
+      let i = items.find(x=>x.itemId==id); 
+      if(!i) return; 
+      let n = i.req + v; 
+      if(n<1)n=1; 
+      if(max && n>max) { n=max; Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); } 
+      i.req = n; 
+      const el = document.getElementById(`qty-${id}`);
+      if(el) el.value = n; 
+  }
+
+  function openStickerModal() {
+      const list = document.getElementById('sticker-list');
+      if(stickerCart.length === 0) list.innerHTML = '<div class="text-center p-3 text-muted">ไม่มีรายการพิมพ์</div>';
+      else {
+        list.innerHTML = stickerCart.map((s,i) => `
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>${s.name} <span class="badge bg-secondary">x${s.qty}</span></div>
+              <i class="fas fa-trash text-danger cursor-pointer" onclick="stickerCart.splice(${i},1); updateStickerBadge(); openStickerModal()"></i>
+          </div>
+        `).join('');
+      }
+      mdlSticker.show();
+  }
+  
+  function adjStk(n) {
+      let el = document.getElementById('stk-qty');
+      let v = parseInt(el.value) || 1;
+      v += n;
+      if(v < 1) v = 1;
+      el.value = v;
+  }
+
+  function adjQrQty(n) {
+      let el = document.getElementById('qr-print-qty');
+      let v = parseInt(el.value) || 1;
+      v += n;
+      if(v < 1) v = 1;
+      el.value = v;
+  }
+
+  function addToStickerCartFromEdit() {
+      const id = document.getElementById('ed-itemid').value;
+      const name = document.getElementById('ed-name').innerText;
+      const exp = document.getElementById('ed-exp').value; 
+      const qty = document.getElementById('stk-qty').value;
+      if(!qty || qty <= 0) return Swal.fire('ระบุจำนวน');
+      
+      stickerCart.push({ itemId: id, name: name, qty: qty, expire: exp });
+      updateStickerBadge();
+      Swal.fire({icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, showConfirmButton:false});
+  }
+
+  function updateStickerBadge() {
+      const b = document.getElementById('badge-sticker');
+      const total = stickerCart.reduce((s,i) => s + Number(i.qty), 0);
+      b.innerText = total;
+      if(total > 0) b.classList.remove('hidden'); else b.classList.add('hidden');
+  }
+
+  async function generateStickerPdf() {
+      if(stickerCart.length === 0) return;
+      Swal.fire({title:'Generating PDF...', didOpen:()=>Swal.showLoading()});
+      let expandList = [];
+      stickerCart.forEach(s => {
+          for(let i=0; i<s.qty; i++) expandList.push({ itemId: s.itemId, name: s.name, expire: s.expire });
+      });
+      
+      const res = await callApi('generateLabelPdf', { items: expandList, user: currentUser.name });
+      if(res.status) {
+          stickerCart = []; updateStickerBadge(); mdlSticker.hide();
+          Swal.fire({ icon:'success', html:`<a href="${res.pdf}" target="_blank" class="btn btn-primary w-100">ดาวน์โหลดฉลาก</a>` });
+      } else Swal.fire('Error', res.message, 'error');
+  }
+
   function loadHist(init = false) { 
       if(!init) document.getElementById('hist-loader').classList.remove('hidden');
       
       callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
           document.getElementById('hist-loader').classList.add('hidden');
+          // FIX: Check if res.data exists before assigning
+          if(res.status && Array.isArray(res.data)) { 
+              allHistory = res.data;
+          } else {
+              allHistory = []; // Fallback to empty array if data is null/undefined
+          }
           
-          allHistory = (res.status && Array.isArray(res.data)) ? res.data : [];
-
           if(allHistory.length > 0) {
               const boxCounts = allHistory.reduce((acc, r) => { 
                   if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; 
@@ -555,12 +972,11 @@
       document.getElementById('bg-recv').innerText = totalRecv;
       
       const globalDone = allHistory.filter(r => r.status.includes('จัดยาเสร็จ')).length;
-      const badgeEl = document.getElementById('nav-badge-hist');
       if(globalDone > 0) { 
-          badgeEl.classList.remove('hidden'); 
-          badgeEl.innerText = globalDone; 
+          document.getElementById('nav-badge-hist').classList.remove('hidden'); 
+          document.getElementById('nav-badge-hist').innerText = globalDone; 
       } else { 
-          badgeEl.classList.add('hidden'); 
+          document.getElementById('nav-badge-hist').classList.add('hidden'); 
       }
 
       let msg = "";
@@ -949,6 +1365,135 @@
   function clrCvsLabel(){ ctxLabel.clearRect(0,0,cvsLabel.width,cvsLabel.height); }
   function clrCvsCheck(){ ctxCheck.clearRect(0,0,cvsCheck.width,cvsCheck.height); }
   function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
+
+  // --- MISSING FUNCTIONS ADDED HERE ---
+  
+  async function checkHosUser() {
+      const u = document.getElementById('hosxp-user').value.trim();
+      const statusDiv = document.getElementById('hos-status');
+      const addDiv = document.getElementById('hos-add-row');
+      
+      statusDiv.innerHTML = '';
+      statusDiv.className = 'small fw-bold text-nowrap';
+      addDiv.classList.add('hidden');
+      hosAuthValid = false;
+      hosAuthName = '';
+      
+      if(u.length < 3) return;
+      
+      clearTimeout(hosAuthTimeout);
+      hosAuthTimeout = setTimeout(async () => {
+          statusDiv.innerHTML = '<span class="spinner-border spinner-border-sm text-secondary"></span>';
+          try {
+            const res = await callApi('checkAdmin', { username: u });
+            if(res.status) {
+                statusDiv.innerHTML = '<i class="fas fa-check-circle text-success"></i> ' + res.name;
+                hosAuthValid = true;
+                hosAuthName = res.name;
+                localStorage.setItem('lastHosUser', u);
+            } else {
+                statusDiv.innerHTML = '<span class="text-danger">ไม่พบผู้ใช้</span>';
+                addDiv.classList.remove('hidden');
+            }
+          } catch(e) {
+             statusDiv.innerHTML = '<span class="text-danger">Error</span>';
+          }
+      }, 500);
+  }
+
+  async function registerHosUser() {
+      const u = document.getElementById('hosxp-user').value.trim();
+      const n = document.getElementById('hos-new-name').value.trim();
+      if(!u || !n) return Swal.fire('ระบุข้อมูลให้ครบ');
+      
+      Swal.showLoading();
+      const res = await callApi('registerAdmin', { username: u, name: n });
+      Swal.close();
+      
+      if(res.status) {
+          checkHosUser();
+      } else {
+          Swal.fire('Error', res.message || 'Failed', 'error');
+      }
+  }
+
+  function openCart() {
+      const el = document.getElementById('cart-list');
+      if(cart.length===0) {
+          el.innerHTML = '<div class="text-center mt-5 text-muted">ตะกร้าว่างเปล่า</div>';
+          document.getElementById('cart-sum').innerText = '0.00';
+          document.getElementById('cart-user-name').innerText = '';
+      } else {
+          let sum = 0;
+          el.innerHTML = cart.map((i,idx) => {
+              const total = i.price * i.req;
+              sum += total;
+              return `
+              <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                  <div class="d-flex align-items-center gap-2">
+                      <div class="fw-bold text-primary">${idx+1}.</div>
+                      <div>
+                          <div class="fw-bold">${i.name}</div>
+                          <div class="small text-muted">${i.req} x ${i.price}</div>
+                      </div>
+                  </div>
+                  <div class="text-end">
+                      <div class="fw-bold">${total.toFixed(2)}</div>
+                      <i class="fas fa-trash text-danger cursor-pointer" onclick="removeCartItem(${idx})"></i>
+                  </div>
+              </div>`;
+          }).join('');
+          document.getElementById('cart-sum').innerText = sum.toFixed(2);
+          document.getElementById('cart-user-name').innerText = `ผู้เบิก: ${hosAuthName || '-'}`;
+      }
+      offC.show();
+      setTimeout(fixCvs, 500);
+  }
+  
+  function removeCartItem(idx) {
+      cart.splice(idx, 1);
+      badge();
+      openCart();
+      renderOrder(); 
+  }
+
+  async function submitOrder() {
+      if(cart.length === 0) return Swal.fire('ไม่มีสินค้าในตะกร้า');
+      if(!hosAuthValid) return Swal.fire('ระบุรหัสผู้เบิก (HosXP) ให้ถูกต้อง');
+      if(isCanvasBlank(cvs)) return Swal.fire('กรุณาเซ็นชื่อผู้เบิก');
+
+      const sign = cvs.toDataURL();
+      const orderData = {
+          box: curBoxOrder,
+          user: hosAuthName,
+          signature: sign,
+          items: cart
+      };
+
+      Swal.fire({ title: 'กำลังบันทึก...', didOpen: ()=>Swal.showLoading() });
+      const res = await callApi('submitOrder', { orderData });
+      
+      if(res.status) {
+          cart = [];
+          badge();
+          renderOrder();
+          offC.hide();
+          clrCvs();
+          document.getElementById('hosxp-user').value = '';
+          document.getElementById('hos-status').innerHTML = '';
+          hosAuthValid = false;
+          
+          Swal.fire({ 
+              icon: 'success', 
+              title: 'บันทึกสำเร็จ',
+              html: `<a href="${res.pdfUrl}" target="_blank" class="btn btn-primary w-100">ดูใบเบิก (PDF)</a>`
+          });
+          loadHist();
+      } else {
+          Swal.fire('Error', res.message, 'error');
+      }
+  }
+
 </script>
 </body>
 </html>
