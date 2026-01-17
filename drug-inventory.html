@@ -113,6 +113,9 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-top: 5px;
         background: white; border-radius: 12px; border: 1px solid #ddd;
     }
+    
+    .cursor-pointer { cursor: pointer; }
+    .hover-bg-light:hover { background-color: #f8f9fa; }
 
     @keyframes blink { 50% { opacity: 0.5; } }
     .blink { animation: blink 1s linear infinite; }
@@ -419,9 +422,14 @@
       }); 
   }
 
+  // Convert dd/MM/yyyy to yyyy-MM-dd
   function thDateToIso(thDate) {
       if(!thDate) return '';
-      const parts = thDate.split('/');
+      // If it's already ISO format or Date object, return formatted
+      if(thDate instanceof Date) return thDate.toISOString().split('T')[0];
+      if(String(thDate).match(/^\d{4}-\d{2}-\d{2}$/)) return thDate;
+
+      const parts = String(thDate).split('/');
       if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
       return thDate;
   }
@@ -896,222 +904,43 @@
       } else Swal.fire('Error', res.message, 'error');
   }
 
-  async function loadPoolHist() {
-      document.getElementById('pool-list').innerHTML = 'Loading...';
-      const res = await callApi('getStickerPools');
-      if(res.status && res.data) {
-          document.getElementById('pool-list').innerHTML = res.data.map((s) => {
-             const statusBadge = s.status === 'Printed' ? '<span class="badge bg-success">Printed</span>' : '<span class="badge bg-secondary">Pending</span>';
-             return `<div class="list-group-item"><div class="d-flex justify-content-between align-items-center">
-                <div><div class="fw-bold small text-truncate" style="max-width:150px">${s.id}</div><div class="small text-muted">${s.time} by ${s.admin}</div></div>
-                <div class="d-flex gap-2 align-items-center">
-                    ${statusBadge}
-                    <button class="btn btn-sm btn-outline-dark" onclick="printPoolPdf(${s.row}, '${s.pdf}')"><i class="fas fa-print"></i></button>
-                </div>
-             </div></div>`;
-          }).join('');
-      }
-  }
-
-  async function printPoolPdf(row, pdfUrl) {
-      window.open(pdfUrl, '_blank');
-      await callApi('updateStickerPoolStatus', { row, adminName: currentUser.name });
-      loadPoolHist(); // Refresh list
-  }
-  
-  // --- HOSXP USER CHECK ---
-  function checkHosUser() {
-      clearTimeout(hosAuthTimeout);
-      const user = document.getElementById('hosxp-user').value.trim();
-      const statusEl = document.getElementById('hos-status');
-      const addRow = document.getElementById('hos-add-row');
-      
-      hosAuthValid = false;
-      hosAuthName = '';
-      addRow.classList.add('hidden');
-      
-      if(!user) {
-          statusEl.innerHTML = '';
-          return;
-      }
-      
-      hosAuthTimeout = setTimeout(async () => {
-          statusEl.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin"></i></span>';
-          const res = await callApi('checkAdmin', { username: user });
-          
-          if(res.status) {
-              statusEl.innerHTML = `<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> ${res.name}</span>`;
-              hosAuthValid = true;
-              hosAuthName = res.name;
-              localStorage.setItem('lastHosUser', user);
-          } else {
-              statusEl.innerHTML = '<span class="text-danger fw-bold"><i class="fas fa-times-circle"></i> ไม่พบผู้ใช้</span>';
-              addRow.classList.remove('hidden');
-          }
-      }, 500);
-  }
-
-  async function registerHosUser() {
-      const user = document.getElementById('hosxp-user').value.trim();
-      const name = document.getElementById('hos-new-name').value.trim();
-      if(!user || !name) return Swal.fire('ระบุข้อมูลให้ครบ');
-      
-      Swal.showLoading();
-      const res = await callApi('registerAdmin', { username: user, name: name });
-      if(res.status) {
-          Swal.close();
-          document.getElementById('hos-new-name').value = '';
-          checkHosUser(); // Re-check to validate
-      }
-  }
-
-  function openCart(){ if(!cart.length) return Swal.fire('ตะกร้าว่าง'); renderCart(); offC.show(); setTimeout(fixCvs,500); }
-  function renderCart(){ 
-      let sum=0; 
-      document.getElementById('cart-list').innerHTML = cart.map((c,i)=>{ 
-          sum+=c.price*c.qty; 
-          return `
-          <div class="bg-white p-3 mb-2 rounded border position-relative">
-              <div class="d-flex align-items-center mb-2">
-                  <img src="${c.imageRaw}" onerror="this.src='${DEFAULT_IMG}'" style="width:50px;height:50px;object-fit:cover;border-radius:4px;margin-right:10px;background:#eee">
-                  <div class="fw-bold flex-grow-1" style="font-size:0.9rem">${c.name}</div>
-              </div>
-              <div class="d-flex justify-content-between small text-muted">
-                  <span class="fw-bold text-dark">จำนวนเบิก : ${c.qty}</span> 
-                  <span class="text-primary fw-bold">${(c.price*c.qty).toFixed(2)} บ.</span>
-              </div>
-              <i class="fas fa-trash text-danger position-absolute top-0 end-0 m-3 cursor-pointer" onclick="cart.splice(${i},1);renderCart();badge();if(!cart.length)offC.hide()"></i>
-          </div>`; 
-      }).join(''); 
-      
-      document.getElementById('cart-sum').innerText = sum.toFixed(2); 
-      document.getElementById('cart-user-name').innerText = currentUser.name || '';
-      checkHosUser();
-  }
-  
-  async function submitOrder() { 
-      if(isCanvasBlank(canvas)) return Swal.fire('กรุณาเซ็นชื่อ'); 
-      
-      const userField = document.getElementById('hosxp-user');
-      if(!userField.value || !hosAuthValid) {
-          userField.classList.add('border-danger');
-          userField.focus();
-          return;
-      }
-      userField.classList.remove('border-danger');
-
-      offC.hide();
-      Swal.fire({
-          icon: 'success',
-          title: 'ส่งใบเบิกเรียบร้อย',
-          text: 'ระบบกำลังบันทึกข้อมูล โปรดติดตามสถานะที่เมนู "รายการเบิก"',
-          timer: 2500,
-          showConfirmButton: false
-      });
-      
-      const orderPayload = { 
-          user: hosAuthName, 
-          box: curBoxOrder, 
-          items: cart, 
-          signature: canvas.toDataURL() 
-      };
-      
-      cart = []; badge(); clrCvs(); 
-      
-      callApi('submitOrder', { orderData: orderPayload }).then(() => {
-          console.log("Order synced");
-          loadHist(); 
-      });
-  }
-  
-  function editStk(id,n,itm,a,e,cnt,time) { 
-      editTarget = document.getElementById(`stk-${id}`); 
-      document.getElementById('ed-id').value=id; 
-      document.getElementById('ed-itemid').value=itm; 
-      document.getElementById('ed-name').innerText=n; 
-      document.getElementById('ed-amt').value=a; 
-      document.getElementById('ed-exp').value = thDateToIso(e); 
-      document.getElementById('ed-change').innerText=cnt;
-      document.getElementById('ed-time').innerText=time; 
-      document.getElementById('stk-qty').value = 1; 
-      calcExpDays();
-      mdlEdit.show(); 
-  }
-
-  function calcExpDays() {
-      const exp = document.getElementById('ed-exp').value;
-      if(!exp) return document.getElementById('ed-days-left').innerText = "";
-      const diff = Math.ceil((new Date(exp) - new Date()) / (1000 * 60 * 60 * 24));
-      
-      let badge = '';
-      if(diff < 0) badge = '<div class="badge-expired w-100 text-center mt-2">ยาหมดอายุแล้ว</div>';
-      else if(diff < 180) {
-          badge = `<div class="badge-near-exp w-100 text-center mt-2">${Math.ceil(diff)} วัน</div>`;
-      }
-      
-      document.getElementById('ed-days-left').innerHTML = `อีก <span class="${diff<0?'text-danger fw-bold':''}">${diff}</span> วันหมดอายุ ${badge}`;
-  }
-  
-  async function saveEdit() { 
-      const id = document.getElementById('ed-id').value;
-      const amt = document.getElementById('ed-amt').value;
-      const exp = document.getElementById('ed-exp').value;
-      
-      const pl = { invId:id, amount:amt, expire:exp }; 
-      const res = await callApi('saveEditItem', pl); 
-      if(res.status) { 
-          mdlEdit.hide();
-          if(editTarget) {
-              editTarget.querySelector('.qty-val').innerText = amt;
-              let displayExp = exp;
-              if(exp.includes('-')) {
-                  const p = exp.split('-');
-                  displayExp = `${p[2]}/${p[1]}/${p[0]}`;
-              }
-              editTarget.querySelector('.exp-val').innerText = displayExp;
-          }
-          Swal.fire({toast:true, icon:'success', title:'บันทึกแล้ว', timer:1500});
-      } 
-  }
-  
-  function addQrToPool() {
-      const qty = document.getElementById('qr-print-qty').value;
-      const id = document.getElementById('qr-id').value;
-      const name = document.getElementById('qr-name').innerText;
-      const exp = document.getElementById('qr-exp').value;
-      
-      if(!qty || qty <= 0) return;
-      
-      stickerCart.push({ itemId: id, name: name, qty: qty, expire: exp });
-      updateStickerBadge();
-      
-      mdlScanRes.hide();
-      Swal.fire({icon:'success', title:'เพิ่มเข้าคิวพิมพ์แล้ว', timer:1000, showConfirmButton:false});
-      
-      startScan();
-  }
-
   function loadHist(init = false) { 
       if(!init) document.getElementById('hist-loader').classList.remove('hidden');
       
       callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
           document.getElementById('hist-loader').classList.add('hidden');
-          if(res.status) { 
-              allHistory = res.data; 
-              const boxCounts = allHistory.reduce((acc, r) => { acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
-              const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
+          // FIX: Check if res.data exists before assigning
+          if(res.status && Array.isArray(res.data)) { 
+              allHistory = res.data;
+          } else {
+              allHistory = []; // Fallback to empty array if data is null/undefined
+          }
+          
+          if(allHistory.length > 0) {
+              const boxCounts = allHistory.reduce((acc, r) => { 
+                  if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; 
+                  return acc; 
+              }, {});
               
+              const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
               const scroller = document.getElementById('box-scroller-hist');
+              
               const histScrollerHtml = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
                 histBoxes.map(bName => {
                     const count = boxCounts[bName] || 0;
                     return `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${count}</span></div>`;
                 }).join('');
               scroller.innerHTML = histScrollerHtml;
+          } else {
+             document.getElementById('box-scroller-hist').innerHTML = '<div class="text-center w-100 py-2 small text-muted">ยังไม่มีประวัติการเบิก</div>';
+          }
 
-              if (curHistStatus === 'STATS') loadStats();
-              else renderHist(curHistStatus); 
-          } 
+          if (curHistStatus === 'STATS') loadStats();
+          else renderHist(curHistStatus); 
+      }).catch(err => {
+         console.error("Load Hist Error:", err);
+         document.getElementById('hist-loader').classList.add('hidden');
+         document.getElementById('hist-res').innerHTML = `<div class="alert alert-danger">เกิดข้อผิดพลาด: ${err.message}</div>`;
       }); 
   }
 
@@ -1389,6 +1218,7 @@
       mdlMasterEdit.show();
   }
 
+  // --- LABEL EDIT ---
   async function openLabelEdit(itemId) {
       const res = await callApi('getLabelInfo', { itemId });
       let data = { itemId };
@@ -1435,6 +1265,7 @@
       const res = await callApi('updateMasterItem', payload); if(res.status) { Swal.fire('Saved'); mdlMasterEdit.hide(); }
   }
 
+  function openBoxEditor() { mdlBoxEdit.show(); }
   async function uploadBoxImg(input) {
       const file = input.files[0]; if(!file) return;
       const reader = new FileReader();
@@ -1445,14 +1276,12 @@
         if(res.status) { document.getElementById('edit-box-img').value = res.path; Swal.close(); } else Swal.fire('Upload Failed');
       }; reader.readAsDataURL(file);
   }
-  
   async function saveBoxInfo() {
       if(!confirm('ยืนยันแก้ไข?')) return;
       const newN = document.getElementById('edit-box-name').value; const newI = document.getElementById('edit-box-img').value;
       const res = await callApi('updateBoxInfo', { oldName: curBoxStock, newName: newN, newImage: newI });
       if(res.status) { Swal.fire('Saved'); curBoxStock=newN; location.reload(); }
   }
-  
   async function searchMasterDebounce() { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMaster, 500); }
   async function searchMaster() {
       const k = document.getElementById('search-master').value; 
@@ -1469,7 +1298,7 @@
       if(res.status) { loadStockItems(curBoxStock); mdlAddItem.hide(); } 
   }
   async function removeBoxItem(invId) { if(!confirm('ลบยานี้?')) return; const res = await callApi('removeBoxItem', { invId }); if(res.status) loadStockItems(curBoxStock); }
-
+  
   function startScan() {
       document.getElementById('qr-overlay').style.display = 'flex';
       html5QrcodeScanner = new Html5Qrcode("reader");
