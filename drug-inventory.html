@@ -430,7 +430,13 @@
       if(String(thDate).match(/^\d{4}-\d{2}-\d{2}$/)) return thDate;
 
       const parts = String(thDate).split('/');
-      if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      if(parts.length === 3) {
+          // Add padding for day/month
+          const d = parts[0].padStart(2, '0');
+          const m = parts[1].padStart(2, '0');
+          const y = parts[2];
+          return `${y}-${m}-${d}`;
+      }
       return thDate;
   }
 
@@ -473,76 +479,6 @@
           }
       }
   }
-
-  // --- INITIALIZATION ---
-  window.onload = async () => {
-      try {
-          offC = new bootstrap.Offcanvas('#cartSheet'); mdlEdit = new bootstrap.Modal('#mdlEdit'); mdlReg = new bootstrap.Modal('#mdlRegister'); 
-          mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
-          mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
-          mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
-          mdlScanRes = new bootstrap.Modal('#mdlScanRes');
-          
-          const lastUser = localStorage.getItem('lastHosUser');
-          if(lastUser) {
-              document.getElementById('hosxp-user').value = lastUser;
-              checkHosUser();
-          }
-
-          const d = new Date();
-          document.getElementById('stat-end').valueAsDate = d;
-          d.setMonth(d.getMonth() - 1);
-          document.getElementById('stat-start').valueAsDate = d;
-
-          if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
-              e.preventDefault(); 
-              const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); 
-              const grp = Array.from(document.getElementById('reg-group').selectedOptions).map(o=>o.value);
-              if(!subs.length) return Swal.fire('เลือกสิทธิ์'); 
-              Swal.showLoading(); 
-              
-              const res = await callApi('registerUser', { 
-                  username: document.getElementById('reg-username').value, 
-                  name: document.getElementById('reg-name').value, 
-                  email: document.getElementById('reg-email').value, 
-                  substock: subs, 
-                  boxGroup: grp,
-                  userId: currentUser.userId, 
-                  photo: currentUser.photo 
-              }); 
-              
-              if(res.status) {
-                  currentUser.username = document.getElementById('reg-username').value;
-                  currentUser.name = document.getElementById('reg-name').value;
-                  currentUser.email = document.getElementById('reg-email').value;
-                  currentUser.substock = subs; 
-                  mdlReg.hide();
-                  Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
-                  startApp(); 
-              } else {
-                  Swal.fire('Error', res.message, 'error');
-              }
-          };
-          
-          document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
-          initCvs(); initCvsLabel(); initCvsCheck();
-          
-          const params = new URLSearchParams(window.location.search);
-          const boxIdParam = params.get('boxId');
-
-          await liff.init({ liffId }); 
-          if(!liff.isLoggedIn()) liff.login(); 
-          else { 
-              const profile = await liff.getProfile(); 
-              currentUser.photo = profile.pictureUrl; 
-              checkUser(profile.userId, boxIdParam); 
-          } 
-      } catch(e) { 
-          console.error(e);
-          const statusDiv = document.getElementById('status-text');
-          if(statusDiv) statusDiv.innerHTML = `Error: ${e.message}<br>Please check configuration.`;
-      }
-  };
 
   // --- CORE APP LOGIC ---
   async function checkUser(uid, boxParam) {
@@ -1265,7 +1201,6 @@
       const res = await callApi('updateMasterItem', payload); if(res.status) { Swal.fire('Saved'); mdlMasterEdit.hide(); }
   }
 
-  function openBoxEditor() { mdlBoxEdit.show(); }
   async function uploadBoxImg(input) {
       const file = input.files[0]; if(!file) return;
       const reader = new FileReader();
@@ -1276,12 +1211,14 @@
         if(res.status) { document.getElementById('edit-box-img').value = res.path; Swal.close(); } else Swal.fire('Upload Failed');
       }; reader.readAsDataURL(file);
   }
+  
   async function saveBoxInfo() {
       if(!confirm('ยืนยันแก้ไข?')) return;
       const newN = document.getElementById('edit-box-name').value; const newI = document.getElementById('edit-box-img').value;
       const res = await callApi('updateBoxInfo', { oldName: curBoxStock, newName: newN, newImage: newI });
       if(res.status) { Swal.fire('Saved'); curBoxStock=newN; location.reload(); }
   }
+  
   async function searchMasterDebounce() { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchMaster, 500); }
   async function searchMaster() {
       const k = document.getElementById('search-master').value; 
