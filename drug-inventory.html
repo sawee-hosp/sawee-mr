@@ -50,7 +50,7 @@
     .box-btn .badge-exp { position: absolute; top: -5px; right: -5px; font-size: 9px; padding: 2px 4px; border-radius: 4px; background: red; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; animation: blink 1s linear infinite; }
     .box-btn .badge-hist-count { position: absolute; top: -5px; right: -5px; font-size: 10px; padding: 2px 5px; border-radius: 10px; background: red; color: white; border:1px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; font-weight:bold; }
 
-    .drug-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+    .drug-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; }
     .drug-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; display: flex; flex-direction: column; position: relative; }
     .drug-img-wrap { width: 100%; aspect-ratio: 1/1; background: #e0e0e0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; }
     .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
@@ -398,6 +398,7 @@
   let hosAuthValid = false;
   let hosAuthName = '';
 
+  // --- UTILS & HELPERS (Moved to Top) ---
   async function callApi(action, payload = {}) {
       try {
         const res = await fetch(GAS_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action, ...payload }) });
@@ -409,68 +410,173 @@
       }
   }
 
-  window.onload = async () => {
-      offC = new bootstrap.Offcanvas('#cartSheet'); mdlEdit = new bootstrap.Modal('#mdlEdit'); mdlReg = new bootstrap.Modal('#mdlRegister'); 
-      mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
-      mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
-      mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
-      mdlScanRes = new bootstrap.Modal('#mdlScanRes');
+  function lazyLoad() { 
+      document.querySelectorAll('img.lazy').forEach(img => { 
+          if(img.dataset.loaded) return; 
+          const raw = img.dataset.raw; 
+          if(!raw || raw==='undefined' || raw==='') { img.classList.remove('loading'); return; } 
+          if(raw.startsWith('http')) { img.src=raw; img.classList.remove('loading'); img.dataset.loaded=true; return; } 
+          callApi('resolveImage', { input: raw }).then(res => { if(res.status) { img.src = res.src; img.classList.remove('loading'); img.dataset.loaded=true; } }); 
+      }); 
+  }
+
+  function thDateToIso(thDate) {
+      if(!thDate) return '';
+      const parts = thDate.split('/');
+      if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      return thDate;
+  }
+
+  function getDuration(t1, t2) {
+      if(!t1 || !t2) return '';
+      const diff = t2 - t1;
+      if(diff <= 0) return '';
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      let str = ""; if(days > 0) str += `${days}วัน `; if(hrs > 0) str += `${hrs}ชม. `; str += `${mins}นาที`; return str;
+  }
+
+  async function authAdmin(callback) {
+      const { value: username } = await Swal.fire({
+          title: 'ยืนยันตัวตน (HosXP)',
+          input: 'text',
+          inputPlaceholder: 'Username',
+          showCancelButton: true
+      });
       
-      const lastUser = localStorage.getItem('lastHosUser');
-      if(lastUser) {
-          document.getElementById('hosxp-user').value = lastUser;
-          checkHosUser();
-      }
-
-      const d = new Date();
-      document.getElementById('stat-end').valueAsDate = d;
-      d.setMonth(d.getMonth() - 1);
-      document.getElementById('stat-start').valueAsDate = d;
-
-      if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
-          e.preventDefault(); 
-          const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); 
-          const grp = Array.from(document.getElementById('reg-group').selectedOptions).map(o=>o.value);
-          if(!subs.length) return Swal.fire('เลือกสิทธิ์'); 
-          Swal.showLoading(); 
-          
-          const res = await callApi('registerUser', { 
-              username: document.getElementById('reg-username').value, 
-              name: document.getElementById('reg-name').value, 
-              email: document.getElementById('reg-email').value, 
-              substock: subs, 
-              boxGroup: grp,
-              userId: currentUser.userId, 
-              photo: currentUser.photo 
-          }); 
+      if (username) {
+          Swal.showLoading();
+          const res = await callApi('checkAdmin', { username });
+          Swal.close();
           
           if(res.status) {
-              currentUser.username = document.getElementById('reg-username').value;
-              currentUser.name = document.getElementById('reg-name').value;
-              currentUser.email = document.getElementById('reg-email').value;
-              currentUser.substock = subs; 
-              mdlReg.hide();
-              Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
-              startApp(); 
+              callback(res.name);
           } else {
-              Swal.fire('Error', res.message, 'error');
+              const { value: newName } = await Swal.fire({
+                  title: 'ไม่พบผู้ใช้',
+                  text: 'กรุณาระบุชื่อ-สกุล เพื่อบันทึก',
+                  input: 'text',
+                  showCancelButton: true
+              });
+              if(newName) {
+                  await callApi('registerAdmin', { username, name: newName });
+                  callback(newName);
+              }
           }
-      };
-      
-      document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
-      initCvs(); initCvsLabel(); initCvsCheck();
-      
-      const params = new URLSearchParams(window.location.search);
-      const boxIdParam = params.get('boxId');
+      }
+  }
 
-      try { await liff.init({ liffId }); if(!liff.isLoggedIn()) liff.login(); else { const profile = await liff.getProfile(); currentUser.photo = profile.pictureUrl; checkUser(profile.userId, boxIdParam); } } 
-      catch(e) { 
+  // --- GLOBAL FUNCTIONS (Must be defined before usage in onclick) ---
+  function openBoxEditor() { mdlBoxEdit.show(); }
+  function addCart(id) { 
+      let i = items.find(x=>x.itemId==id); 
+      let ex = cart.find(x=>x.itemId==id); 
+      if(ex) { 
+          if(ex.qty+i.req > i.amount) return Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); 
+          ex.qty+=i.req; 
+      } else {
+          cart.push({...i, qty:i.req}); 
+      }
+      badge(); 
+      const b=document.querySelector('.fa-shopping-basket'); 
+      if(b) { b.style.transform='scale(1.4)'; setTimeout(()=>b.style.transform='scale(1)',200); }
+      i.req=1; 
+      const inp = document.getElementById(`qty-${id}`);
+      if(inp) inp.value=1; 
+  }
+  
+  function badge() { 
+      let n=cart.length; 
+      const b = document.getElementById('badge');
+      if(b) {
+          b.innerText=n; 
+          n>0 ? b.classList.remove('hidden') : b.classList.add('hidden'); 
+      }
+  }
+
+  function adj(id, v, max) { 
+      let i = items.find(x=>x.itemId==id); 
+      if(!i) return; 
+      let n = i.req + v; 
+      if(n<1)n=1; 
+      if(max && n>max) { n=max; Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); } 
+      i.req = n; 
+      const el = document.getElementById(`qty-${id}`);
+      if(el) el.value = n; 
+  }
+
+  // --- INITIALIZATION ---
+  window.onload = async () => {
+      try {
+          offC = new bootstrap.Offcanvas('#cartSheet'); mdlEdit = new bootstrap.Modal('#mdlEdit'); mdlReg = new bootstrap.Modal('#mdlRegister'); 
+          mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); mdlMasterEdit = new bootstrap.Modal('#mdlMasterEdit'); 
+          mdlProfile = new bootstrap.Modal('#mdlProfile'); mdlSignLabel = new bootstrap.Modal('#mdlSignLabel'); mdlSticker = new bootstrap.Modal('#mdlSticker');
+          mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
+          mdlScanRes = new bootstrap.Modal('#mdlScanRes');
+          
+          const lastUser = localStorage.getItem('lastHosUser');
+          if(lastUser) {
+              document.getElementById('hosxp-user').value = lastUser;
+              checkHosUser();
+          }
+
+          const d = new Date();
+          document.getElementById('stat-end').valueAsDate = d;
+          d.setMonth(d.getMonth() - 1);
+          document.getElementById('stat-start').valueAsDate = d;
+
+          if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
+              e.preventDefault(); 
+              const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); 
+              const grp = Array.from(document.getElementById('reg-group').selectedOptions).map(o=>o.value);
+              if(!subs.length) return Swal.fire('เลือกสิทธิ์'); 
+              Swal.showLoading(); 
+              
+              const res = await callApi('registerUser', { 
+                  username: document.getElementById('reg-username').value, 
+                  name: document.getElementById('reg-name').value, 
+                  email: document.getElementById('reg-email').value, 
+                  substock: subs, 
+                  boxGroup: grp,
+                  userId: currentUser.userId, 
+                  photo: currentUser.photo 
+              }); 
+              
+              if(res.status) {
+                  currentUser.username = document.getElementById('reg-username').value;
+                  currentUser.name = document.getElementById('reg-name').value;
+                  currentUser.email = document.getElementById('reg-email').value;
+                  currentUser.substock = subs; 
+                  mdlReg.hide();
+                  Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
+                  startApp(); 
+              } else {
+                  Swal.fire('Error', res.message, 'error');
+              }
+          };
+          
+          document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
+          initCvs(); initCvsLabel(); initCvsCheck();
+          
+          const params = new URLSearchParams(window.location.search);
+          const boxIdParam = params.get('boxId');
+
+          await liff.init({ liffId }); 
+          if(!liff.isLoggedIn()) liff.login(); 
+          else { 
+              const profile = await liff.getProfile(); 
+              currentUser.photo = profile.pictureUrl; 
+              checkUser(profile.userId, boxIdParam); 
+          } 
+      } catch(e) { 
           console.error(e);
           const statusDiv = document.getElementById('status-text');
           if(statusDiv) statusDiv.innerHTML = `Error: ${e.message}<br>Please check configuration.`;
       }
   };
 
+  // --- CORE APP LOGIC ---
   async function checkUser(uid, boxParam) {
       const res = await callApi('checkUserLIFF', { userId: uid });
       if (res.status === 'NOT_FOUND') { 
@@ -526,7 +632,6 @@
       }
   }
 
-  // --- NEW: Render Group Filters with Box Counts ---
   async function renderStockGroups() {
       const resGroups = await callApi('getBoxGroups');
       if(resGroups.status) {
@@ -570,14 +675,12 @@
 
   function filterStockBox(group, el) {
       const p = el.parentElement; 
-      // Reset all buttons style
       Array.from(p.children).forEach(x=> { 
           x.classList.remove('bg-primary','text-white'); 
           x.classList.add('bg-white','text-dark'); 
           const badge = x.querySelector('.badge');
           if(badge) { badge.classList.remove('bg-white', 'text-dark'); badge.classList.add('bg-secondary'); }
       });
-      // Active button style
       el.classList.remove('bg-white','text-dark'); 
       el.classList.add('bg-primary','text-white');
       const activeBadge = el.querySelector('.badge');
@@ -789,13 +892,15 @@
       } else Swal.fire('Error', res.message, 'error');
   }
 
-  // --- Sticker Pool History ---
+  // --- Sticker Pool History (Updated Logic) ---
   async function loadPoolHist() {
       document.getElementById('pool-list').innerHTML = 'Loading...';
       const res = await callApi('getStickerPools');
       if(res.status && res.data) {
           document.getElementById('pool-list').innerHTML = res.data.map((s) => {
+             // Only show 'Printed' if status is Printed, else show Blank/Pending
              const statusBadge = s.status === 'Printed' ? '<span class="badge bg-success">Printed</span>' : '<span class="badge bg-secondary">Pending</span>';
+             
              return `<div class="list-group-item"><div class="d-flex justify-content-between align-items-center">
                 <div><div class="fw-bold small text-truncate" style="max-width:150px">${s.id}</div><div class="small text-muted">${s.time} by ${s.admin}</div></div>
                 <div class="d-flex gap-2 align-items-center">
@@ -809,11 +914,12 @@
 
   async function printPoolPdf(row, pdfUrl) {
       window.open(pdfUrl, '_blank');
+      // Update status to Printed in background
       await callApi('updateStickerPoolStatus', { row, adminName: currentUser.name });
-      loadPoolHist(); 
+      loadPoolHist(); // Refresh list
   }
   
-  // --- HOSXP USER CHECK ---
+  // --- HOSXP USER CHECK (New Logic) ---
   function checkHosUser() {
       clearTimeout(hosAuthTimeout);
       const user = document.getElementById('hosxp-user').value.trim();
@@ -855,7 +961,7 @@
       if(res.status) {
           Swal.close();
           document.getElementById('hos-new-name').value = '';
-          checkHosUser(); 
+          checkHosUser(); // Re-check to validate
       }
   }
 
@@ -880,6 +986,7 @@
       
       document.getElementById('cart-sum').innerText = sum.toFixed(2); 
       document.getElementById('cart-user-name').innerText = currentUser.name || '';
+      // Trigger check user if input exists
       checkHosUser();
   }
   
@@ -890,10 +997,12 @@
       if(!userField.value || !hosAuthValid) {
           userField.classList.add('border-danger');
           userField.focus();
+          // Swal.fire({toast:true, icon:'error', title:'ระบุชื่อผู้เบิก (HosXP) ให้ถูกต้อง'});
           return;
       }
       userField.classList.remove('border-danger');
 
+      // Optimistic UI: Close immediately
       offC.hide();
       Swal.fire({
           icon: 'success',
@@ -903,18 +1012,21 @@
           showConfirmButton: false
       });
       
+      // Prepare Data
       const orderPayload = { 
-          user: hosAuthName, 
+          user: hosAuthName, // Use verified name
           box: curBoxOrder, 
           items: cart, 
           signature: canvas.toDataURL() 
       };
       
+      // Clear Cart Logic Locally
       cart = []; badge(); clrCvs(); 
       
+      // Send to Backend asynchronously (no await blocking UI)
       callApi('submitOrder', { orderData: orderPayload }).then(() => {
           console.log("Order synced");
-          loadHist(); 
+          loadHist(); // Refresh history quietly
       });
   }
   
@@ -932,404 +1044,12 @@
       mdlScanRes.hide();
       Swal.fire({icon:'success', title:'เพิ่มเข้าคิวพิมพ์แล้ว', timer:1000, showConfirmButton:false});
       
+      // Continue scanning
       startScan();
   }
 
-  // --- MISSING FUNCTIONS ADDED BELOW ---
-
-  function thDateToIso(thDate) {
-      if(!thDate) return '';
-      const parts = thDate.split('/');
-      if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-      return thDate;
-  }
-
-  function editStk(id,n,itm,a,e,cnt,time) { 
-      editTarget = document.getElementById(`stk-${id}`); 
-      document.getElementById('ed-id').value=id; 
-      document.getElementById('ed-itemid').value=itm; 
-      document.getElementById('ed-name').innerText=n; 
-      document.getElementById('ed-amt').value=a; 
-      document.getElementById('ed-exp').value = thDateToIso(e); 
-      document.getElementById('ed-change').innerText=cnt;
-      document.getElementById('ed-time').innerText=time; 
-      document.getElementById('stk-qty').value = 1; 
-      calcExpDays();
-      mdlEdit.show(); 
-  }
-
-  function calcExpDays() {
-      const exp = document.getElementById('ed-exp').value;
-      if(!exp) return document.getElementById('ed-days-left').innerText = "";
-      const diff = Math.ceil((new Date(exp) - new Date()) / (1000 * 60 * 60 * 24));
-      
-      let badge = '';
-      if(diff < 0) badge = '<div class="badge-expired w-100 text-center mt-2">ยาหมดอายุแล้ว</div>';
-      else if(diff < 180) {
-          badge = `<div class="badge-near-exp w-100 text-center mt-2">${Math.ceil(diff)} วัน</div>`;
-      }
-      
-      document.getElementById('ed-days-left').innerHTML = `อีก <span class="${diff<0?'text-danger fw-bold':''}">${diff}</span> วันหมดอายุ ${badge}`;
-  }
+  function filterOrder(){ renderOrder(); }
   
-  async function saveEdit() { 
-      const id = document.getElementById('ed-id').value;
-      const amt = document.getElementById('ed-amt').value;
-      const exp = document.getElementById('ed-exp').value;
-      
-      const pl = { invId:id, amount:amt, expire:exp }; 
-      const res = await callApi('saveEditItem', pl); 
-      if(res.status) { 
-          mdlEdit.hide();
-          if(editTarget) {
-              editTarget.querySelector('.qty-val').innerText = amt;
-              let displayExp = exp;
-              if(exp.includes('-')) {
-                  const p = exp.split('-');
-                  displayExp = `${p[2]}/${p[1]}/${p[0]}`;
-              }
-              editTarget.querySelector('.exp-val').innerText = displayExp;
-          }
-          Swal.fire({toast:true, icon:'success', title:'บันทึกแล้ว', timer:1500});
-      } 
-  }
-
-  // --- HISTORY & STATS ---
-  function loadHist(init = false) { 
-      if(!init) document.getElementById('hist-loader').classList.remove('hidden');
-      
-      callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
-          document.getElementById('hist-loader').classList.add('hidden');
-          if(res.status) { 
-              allHistory = res.data; 
-              const boxCounts = allHistory.reduce((acc, r) => { acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
-              const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
-              
-              const scroller = document.getElementById('box-scroller-hist');
-              const histScrollerHtml = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
-                histBoxes.map(bName => {
-                    const count = boxCounts[bName] || 0;
-                    return `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${count}</span></div>`;
-                }).join('');
-              scroller.innerHTML = histScrollerHtml;
-
-              if (curHistStatus === 'STATS') loadStats();
-              else renderHist(curHistStatus); 
-          } 
-      }); 
-  }
-
-  function filterHist(status, el) {
-      curHistStatus = status;
-      document.querySelectorAll('.nav-tabs .nav-link').forEach(x=>x.classList.remove('active')); el.classList.add('active');
-      const scroller = document.getElementById('box-scroller-hist');
-      const statsFilter = document.getElementById('stats-filter');
-      
-      if(status === 'STATS') {
-          scroller.classList.add('hidden'); statsFilter.classList.remove('hidden');
-          loadStats();
-      } else {
-          scroller.classList.remove('hidden'); statsFilter.classList.add('hidden');
-          renderHist(status);
-      }
-  }
-
-  function renderHist(status) {
-      let filtered = allHistory;
-      if(curHistBox !== 'ALL') { filtered = filtered.filter(r => r.box === curHistBox); }
-
-      const totalWait = filtered.filter(r => r.status.includes('รอ')).length;
-      const totalDone = filtered.filter(r => r.status.includes('จัดยาเสร็จ')).length;
-      const totalRecv = filtered.filter(r => r.status.includes('ได้รับ')).length;
-      
-      document.getElementById('bg-wait').innerText = totalWait; 
-      document.getElementById('bg-done').innerText = totalDone; 
-      document.getElementById('bg-recv').innerText = totalRecv;
-      
-      const globalDone = allHistory.filter(r => r.status.includes('จัดยาเสร็จ')).length;
-      if(globalDone > 0) { 
-          document.getElementById('nav-badge-hist').classList.remove('hidden'); 
-          document.getElementById('nav-badge-hist').innerText = globalDone; 
-      } else { 
-          document.getElementById('nav-badge-hist').classList.add('hidden'); 
-      }
-
-      let msg = "";
-      if(status === 'รอการจัดยา') { filtered = filtered.filter(r => r.status.includes('รอ')); msg = "เมื่อห้องยารับ order แล้ว จะเปลี่ยนสถานะเป็น 'จัดยาเสร็จแล้ว'"; }
-      else if(status === 'จัดยาเสร็จแล้ว') { filtered = filtered.filter(r => r.status.includes('จัดยาเสร็จ')); msg = "มารับยาที่ห้องยาได้เลย"; }
-      else if(status === 'ได้รับยาแล้ว') { filtered = filtered.filter(r => r.status.includes('ได้รับ')); }
-      else if(status === 'STATS') return;
-
-      document.getElementById('hist-msg').innerText = msg; document.getElementById('hist-msg').classList.toggle('hidden', msg === "");
-      renderHistList(filtered, 10);
-  }
-
-  function renderHistList(data, limit) {
-      const displayData = limit ? data.slice(0, limit) : data;
-      const html = displayData.map(r=>{
-        let action = ''; 
-        if(r.status.includes('รอการจัดยา')) {
-            action = `<button class="btn btn-warning w-100 fw-bold py-2 mt-2" style="font-size:1.1rem;color:#333" onclick="openCheckOrder('${r.id}')"><i class="fas fa-clipboard-check"></i> พิมพ์ใบจัดยา</button>`;
-        } else if(r.status.includes('จัดยาเสร็จ')) {
-            action = `<button class="btn btn-success w-100 fw-bold py-2 mt-2" style="font-size:1.2rem;" onclick="receiveOrder('${r.id}')">กดรับยา</button>`;
-        }
-        
-        let pdfBtn = '';
-        if(!r.status.includes('รอการจัดยา')) {
-            pdfBtn = `<a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i> PDF</a>`;
-        }
-
-        let itemList = r.items.map(i=> `<li>${i.name} (${i.qty}) - ${i.price}</li>`).join('').slice(0, 200) + (r.items.length > 5 ? '...' : '');
-        let cardClass = r.status.includes('รอ') ? 'card-wait' : (r.status.includes('รับ') ? 'card-recv' : 'card-done');
-        
-        const diff1 = getDuration(r.rawOrderTime, r.rawCheckTime);
-        const diff2 = getDuration(r.rawCheckTime, r.rawAcceptTime);
-        
-        let timelineHtml = '';
-        if(r.status.includes('ได้รับ')) {
-            timelineHtml = `
-              <div class="timeline px-2 py-2">
-                 <div class="timeline-line"></div>
-                 <div class="tl-step step-order active"><div class="tl-icon"><i class="fas fa-file-alt"></i></div><div class="tl-time">เบิก<br>${r.time.split(' ')[1]||''}</div></div>
-                 <div class="tl-step step-check active"><div class="tl-duration">${diff1}</div><div class="tl-icon"><i class="fas fa-check"></i></div><div class="tl-time">จัดเสร็จ<br>${r.checkedTime||'-'}</div></div>
-                 <div class="tl-step step-recv active"><div class="tl-duration">${diff2}</div><div class="tl-icon"><i class="fas fa-hand-holding"></i></div><div class="tl-time">รับยา<br>${r.acceptedTime||'-'}</div></div>
-              </div>`;
-        }
-        
-        return `<div class="card mb-2 p-2 shadow-sm ${cardClass}">
-                  <div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${r.id}</strong><small class="text-muted" style="font-size:10px">${r.time}</small></div>
-                  <div class="small text-muted my-1"><i class="fas fa-box"></i> ${r.box}</div>
-                  ${timelineHtml}
-                  <ul class="small text-muted ps-3 mb-1" style="max-height:100px;overflow-y:auto">${itemList}</ul>
-                  <div class="d-flex flex-column align-items-stretch">
-                     <div class="d-flex justify-content-between align-items-center"><small class="badge bg-light text-dark border">${r.status}</small>${pdfBtn}</div>
-                     ${action}
-                  </div>
-                </div>`;
-      }).join('');
-
-      let moreBtn = '';
-      if(limit && data.length > limit) {
-          moreBtn = `<button class="btn btn-outline-secondary w-100 mt-2" onclick='renderHistList(${JSON.stringify(data).replace(/'/g, "&apos;")}, null)'>ดูทั้งหมด (${data.length})</button>`;
-      }
-      document.getElementById('hist-res').innerHTML = html + moreBtn || '<div class="text-center text-muted mt-3">ไม่มีรายการ</div>';
-  }
-  
-  function getDuration(t1, t2) {
-      if(!t1 || !t2) return '';
-      const diff = t2 - t1;
-      if(diff <= 0) return '';
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      let str = ""; if(days > 0) str += `${days}วัน `; if(hrs > 0) str += `${hrs}ชม. `; str += `${mins}นาที`; return str;
-  }
-
-  async function loadStats() {
-      const start = document.getElementById('stat-start').value;
-      const end = document.getElementById('stat-end').value;
-      document.getElementById('hist-res').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2">กำลังคำนวณสถิติ...</div></div>';
-      document.getElementById('hist-msg').classList.add('hidden');
-      const res = await callApi('getStatData', { user: currentUser.name, substock: currentUser.substock, start: start, end: end });
-      if(res.status) { renderStats(res.data); } else { document.getElementById('hist-res').innerHTML = '<div class="alert alert-danger">Error loading stats</div>'; }
-  }
-
-  function renderStats(data) {
-      if(!data || data.length === 0) { document.getElementById('hist-res').innerHTML = '<div class="text-center text-muted mt-5">ไม่พบข้อมูลการเบิกในช่วงเวลานี้</div>'; return; }
-      const html = data.map((item, idx) => `
-        <div class="d-flex align-items-center bg-white p-2 mb-2 rounded shadow-sm border">
-            <div class="me-3 fw-bold text-muted" style="width:20px">${idx+1}</div>
-            <div class="flex-grow-1"><div class="fw-bold text-primary">${item.name}</div><div class="small text-secondary"><i class="fas fa-box"></i> ${item.box}</div><div class="small text-muted">เบิกไป ${item.count} ครั้ง</div></div>
-            <div class="text-end"><div class="fw-bold fs-5">${item.qty}</div><div class="small text-muted">${item.price.toFixed(0)} บ.</div></div>
-        </div>`).join('');
-      document.getElementById('hist-res').innerHTML = html;
-  }
-
-  // --- ACTIONS ---
-  function openCheckOrder(oid) {
-      tempCheckOrderId = oid;
-      document.getElementById('check-user-name').innerText = currentUser.name;
-      mdlCheckOrder.show(); setTimeout(fixCvsCheck, 500);
-  }
-  
-  async function confirmCheckOrder() {
-      if(isCanvasBlank(cvsCheck)) return Swal.fire('กรุณาเซ็นชื่อผู้จัดยา');
-      mdlCheckOrder.hide();
-      const sign = cvsCheck.toDataURL();
-      const res = await callApi('confirmOrderCheck', { orderId: tempCheckOrderId, user: currentUser.name, signature: sign }); // Assume pharmacist is current user
-      clrCvsCheck();
-      if(res.status && res.pdf) window.open(res.pdf, '_blank');
-      loadHist();
-      Swal.fire({toast:true, icon:'success', title:'บันทึกเรียบร้อย'});
-  }
-
-  async function receiveOrder(oid) {
-      if(!confirm('ยืนยันได้รับยาครบถ้วน?')) return;
-      const res = await callApi('updateOrderStatus', { orderId: oid, user: currentUser.name });
-      if(res.status) { Swal.fire('Success'); loadHist(); }
-  }
-
-  function openPrintLabel() { 
-      document.getElementById('lbl-signer').innerText = currentUser.name;
-      mdlSignLabel.show(); setTimeout(fixCvsLabel, 500); 
-  }
-  async function submitLabel() {
-      if(isCanvasBlank(cvsLabel)) return Swal.fire('เซ็นชื่อก่อน');
-      mdlSignLabel.hide(); 
-      Swal.fire({title:'กำลังสร้าง PDF...', didOpen:()=>Swal.showLoading()});
-      const sign = cvsLabel.toDataURL();
-      const res = await callApi('generateBoxLabel', { boxName: curBoxStock, signBase64: sign, user: currentUser.name });
-      if(res.status) {
-        clrCvsLabel();
-        Swal.fire({ icon:'success', title:'เรียบร้อย', html:`<a href="${res.pdf}" target="_blank" class="btn btn-primary">ดูใบแปะกล่อง</a>` });
-      } else Swal.fire('Error', res.message, 'error');
-  }
-
-  async function showExpiredDrugs() {
-      Swal.fire({title:'Loading...', didOpen:()=>Swal.showLoading()});
-      try {
-          const res = await callApi('getExpiredInventory');
-          Swal.close();
-          const div = document.getElementById('realtime-detail');
-          if(!res.data || res.data.length === 0) {
-              div.innerHTML = '<div class="alert alert-success text-center">เยี่ยม! ไม่มียาหมดอายุ</div>';
-          } else {
-              div.innerHTML = `<h6 class="text-danger fw-bold"><i class="fas fa-exclamation-circle"></i> รายการยาหมดอายุ (${res.data.length})</h6>` + 
-              res.data.map(d => `
-                 <div class="border-bottom py-2">
-                    <div class="fw-bold text-dark">${d.name}</div>
-                    <div class="d-flex justify-content-between small text-muted"><span><i class="fas fa-box"></i> ${d.box}</span><span class="text-danger fw-bold">${d.expire}</span></div>
-                 </div>`).join('');
-          }
-          document.getElementById('pagination-controls').classList.add('hidden');
-      } catch(e) { Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลได้', 'error'); }
-  }
-
-  // --- SEARCH & SUGGESTIONS ---
-  async function showSuggestions(kw) {
-      if(!kw || kw.length < 2) {
-          document.getElementById('search-suggestions').innerHTML = '';
-          document.getElementById('search-suggestions').classList.add('hidden');
-          return;
-      }
-      const res = await callApi('searchMasterItems', { kw });
-      if(res.data && res.data.length > 0) {
-          const html = res.data.map(i => 
-              `<div class="p-2 border-bottom cursor-pointer hover-bg-light" onclick="doFullSearch('${i.name}'); document.getElementById('kw-realtime').value='${i.name}';">
-                 <i class="fas fa-search text-muted me-2"></i> ${i.name}
-              </div>`
-          ).join('');
-          document.getElementById('search-suggestions').innerHTML = html;
-          document.getElementById('search-suggestions').classList.remove('hidden');
-      } else {
-          document.getElementById('search-suggestions').classList.add('hidden');
-      }
-  }
-
-  async function doFullSearch(kw, page=1) {
-      document.getElementById('search-suggestions').classList.add('hidden');
-      if(!kw) return;
-      curPage = page;
-      document.getElementById('search-spinner').classList.remove('hidden');
-      document.getElementById('realtime-detail').innerHTML = '';
-      
-      const res = await callApi('searchDrugDetails', { kw: kw, page: page });
-      document.getElementById('search-spinner').classList.add('hidden');
-
-      if(res.status) {
-         totalPages = res.data.totalPages;
-         totalSearchItems = res.data.totalItems;
-         document.getElementById('search-count').innerText = `พบ ${totalSearchItems} รายการ`;
-         
-         if(totalSearchItems === 0) {
-             document.getElementById('realtime-detail').innerHTML = '<div class="alert alert-warning text-center">ไม่พบยาสต็อก</div>';
-             document.getElementById('pagination-controls').classList.add('hidden');
-             return;
-         }
-
-         if(kw === 'SHOW_ALL') {
-            document.getElementById('pagination-controls').classList.remove('hidden');
-            document.getElementById('page-display').innerText = `หน้า ${curPage} / ${totalPages}`;
-         } else {
-            document.getElementById('pagination-controls').classList.add('hidden');
-         }
-
-         document.getElementById('realtime-detail').innerHTML = res.data.results.map(d => {
-           let rows = d.locations.map(l => {
-               let cls = ''; let badge = '';
-               if(l.isExpired) { cls = 'row-expired'; badge = '<span class="badge-expired ms-1">ยาหมดอายุ</span>'; }
-               else if(l.isNearExp) { badge = `<span class="badge-near-exp ms-1">${l.daysLeft} วัน</span>`; }
-               return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}${badge}</td></tr>`;
-            }).join('');
-           
-            return `<div class="mb-3 border rounded shadow-sm p-3 bg-white fade-in">
-                      <div class="d-flex gap-2">
-                        <div class="drug-img-wrap" style="width:80px;height:80px;flex-shrink:0;">
-                            <img src="${DEFAULT_IMG}" data-raw="${d.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer">
-                        </div>
-                        <div class="flex-grow-1">
-                           <div class="fw-bold text-primary">${d.name} <span class="badge bg-info text-dark">รวม ${d.totalQty}</span></div>
-                           <div class="small text-muted mb-1">ID: ${d.itemId}</div>
-                           <table class="table table-sm table-custom mb-0"><thead><tr><th>กล่อง</th><th>จน.</th><th>Exp</th></tr></thead><tbody>${rows}</tbody></table>
-                        </div>
-                      </div>
-                      <div class="d-flex gap-2 mt-2 justify-content-end">
-                        <button class="btn btn-sm btn-outline-secondary" onclick='openMasterEdit(${JSON.stringify(d).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i> แก้ไขข้อมูล</button>
-                        <button class="btn btn-sm btn-outline-info" onclick="openLabelEdit('${d.itemId}')"><i class="fas fa-tag"></i> แก้ไขฉลาก</button>
-                      </div>
-                    </div>`;
-         }).join('');
-         lazyLoad();
-      }
-  }
-  function nextPage() { if(curPage < totalPages) doFullSearch('SHOW_ALL', curPage+1); }
-  function prevPage() { if(curPage > 1) doFullSearch('SHOW_ALL', curPage-1); }
-
-  // --- SCANNER ---
-  function startScan() {
-      document.getElementById('qr-overlay').style.display = 'flex';
-      html5QrcodeScanner = new Html5Qrcode("reader");
-      html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess);
-  }
-  function stopScan() {
-      if(html5QrcodeScanner) html5QrcodeScanner.stop().then(() => {
-          html5QrcodeScanner.clear();
-          document.getElementById('qr-overlay').style.display = 'none';
-      });
-  }
-  function restartScan() {
-      mdlScanRes.hide();
-      startScan();
-  }
-  async function onScanSuccess(decodedText) {
-      stopScan();
-      Swal.fire({title:'Searching...', didOpen:()=>Swal.showLoading()});
-      const res = await callApi('getInventoryByQr', { qrCode: decodedText.trim() });
-      Swal.close();
-      if(res.status) {
-          const d = res.data;
-          document.getElementById('qr-id').value = d.invId;
-          document.getElementById('qr-name').innerText = d.name;
-          document.getElementById('qr-box').innerText = d.box;
-          document.getElementById('qr-loc').value = d.location;
-          document.getElementById('qr-amt').value = d.amount;
-          document.getElementById('qr-act').value = d.actual;
-          document.getElementById('qr-exp').value = thDateToIso(d.expire); 
-          document.getElementById('qr-img').src = DEFAULT_IMG; 
-          if(d.imageRaw) callApi('resolveImage',{input:d.imageRaw}).then(r=>{if(r.status) document.getElementById('qr-img').src=r.src});
-          document.getElementById('qr-print-qty').value = 1;
-          mdlScanRes.show();
-      } else { Swal.fire('Not Found', 'QR Code not mapped', 'error').then(startScan); }
-  }
-  async function saveQrEdit() {
-      const pl = { invId: document.getElementById('qr-id').value, amount: document.getElementById('qr-amt').value, actual: document.getElementById('qr-act').value, location: document.getElementById('qr-loc').value, expire: document.getElementById('qr-exp').value };
-      await callApi('updateInventoryFromQr', pl);
-      Swal.fire({toast:true, icon:'success', title:'Saved', position:'center', timer:1000});
-      mdlScanRes.hide();
-      startScan();
-  }
-
-  // --- CANVAS & UTILS ---
   let canvas, ctx, isDraw=false;
   let cvsLabel, ctxLabel, isDrawLabel=false;
   let cvsCheck, ctxCheck, isDrawCheck=false;
