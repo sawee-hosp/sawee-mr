@@ -313,6 +313,7 @@
             <div class="modal-header bg-dark text-white p-2"><h6 class="m-0 ms-2"><i class="fas fa-qrcode"></i> ผลการแสกน</h6><button class="btn-close btn-close-white" onclick="restartScan()"></button></div>
             <div class="modal-body pt-2">
                 <input type="hidden" id="qr-id">
+                <input type="hidden" id="qr-item-id">
                 <div class="text-center mb-1"><img id="qr-img" src="" style="height:60px;border-radius:6px;object-fit:cover;"></div>
                 <h6 id="qr-name" class="fw-bold text-center m-0 text-primary"></h6>
                 <div class="small text-muted text-center mb-2"><i class="fas fa-box"></i> <span id="qr-box"></span> | <i class="fas fa-map-marker-alt"></i> <input id="qr-loc" class="d-inline border-0 text-center" style="width:60px;font-size:0.8rem" placeholder="Loc"></div>
@@ -903,6 +904,20 @@
       Swal.fire({icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, showConfirmButton:false});
   }
 
+  function addQrToPool() {
+      const id = document.getElementById('qr-item-id').value;
+      const name = document.getElementById('qr-name').innerText;
+      const exp = document.getElementById('qr-exp').value; 
+      const qty = document.getElementById('qr-print-qty').value;
+      
+      if(!id) return Swal.fire('ไม่พบข้อมูลยา (Item ID)');
+      if(!qty || qty <= 0) return Swal.fire('ระบุจำนวน');
+      
+      stickerCart.push({ itemId: id, name: name, qty: qty, expire: exp });
+      updateStickerBadge();
+      Swal.fire({toast:true, icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, position: 'top-end', showConfirmButton:false});
+  }
+
   function updateStickerBadge() {
       const b = document.getElementById('badge-sticker');
       const total = stickerCart.reduce((s,i) => s + Number(i.qty), 0);
@@ -1370,6 +1385,7 @@
           if(res.status) {
               const d = res.data;
               document.getElementById('qr-id').value = d.invId;
+              document.getElementById('qr-item-id').value = d.itemId; // Added hidden input set
               document.getElementById('qr-name').innerText = d.name;
               document.getElementById('qr-box').innerText = d.box;
               document.getElementById('qr-loc').value = d.location;
@@ -1533,12 +1549,26 @@
           Swal.fire({ 
               icon: 'success', 
               title: 'ส่งข้อมูลเรียบร้อยแล้ว',
-              html: `โปรดเช็คสถานะในหน้า "รายการเบิก"<br><a href="${res.pdfUrl}" target="_blank" class="btn btn-sm btn-primary mt-2">ดูใบเบิก (PDF)</a>`
+              html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
           });
           loadHist();
       } else {
           Swal.fire('Error', res.message, 'error');
       }
+  }
+
+  function addQrToPool() {
+      const id = document.getElementById('qr-item-id').value;
+      const name = document.getElementById('qr-name').innerText;
+      const exp = document.getElementById('qr-exp').value; 
+      const qty = document.getElementById('qr-print-qty').value;
+      
+      if(!id) return Swal.fire('ไม่พบข้อมูลยา (Item ID)');
+      if(!qty || qty <= 0) return Swal.fire('ระบุจำนวน');
+      
+      stickerCart.push({ itemId: id, name: name, qty: qty, expire: exp });
+      updateStickerBadge();
+      Swal.fire({toast:true, icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, position: 'top-end', showConfirmButton:false});
   }
 
 </script>
