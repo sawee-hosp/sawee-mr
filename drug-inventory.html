@@ -418,6 +418,9 @@
   let hosAuthValid = false;
   let hosAuthName = '';
   let scanMode = 'ITEM'; // 'ITEM' or 'BOX'
+  
+  // -- NEW GLOBAL TO PREVENT DOUBLE SUBMIT --
+  let isSubmitting = false;
 
   // --- UTILS & HELPERS ---
   async function callApi(action, payload = {}) {
@@ -470,6 +473,19 @@
           mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
           mdlScanRes = new bootstrap.Modal('#mdlScanRes');
           
+          // -- FAST LOAD: CHECK CACHE --
+          const cachedUser = localStorage.getItem('saw_user_v2');
+          if (cachedUser) {
+              currentUser = JSON.parse(cachedUser);
+              document.getElementById('login-overlay').classList.add('hidden');
+              document.getElementById('app-main').classList.remove('hidden');
+              document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
+              document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
+              
+              // Load critical data parallel to LIFF init
+              startApp(null, true); 
+          }
+
           const lastUser = localStorage.getItem('lastHosUser');
           if(lastUser) {
               document.getElementById('hosxp-user').value = lastUser;
@@ -503,6 +519,7 @@
                   currentUser.name = document.getElementById('reg-name').value;
                   currentUser.email = document.getElementById('reg-email').value;
                   currentUser.substock = subs; 
+                  localStorage.setItem('saw_user_v2', JSON.stringify(currentUser)); // Update cache
                   mdlReg.hide();
                   Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
                   startApp(); 
@@ -522,7 +539,8 @@
           else { 
               const profile = await liff.getProfile(); 
               currentUser.photo = profile.pictureUrl; 
-              checkUser(profile.userId, boxIdParam); 
+              // Verify user in background (or foreground if not cached)
+              checkUser(profile.userId, boxIdParam, !!cachedUser); 
           } 
       } catch(e) { 
           console.error(e);
@@ -532,9 +550,15 @@
   };
 
   // --- CORE APP LOGIC ---
-  async function checkUser(uid, boxParam) {
+  async function checkUser(uid, boxParam, isBackground) {
       const res = await callApi('checkUserLIFF', { userId: uid });
       if (res.status === 'NOT_FOUND') { 
+          // If not found but we loaded cache, cache is invalid
+          if(isBackground) {
+             localStorage.removeItem('saw_user_v2');
+             location.reload();
+             return;
+          }
           currentUser.userId = uid; 
           const opts = await callApi('getRegOptions');
           if(opts.status) {
@@ -547,7 +571,11 @@
           document.getElementById('reg-img').src = currentUser.photo || DEFAULT_IMG; 
           mdlReg.show(); 
       }
-      else if (res.status === 'FOUND') { currentUser = { ...res.userData, userId: uid }; startApp(boxParam); }
+      else if (res.status === 'FOUND') { 
+          currentUser = { ...res.userData, userId: uid }; 
+          localStorage.setItem('saw_user_v2', JSON.stringify(currentUser)); // Cache
+          if (!isBackground) startApp(boxParam); 
+      }
   }
 
   function openProfile() {
@@ -561,13 +589,20 @@
   async function saveProfile() {
       const pl = { userId: currentUser.userId, username: document.getElementById('pf-user').value, name: document.getElementById('pf-name').value, substock: document.getElementById('pf-sub').value, password: document.getElementById('pf-pass').value, email: document.getElementById('pf-email').value };
       const res = await callApi('updateUserProfile', pl);
-      if(res.status) location.reload(); else Swal.fire(res.message);
+      if(res.status) {
+          currentUser.name = pl.name;
+          localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
+          location.reload(); 
+      } else Swal.fire(res.message);
   }
 
-  async function startApp(boxParam) {
-      document.getElementById('login-overlay').classList.add('hidden'); document.getElementById('app-main').classList.remove('hidden');
-      document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
+  async function startApp(boxParam, fromCache=false) {
+      if(!fromCache) {
+        document.getElementById('login-overlay').classList.add('hidden'); document.getElementById('app-main').classList.remove('hidden');
+        document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
+      }
       
+      // Load Data
       const resOrder = await callApi('getBoxes', { user: currentUser, showAll: false });
       if(resOrder.status) renderBoxScroller('order', resOrder.boxes);
       const resStock = await callApi('getBoxes', { user: currentUser, showAll: true });
@@ -1294,7 +1329,6 @@
       const res = await callApi('updateMasterItem', payload); if(res.status) { Swal.fire('Saved'); mdlMasterEdit.hide(); }
   }
 
-  function openBoxEditor() { mdlBoxEdit.show(); }
   async function uploadBoxImg(input) {
       const file = input.files[0]; if(!file) return;
       const reader = new FileReader();
@@ -1521,9 +1555,15 @@
   }
 
   async function submitOrder() {
+      // -- DUPLICATE FIX: Guard Clause --
+      if(isSubmitting) return;
+
       if(cart.length === 0) return Swal.fire('ไม่มีสินค้าในตะกร้า');
       if(!hosAuthValid) return Swal.fire('กดบันทึกชื่อครั้งแรกก่อนเบิกยา');
       if(isCanvasBlank(cvs)) return Swal.fire('กรุณาเซ็นชื่อผู้เบิก');
+
+      // Lock
+      isSubmitting = true;
 
       const sign = cvs.toDataURL();
       const orderData = {
@@ -1534,26 +1574,34 @@
       };
 
       Swal.fire({ title: 'กำลังบันทึก...', didOpen: ()=>Swal.showLoading() });
-      const res = await callApi('submitOrder', { orderData });
       
-      if(res.status) {
-          cart = [];
-          badge();
-          renderOrder();
-          offC.hide();
-          clrCvs();
-          document.getElementById('hosxp-user').value = '';
-          document.getElementById('hos-status').innerHTML = '';
-          hosAuthValid = false;
+      try {
+          const res = await callApi('submitOrder', { orderData });
           
-          Swal.fire({ 
-              icon: 'success', 
-              title: 'ส่งข้อมูลเรียบร้อยแล้ว',
-              html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
-          });
-          loadHist();
-      } else {
-          Swal.fire('Error', res.message, 'error');
+          if(res.status) {
+              cart = [];
+              badge();
+              renderOrder();
+              offC.hide();
+              clrCvs();
+              document.getElementById('hosxp-user').value = '';
+              document.getElementById('hos-status').innerHTML = '';
+              hosAuthValid = false;
+              
+              Swal.fire({ 
+                  icon: 'success', 
+                  title: 'ส่งข้อมูลเรียบร้อยแล้ว',
+                  html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
+              });
+              loadHist();
+          } else {
+              Swal.fire('Error', res.message, 'error');
+          }
+      } catch(e) {
+          Swal.fire('Error', 'การเชื่อมต่อผิดพลาด', 'error');
+      } finally {
+          // Unlock
+          isSubmitting = false;
       }
   }
 
@@ -1570,7 +1618,6 @@
       updateStickerBadge();
       Swal.fire({toast:true, icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, position: 'top-end', showConfirmButton:false});
   }
-
 </script>
 </body>
 </html>
