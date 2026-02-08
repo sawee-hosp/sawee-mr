@@ -141,8 +141,16 @@
   <div id="login-overlay" style="position:fixed;inset:0;background:#f4f6f9;z-index:3000;display:flex;align-items:center;justify-content:center;flex-direction:column;">
      <div style="font-size:3.5rem;color:var(--primary);margin-bottom:15px">💊</div>
      <h3 class="fw-bold m-0" style="font-size:1.8rem">Sawee Rxfill 2.0</h3>
-     <div class="animate-pulse text-primary fw-bold mt-2" style="font-size:0.8rem; letter-spacing: 1px;">CONNECTING...</div>
-     <div class="spinner-border text-primary mt-4" style="width: 2rem; height: 2rem;"></div>
+     
+     <!-- New Login Form -->
+     <div id="login-form-box" class="card p-4 mt-4 shadow-sm border-0 w-75 hidden" style="max-width:350px;">
+        <div class="mb-3">
+            <label class="form-label small text-muted">HosXP Username</label>
+            <input type="text" id="login-username" class="form-control text-center fw-bold" placeholder="ระบุชื่อผู้ใช้งาน">
+        </div>
+        <button class="btn btn-primary w-100 rounded-pill" onclick="onLoginSubmit()">เข้าสู่ระบบ</button>
+     </div>
+
      <div id="status-text" class="text-danger mt-3 text-center px-4 small"></div>
   </div>
 
@@ -175,6 +183,9 @@
          <div style="position:relative;padding:5px;" onclick="openCart()">
             <i class="fas fa-shopping-basket" style="font-size:1.3rem;"></i>
             <div id="badge" class="badge bg-danger rounded-circle position-absolute top-0 end-0 hidden" style="font-size:9px">0</div>
+         </div>
+         <div style="position:relative;padding:5px;cursor:pointer" onclick="logout()">
+            <i class="fas fa-sign-out-alt" style="font-size:1.3rem;"></i>
          </div>
       </div>
     </nav>
@@ -288,20 +299,12 @@
             <div class="border rounded p-2 mb-1 bg-white">
                 <small class="text-muted d-block">ลายเซ็นผู้เบิก:</small>
                 
-                <div class="d-flex align-items-center gap-2 mt-1 mb-2">
-                    <input id="hosxp-user" class="form-control" placeholder="ระบุ HosXP Username" onkeyup="checkHosUser()">
-                    <div id="hos-status" class="small fw-bold text-nowrap" style="min-width:100px;text-align:right;"></div>
-                </div>
-                <div id="hos-add-row" class="input-group mb-2 hidden fade-in">
-                   <input id="hos-new-name" class="form-control" placeholder="ชื่อ-สกุลจริง">
-                   <button class="btn btn-outline-primary" onclick="registerHosUser()">บันทึก</button>
-                </div>
+                <div class="text-primary fw-bold mb-2"><i class="fas fa-user-circle"></i> <span id="cart-signer-name"></span></div>
                 
                 <canvas id="cvs" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas>
                 <div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvs()">ล้าง</small></div>
             </div>
             
-            <div class="text-center text-primary fw-bold mb-3 small" id="cart-user-name"></div>
             <button id="btn-submit-order" onclick="submitOrder()" class="btn btn-primary w-100 rounded-pill py-3 fw-bold">ยืนยันการเบิก</button>
         </div>
     </div>
@@ -361,10 +364,25 @@
   <div class="modal fade" id="mdlProfile"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">แก้ไขข้อมูลส่วนตัว</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
     <div class="mb-2"><label class="small">Username</label><input id="pf-user" class="form-control"></div>
     <div class="mb-2"><label class="small">ชื่อ-สกุล</label><input id="pf-name" class="form-control"></div>
-    <div class="mb-2"><label class="small">สิทธิ์ (Substock)</label><textarea id="pf-sub" class="form-control" rows="2"></textarea></div>
+    
+    <div class="mb-2 p-2 bg-light rounded border">
+        <label class="small fw-bold text-primary">สิทธิ์การเบิก (Substock)</label>
+        <div id="display-substock" class="small text-muted"></div>
+    </div>
+    
+    <div class="mb-2 p-2 bg-light rounded border">
+        <label class="small fw-bold text-primary">Box Group (ตึก)</label>
+        <div id="display-boxgroup" class="small text-muted"></div>
+    </div>
+
+    <!-- Hidden inputs for legacy compatibility if needed -->
+    <input type="hidden" id="pf-sub">
+    
     <div class="mb-2"><label class="small">Password</label><input id="pf-pass" class="form-control"></div>
     <div class="mb-2"><label class="small">Email</label><input id="pf-email" class="form-control"></div>
     <button onclick="saveProfile()" class="btn btn-primary w-100 mt-2">บันทึก</button>
+    <hr>
+    <button onclick="logout()" class="btn btn-danger w-100"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div></div></div></div>
 
   <div class="modal fade" id="mdlBoxEdit" tabindex="-1">
@@ -475,21 +493,30 @@
           
           // -- FAST LOAD: CHECK CACHE --
           const cachedUser = localStorage.getItem('saw_user_v2');
+          
           if (cachedUser) {
               currentUser = JSON.parse(cachedUser);
+              
+              // FORCE REFRESH IF DATA IS STALE (missing boxGroup which is critical now)
+              if (currentUser.boxGroup === undefined) { 
+                   localStorage.removeItem('saw_user_v2'); 
+                   location.reload(); 
+                   return;
+              }
+
               document.getElementById('login-overlay').classList.add('hidden');
               document.getElementById('app-main').classList.remove('hidden');
               document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
               document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
               
-              // Load critical data parallel to LIFF init
-              startApp(null, true); 
-          }
-
-          const lastUser = localStorage.getItem('lastHosUser');
-          if(lastUser) {
-              document.getElementById('hosxp-user').value = lastUser;
-              checkHosUser();
+              const params = new URLSearchParams(window.location.search);
+              const boxIdParam = params.get('boxId');
+              
+              // Direct start app (no LIFF)
+              startApp(boxIdParam, true); 
+          } else {
+             // SHOW MANUAL LOGIN
+             document.getElementById('login-form-box').classList.remove('hidden');
           }
 
           const d = new Date();
@@ -519,6 +546,14 @@
                   currentUser.name = document.getElementById('reg-name').value;
                   currentUser.email = document.getElementById('reg-email').value;
                   currentUser.substock = subs; 
+                  currentUser.boxGroup = grp;
+                  // If we didn't have a userId before (manual login flow), we don't know it until server returns success, 
+                  // but assuming the flow for manual is handled by registerUserFromLIFF correctly, 
+                  // for manual login we rely on local persistence.
+                  
+                  // For manual login, if user was null, we construct it now
+                  if(!currentUser.userId) currentUser.userId = 'MANUAL_' + currentUser.username;
+
                   localStorage.setItem('saw_user_v2', JSON.stringify(currentUser)); // Update cache
                   mdlReg.hide();
                   Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
@@ -530,18 +565,7 @@
           
           document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
           initCvs(); initCvsLabel(); initCvsCheck();
-          
-          const params = new URLSearchParams(window.location.search);
-          const boxIdParam = params.get('boxId');
 
-          await liff.init({ liffId }); 
-          if(!liff.isLoggedIn()) liff.login(); 
-          else { 
-              const profile = await liff.getProfile(); 
-              currentUser.photo = profile.pictureUrl; 
-              // Verify user in background (or foreground if not cached)
-              checkUser(profile.userId, boxIdParam, !!cachedUser); 
-          } 
       } catch(e) { 
           console.error(e);
           const statusDiv = document.getElementById('status-text');
@@ -549,41 +573,82 @@
       }
   };
 
+  // --- NEW LOGIN FUNCTION ---
+  async function onLoginSubmit() {
+     const username = document.getElementById('login-username').value.trim();
+     if(!username) return Swal.fire('กรุณาระบุ Username');
+     
+     const statusDiv = document.getElementById('status-text');
+     statusDiv.innerHTML = '<div class="spinner-border text-primary spinner-border-sm"></div> Checking...';
+     document.getElementById('login-form-box').classList.add('disabled');
+     
+     try {
+         const res = await callApi('checkHosxpUser', { username: username });
+         statusDiv.innerHTML = '';
+         
+         if(res.status === 'FOUND') {
+            // Found existing app user
+            currentUser = res.userData;
+            localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('app-main').classList.remove('hidden');
+            document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
+            document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
+            startApp();
+         } else if (res.status === 'PARTIAL') {
+             // Found in HosXP but not in App -> Show Reg with Pre-filled Name
+             currentUser = { username: username, photo: DEFAULT_IMG };
+             prepareRegistration(username, res.name);
+         } else {
+             // New User -> Show Reg Empty
+             currentUser = { username: username, photo: DEFAULT_IMG };
+             prepareRegistration(username, '');
+         }
+     } catch(e) {
+         statusDiv.innerHTML = 'Error connecting to server';
+         console.error(e);
+     }
+  }
+
+  async function prepareRegistration(username, name) {
+      document.getElementById('login-overlay').classList.add('hidden');
+      
+      const opts = await callApi('getRegOptions');
+      if(opts.status) {
+         const list = document.getElementById('reg-substock-list');
+         list.innerHTML = opts.options.map(o => `<div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="${o}"><label>${o}</label></div>`).join('');
+         const grpSel = document.getElementById('reg-group');
+         grpSel.innerHTML = opts.groups.map(g=>`<option value="${g}">${g}</option>`).join('');
+      }
+      
+      document.getElementById('reg-username').value = username;
+      document.getElementById('reg-name').value = name;
+      document.getElementById('reg-img').src = DEFAULT_IMG;
+      mdlReg.show();
+  }
+  
+  function logout() {
+      localStorage.removeItem('saw_user_v2');
+      location.reload();
+  }
+
   // --- CORE APP LOGIC ---
-  async function checkUser(uid, boxParam, isBackground) {
-      const res = await callApi('checkUserLIFF', { userId: uid });
-      if (res.status === 'NOT_FOUND') { 
-          // If not found but we loaded cache, cache is invalid
-          if(isBackground) {
-             localStorage.removeItem('saw_user_v2');
-             location.reload();
-             return;
-          }
-          currentUser.userId = uid; 
-          const opts = await callApi('getRegOptions');
-          if(opts.status) {
-             const list = document.getElementById('reg-substock-list');
-             list.innerHTML = opts.options.map(o => `<div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="${o}"><label>${o}</label></div>`).join('');
-             const grpSel = document.getElementById('reg-group');
-             grpSel.innerHTML = opts.groups.map(g=>`<option value="${g}">${g}</option>`).join('');
-          }
-          document.getElementById('login-overlay').classList.add('hidden'); 
-          document.getElementById('reg-img').src = currentUser.photo || DEFAULT_IMG; 
-          mdlReg.show(); 
-      }
-      else if (res.status === 'FOUND') { 
-          currentUser = { ...res.userData, userId: uid }; 
-          localStorage.setItem('saw_user_v2', JSON.stringify(currentUser)); // Cache
-          if (!isBackground) startApp(boxParam); 
-      }
+  function checkUser(uid, boxParam, isBackground) {
+      // NOTE: This legacy function is bypassed by the new manual login flow
+      // but kept for compatibility if needed later.
   }
 
   function openProfile() {
-      document.getElementById('pf-user').value = currentUser.username;
-      document.getElementById('pf-name').value = currentUser.name;
-      document.getElementById('pf-sub').value = currentUser.substock;
-      document.getElementById('pf-pass').value = currentUser.password;
-      document.getElementById('pf-email').value = currentUser.email;
+      document.getElementById('pf-user').value = currentUser.username || '';
+      document.getElementById('pf-name').value = currentUser.name || '';
+      // document.getElementById('pf-sub').value = currentUser.substock; // Hidden now
+      document.getElementById('pf-pass').value = currentUser.password || '';
+      document.getElementById('pf-email').value = currentUser.email || '';
+      
+      // Display permissions nicely
+      document.getElementById('display-substock').innerText = Array.isArray(currentUser.substock) ? currentUser.substock.join(', ') : (currentUser.substock || '-');
+      document.getElementById('display-boxgroup').innerText = Array.isArray(currentUser.boxGroup) ? currentUser.boxGroup.join(', ') : (currentUser.boxGroup || '-');
+      
       mdlProfile.show();
   }
   async function saveProfile() {
@@ -602,17 +667,54 @@
         document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
       }
       
-      // Load Data
-      const resOrder = await callApi('getBoxes', { user: currentUser, showAll: false });
-      if(resOrder.status) renderBoxScroller('order', resOrder.boxes);
-      const resStock = await callApi('getBoxes', { user: currentUser, showAll: true });
-      if(resStock.status) { 
-          allBoxes = resStock.boxes; 
-          renderBoxScroller('stock', allBoxes); 
-          renderStockGroups(); 
+      // OPTIMIZED LOAD
+      const res = await callApi('getInitialData', { user: currentUser });
+      if(res.status && res.data) {
+          const d = res.data;
+          
+          // Order Boxes
+          if (d.boxesOrder && d.boxesOrder.length > 0) {
+             renderBoxScroller('order', d.boxesOrder);
+          } else {
+             document.getElementById('box-scroller-order').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาที่คุณมีสิทธิ์เบิก (Substock)</div>';
+          }
+          
+          // Stock Boxes
+          allBoxes = d.boxesStock || [];
+          if (allBoxes.length > 0) {
+             renderBoxScroller('stock', allBoxes);
+          } else {
+             document.getElementById('box-scroller-stock').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาในตึกของคุณ (Box Group)</div>';
+          }
+          
+          // Groups
+          if(d.groups) {
+              document.getElementById('group-filter').innerHTML = 
+                `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
+                    ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
+                 </div>` + 
+                d.groups.map(g => {
+                    let count = allBoxes.filter(b=>b.group===g).length;
+                    return `<div class="badge rounded-pill bg-white text-dark border cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('${g}',this)">
+                              ${g} <span class="badge bg-secondary rounded-circle">${count}</span>
+                            </div>`;
+                }).join('');
+          }
+          
+          // History
+          allHistory = d.history || [];
+          document.getElementById('hist-loader').classList.add('hidden');
+          if(allHistory.length > 0) {
+              const boxCounts = allHistory.reduce((acc, r) => { if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
+              const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
+              const scroller = document.getElementById('box-scroller-hist');
+              scroller.innerHTML = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
+                histBoxes.map(bName => `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${boxCounts[bName]||0}</span></div>`).join('');
+          } else {
+             document.getElementById('box-scroller-hist').innerHTML = '<div class="text-center w-100 py-2 small text-muted">ยังไม่มีประวัติการเบิก</div>';
+          }
+          renderHist(curHistStatus);
       }
-      
-      loadHist(true); 
 
       if(boxParam) {
           if(allBoxes.length) {
@@ -623,25 +725,7 @@
   }
 
   async function renderStockGroups() {
-      const resGroups = await callApi('getBoxGroups');
-      if(resGroups.status) {
-          const counts = {};
-          allBoxes.forEach(b => {
-             const g = b.group || 'Other';
-             counts[g] = (counts[g] || 0) + 1;
-          });
-
-          document.getElementById('group-filter').innerHTML = 
-            `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
-                ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
-             </div>` + 
-            resGroups.groups.map(g => {
-                const count = counts[g] || 0;
-                return `<div class="badge rounded-pill bg-white text-dark border cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('${g}',this)">
-                          ${g} <span class="badge bg-secondary rounded-circle">${count}</span>
-                        </div>`;
-            }).join('');
-      }
+      // Replaced by getInitialData logic
   }
 
   function getBoxIcon(type) {
@@ -684,7 +768,7 @@
       document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
       document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
       if(pid === 'tab-hist') {
-          loadHist();
+          // loadHist(); // Now preloaded
       }
   }
 
@@ -976,42 +1060,7 @@
   }
 
   function loadHist(init = false) { 
-      if(!init) document.getElementById('hist-loader').classList.remove('hidden');
-      
-      callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
-          document.getElementById('hist-loader').classList.add('hidden');
-          if(res.status && Array.isArray(res.data)) { 
-              allHistory = res.data;
-          } else {
-              allHistory = []; 
-          }
-          
-          if(allHistory.length > 0) {
-              const boxCounts = allHistory.reduce((acc, r) => { 
-                  if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; 
-                  return acc; 
-              }, {});
-              
-              const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
-              const scroller = document.getElementById('box-scroller-hist');
-              
-              const histScrollerHtml = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
-                histBoxes.map(bName => {
-                    const count = boxCounts[bName] || 0;
-                    return `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${count}</span></div>`;
-                }).join('');
-              scroller.innerHTML = histScrollerHtml;
-          } else {
-             document.getElementById('box-scroller-hist').innerHTML = '<div class="text-center w-100 py-2 small text-muted">ยังไม่มีประวัติการเบิก</div>';
-          }
-
-          if (curHistStatus === 'STATS') loadStats();
-          else renderHist(curHistStatus); 
-      }).catch(err => {
-         console.error("Load Hist Error:", err);
-         document.getElementById('hist-loader').classList.add('hidden');
-         document.getElementById('hist-res').innerHTML = `<div class="alert alert-danger">เกิดข้อผิดพลาด: ${err.message}</div>`;
-      }); 
+      // Pre-loaded in getInitialData
   }
 
   function filterHist(status, el) {
@@ -1144,14 +1193,14 @@
       const res = await callApi('confirmOrderCheck', { orderId: tempCheckOrderId, user: currentUser.name, signature: sign });
       clrCvsCheck();
       if(res.status && res.pdf) window.open(res.pdf, '_blank');
-      loadHist();
+      // loadHist(); // Not needed if just updated status locally, but for safety
       Swal.fire({toast:true, icon:'success', title:'บันทึกเรียบร้อย'});
   }
 
   async function receiveOrder(oid) {
       if(!confirm('ยืนยันได้รับยาครบถ้วน?')) return;
       const res = await callApi('updateOrderStatus', { orderId: oid, user: currentUser.name });
-      if(res.status) { Swal.fire('Success'); loadHist(); }
+      if(res.status) { Swal.fire('Success'); }
   }
 
   function openPrintLabel() { 
@@ -1466,52 +1515,11 @@
   function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
 
   async function checkHosUser() {
-      const u = document.getElementById('hosxp-user').value.trim();
-      const statusDiv = document.getElementById('hos-status');
-      const addDiv = document.getElementById('hos-add-row');
-      
-      statusDiv.innerHTML = '';
-      statusDiv.className = 'small fw-bold text-nowrap';
-      addDiv.classList.add('hidden');
-      hosAuthValid = false;
-      hosAuthName = '';
-      
-      if(u.length < 3) return;
-      
-      clearTimeout(hosAuthTimeout);
-      hosAuthTimeout = setTimeout(async () => {
-          statusDiv.innerHTML = '<span class="spinner-border spinner-border-sm text-secondary"></span>';
-          try {
-            const res = await callApi('checkAdmin', { username: u });
-            if(res.status) {
-                statusDiv.innerHTML = '<i class="fas fa-check-circle text-success"></i> ' + res.name;
-                hosAuthValid = true;
-                hosAuthName = res.name;
-                localStorage.setItem('lastHosUser', u);
-            } else {
-                statusDiv.innerHTML = '<span class="text-danger">กดบันทึกชื่อครั้งแรกก่อนเบิกยา</span>';
-                addDiv.classList.remove('hidden');
-            }
-          } catch(e) {
-             statusDiv.innerHTML = '<span class="text-danger">Error</span>';
-          }
-      }, 500);
+      // Disabled as we use login name now
   }
 
   async function registerHosUser() {
-      const u = document.getElementById('hosxp-user').value.trim();
-      const n = document.getElementById('hos-new-name').value.trim();
-      if(!u || !n) return Swal.fire('ระบุข้อมูลให้ครบ');
-      
-      Swal.showLoading();
-      const res = await callApi('registerAdmin', { username: u, name: n });
-      Swal.close();
-      
-      if(res.status) {
-          checkHosUser();
-      } else {
-          Swal.fire('Error', res.message || 'Failed', 'error');
-      }
+      // Disabled
   }
 
   function openCart() {
@@ -1519,7 +1527,7 @@
       if(cart.length===0) {
           el.innerHTML = '<div class="text-center mt-5 text-muted">ตะกร้าว่างเปล่า</div>';
           document.getElementById('cart-sum').innerText = '0.00';
-          document.getElementById('cart-user-name').innerText = '';
+          document.getElementById('cart-signer-name').innerText = '';
       } else {
           let sum = 0;
           el.innerHTML = cart.map((i,idx) => {
@@ -1541,7 +1549,7 @@
               </div>`;
           }).join('');
           document.getElementById('cart-sum').innerText = sum.toFixed(2);
-          document.getElementById('cart-user-name').innerText = `ผู้เบิก: ${hosAuthName || '-'}`;
+          document.getElementById('cart-signer-name').innerText = currentUser.name || currentUser.username;
       }
       offC.show();
       setTimeout(fixCvs, 500);
@@ -1559,7 +1567,7 @@
       if(isSubmitting) return;
 
       if(cart.length === 0) return Swal.fire('ไม่มีสินค้าในตะกร้า');
-      if(!hosAuthValid) return Swal.fire('กดบันทึกชื่อครั้งแรกก่อนเบิกยา');
+      // Removed check for hosAuthValid
       if(isCanvasBlank(cvs)) return Swal.fire('กรุณาเซ็นชื่อผู้เบิก');
 
       // Lock
@@ -1568,7 +1576,7 @@
       const sign = cvs.toDataURL();
       const orderData = {
           box: curBoxOrder,
-          user: hosAuthName,
+          user: currentUser.name || currentUser.username, // Use logged in user
           signature: sign,
           items: cart
       };
@@ -1584,16 +1592,14 @@
               renderOrder();
               offC.hide();
               clrCvs();
-              document.getElementById('hosxp-user').value = '';
-              document.getElementById('hos-status').innerHTML = '';
-              hosAuthValid = false;
+              // No need to clear hosxp-user fields
               
               Swal.fire({ 
                   icon: 'success', 
                   title: 'ส่งข้อมูลเรียบร้อยแล้ว',
                   html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
               });
-              loadHist();
+              // loadHist(); // already updated in getInitialData if reloaded, but here we might want to refresh history partially or just rely on next open
           } else {
               Swal.fire('Error', res.message, 'error');
           }
