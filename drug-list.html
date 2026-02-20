@@ -3,378 +3,633 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ฐานข้อมูลยา รพ.สวี</title>
-    
-    <!-- Google Fonts: Sarabun (ฟอนต์ทางการสำหรับให้อ่านง่ายและเป็นทางการ) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
+    <title>ฐานข้อมูลยา โรงพยาบาลสวี</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    
-    <!-- DataTables CSS & JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        /* บังคับใช้ฟอนต์ Sarabun ทั้งหน้า */
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
         body {
             font-family: 'Sarabun', sans-serif;
-            background-color: #f1f5f9; /* Slate 50 */
+            font-size: 16px;
         }
-
-        /* ปรับแต่ง DataTables ให้กลมกลืนกับ Theme ทางการ */
-        .dataTables_wrapper .dataTables_length select {
-            border: 1px solid #cbd5e1;
-            border-radius: 0.375rem;
-            padding: 0.25rem 2rem 0.25rem 0.5rem;
-            margin: 0 0.5rem;
-            outline: none;
-            background-color: white;
-            font-family: 'Sarabun', sans-serif;
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        
-        table.dataTable.no-footer {
-            border-bottom: 1px solid #e2e8f0;
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
-        
-        table.dataTable thead th {
-            background-color: #f8fafc; /* Slate 50 */
-            border-bottom: 2px solid #cbd5e1; /* Slate 300 */
-            color: #334155; /* Slate 700 */
-            font-weight: 600;
-            padding: 12px 10px;
+        th {
+            cursor: pointer;
+            user-select: none;
         }
-        
-        table.dataTable tbody td {
-            padding: 10px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
+        th:hover {
+            background-color: #e2e8f0;
         }
-        
-        table.dataTable tbody tr:hover {
-            background-color: #f8fafc;
-        }
-
-        /* Custom Scrollbar สำหรับตาราง */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+        /* ซ่อน Element โดยสมบูรณ์ */
+        .hidden-tab {
+            display: none !important;
         }
     </style>
 </head>
-<body class="text-slate-800 p-4 md:p-8">
+<body class="bg-gray-50 text-gray-800 flex flex-col h-screen relative">
 
-    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-md z-10 flex-shrink-0">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-2">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <h1 class="text-xl md:text-2xl font-bold tracking-wide">ฐานข้อมูลยา โรงพยาบาลสวี</h1>
+            </div>
+            
+            <!-- Tabs Navigation -->
+            <div class="flex space-x-1 bg-blue-900 rounded-lg p-1">
+                <button id="btn-tab-drug" onclick="switchTab('drug')" class="px-4 py-1.5 text-sm md:text-base rounded-md font-medium transition-colors bg-white text-blue-800 shadow-sm">
+                    บัญชียา รพ.สวี
+                </button>
+                <button id="btn-tab-tmt" onclick="switchTab('tmt')" class="px-4 py-1.5 text-sm md:text-base rounded-md font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white">
+                    ค้นหา TMTID
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden max-w-full mx-auto w-full p-2 sm:p-4 lg:p-6">
         
-        <!-- Header (โทนสีกรมท่า/ทางการ) -->
-        <div class="bg-slate-800 p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-5">
-                <div class="bg-white/10 p-4 rounded-full backdrop-blur-sm shadow-inner">
-                    <i class="fa-solid fa-staff-snake text-4xl text-blue-300"></i>
-                </div>
-                <div>
-                    <h1 class="text-3xl font-bold tracking-wide">บัญชีรายการยา</h1>
-                    <p class="text-slate-300 text-base mt-1 font-medium">โรงพยาบาลสวี (Sawi Hospital Drug Formulary)</p>
+        <!-- ================= TAB: DRUG (โรงพยาบาลสวี) ================= -->
+        <div id="view-drug" class="flex-1 flex flex-col h-full overflow-hidden">
+            <!-- Summary Dashboard (บังคับ 1 แถวพอดี ไม่มีขึ้นบรรทัดใหม่) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-3 flex-shrink-0 overflow-hidden">
+                <div class="p-1.5 flex flex-nowrap w-full overflow-x-auto no-scrollbar gap-1 text-center justify-between items-stretch">
+                    <div class="flex-1 min-w-[35px] bg-gray-50 py-1 px-0.5 rounded border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-gray-500 font-medium leading-tight truncate">รวม</span>
+                        <span id="stat-total" class="block text-xs md:text-sm font-bold text-gray-800 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-green-50 py-1 px-0.5 rounded border border-green-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-green-600 font-medium leading-tight truncate">E</span>
+                        <span id="stat-e" class="block text-xs md:text-sm font-bold text-green-700 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-red-50 py-1 px-0.5 rounded border border-red-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-red-600 font-medium leading-tight truncate">N</span>
+                        <span id="stat-n" class="block text-xs md:text-sm font-bold text-red-700 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-blue-50 py-1 px-0.5 rounded border border-blue-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-blue-600 font-medium leading-tight truncate">ก</span>
+                        <span id="stat-kor" class="block text-xs md:text-sm font-bold text-blue-700 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-blue-50 py-1 px-0.5 rounded border border-blue-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-blue-600 font-medium leading-tight truncate">ข</span>
+                        <span id="stat-khor" class="block text-xs md:text-sm font-bold text-blue-700 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-blue-50 py-1 px-0.5 rounded border border-blue-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-blue-600 font-medium leading-tight truncate">ค</span>
+                        <span id="stat-kor-kway" class="block text-xs md:text-sm font-bold text-blue-700 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-blue-50 py-1 px-0.5 rounded border border-blue-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-blue-600 font-medium leading-tight truncate">ง</span>
+                        <span id="stat-ngor" class="block text-xs md:text-sm font-bold text-blue-700 leading-none mt-0.5">-</span>
+                    </div>
+                    <div class="flex-1 min-w-[35px] bg-blue-50 py-1 px-0.5 rounded border border-blue-100 shadow-sm flex flex-col justify-center">
+                        <span class="block text-[10px] md:text-xs text-blue-600 font-medium leading-tight truncate">จ(1)</span>
+                        <span id="stat-jor1" class="block text-xs md:text-sm font-bold text-blue-700 leading-none mt-0.5">-</span>
+                    </div>
                 </div>
             </div>
-            <button onclick="loadData()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg shadow-md transition-all text-sm font-semibold flex items-center gap-2 border border-blue-500">
-                <i class="fa-solid fa-cloud-arrow-down"></i> ซิงค์ข้อมูลล่าสุด
-            </button>
-        </div>
 
-        <!-- Toolbar & Smart Search -->
-        <div class="p-6 bg-slate-50 border-b border-slate-200" id="toolbar-container" style="display: none;">
-            <div class="relative max-w-2xl mx-auto">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <!-- Controls: Search & Filter (Drug) -->
+            <div class="bg-white p-3 rounded-t-lg shadow-sm border-b border-gray-200 flex flex-col md:flex-row gap-3 items-center justify-between flex-shrink-0">
+                <div class="relative w-full md:w-1/2">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" id="searchDrug" class="block w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="ค้นหาชื่อยา, รหัส..." oninput="filterDrugData()">
                 </div>
-                <input type="text" id="customSearch" 
-                    class="block w-full pl-11 pr-4 py-3 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-base shadow-sm transition-all" 
-                    placeholder="พิมพ์ชื่อยา, รหัสเบิก, รหัส HosXP, TMTID หรือบริษัท เพื่อค้นหา..." autocomplete="off">
                 
-                <!-- Suggestions Box -->
-                <ul id="suggestions-box" class="absolute z-50 w-full bg-white border border-slate-200 rounded-lg shadow-xl mt-1 max-h-72 overflow-y-auto hidden">
-                    <!-- Suggestions will be populated here via JS -->
-                </ul>
+                <div class="flex items-center">
+                    <input id="rpstFilter" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer" onchange="filterDrugData()">
+                    <label for="rpstFilter" class="ml-2 block text-sm text-gray-900 cursor-pointer">แสดงเฉพาะ รพ.สต.</label>
+                </div>
+            </div>
+
+            <!-- Table Container (Drug) -->
+            <div class="flex-1 overflow-auto bg-white shadow-sm rounded-b-lg border-x border-b border-gray-200 relative">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-10 text-center">รูป</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('name')">ชื่อยา <span id="sort-drug-name" class="text-gray-400">↕️</span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('trade_name')">ชื่อการค้า <span id="sort-drug-trade_name" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('code')">รหัสเบิก <span id="sort-drug-code" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('working_code')">HosXP <span id="sort-drug-working_code" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('tmtid')">TMTID <span id="sort-drug-tmtid" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('per_pack')">บรรจุ <span id="sort-drug-per_pack" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('unit')">หน่วย <span id="sort-drug-unit" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('price')">ราคา <span id="sort-drug-price" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('category')">กลุ่มยา <span id="sort-drug-category" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('ed')">บัญชี <span id="sort-drug-ed" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('list')">ย่อย <span id="sort-drug-list" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-2 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortDrug('subdistrict_list')">รพ.สต. <span id="sort-drug-subdistrict_list" class="text-gray-400"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyDrug" class="bg-white divide-y divide-gray-200 text-sm">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+                <div id="noDataDrug" class="hidden flex flex-col items-center justify-center py-8 text-gray-500">
+                    <p>ไม่พบข้อมูลที่ค้นหา</p>
+                </div>
             </div>
         </div>
 
-        <!-- Loading State -->
-        <div id="loading" class="p-20 text-center flex flex-col items-center justify-center">
-            <div class="relative w-16 h-16">
-                <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+        <!-- ================= TAB: TMT (ค้นหาฐานข้อมูลส่วนกลาง) ================= -->
+        <div id="view-tmt" class="hidden-tab flex-1 flex flex-col h-full overflow-hidden">
+            
+            <!-- Note & Search -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3 rounded-r-lg flex-shrink-0">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <p class="text-sm text-yellow-700 font-medium">หมายเหตุ: ข้อมูลนี้มาจากฐานข้อมูล TMT ซึ่ง<span class="font-bold underline">รวมยาที่ไม่มีใน รพ.สวี</span> ด้วย</p>
+                </div>
             </div>
-            <p class="text-slate-500 mt-6 font-medium text-lg">กำลังเชื่อมต่อฐานข้อมูลและประมวลผล...</p>
-            <p class="text-slate-400 text-sm mt-1">อาจใช้เวลาสักครู่หากมีรายการยาและรูปภาพจำนวนมาก</p>
+
+            <div class="bg-white p-3 rounded-t-lg shadow-sm border-b border-gray-200 flex flex-col md:flex-row gap-3 items-center justify-between flex-shrink-0">
+                <div class="relative w-full md:w-2/3">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" id="searchTmt" class="block w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="ค้นหาจากชื่อการค้า (Trade Name), FSN, หรือ TMTID..." oninput="filterTmtData()">
+                </div>
+                <div class="text-sm text-gray-500">
+                    พบ: <span id="countIndicatorTmt" class="font-bold text-gray-800">0</span> รายการ
+                </div>
+            </div>
+
+            <!-- Table Container (TMT) -->
+            <div class="flex-1 overflow-auto bg-white shadow-sm rounded-b-lg border-x border-b border-gray-200 relative">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortTmt('tmtid')">TMTID <span id="sort-tmt-tmtid" class="text-gray-400">↕️</span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortTmt('trade_name')">Trade Name <span id="sort-tmt-trade_name" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortTmt('fsn')">FSN <span id="sort-tmt-fsn" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortTmt('active_ingredient')">Active Ingredient <span id="sort-tmt-active_ingredient" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Strength / Form</th>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortTmt('manufacturer')">Manufacturer <span id="sort-tmt-manufacturer" class="text-gray-400"></span></th>
+                            <th scope="col" class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider" onclick="sortTmt('status')">Status <span id="sort-tmt-status" class="text-gray-400"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBodyTmt" class="bg-white divide-y divide-gray-200 text-sm">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+                <div id="noDataTmt" class="hidden flex flex-col items-center justify-center py-8 text-gray-500">
+                    <p>ไม่พบข้อมูลที่ค้นหา</p>
+                </div>
+            </div>
         </div>
 
-        <!-- Error State -->
-        <div id="error" class="hidden p-6 bg-red-50 text-red-700 border-l-4 border-red-600 m-6 rounded-r-lg flex items-start gap-3 shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation text-xl mt-0.5"></i>
-            <div>
-                <h3 class="font-bold text-lg mb-1">เกิดข้อผิดพลาด</h3>
-                <span id="error-msg" class="text-red-600"></span>
-            </div>
-        </div>
+    </main>
 
-        <!-- Table Container -->
-        <div id="table-container" class="hidden p-6 overflow-x-auto w-full">
-            <table id="drugTable" class="w-full text-sm text-left whitespace-nowrap" style="width:100%">
-                <thead>
-                    <tr>
-                        <th class="w-16 text-center">รูปภาพ</th>
-                        <th>ชื่อยา (Generic Name)</th>
-                        <th>รหัสเบิก</th>
-                        <th>รหัส HosXP</th>
-                        <th>รหัส TMTID</th>
-                        <th class="text-center">บรรจุ</th>
-                        <th>หน่วย</th>
-                        <th>ชื่อการค้า (Trade Name)</th>
-                        <th>บริษัท</th>
-                        <th class="text-right">ราคา (฿)</th>
-                        <th>กลุ่มยา</th>
-                        <th class="text-center">ประเภทบัญชี</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be populated here -->
-                </tbody>
-            </table>
+    <!-- Modal รายละเอียดข้อมูลยา (ถูกเพิ่มกลับเข้ามา) -->
+    <div id="drugModal" class="fixed inset-0 z-[100] hidden bg-gray-900 bg-opacity-60 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative" onclick="event.stopPropagation()">
+            <!-- Header Modal -->
+            <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-blue-50">
+                <h3 class="text-lg font-bold text-blue-800" id="modalTitle">รายละเอียดข้อมูลยา</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 bg-white hover:bg-gray-200 rounded-full p-1 transition-colors shadow-sm">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <!-- Content Modal -->
+            <div class="p-4 md:p-6 overflow-y-auto" id="modalContent">
+                <!-- ข้อมูลจะถูกสร้างโดย JavaScript -->
+            </div>
+            
+            <!-- Footer Modal -->
+            <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 text-right">
+                <button onclick="closeModal()" class="px-4 py-2 bg-blue-600 text-white text-sm rounded shadow hover:bg-blue-700 transition-colors">ปิดหน้าต่าง</button>
+            </div>
         </div>
     </div>
 
+    <!-- Global Loading Status -->
+    <div id="globalLoader" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg border border-gray-200 flex items-center gap-2 z-50 text-sm font-medium transition-opacity duration-300">
+        <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span id="loaderText" class="text-blue-600">กำลังโหลดข้อมูล...</span>
+    </div>
+
+    <!-- Toast Notification (แจ้งเตือนเมื่อ Copy) -->
+    <div id="copyToast" class="fixed bottom-6 right-6 z-[60] transform transition-all duration-300 translate-y-20 opacity-0 bg-gray-800 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3">
+        <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span id="toastMessage" class="font-medium">คัดลอกแล้ว</span>
+    </div>
+
     <script>
-        // ==========================================
-        // GAS URL สำหรับดึงข้อมูล
-        // ==========================================
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxbljVfMbph_tJysEVEZ-EFyyvc25LQiGTnFmT771tHHziwujRmmv6zP96gTOsWbAmg/exec"; 
+        const webAppUrl = "https://script.google.com/macros/s/AKfycbxbljVfMbph_tJysEVEZ-EFyyvc25LQiGTnFmT771tHHziwujRmmv6zP96gTOsWbAmg/exec";
+        
+        // State
+        let allDrugs = [], filteredDrugs = [];
+        let allTmt = [], filteredTmt = [];
+        let currentTab = 'drug'; // 'drug' or 'tmt'
+        let drugSort = { column: 'name', direction: 'asc' };
+        let tmtSort = { column: 'tmtid', direction: 'asc' };
+        let isTmtLoaded = false;
 
-        let dataTable;
-        let windowDrugData = []; // เก็บข้อมูลดิบไว้ทำ Suggestion
+        const rawSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#9ca3af"><rect width="100%" height="100%" fill="#f3f4f6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`;
+        const errorImageSVG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(rawSvg);
 
-        $(document).ready(function() {
-            loadData();
+        // ================= Tab Management =================
+        function switchTab(tab) {
+            currentTab = tab;
+            const btnDrug = document.getElementById('btn-tab-drug');
+            const btnTmt = document.getElementById('btn-tab-tmt');
+            const viewDrug = document.getElementById('view-drug');
+            const viewTmt = document.getElementById('view-tmt');
 
-            // Event Listener สำหรับช่องค้นหาอัจฉริยะ (Smart Search)
-            $('#customSearch').on('input', function() {
-                let val = $(this).val();
-                
-                // ค้นหาใน DataTables ไปด้วยเลยแบบ Real-time
-                if(dataTable) {
-                    dataTable.search(val).draw();
+            if (tab === 'drug') {
+                btnDrug.className = "px-4 py-1.5 text-sm md:text-base rounded-md font-medium transition-colors bg-white text-blue-800 shadow-sm";
+                btnTmt.className = "px-4 py-1.5 text-sm md:text-base rounded-md font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white";
+                viewDrug.classList.remove('hidden-tab');
+                viewTmt.classList.add('hidden-tab');
+            } else {
+                btnTmt.className = "px-4 py-1.5 text-sm md:text-base rounded-md font-medium transition-colors bg-white text-blue-800 shadow-sm";
+                btnDrug.className = "px-4 py-1.5 text-sm md:text-base rounded-md font-medium transition-colors text-blue-100 hover:bg-blue-700 hover:text-white";
+                viewTmt.classList.remove('hidden-tab');
+                viewDrug.classList.add('hidden-tab');
+
+                if (!isTmtLoaded) fetchTmt();
+            }
+        }
+
+        // ================= Fetch Data =================
+        async function fetchDrug() {
+            showLoader("กำลังโหลดบัญชียา รพ.สวี...");
+            try {
+                const response = await fetch(`${webAppUrl}?sheet=drug`);
+                const result = await response.json();
+                if (result.status === 'success') {
+                    allDrugs = result.data;
+                    filteredDrugs = [...allDrugs];
+                    updateSummary(allDrugs);
+                    executeDrugSort();
+                    hideLoaderSuccess("โหลดบัญชียาสำเร็จ");
+                } else {
+                    hideLoaderError(result.message);
                 }
-                
-                // แสดง Suggestion Box
-                showSuggestions(val);
+            } catch (error) {
+                hideLoaderError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+            }
+        }
+
+        async function fetchTmt() {
+            showLoader("กำลังโหลดฐานข้อมูล TMT (อาจใช้เวลาสักครู่)...");
+            try {
+                const response = await fetch(`${webAppUrl}?sheet=tmt`);
+                const result = await response.json();
+                if (result.status === 'success') {
+                    allTmt = result.data;
+                    filteredTmt = [...allTmt];
+                    isTmtLoaded = true;
+                    executeTmtSort();
+                    hideLoaderSuccess("โหลดฐานข้อมูล TMT สำเร็จ");
+                } else {
+                    hideLoaderError("ไม่พบข้อมูล TMT (กรุณาอัปเดต Google Apps Script ตามที่แนะนำ)");
+                }
+            } catch (error) {
+                hideLoaderError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+            }
+        }
+
+        // ================= Drug Logic =================
+        function updateSummary(data) {
+            const safeTrim = (str) => (str || '').toString().trim();
+            document.getElementById('stat-total').innerText = data.length.toLocaleString();
+            document.getElementById('stat-e').innerText = data.filter(d => safeTrim(d.ed) === 'E').length.toLocaleString();
+            document.getElementById('stat-n').innerText = data.filter(d => safeTrim(d.ed) === 'N').length.toLocaleString();
+            document.getElementById('stat-kor').innerText = data.filter(d => safeTrim(d.list) === 'ก').length.toLocaleString();
+            document.getElementById('stat-khor').innerText = data.filter(d => safeTrim(d.list) === 'ข').length.toLocaleString();
+            document.getElementById('stat-kor-kway').innerText = data.filter(d => safeTrim(d.list) === 'ค').length.toLocaleString();
+            document.getElementById('stat-ngor').innerText = data.filter(d => safeTrim(d.list) === 'ง').length.toLocaleString();
+            document.getElementById('stat-jor1').innerText = data.filter(d => safeTrim(d.list) === 'จ(1)').length.toLocaleString();
+        }
+
+        function filterDrugData() {
+            const term = document.getElementById('searchDrug').value.toLowerCase().trim();
+            const showOnlyRpst = document.getElementById('rpstFilter').checked;
+
+            filteredDrugs = allDrugs.filter(drug => {
+                if (showOnlyRpst && drug.subdistrict_list !== '/') return false;
+                if (term === '') return true;
+                return Object.values(drug).some(v => v && String(v).toLowerCase().includes(term));
             });
+            executeDrugSort();
+        }
 
-            // ปิด Suggestion Box เมื่อคลิกที่อื่น
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#customSearch, #suggestions-box').length) {
-                    $('#suggestions-box').addClass('hidden');
-                }
+        function sortDrug(column) {
+            if (drugSort.column === column) drugSort.direction = drugSort.direction === 'asc' ? 'desc' : 'asc';
+            else { drugSort.column = column; drugSort.direction = 'asc'; }
+
+            document.querySelectorAll('#view-drug th span').forEach(s => s.innerText = '');
+            document.getElementById('sort-drug-' + column).innerText = drugSort.direction === 'asc' ? ' 🔼' : ' 🔽';
+            executeDrugSort();
+        }
+
+        function executeDrugSort() {
+            const { column, direction } = drugSort;
+            filteredDrugs.sort((a, b) => {
+                let vA = a[column] || '', vB = b[column] || '';
+                if(!isNaN(vA) && !isNaN(vB) && vA !== '' && vB !== '') { vA = Number(vA); vB = Number(vB); } 
+                else { vA = String(vA).toLowerCase(); vB = String(vB).toLowerCase(); }
+                if (vA < vB) return direction === 'asc' ? -1 : 1;
+                if (vA > vB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderDrugTable();
+        }
+
+        function renderDrugTable() {
+            const tbody = document.getElementById('tableBodyDrug');
+            const noData = document.getElementById('noDataDrug');
+            
+            if (filteredDrugs.length === 0) {
+                tbody.innerHTML = '';
+                noData.classList.remove('hidden');
+                return;
+            }
+            noData.classList.add('hidden');
+            
+            let html = '';
+            filteredDrugs.forEach((drug, index) => {
+                const imgSrc = drug.image || errorImageSVG;
+                let edBadge = '-';
+                if(drug.ed === 'E') edBadge = `<span class="px-1.5 py-0.5 inline-flex text-xs font-semibold rounded bg-green-100 text-green-800">E</span>`;
+                else if(drug.ed === 'N') edBadge = `<span class="px-1.5 py-0.5 inline-flex text-xs font-semibold rounded bg-red-100 text-red-800">N</span>`;
+                else if(drug.ed) edBadge = `<span class="px-1.5 py-0.5 inline-flex text-xs font-semibold rounded bg-gray-100 text-gray-800">${drug.ed}</span>`;
+
+                const isRpst = drug.subdistrict_list === '/' ? `<span class="text-green-500 font-bold">✓</span>` : `<span class="text-gray-300">-</span>`;
+
+                html += `
+                    <tr class="hover:bg-blue-100 transition-colors cursor-pointer" onclick="openModal(${index})">
+                        <td class="px-2 py-1.5 text-center"><img src="${imgSrc}" loading="lazy" class="h-5 w-5 rounded object-cover border border-gray-300 mx-auto" onerror="this.src='${errorImageSVG}'"></td>
+                        <td class="px-3 py-1.5 whitespace-normal min-w-[150px] font-medium text-gray-900 leading-tight">${drug.name || '-'}</td>
+                        <td class="px-3 py-1.5 text-gray-500">${drug.trade_name || '-'}</td>
+                        <td class="px-3 py-1.5 text-gray-500">${drug.code || '-'}</td>
+                        <td class="px-3 py-1.5 font-mono text-gray-700">${drug.working_code || '-'}</td>
+                        <td class="px-3 py-1.5 font-mono text-blue-600">
+                            <div class="flex items-center gap-1">
+                                <span>${drug.tmtid || '-'}</span>
+                                ${drug.tmtid ? `<button onclick="copyTmtid(event, '${drug.tmtid}')" class="text-gray-400 hover:text-blue-800"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>` : ''}
+                            </div>
+                        </td>
+                        <td class="px-2 py-1.5 text-gray-500">${drug.per_pack || '-'}</td>
+                        <td class="px-2 py-1.5 text-gray-500">${drug.unit || '-'}</td>
+                        <td class="px-3 py-1.5 text-right font-semibold text-blue-600">${drug.price ? Number(drug.price).toFixed(2) : '-'}</td>
+                        <td class="px-2 py-1.5 text-center text-gray-500 text-xs">${drug.category || '-'}</td>
+                        <td class="px-2 py-1.5 text-center">${edBadge}</td>
+                        <td class="px-2 py-1.5 text-center text-gray-600 font-medium">${drug.list || '-'}</td>
+                        <td class="px-2 py-1.5 text-center">${isRpst}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ================= TMT Logic =================
+        function filterTmtData() {
+            const term = document.getElementById('searchTmt').value.toLowerCase().trim();
+            filteredTmt = allTmt.filter(item => {
+                if (term === '') return true;
+                // เน้นหาจาก FSN, TradeName, และ TMTID
+                return (item.fsn && item.fsn.toLowerCase().includes(term)) || 
+                       (item.trade_name && item.trade_name.toLowerCase().includes(term)) ||
+                       (item.tmtid && item.tmtid.toString().toLowerCase().includes(term)) ||
+                       (item.active_ingredient && item.active_ingredient.toLowerCase().includes(term));
+            });
+            executeTmtSort();
+        }
+
+        function sortTmt(column) {
+            if (tmtSort.column === column) tmtSort.direction = tmtSort.direction === 'asc' ? 'desc' : 'asc';
+            else { tmtSort.column = column; tmtSort.direction = 'asc'; }
+
+            document.querySelectorAll('#view-tmt th span').forEach(s => s.innerText = '');
+            document.getElementById('sort-tmt-' + column).innerText = tmtSort.direction === 'asc' ? ' 🔼' : ' 🔽';
+            executeTmtSort();
+        }
+
+        function executeTmtSort() {
+            const { column, direction } = tmtSort;
+            filteredTmt.sort((a, b) => {
+                let vA = String(a[column] || '').toLowerCase(), vB = String(b[column] || '').toLowerCase();
+                if (vA < vB) return direction === 'asc' ? -1 : 1;
+                if (vA > vB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            renderTmtTable();
+        }
+
+        function renderTmtTable() {
+            const tbody = document.getElementById('tableBodyTmt');
+            const noData = document.getElementById('noDataTmt');
+            document.getElementById('countIndicatorTmt').innerText = filteredTmt.length.toLocaleString();
+
+            if (filteredTmt.length === 0) {
+                tbody.innerHTML = '';
+                noData.classList.remove('hidden');
+                return;
+            }
+            noData.classList.add('hidden');
+            
+            let html = '';
+            filteredTmt.forEach((item) => {
+                // จัดการ Status
+                let statusBadge = '-';
+                if(item.status === 'Active' || item.status === 'A') statusBadge = `<span class="px-2 py-0.5 inline-flex text-xs font-semibold rounded bg-green-100 text-green-800">Active</span>`;
+                else if(item.status) statusBadge = `<span class="px-2 py-0.5 inline-flex text-xs font-semibold rounded bg-gray-100 text-gray-600">${item.status}</span>`;
+
+                html += `
+                    <tr class="hover:bg-blue-50 transition-colors">
+                        <td class="px-3 py-2 font-mono text-blue-700 font-medium">
+                            <div class="flex items-center gap-2">
+                                ${item.tmtid || '-'}
+                                ${item.tmtid ? `<button onclick="copyToClipboard('${item.tmtid}')" class="text-gray-400 hover:text-blue-800"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>` : ''}
+                            </div>
+                        </td>
+                        <td class="px-3 py-2 whitespace-normal min-w-[150px] font-medium text-gray-900 leading-tight">${item.trade_name || '-'}</td>
+                        <td class="px-3 py-2 whitespace-normal min-w-[200px] text-gray-600 leading-tight text-sm">${item.fsn || '-'}</td>
+                        <td class="px-3 py-2 whitespace-normal text-gray-700 text-sm">${item.active_ingredient || '-'}</td>
+                        <td class="px-3 py-2 text-gray-600 text-sm">${item.strength || '-'} <br> <span class="text-xs text-gray-400">${item.dosageform || '-'}</span></td>
+                        <td class="px-3 py-2 text-gray-500 text-sm whitespace-normal min-w-[150px]">${item.manufacturer || '-'}</td>
+                        <td class="px-3 py-2 text-center">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ================= Modal & Utilities =================
+        function openModal(index) {
+            const drug = filteredDrugs[index];
+            const modal = document.getElementById('drugModal');
+            const content = document.getElementById('modalContent');
+            const imgSrc = drug.image || errorImageSVG;
+
+            let edBadge = '-';
+            if(drug.ed === 'E') edBadge = `<span class="px-2 py-0.5 inline-flex text-xs font-semibold rounded bg-green-100 text-green-800">ในบัญชี (E)</span>`;
+            else if(drug.ed === 'N') edBadge = `<span class="px-2 py-0.5 inline-flex text-xs font-semibold rounded bg-red-100 text-red-800">นอกบัญชี (N)</span>`;
+            else if(drug.ed) edBadge = `<span class="px-2 py-0.5 inline-flex text-xs font-semibold rounded bg-gray-100 text-gray-800">${drug.ed}</span>`;
+
+            content.innerHTML = `
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/3 flex flex-col items-center">
+                        <img src="${imgSrc}" class="w-full max-w-[180px] h-auto aspect-square object-cover rounded-lg border border-gray-200 shadow-sm mb-3" onerror="this.src='${errorImageSVG}'">
+                        <div class="w-full text-center">
+                            <span class="block text-xl font-bold text-blue-700">${drug.price ? Number(drug.price).toFixed(2) + ' ฿' : '-'}</span>
+                            <span class="block text-xs text-gray-500">ราคาต่อหน่วย (${drug.unit || '-'})</span>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-2/3">
+                        <h4 class="text-xl md:text-2xl font-bold text-gray-900 mb-1">${drug.name || '-'}</h4>
+                        <h5 class="text-sm md:text-base text-gray-500 mb-4 font-medium">ชื่อการค้า: ${drug.trade_name || '-'}</h5>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
+                            <div class="border-b border-gray-100 pb-1.5">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">รหัสเบิก (CODE)</span>
+                                <span class="block text-sm font-medium text-gray-800">${drug.code || '-'}</span>
+                            </div>
+                            <div class="border-b border-gray-100 pb-1.5">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">รหัส HosXP</span>
+                                <span class="block text-sm font-medium text-gray-800 font-mono">${drug.working_code || '-'}</span>
+                            </div>
+                            <div class="border-b border-gray-100 pb-1.5 sm:col-span-2">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">รหัส TMTID</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="block text-sm font-medium text-blue-600 font-mono">${drug.tmtid || '-'}</span>
+                                    ${drug.tmtid ? `<button onclick="copyTmtid(event, '${drug.tmtid}')" class="text-gray-400 hover:text-blue-600" title="คัดลอก TMTID"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>` : ''}
+                                </div>
+                            </div>
+                            <div class="border-b border-gray-100 pb-1.5">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">บรรจุ / หน่วย</span>
+                                <span class="block text-sm font-medium text-gray-800">${drug.per_pack || '-'} ${drug.unit || '-'}</span>
+                            </div>
+                            <div class="border-b border-gray-100 pb-1.5">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">กลุ่มยา</span>
+                                <span class="block text-sm font-medium text-gray-800">${drug.category || '-'}</span>
+                            </div>
+                            <div class="border-b border-gray-100 pb-1.5">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">บัญชียา / บัญชีย่อย</span>
+                                <span class="block text-sm mt-0.5">${edBadge} <span class="ml-1 text-gray-600 font-semibold">${drug.list || ''}</span></span>
+                            </div>
+                            <div class="border-b border-gray-100 pb-1.5 sm:col-span-2">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider">บริษัทผู้ผลิต/จำหน่าย</span>
+                                <span class="block text-sm font-medium text-gray-800">${drug.company || '-'}</span>
+                            </div>
+                            <div class="pb-1.5 sm:col-span-2">
+                                <span class="block text-[11px] text-gray-400 uppercase tracking-wider mb-1">สถานะ รพ.สต.</span>
+                                ${drug.subdistrict_list === '/' ? 
+                                    `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-800"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> มีในบัญชียา รพ.สต.</span>` : 
+                                    `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-500">ไม่มีในบัญชียา รพ.สต.</span>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('drugModal').classList.add('hidden');
+        }
+
+        // ปิด Modal เมื่อคลิกที่พื้นที่พื้นหลังสีดำ
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('drugModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
             });
         });
 
-        // ฟังก์ชันดึงข้อมูลจาก GAS
-        function loadData() {
-            $('#loading').show();
-            $('#table-container, #toolbar-container, #error').hide();
-
-            fetch(GAS_URL)
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        windowDrugData = result.data; // เก็บไว้ทำ Auto-complete
-                        initTable(result.data);
-                        $('#toolbar-container').show();
-                    } else {
-                        showError("เซิร์ฟเวอร์ตอบสนองผิดพลาด: " + result.message);
-                    }
-                })
-                .catch(error => {
-                    showError("ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้ โปรดตรวจสอบการตั้งค่า GAS_URL หรือเครือข่ายอินเทอร์เน็ต (" + error.message + ")");
-                })
-                .finally(() => {
-                    $('#loading').hide();
-                });
+        // Wrapper ฟังก์ชันนี้ช่วยให้เวลากดคัดลอกในตารางแล้ว Modal จะไม่เด้งขึ้นมา
+        function copyTmtid(event, text) {
+            if(event) event.stopPropagation();
+            copyToClipboard(text);
         }
 
-        // ฟังก์ชันสร้างตาราง
-        function initTable(data) {
-            if ($.fn.DataTable.isDataTable('#drugTable')) {
-                $('#drugTable').DataTable().destroy();
+        function copyToClipboard(text) {
+            if (!text || text === '-') return;
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast(`คัดลอก TMTID: ${text} สำเร็จ`);
+            } catch (err) {
+                showToast(`ไม่สามารถคัดลอกได้`);
             }
-
-            $('#table-container').show();
-
-            dataTable = $('#drugTable').DataTable({
-                data: data,
-                pageLength: 20,
-                lengthMenu: [10, 20, 50, 100],
-                // ซ่อนช่อง Search เดิมของ DataTables เพื่อใช้ช่องที่เราสร้างเอง
-                dom: '<"flex flex-col md:flex-row justify-between items-center mb-4 text-slate-600"li>rt<"flex justify-end mt-6 text-sm"p>',
-                language: {
-                    lengthMenu: "แสดง _MENU_ รายการต่อหน้า",
-                    info: "แสดงรายการที่ _START_ ถึง _END_ จากทั้งหมด <span class='font-bold text-slate-800'>_TOTAL_</span> รายการ",
-                    infoEmpty: "ไม่มีข้อมูล",
-                    infoFiltered: "(กรองจากทั้งหมด _MAX_ รายการ)",
-                    paginate: {
-                        first: "หน้าแรก",
-                        last: "หน้าสุดท้าย",
-                        next: "ถัดไป <i class='fa-solid fa-angle-right ml-1'></i>",
-                        previous: "<i class='fa-solid fa-angle-left mr-1'></i> ก่อนหน้า"
-                    },
-                    emptyTable: "ไม่พบข้อมูลยาในระบบ"
-                },
-                columns: [
-                    { 
-                        data: 'image',
-                        render: function(data) {
-                            if (data) {
-                                return `<div class="w-12 h-12 mx-auto rounded overflow-hidden border border-slate-200 shadow-sm bg-white group">
-                                            <img src="${data}" alt="drug" class="w-full h-full object-cover cursor-zoom-in group-hover:scale-125 transition-transform duration-300" loading="lazy">
-                                        </div>`;
-                            }
-                            return `<div class="w-12 h-12 mx-auto bg-slate-100 border border-slate-200 rounded flex items-center justify-center text-slate-300"><i class="fa-solid fa-capsules text-xl"></i></div>`;
-                        },
-                        orderable: false,
-                        className: 'text-center'
-                    },
-                    { data: 'name', className: 'font-semibold text-blue-700' },
-                    { data: 'code', className: 'font-mono text-slate-600 text-xs' },
-                    { data: 'working_code', className: 'font-mono text-slate-600 text-xs' },
-                    { data: 'tmtid', className: 'font-mono text-slate-600 text-xs' },
-                    { data: 'per_pack', className: 'text-center font-medium' },
-                    { data: 'unit', className: 'text-slate-600' },
-                    { data: 'trade_name', className: 'text-slate-700' },
-                    { data: 'company', className: 'text-slate-600 text-xs truncate max-w-[150px]', render: function(data){ return `<span title="${data}">${data}</span>`; } },
-                    { 
-                        data: 'price',
-                        render: $.fn.dataTable.render.number(',', '.', 2, ''),
-                        className: 'text-right font-medium text-emerald-600'
-                    },
-                    { data: 'category', className: 'text-xs text-slate-500 truncate max-w-[150px]' },
-                    { 
-                        data: 'ed',
-                        render: function(data, type, row) {
-                            let listStr = row.list ? ` <span class="text-xs opacity-75">(${row.list})</span>` : '';
-                            if (data === 'E') return `<span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200 shadow-sm">ED${listStr}</span>`;
-                            if (data === 'N') return `<span class="bg-rose-100 text-rose-700 text-xs font-bold px-3 py-1 rounded-full border border-rose-200 shadow-sm">NED${listStr}</span>`;
-                            return `<span class="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full">${data || '-'}</span>`;
-                        },
-                        className: 'text-center'
-                    }
-                ],
-                order: [[1, 'asc']], 
-            });
+            document.body.removeChild(textArea);
         }
 
-        // ฟังก์ชันประมวลผลระบบ Suggestion แบบเดาทุก Field
-        function showSuggestions(query) {
-            let $box = $('#suggestions-box');
-            if (!query || query.trim() === '') { 
-                $box.addClass('hidden'); 
-                return; 
-            }
-
-            let q = query.toLowerCase().trim();
-            let suggestions = [];
-            let seenValues = new Set(); // ป้องกันการแสดงคำเดาซ้ำ
-
-            // กำหนด Field ที่ต้องการให้ค้นหา และชื่อป้ายกำกับ
-            const searchableFields = [
-                { key: 'name', label: 'ชื่อสามัญ' },
-                { key: 'trade_name', label: 'ชื่อการค้า' },
-                { key: 'code', label: 'รหัสเบิก' },
-                { key: 'working_code', label: 'รหัส HosXP' },
-                { key: 'tmtid', label: 'TMTID' },
-                { key: 'company', label: 'บริษัท' },
-                { key: 'category', label: 'กลุ่มยา' }
-            ];
-
-            // วนลูปหาข้อมูลที่ตรงกัน
-            windowDrugData.forEach(row => {
-                searchableFields.forEach(field => {
-                    let val = row[field.key];
-                    if (val) {
-                        let strVal = val.toString();
-                        if (strVal.toLowerCase().includes(q)) {
-                            // เก็บเฉพาะข้อมูลที่ไม่ซ้ำกัน
-                            let uniqueKey = strVal.toLowerCase() + '-' + field.key;
-                            if (!seenValues.has(uniqueKey)) {
-                                seenValues.add(uniqueKey);
-                                suggestions.push({ text: strVal, type: field.label });
-                            }
-                        }
-                    }
-                });
-            });
-
-            // จัดเรียงและตัดให้แสดงแค่ 10 รายการเพื่อไม่ให้เยอะเกินไป
-            suggestions.sort((a, b) => a.text.length - b.text.length); // เอาคำที่สั้นกว่า/ตรงกว่าขึ้นก่อน
-            suggestions = suggestions.slice(0, 10);
-
-            if (suggestions.length === 0) {
-                $box.html('<li class="px-4 py-3 text-slate-500 text-sm text-center">ไม่พบข้อมูลที่ตรงกัน</li>').removeClass('hidden');
-                return;
-            }
-
-            // สร้าง HTML สำหรับ Dropdown
-            let html = suggestions.map(s => {
-                // สร้าง Regex สำหรับ Highlight คำที่ค้นหา
-                let regex = new RegExp(`(${q})`, 'gi');
-                let highlightedText = s.text.replace(regex, '<span class="font-bold text-blue-600 bg-blue-50">$1</span>');
-                
-                // Escape เครื่องหมาย ' เผื่อมีในชื่อยา
-                let safeText = s.text.replace(/'/g, "\\'"); 
-                
-                return `
-                    <li class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-0 flex flex-col md:flex-row md:items-center justify-between gap-1 transition-colors" 
-                        onclick="selectSuggestion('${safeText}')">
-                        <span class="text-slate-800 text-sm md:text-base truncate pr-4">${highlightedText}</span>
-                        <span class="text-[10px] md:text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded w-max">เจอใน: ${s.type}</span>
-                    </li>
-                `;
-            }).join('');
-
-            $box.html(html).removeClass('hidden');
+        function showToast(message) {
+            const toast = document.getElementById('copyToast');
+            document.getElementById('toastMessage').innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2500);
         }
 
-        // เมื่อผู้ใช้กดเลือก Suggestion
-        window.selectSuggestion = function(val) {
-            $('#customSearch').val(val);
-            $('#suggestions-box').addClass('hidden');
+        function showLoader(msg) {
+            const loader = document.getElementById('globalLoader');
+            document.getElementById('loaderText').innerText = msg;
+            loader.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function hideLoaderSuccess(msg) {
+            const loader = document.getElementById('globalLoader');
+            const txt = document.getElementById('loaderText');
+            txt.innerText = msg;
+            txt.classList.replace('text-blue-600', 'text-green-600');
+            loader.querySelector('svg').classList.replace('text-blue-600', 'text-green-500');
+            loader.querySelector('svg').classList.remove('animate-spin');
             
-            // สั่งให้ตารางค้นหาคำนั้นทันที
-            if(dataTable) {
-                dataTable.search(val).draw();
-            }
-        };
-
-        function showError(msg) {
-            $('#error-msg').text(msg);
-            $('#error').removeClass('hidden').show(); // ใช้ flex ใน tailwind เลยต้องลบ class hidden ออก
+            setTimeout(() => {
+                loader.classList.add('opacity-0', 'pointer-events-none');
+                // Reset loader styles for next use
+                setTimeout(() => {
+                    txt.classList.replace('text-green-600', 'text-blue-600');
+                    loader.querySelector('svg').classList.replace('text-green-500', 'text-blue-600');
+                    loader.querySelector('svg').classList.add('animate-spin');
+                }, 300);
+            }, 2000);
         }
+
+        function hideLoaderError(msg) {
+            const loader = document.getElementById('globalLoader');
+            const txt = document.getElementById('loaderText');
+            txt.innerText = "ข้อผิดพลาด: " + msg;
+            txt.classList.replace('text-blue-600', 'text-red-600');
+            loader.querySelector('svg').classList.replace('text-blue-600', 'text-red-500');
+            loader.querySelector('svg').classList.remove('animate-spin');
+        }
+
+        // Start
+        fetchDrug();
+
     </script>
 </body>
 </html>
