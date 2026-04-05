@@ -374,7 +374,7 @@
 </div>
 
 <div class="modal fade" id="receiveModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
           <h5 class="modal-title">ลงรับยา</h5>
@@ -382,11 +382,12 @@
       </div>
       <div class="modal-body">
           <input type="hidden" id="rc_reqId">
-          <p id="rc_display" class="text-green-glam"></p>
-          <label>จำนวนที่รับ</label>
-    <input type="text" class="form-control mb-2" id="rc_amount">
-          <label>ราคา (บาท)</label><input type="number" class="form-control mb-3" id="rc_cost">
-          <label class="fw-bold">หมายเหตุ</label>
+          <p id="rc_display" class="text-green-glam mb-2"></p>
+          
+          <div id="rc_drug_list"></div>
+          
+          <hr>
+          <label class="fw-bold">หมายเหตุการรับ</label>
           <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div>
           <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div>
           <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div>
@@ -591,16 +592,12 @@ app.login = function() { if(!liff.isLoggedIn()) liff.login(); else app.checkUser
 // 🔥 ฟังก์ชันช่วยเปิดลิงก์แบบไม่โดนบล็อก (รองรับทั้งมือถือและคอมพิวเตอร์)
 app.fallbackShare = function(textMsg) {
     const lineUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(textMsg);
-    if (liff.isInClient()) {
-        liff.openWindow({ url: lineUrl, external: true });
-    } else {
-        // ใช้ location.href เพื่อป้องกัน Popup Blocker ในมือถือ
-        window.location.href = lineUrl; 
-    }
+    // ใช้ location.href จะปลอดภัยที่สุดและไม่โดน Popup Blocker บล็อก
+    window.location.href = lineUrl; 
 };
 
-// 🔥 แชร์รูปแบบใหม่เป็น "ข้อความธรรมดา" แทน Flex Message 🔥
-app.shareApprove = function(encodedData) {
+// 🔥 แชร์รูปแบบใหม่เป็น "ข้อความธรรมดา" 🔥
+app.shareApprove = async function(encodedData) {
     if(!liff.isLoggedIn()) { 
         alert("กรุณา Login LINE ก่อนแชร์เข้ากลุ่ม");
         liff.login({ redirectUri: window.location.href });
@@ -608,24 +605,23 @@ app.shareApprove = function(encodedData) {
     }
     const data = JSON.parse(decodeURIComponent(encodedData));
     
-    // สร้าง Template ข้อความธรรมดา
-    const textMsg = `💊มีการขอใช้ยานอกรพ.สวี รายใหม่\nชื่อยา/จำนวน: ${data.drugSummary}\nผู้ขอ: ${data.doctorName}\nวันที่ขอ: ${data.timestamp}\nเลขที่หนังสือ: ${data.docNum}\nกรุณาคลิกเพื่อดู pdf: \n${data.pdfUrl}`;
+    const textMsg = `มีการขอใช้ยานอกรพ.สวี รายใหม่\nชื่อยา/จำนวน: ${data.drugSummary}\nผู้ขอ: ${data.doctorName}\nวันที่ขอ: ${data.timestamp}\nเลขที่หนังสือ: ${data.docNum}\nกรุณาคลิกเพื่อดู pdf: \n${data.pdfUrl}`;
 
     if(liff.isApiAvailable('shareTargetPicker')) {
-        liff.shareTargetPicker([
-            { type: "text", text: textMsg }
-        ]).catch(e => {
+        try {
+            await liff.shareTargetPicker([{ type: "text", text: textMsg }]);
+        } catch(e) {
             console.error(e);
-            // กรณีเกิดข้อผิดพลาดจาก ShareTargetPicker (เช่น ไม่ได้เปิดสิทธิ์ไว้ใน LIFF)
+            alert("⚠️ ไม่สามารถแชร์ผ่าน LIFF ได้ (Failed to fetch)\n\nวิธีแก้: คุณต้องไปที่เว็บ LINE Developers Console -> เลือก LIFF ของคุณ -> เปิดสวิตช์ 'Share Target Picker' ให้เป็น ON\n\nระบบจะสลับไปใช้การแชร์สำรองแทนครับ");
             app.fallbackShare(textMsg);
-        });
+        }
     } else { 
         app.fallbackShare(textMsg);
     }
 };
 
 // 🔥 แชร์แจ้งเตือนรับยาเป็น "ข้อความธรรมดา" 🔥
-app.shareNotify = function(text, url) {
+app.shareNotify = async function(text, url) {
     if(!liff.isLoggedIn()) { 
         alert("กรุณา Login LINE ก่อนแชร์เข้ากลุ่ม");
         liff.login({ redirectUri: window.location.href });
@@ -635,12 +631,12 @@ app.shareNotify = function(text, url) {
     if (url) fullText += "\n" + url;
 
     if(liff.isApiAvailable('shareTargetPicker')) {
-        liff.shareTargetPicker([
-            { type: "text", text: fullText }
-        ]).catch(e => {
+        try {
+            await liff.shareTargetPicker([{ type: "text", text: fullText }]);
+        } catch(e) {
             console.error(e);
             app.fallbackShare(fullText);
-        });
+        }
     } else { 
         app.fallbackShare(fullText);
     }
@@ -812,21 +808,89 @@ app.loadApproved = async function() {
     } catch(e) {}
 };
 app.openPdf = function(url) { if(!url) return alert("No PDF"); if(liff.isInClient()) liff.openWindow({ url: url, external: true }); else window.open(url, '_blank'); };
+
 app.openReceive = function(index) {
     const item = approvedData[index];
     document.getElementById('rc_reqId').value = item.reqId;
-    document.getElementById('rc_display').innerText = item.drug;
+    document.getElementById('rc_display').innerText = "ผู้ป่วย: " + item.patient;
     
-    document.getElementById('rc_amount').value = item.qty || "";
+    let html = '';
+    if(item.drugsList && item.drugsList.length > 0) {
+        item.drugsList.forEach((d, i) => {
+            html += `
+            <div class="border p-3 mb-2 rounded bg-light rc-drug-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold text-primary rc-d-name">${d.name} ${d.strength || ''}</span>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input rc-receive-cb" type="checkbox" id="cb_${i}" checked onchange="app.toggleDrugReceive(${i})">
+                        <label class="form-check-label text-success rc-lbl" id="lbl_${i}" for="cb_${i}">ได้รับยา</label>
+                    </div>
+                </div>
+                <div class="row g-2 rc-inputs" id="inputs_${i}">
+                    <div class="col-6">
+                        <label class="small text-muted mb-1">จน.ที่รับ (ขอไป: ${d.quantity})</label>
+                        <input type="text" class="form-control form-control-sm rc-amount" value="${d.quantity}">
+                    </div>
+                    <div class="col-6">
+                        <label class="small text-muted mb-1">ราคา (บาท)</label>
+                        <input type="number" class="form-control form-control-sm rc-cost" placeholder="0">
+                    </div>
+                </div>
+            </div>`;
+        });
+    }
+    document.getElementById('rc_drug_list').innerHTML = html;
     
-    document.getElementById('rc_cost').value = "";
     document.querySelector('input[name="rc_note_opt"][value="จ่ายแก่ผู้ป่วยแล้ว"]').checked = true;
+    document.getElementById('rc_note_storage').value = "";
+    document.getElementById('rc_note_incomplete').value = "";
     document.getElementById('rc_footer').innerHTML = `<button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button>`;
     receiveModal.show();
 };
+
+app.toggleDrugReceive = function(idx) {
+    const cb = document.getElementById(`cb_${idx}`);
+    const inputsDiv = document.getElementById(`inputs_${idx}`);
+    const lbl = document.getElementById(`lbl_${idx}`);
+    const amtInput = inputsDiv.querySelector('.rc-amount');
+    const costInput = inputsDiv.querySelector('.rc-cost');
+    
+    if(cb.checked) {
+        lbl.innerText = "ได้รับยา";
+        lbl.classList.remove('text-danger');
+        lbl.classList.add('text-success');
+        amtInput.disabled = false;
+        costInput.disabled = false;
+    } else {
+        lbl.innerText = "ไม่ได้รับยา";
+        lbl.classList.remove('text-success');
+        lbl.classList.add('text-danger');
+        amtInput.disabled = true;
+        costInput.disabled = true;
+        amtInput.value = "0";
+        costInput.value = "0";
+    }
+};
+
 app.confirmReceive = async function() {
-    const cost = document.getElementById('rc_cost').value;
-    const amount = document.getElementById('rc_amount').value; 
+    let receivedDrugs = [];
+    let totalCost = 0;
+    
+    document.querySelectorAll('.rc-drug-item').forEach(el => {
+        const isReceived = el.querySelector('.rc-receive-cb').checked;
+        const name = el.querySelector('.rc-d-name').innerText;
+        const amt = el.querySelector('.rc-amount').value || "0";
+        const cost = parseFloat(el.querySelector('.rc-cost').value) || 0;
+        
+        receivedDrugs.push({
+            name: name,
+            isReceived: isReceived,
+            amount: isReceived ? amt : "0",
+            cost: isReceived ? cost : 0
+        });
+        
+        if(isReceived) totalCost += cost;
+    });
     
     let note = "";
     const radio = document.querySelector('input[name="rc_note_opt"]:checked');
@@ -834,11 +898,27 @@ app.confirmReceive = async function() {
     else if(radio.value === 'incomplete') note = "ได้รับไม่ครบถ้วน " + document.getElementById('rc_note_incomplete').value;
     else note = radio.value;
 
-    const payload = { reqId: document.getElementById('rc_reqId').value, amount: amount, cost: cost, note: note };
+    // สร้าง note สรุปยาที่ได้รับ/ไม่ได้รับเพื่อเก็บลง Sheet
+    let detailNotes = receivedDrugs.map(d => d.isReceived ? `${d.name}(${d.amount})` : `${d.name}(ไม่ได้)`).join(', ');
+    let combinedNote = `${note} [${detailNotes}]`;
+
+    const payload = { 
+        reqId: document.getElementById('rc_reqId').value, 
+        receivedDrugs: receivedDrugs,
+        totalCost: totalCost, 
+        note: combinedNote 
+    };
     
     try {
         await app.callApi('completeRequest', payload);
-        const msg = `ได้รับยา ${document.getElementById('rc_display').innerText} จำนวน ${amount} (${note}) แล้ว`;
+        
+        // สร้างข้อความแจ้งเตือนเข้าไลน์
+        let msgDrugs = receivedDrugs.filter(d => d.isReceived).map(d => `- ${d.name} (${d.amount})`).join('\n');
+        let msgNotReceived = receivedDrugs.filter(d => !d.isReceived).map(d => d.name).join(', ');
+        let msg = `✅ ลงรับยาเรียบร้อย\nรายการที่ได้รับ:\n${msgDrugs || 'ไม่มี'}\n`;
+        if(msgNotReceived) msg += `❌ ไม่ได้ยา: ${msgNotReceived}\n`;
+        msg += `💰 ยอดรวม: ${totalCost} บาท\n📝 หมายเหตุ: ${note}`;
+        
         document.getElementById('rc_footer').innerHTML = `<div class="w-100 text-center text-success mb-2 fw-bold">บันทึกสำเร็จ!</div><button class="btn btn-primary w-100" onclick="app.shareNotify('${msg}', '')">แชร์เข้าไลน์กลุ่ม</button>`;
         app.loadApproved();
         app.updateBadges();
