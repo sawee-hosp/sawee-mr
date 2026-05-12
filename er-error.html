@@ -4,30 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ER ERROR Report System</title>
+    <!-- Google Fonts & Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- React & Libraries -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Libraries -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- PDF Generation Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f0f2f5; }
-        .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
-        .datalist-input::-webkit-calendar-picker-indicator { display: block !important; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-content { animation: slideIn 0.3s ease-out; }
+        :root {
+            --google-blue: #4285F4;
+            --google-indigo: #4F46E5;
+        }
+        body { 
+            font-family: 'Inter', 'Prompt', sans-serif; 
+            background-color: #fcfcfd;
+            color: #1f2937;
+        }
+        .btn-radio:checked + label {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        .luxury-shadow {
+            box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Datalist indicator fix */
+        .datalist-input::-webkit-calendar-picker-indicator { display: block !important; opacity: 0.5; }
+        
+        /* PDF specific style */
+        .pdf-content { font-family: 'Sarabun', sans-serif; visibility: hidden; position: absolute; left: -9999px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-        const { jsPDF } = window.jspdf;
+        const { useState, useEffect, useMemo, useRef } = React;
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyEL06mYIlpEnvw6McVa63_57GLCWeSiiqx7DQzjAJymqbncpmb4Au_F6J4g5DAMPf6/exec";
 
@@ -57,12 +77,12 @@
                 inspector: '', doctor: '', recorder: ''
             });
             const [isTotalRxLocked, setIsTotalRxLocked] = useState(false);
-            const [isDrugOpen, setIsDrugOpen] = useState(false);
+            const [isDrugDropdownOpen, setIsDrugDropdownOpen] = useState(false);
             const [drugSearch, setDrugSearch] = useState('');
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [showModal, setShowModal] = useState(false);
 
-            // History Filter State
+            // History Filtering
             const [filterType, setFilterType] = useState('day');
             const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
             const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -75,13 +95,13 @@
                     const res = await fetch(GAS_URL);
                     const json = await res.json();
                     setData(json);
-                } catch (e) { console.error("Fetch failed", e); }
+                } catch (e) { console.error("Error loading data", e); }
                 setIsLoading(false);
             };
 
             useEffect(() => { fetchData(); }, []);
 
-            // Shift Calculation: d-d/mm/yyyy
+            // Shift Logic: D-D/MM/YYYY
             useEffect(() => {
                 const [h, m] = form.time.split(':').map(Number);
                 const d = new Date(form.date);
@@ -100,26 +120,26 @@
                 setForm(prev => ({ ...prev, shiftDate: fmt }));
             }, [form.date, form.time]);
 
-            // Sync with history
+            // Sync with existing history in shift
             useEffect(() => {
-                const historyInShift = data.history.filter(h => h.shiftDate === form.shiftDate);
-                const firstRx = historyInShift.find(h => h.totalRx && h.totalRx !== "");
-                const errorCount = historyInShift.filter(h => h.errorType !== errorOptions[0]).length;
+                const itemsInShift = data.history.filter(h => h.shiftDate === form.shiftDate);
+                const shiftTotalRx = itemsInShift.find(h => h.totalRx && h.totalRx !== "")?.totalRx;
+                const errorCount = itemsInShift.filter(h => h.errorType !== errorOptions[0]).length;
 
                 setForm(prev => ({
                     ...prev,
-                    totalRx: firstRx ? firstRx.totalRx : '',
-                    sequence: historyInShift.length + 1,
+                    totalRx: shiftTotalRx || prev.totalRx,
+                    sequence: itemsInShift.length + 1,
                     totalErrors: errorCount
                 }));
-                setIsTotalRxLocked(!!firstRx);
+                setIsTotalRxLocked(!!shiftTotalRx);
             }, [form.shiftDate, data.history]);
 
-            // Auto-Text Generation
+            // Auto Generate Details
             useEffect(() => {
                 if (form.errorType !== errorOptions[0]) {
-                    const dStr = form.selectedDrugs.join(', ') || '...';
-                    setForm(prev => ({ ...prev, details: `HN ${form.hn || '...'} ${form.errorType} คือ ${dStr}` }));
+                    const drugs = form.selectedDrugs.length > 0 ? form.selectedDrugs.join(', ') : '...';
+                    setForm(prev => ({ ...prev, details: `HN ${form.hn || '...'} ${form.errorType} คือ ${drugs}` }));
                 } else {
                     setForm(prev => ({ ...prev, details: '' }));
                 }
@@ -129,7 +149,7 @@
                 try {
                     const text = await navigator.clipboard.readText();
                     setForm(prev => ({ ...prev, [field]: text }));
-                } catch (err) { console.error("Paste failed", err); }
+                } catch (err) { console.warn("Cannot paste", err); }
             };
 
             const handleSubmit = async (e) => {
@@ -138,297 +158,327 @@
                 const payload = { ...form, drugs: form.selectedDrugs.join(', ') };
                 try {
                     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const resJson = await res.json();
-                    if(resJson.status === 'success') {
+                    const json = await res.json();
+                    if(json.status === 'success') {
                         setShowModal(true);
                         await fetchData();
-                        // Reset Form (Keeping essential staff info if needed, but per request reset fully)
+                        // Reset Form but keep Date/Time/TotalRx logic
                         setForm(prev => ({ ...prev, errorType: errorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '' }));
                         setTimeout(() => setShowModal(false), 2000);
                     }
-                } catch (e) { alert("เกิดข้อผิดพลาด"); }
+                } catch (e) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
                 setIsSubmitting(false);
             };
 
             const filteredHistory = useMemo(() => {
+                if (!data.history) return [];
                 return data.history.filter(item => {
-                    const matchSearch = item.hn.includes(searchTerm) || item.details.toLowerCase().includes(searchTerm.toLowerCase());
+                    const matchSearch = (item.hn || '').includes(searchTerm) || (item.details || '').toLowerCase().includes(searchTerm.toLowerCase());
                     const matchDate = filterType === 'day' 
-                        ? item.date.includes(filterDate.split('-').reverse().join('/'))
-                        : item.shiftDate.includes(`/${filterMonth.split('-')[1]}/${filterMonth.split('-')[0]}`);
+                        ? (item.date || '').includes(filterDate.split('-').reverse().join('/'))
+                        : (item.shiftDate || '').includes(`/${filterMonth.split('-')[1]}/${filterMonth.split('-')[0]}`);
                     
                     if (excludeNoError && item.errorType === errorOptions[0]) return false;
                     return matchDate && matchSearch;
                 });
             }, [data.history, filterType, filterDate, filterMonth, searchTerm, excludeNoError]);
 
-            const generatePDF = () => {
-                const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-                
-                // Header
-                doc.setFontSize(16);
-                doc.text("รายงานสรุป ER Medication Errors", 148, 15, { align: 'center' });
-                doc.setFontSize(10);
-                const period = filterType === 'day' ? filterDate : filterMonth;
-                doc.text(`ช่วงเวลา: ${period} | รายการทั้งหมด: ${filteredHistory.length} รายการ`, 148, 22, { align: 'center' });
-
-                // Table
-                const tableData = filteredHistory.map(h => [
-                    h.shiftDate, h.time, h.hn, h.errorType, h.details, h.severity, h.inspector, h.doctor, h.recorder
-                ]);
-
-                doc.autoTable({
-                    startY: 30,
-                    head: [['กะรับยา', 'เวลา', 'HN', 'ความเสี่ยง', 'รายละเอียด', 'ระดับ', 'ผู้ตรวจ', 'รคส.', 'ผู้บันทึก']],
-                    body: tableData,
-                    theme: 'grid',
-                    styles: { fontSize: 8, font: 'helvetica' },
-                    headStyles: { fillColor: [37, 99, 235] },
-                    margin: { top: 30 }
-                });
-
-                doc.save(`ER_Error_Report_${period}.pdf`);
+            const handleExportPDF = () => {
+                const element = document.getElementById('report-pdf');
+                const opt = {
+                    margin: 10,
+                    filename: `ER_Error_Report_${filterType === 'day' ? filterDate : filterMonth}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                };
+                html2pdf().from(element).set(opt).save();
             };
 
-            if (isLoading) return <div className="h-screen flex items-center justify-center font-bold text-blue-600">กำลังเชื่อมต่อข้อมูล...</div>;
+            const stats = useMemo(() => {
+                const uniqueShifts = new Set();
+                let rxSum = 0;
+                filteredHistory.forEach(h => {
+                    if (h.totalRx && !uniqueShifts.has(h.shiftDate)) {
+                        rxSum += parseInt(h.totalRx) || 0;
+                        uniqueShifts.add(h.shiftDate);
+                    }
+                });
+                return {
+                    rx: rxSum,
+                    errors: filteredHistory.filter(h => h.errorType !== errorOptions[0]).length
+                };
+            }, [filteredHistory]);
+
+            if (isLoading && data.history.length === 0) return (
+                <div className="h-screen flex flex-col items-center justify-center gap-4 bg-white">
+                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-400 font-medium">กำลังเตรียมข้อมูลระบบ...</p>
+                </div>
+            );
 
             return (
                 <div className="min-h-screen">
-                    {/* Modal */}
+                    {/* Modal Success */}
                     {showModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-content">
-                            <div className="bg-white p-8 rounded-3xl shadow-2xl text-center">
-                                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-content">
+                            <div className="bg-white p-8 rounded-3xl luxury-shadow text-center max-w-xs w-full">
+                                <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
-                                <h3 className="text-xl font-bold">บันทึกเรียบร้อย!</h3>
-                                <p className="text-gray-500">ข้อมูลของคุณถูกส่งไปยัง Google Sheet แล้ว</p>
+                                <h3 className="text-xl font-bold text-slate-800">บันทึกสำเร็จ</h3>
+                                <p className="text-slate-500 mt-2">ข้อมูลถูกจัดเก็บเรียบร้อยแล้ว</p>
                             </div>
                         </div>
                     )}
 
+                    {/* Navigation */}
                     <nav className="bg-white border-b sticky top-0 z-40">
-                        <div className="max-w-4xl mx-auto flex">
-                            <button onClick={()=>setActiveTab('form')} className={`flex-1 py-4 font-bold text-sm ${activeTab === 'form' ? 'tab-active' : 'text-gray-400'}`}>บันทึกข้อมูล</button>
-                            <button onClick={()=>setActiveTab('history')} className={`flex-1 py-4 font-bold text-sm ${activeTab === 'history' ? 'tab-active' : 'text-gray-400'}`}>รายงานย้อนหลัง</button>
+                        <div className="max-w-4xl mx-auto flex justify-center">
+                            <button onClick={()=>setActiveTab('form')} className={`px-8 py-5 font-bold text-sm transition-smooth ${activeTab === 'form' ? 'tab-active' : 'text-slate-400'}`}>
+                                📝 บันทึกข้อมูล
+                            </button>
+                            <button onClick={()=>setActiveTab('history')} className={`px-8 py-5 font-bold text-sm transition-smooth ${activeTab === 'history' ? 'tab-active' : 'text-slate-400'}`}>
+                                📊 ประวัติ & รายงาน
+                            </button>
                         </div>
                     </nav>
 
-                    <main className="max-w-4xl mx-auto p-4 md:p-6 mb-20">
+                    <main className="max-w-4xl mx-auto p-4 md:p-8 mb-20">
                         {activeTab === 'form' ? (
-                            <div className="bg-white rounded-3xl shadow-md p-6 md:p-8 border border-gray-100 animate-content">
-                                <div className="mb-6">
-                                    <h1 className="text-xl font-bold text-gray-800">แบบฟอร์มบันทึก ER ERROR</h1>
-                                    <p className="text-blue-500 text-sm font-medium">โดยเภสัชกรเวรเช้าประจำวัน</p>
+                            <div className="bg-white rounded-[2rem] luxury-shadow p-6 md:p-10 border border-slate-50 animate-fade">
+                                <div className="mb-10 text-center md:text-left">
+                                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">แบบฟอร์มบันทึก ER ERROR</h1>
+                                    <p className="text-indigo-500 font-medium mt-1">โดยเภสัชกรเวรเช้าประจำวัน</p>
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="space-y-6">
-                                    {/* Shift Info */}
-                                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-4">
+                                <form onSubmit={handleSubmit} className="space-y-10">
+                                    {/* Shift Header Area */}
+                                    <div className="bg-slate-50/80 p-6 rounded-3xl border border-slate-100 flex flex-col gap-6">
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-500">วันที่เกิดเหตุ (เลือก)</label>
-                                                <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="w-full mt-1 p-2 border rounded-xl" required />
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">วันที่เกิดเหตุ</label>
+                                                <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="w-full p-3 rounded-2xl border-none luxury-shadow outline-none focus:ring-2 focus:ring-indigo-500/20" required />
                                             </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-gray-500">เวลา (น.)</label>
-                                                <input type="time" value={form.time} onChange={e=>setForm({...form, time: e.target.value})} className="w-full mt-1 p-2 border rounded-xl" required />
+                                            <div className="space-y-1.5">
+                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">เวลา (น.)</label>
+                                                <input type="time" value={form.time} onChange={e=>setForm({...form, time: e.target.value})} className="w-full p-3 rounded-2xl border-none luxury-shadow outline-none focus:ring-2 focus:ring-indigo-500/20" required />
                                             </div>
                                         </div>
-                                        <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border border-blue-50 gap-4">
+                                        
+                                        <div className="flex flex-col md:flex-row justify-between items-center bg-white p-5 rounded-2xl luxury-shadow border border-indigo-50 gap-4">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-bold text-blue-400">กะรับยาประจำวันที่</span>
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-xl font-black text-blue-700">{form.shiftDate}</span>
-                                                    <span className="text-xs font-bold text-slate-400">|</span>
-                                                    <span className="text-sm font-bold text-slate-600">ใบสั่งยา: {form.totalRx || '-'} ใบ</span>
+                                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">กะรับยาประจำวันที่</span>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl font-black text-indigo-700">{form.shiftDate}</span>
+                                                    <div className="flex items-center gap-2 ml-2 border-l pl-4">
+                                                        <span className="text-xs font-bold text-slate-500">ใบสั่งยารวม:</span>
+                                                        <input 
+                                                            type="number" 
+                                                            value={form.totalRx} 
+                                                            onChange={e=>setForm({...form, totalRx: e.target.value})} 
+                                                            disabled={isTotalRxLocked} 
+                                                            className="w-20 p-1.5 rounded-lg border-b-2 border-indigo-100 font-bold text-indigo-600 outline-none focus:border-indigo-500 disabled:bg-transparent disabled:border-transparent text-center" 
+                                                            placeholder="..."
+                                                        />
+                                                        {isTotalRxLocked && <button type="button" onClick={()=>setIsTotalRxLocked(false)} className="text-[10px] text-indigo-400 underline font-bold">แก้ไข</button>}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="bg-slate-100 px-4 py-1 rounded-lg text-center">
-                                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">ลำดับที่ / Error สะสม</div>
-                                                <div className="text-lg font-bold">
+                                            <div className="bg-indigo-50/50 px-5 py-2.5 rounded-2xl text-center min-w-[120px]">
+                                                <div className="text-[10px] text-indigo-400 font-bold uppercase">ลำดับที่ / Error สะสม</div>
+                                                <div className="text-xl font-black text-slate-700">
                                                     {form.errorType === errorOptions[0] ? '-' : form.sequence} / <span className="text-red-500">{form.errorType === errorOptions[0] ? '-' : form.totalErrors}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-2">
-                                            <label className="text-xs font-bold text-gray-400">จำนวนใบสั่งยาทั้งหมดของกะนี้ (กรอกครั้งเดียวต่อกะ)</label>
-                                            <div className="flex gap-2 mt-1">
-                                                <input type="number" value={form.totalRx} onChange={e=>setForm({...form, totalRx: e.target.value})} disabled={isTotalRxLocked} className="flex-1 p-2 border rounded-xl disabled:bg-gray-100 font-bold" required placeholder="จำนวนใบสั่งยา..." />
-                                                {isTotalRxLocked && <button type="button" onClick={()=>setIsTotalRxLocked(false)} className="text-blue-500 text-xs font-bold px-3">แก้ไข</button>}
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    {/* Risk Found Dropdown */}
-                                    <div>
-                                        <label className="text-sm font-bold text-gray-700 mb-2 block">ความเสี่ยงที่พบ</label>
-                                        <select value={form.errorType} onChange={e=>setForm({...form, errorType: e.target.value})} className={`w-full p-3 border-2 rounded-2xl font-bold outline-none ${form.errorType === errorOptions[0] ? 'border-green-300 text-green-700' : 'border-red-300 text-red-700'}`}>
+                                    {/* Error Type Dropdown */}
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-bold text-slate-700 flex items-center gap-2">ความเสี่ยงที่พบ</label>
+                                        <select value={form.errorType} onChange={e=>setForm({...form, errorType: e.target.value})} className={`w-full p-4 rounded-2xl border-2 luxury-shadow font-bold outline-none transition-smooth ${form.errorType === errorOptions[0] ? 'border-green-100 text-green-600' : 'border-red-100 text-red-600'}`}>
                                             {errorOptions.map(o => <option key={o} value={o}>{o}</option>)}
                                         </select>
                                     </div>
 
-                                    {/* Conditional Form Content */}
+                                    {/* Error Details Area */}
                                     {form.errorType !== errorOptions[0] && (
-                                        <div className="space-y-5 bg-red-50/50 p-6 rounded-3xl border border-red-50 animate-content">
-                                            <div className="relative">
-                                                <label className="text-xs font-bold text-red-800">HN</label>
-                                                <div className="flex gap-2 mt-1">
-                                                    <input type="text" value={form.hn} onChange={e=>setForm({...form, hn: e.target.value})} className="flex-1 p-2 border border-red-100 rounded-xl" required placeholder="เช่น 6100xxxx" />
-                                                    <button type="button" onClick={()=>handlePaste('hn')} className="bg-white px-4 border border-red-200 rounded-xl text-xs font-bold text-red-500 shadow-sm">วาง</button>
-                                                </div>
-                                            </div>
-
-                                            <div className="relative">
-                                                <label className="text-xs font-bold text-red-800">ยาที่เกี่ยวข้อง</label>
+                                        <div className="space-y-8 bg-red-50/30 p-8 rounded-[2.5rem] border border-red-50/50 animate-content">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                 <div className="relative">
-                                                    <div onClick={()=>setIsDrugOpen(!isDrugOpen)} className="w-full mt-1 p-2 border border-red-100 bg-white rounded-xl min-h-[42px] flex flex-wrap gap-1 cursor-pointer">
-                                                        {form.selectedDrugs.length === 0 ? <span className="text-slate-300 text-xs">คลิกเพื่อเลือกยา...</span> : form.selectedDrugs.map(d=>(
-                                                            <span key={d} className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
-                                                                {d} <span onClick={(e)=>{e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}}>×</span>
-                                                            </span>
+                                                    <label className="text-xs font-bold text-red-700 ml-1">HN</label>
+                                                    <div className="flex gap-2 mt-2">
+                                                        <input type="text" value={form.hn} onChange={e=>setForm({...form, hn: e.target.value})} className="flex-1 p-3.5 rounded-2xl border-none luxury-shadow outline-none" required placeholder="HN ผู้ป่วย" />
+                                                        <button type="button" onClick={()=>handlePaste('hn')} className="px-5 bg-white text-indigo-600 rounded-2xl luxury-shadow font-bold text-xs hover:bg-slate-50 transition-smooth">วาง</button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="relative">
+                                                    <label className="text-xs font-bold text-red-700 ml-1">ยาที่เกี่ยวข้อง</label>
+                                                    <div className="relative mt-2">
+                                                        <div onClick={()=>setIsDrugDropdownOpen(!isDrugDropdownOpen)} className="w-full p-3.5 rounded-2xl bg-white luxury-shadow min-h-[50px] flex flex-wrap gap-1.5 cursor-pointer">
+                                                            {form.selectedDrugs.length === 0 ? <span className="text-slate-300 text-sm italic">เลือกรายการยา...</span> : form.selectedDrugs.map(d=>(
+                                                                <span key={d} className="bg-red-50 text-red-600 px-3 py-1 rounded-xl text-[11px] font-bold flex items-center gap-2 border border-red-100">
+                                                                    {d} <span onClick={(e)=>{e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}} className="text-red-400 hover:text-red-600">×</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                        {isDrugDropdownOpen && (
+                                                            <div className="absolute z-50 w-full mt-2 bg-white luxury-shadow rounded-2xl overflow-hidden animate-content border border-slate-100">
+                                                                <div className="p-3 border-b flex gap-2">
+                                                                    <input type="text" placeholder="ค้นหาชื่อยา..." value={drugSearch} onChange={e=>setDrugSearch(e.target.value)} className="flex-1 p-2 border rounded-xl text-xs outline-none" onClick={e=>e.stopPropagation()} />
+                                                                    <button type="button" onClick={()=>setIsDrugDropdownOpen(false)} className="text-xs font-bold text-red-400 p-2">ปิด</button>
+                                                                </div>
+                                                                <div className="max-h-52 overflow-y-auto">
+                                                                    {data.drugs.filter(d=>d.toLowerCase().includes(drugSearch.toLowerCase())).map(d=>(
+                                                                        <div key={d} onClick={()=>setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})} className={`p-3 text-xs border-b last:border-0 cursor-pointer hover:bg-red-50 ${form.selectedDrugs.includes(d)?'bg-red-50 font-bold text-red-700':''}`}>{d}</div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className="text-xs font-bold text-red-700 ml-1">รายละเอียด (Auto Generated)</label>
+                                                    <textarea value={form.details} onChange={e=>setForm({...form, details: e.target.value})} className="w-full mt-2 p-4 rounded-2xl luxury-shadow outline-none h-24 text-sm bg-amber-50/30 focus:bg-white" />
+                                                </div>
+
+                                                <div className="md:col-span-2 space-y-4">
+                                                    <label className="text-xs font-bold text-red-700 ml-1">ประเภทความเสี่ยง</label>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {riskTypes.map(rt => (
+                                                            <div key={rt} className="flex-1 min-w-[150px]">
+                                                                <input type="radio" id={`rt-${rt}`} name="riskType" value={rt} checked={form.riskType === rt} onChange={e=>setForm({...form, riskType: e.target.value})} className="hidden btn-radio" />
+                                                                <label htmlFor={`rt-${rt}`} className="block w-full p-3 text-center rounded-2xl border-2 border-transparent bg-white luxury-shadow text-[11px] font-medium cursor-pointer transition-smooth text-slate-500 hover:bg-slate-50">
+                                                                    {rt}
+                                                                </label>
+                                                            </div>
                                                         ))}
                                                     </div>
-                                                    {isDrugOpen && (
-                                                        <div className="absolute z-50 w-full mt-1 bg-white border border-red-100 shadow-xl rounded-xl overflow-hidden animate-content">
-                                                            <div className="p-2 border-b flex gap-2">
-                                                                <input type="text" placeholder="ค้นหายา..." value={drugSearch} onChange={e=>setDrugSearch(e.target.value)} className="flex-1 p-2 border rounded-lg text-xs" onClick={e=>e.stopPropagation()} />
-                                                                <button type="button" onClick={()=>setIsDrugOpen(false)} className="text-xs font-bold text-red-400">ปิด</button>
-                                                            </div>
-                                                            <div className="max-h-48 overflow-y-auto">
-                                                                {data.drugs.filter(d=>d.toLowerCase().includes(drugSearch.toLowerCase())).map(d=>(
-                                                                    <div key={d} onClick={()=>setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})} className={`p-2 text-xs border-b last:border-0 cursor-pointer hover:bg-red-50 ${form.selectedDrugs.includes(d)?'bg-red-50 font-bold text-red-700':''}`}>{d}</div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
                                                 </div>
-                                            </div>
 
-                                            <div>
-                                                <label className="text-xs font-bold text-red-800">รายละเอียดเพิ่มเติม</label>
-                                                <textarea value={form.details} onChange={e=>setForm({...form, details: e.target.value})} className="w-full mt-1 p-2 border border-red-100 rounded-xl text-xs h-20 bg-orange-50/30" />
-                                            </div>
+                                                <div className="md:col-span-2 space-y-4">
+                                                    <label className="text-xs font-bold text-red-700 ml-1">ระดับความรุนแรง</label>
+                                                    <div className="flex gap-3">
+                                                        {severities.map(sv => (
+                                                            <div key={sv} className="flex-1">
+                                                                <input type="radio" id={`sv-${sv}`} name="severity" value={sv} checked={form.severity === sv} onChange={e=>setForm({...form, severity: e.target.value})} className="hidden btn-radio" />
+                                                                <label htmlFor={`sv-${sv}`} className="block w-full py-4 text-center rounded-2xl border-2 border-transparent bg-white luxury-shadow text-lg font-black cursor-pointer transition-smooth text-slate-300">
+                                                                    {sv}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-xs font-bold text-red-800">ประเภทความเสี่ยง</label>
-                                                    <select value={form.riskType} onChange={e=>setForm({...form, riskType: e.target.value})} className="w-full mt-1 p-2 border border-red-100 rounded-xl text-xs bg-white" required>
-                                                        <option value="">-- เลือก --</option>
-                                                        {riskTypes.map(t=><option key={t} value={t}>{t}</option>)}
+                                                <div className="md:col-span-2">
+                                                    <label className="text-xs font-bold text-red-700 ml-1">การแก้ไขเบื้องต้น</label>
+                                                    <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full mt-2 p-4 border-none rounded-2xl luxury-shadow outline-none text-sm bg-white" required>
+                                                        <option value="">-- เลือกการแก้ไข --</option>
+                                                        {actions.map(a=><option key={a} value={a}>{a}</option>)}
                                                     </select>
                                                 </div>
-                                                <div>
-                                                    <label className="text-xs font-bold text-red-800">ระดับความรุนแรง</label>
-                                                    <select value={form.severity} onChange={e=>setForm({...form, severity: e.target.value})} className="w-full mt-1 p-2 border border-red-100 rounded-xl text-xs bg-white" required>
-                                                        <option value="">-- เลือก --</option>
-                                                        {severities.map(s=><option key={s} value={s}>{s}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="text-xs font-bold text-red-800">การแก้ไข</label>
-                                                <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full mt-1 p-2 border border-red-100 rounded-xl text-xs bg-white" required>
-                                                    <option value="">-- เลือกการแก้ไข --</option>
-                                                    {actions.map(a=><option key={a} value={a}>{a}</option>)}
-                                                </select>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Staff Selection */}
-                                    <div className="bg-slate-50 p-5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-5 border border-slate-100">
+                                    {/* Staff Section */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-50/50 p-8 rounded-[2.5rem] border border-slate-100">
                                         {[
                                             { label: 'ผู้ตรวจ (พยาบาล)', field: 'inspector', list: 'inspectors' },
                                             { label: 'รคส. (แพทย์)', field: 'doctor', list: 'doctors' },
                                             { label: 'ผู้บันทึก (เภสัชกร)', field: 'recorder', list: 'recorders' }
                                         ].map(item => (
-                                            <div key={item.field}>
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase">{item.label}</label>
-                                                <div className="flex gap-1 mt-1">
-                                                    <input list={item.list} value={form[item.field]} onChange={e=>setForm({...form, [item.field]: e.target.value})} className="flex-1 p-2 border rounded-xl text-xs" required />
-                                                    <button type="button" onClick={()=>handlePaste(item.field)} className="px-2 bg-white border border-slate-200 rounded-lg text-[9px] font-bold hover:bg-slate-100">วาง</button>
+                                            <div key={item.field} className="space-y-2">
+                                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">{item.label}</label>
+                                                <div className="flex gap-2">
+                                                    <input list={item.list} value={form[item.field]} onChange={e=>setForm({...form, [item.field]: e.target.value})} className="flex-1 p-3 rounded-2xl border-none luxury-shadow text-xs outline-none focus:ring-2 focus:ring-indigo-500/20" required />
+                                                    <button type="button" onClick={()=>handlePaste(item.field)} className="bg-white p-3 text-indigo-500 luxury-shadow rounded-2xl flex items-center justify-center hover:bg-slate-50"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></button>
                                                 </div>
                                                 <datalist id={item.list}>{data[item.list].map(n=><option key={n} value={n}/>)}</datalist>
                                             </div>
                                         ))}
                                     </div>
 
-                                    <button type="submit" disabled={isSubmitting} className={`w-full p-4 rounded-2xl text-lg font-bold text-white shadow-lg transition-all ${isSubmitting?'bg-gray-300':'bg-blue-600 hover:bg-blue-700'}`}>
-                                        {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกรายงาน ER ERROR'}
+                                    <button type="submit" disabled={isSubmitting} className={`w-full p-6 rounded-[2rem] text-xl font-bold text-white shadow-2xl transition-smooth transform hover:scale-[1.02] active:scale-[0.98] ${isSubmitting?'bg-slate-400':'bg-indigo-600 hover:bg-indigo-700'}`}>
+                                        {isSubmitting ? 'กำลังจัดเก็บข้อมูล...' : 'บันทึกรายงาน ER ERROR'}
                                     </button>
                                 </form>
                             </div>
                         ) : (
-                            /* --- History Tab --- */
-                            <div className="animate-content space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-blue-500">
-                                        <div className="text-xs font-bold text-gray-400">ใบสั่งยารวม</div>
-                                        <div className="text-3xl font-black text-blue-600">
-                                            {useMemo(() => {
-                                                const shifts = new Set(); let sum = 0;
-                                                filteredHistory.forEach(h => {
-                                                    if(h.totalRx && !shifts.has(h.shiftDate)) { sum += parseInt(h.totalRx); shifts.add(h.shiftDate); }
-                                                });
-                                                return sum;
-                                            }, [filteredHistory])} <span className="text-xs font-normal">ใบ</span>
-                                        </div>
+                            /* --- History & Report Tab --- */
+                            <div className="animate-fade space-y-8">
+                                {/* Dashboard */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-white p-8 rounded-[2rem] luxury-shadow border-b-8 border-indigo-500">
+                                        <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">ใบสั่งยารวมทั้งหมด</div>
+                                        <div className="text-4xl font-black text-indigo-600">{stats.rx} <span className="text-sm font-normal text-slate-300 tracking-normal">ใบสั่งยา</span></div>
                                     </div>
-                                    <div className="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-red-500 flex justify-between items-center">
+                                    <div className="bg-white p-8 rounded-[2rem] luxury-shadow border-b-8 border-red-500 flex justify-between items-center">
                                         <div>
-                                            <div className="text-xs font-bold text-gray-400">Error รวม</div>
-                                            <div className="text-3xl font-black text-red-600">
-                                                {filteredHistory.filter(h=>h.errorType !== errorOptions[0]).length} <span className="text-xs font-normal text-gray-400">รายการ</span>
-                                            </div>
+                                            <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Error ที่พบ</div>
+                                            <div className="text-4xl font-black text-red-600">{stats.errors} <span className="text-sm font-normal text-slate-300 tracking-normal">รายการ</span></div>
                                         </div>
-                                        <button onClick={generatePDF} className="bg-red-50 text-red-600 p-3 rounded-2xl flex flex-col items-center gap-1 hover:bg-red-100 transition-colors">
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                            <span className="text-[10px] font-bold">สร้าง PDF</span>
+                                        <button onClick={handleExportPDF} className="bg-red-50 text-red-600 p-4 rounded-3xl flex flex-col items-center gap-1 hover:bg-red-100 transition-smooth group luxury-shadow">
+                                            <svg className="w-8 h-8 group-hover:scale-110 transition-smooth" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <span className="text-[10px] font-black">ส่งออก PDF</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
-                                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-                                        <div className="flex gap-2 bg-gray-50 p-1 rounded-xl">
-                                            <button onClick={()=>setFilterType('day')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filterType==='day'?'bg-white shadow text-blue-600':'text-gray-400'}`}>รายวัน</button>
-                                            <button onClick={()=>setFilterType('month')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filterType==='month'?'bg-white shadow text-blue-600':'text-gray-400'}`}>รายเดือน</button>
+                                {/* Filters */}
+                                <div className="bg-white rounded-[2rem] luxury-shadow p-8 border border-slate-50">
+                                    <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
+                                        <div className="flex gap-2 bg-slate-50 p-1.5 rounded-2xl">
+                                            <button onClick={()=>setFilterType('day')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-smooth ${filterType==='day'?'bg-white shadow-sm text-indigo-600':'text-slate-400 hover:text-slate-600'}`}>รายวัน</button>
+                                            <button onClick={()=>setFilterType('month')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-smooth ${filterType==='month'?'bg-white shadow-sm text-indigo-600':'text-slate-400 hover:text-slate-600'}`}>รายเดือน</button>
                                         </div>
-                                        <div className="flex flex-1 gap-2">
-                                            <input type="text" placeholder="ค้นหา HN..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="flex-1 p-2 border rounded-xl text-xs" />
-                                            {filterType==='day' ? <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="p-2 border rounded-xl text-xs" /> : <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="p-2 border rounded-xl text-xs" />}
+                                        <div className="flex-1 max-w-sm">
+                                            <input type="text" placeholder="ค้นหา HN หรือ รายละเอียด..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="w-full p-3 border-none bg-slate-50 rounded-2xl text-xs outline-none focus:ring-2 focus:ring-indigo-500/10" />
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {filterType==='day' ? 
+                                                <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="p-3 bg-slate-50 border-none rounded-2xl text-xs outline-none" /> : 
+                                                <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="p-3 bg-slate-50 border-none rounded-2xl text-xs outline-none" />
+                                            }
                                         </div>
                                     </div>
                                     
-                                    <div className="mb-4 flex items-center gap-2 px-2">
-                                        <input type="checkbox" id="exclude-no-error" checked={excludeNoError} onChange={e=>setExcludeNoError(e.target.checked)} className="w-4 h-4 rounded accent-blue-600" />
-                                        <label htmlFor="exclude-no-error" className="text-xs font-bold text-gray-500">ไม่นับรวม ❌ไม่พบ Error (Default)</label>
+                                    <div className="flex items-center gap-3 mb-6 px-2">
+                                        <div className="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="no-error-check" checked={excludeNoError} onChange={e=>setExcludeNoError(e.target.checked)} className="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500" />
+                                            <label htmlFor="no-error-check" className="ml-3 text-xs font-bold text-slate-500">ซ่อนรายการ ❌ไม่พบ Error (Default)</label>
+                                        </div>
                                     </div>
 
-                                    <div className="overflow-x-auto rounded-xl border border-gray-50">
-                                        <table className="w-full text-left text-[11px]">
-                                            <thead className="bg-slate-50 text-slate-400 font-bold uppercase tracking-wider">
+                                    <div className="overflow-x-auto rounded-[1.5rem] border border-slate-50 luxury-shadow">
+                                        <table className="w-full text-left text-[11px] border-collapse">
+                                            <thead className="bg-slate-50/80 text-slate-400 font-bold uppercase tracking-wider">
                                                 <tr>
-                                                    <th className="p-3">กะรับยา</th>
-                                                    <th className="p-3">HN</th>
-                                                    <th className="p-3">ความเสี่ยง</th>
-                                                    <th className="p-3">ระดับ</th>
-                                                    <th className="p-3">ผู้บันทึก</th>
+                                                    <th className="p-4 border-b">กะรับยา</th>
+                                                    <th className="p-4 border-b">เวลา</th>
+                                                    <th className="p-4 border-b">HN</th>
+                                                    <th className="p-4 border-b">ความเสี่ยง</th>
+                                                    <th className="p-4 border-b">ระดับ</th>
+                                                    <th className="p-4 border-b">ผู้บันทึก</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-gray-50">
+                                            <tbody className="divide-y divide-slate-50">
                                                 {filteredHistory.map((h, i)=>(
-                                                    <tr key={i} className="hover:bg-gray-50/50">
-                                                        <td className="p-3 font-bold text-slate-600">{h.shiftDate}</td>
-                                                        <td className="p-3 font-black text-blue-600">{h.hn || '-'}</td>
-                                                        <td className={`p-3 font-bold ${h.errorType===errorOptions[0]?'text-green-400':'text-red-500'}`}>{h.errorType}</td>
-                                                        <td className="p-3 text-center font-black">{h.severity || '-'}</td>
-                                                        <td className="p-3 text-gray-400">{h.recorder}</td>
+                                                    <tr key={i} className="hover:bg-slate-50/50 transition-smooth group">
+                                                        <td className="p-4 font-bold text-slate-600">{h.shiftDate}</td>
+                                                        <td className="p-4 text-slate-400">{h.time}</td>
+                                                        <td className="p-4 font-black text-indigo-600 group-hover:scale-105 transition-smooth inline-block">{h.hn || '-'}</td>
+                                                        <td className={`p-4 font-bold ${h.errorType===errorOptions[0]?'text-green-400':'text-red-500'}`}>{h.errorType}</td>
+                                                        <td className="p-4 text-center font-black text-slate-700">{h.severity || '-'}</td>
+                                                        <td className="p-4 text-slate-400 italic">{h.recorder}</td>
                                                     </tr>
                                                 ))}
-                                                {filteredHistory.length === 0 && <tr><td colSpan="5" className="p-10 text-center text-gray-300 italic">ไม่พบข้อมูลตามเงื่อนไข</td></tr>}
+                                                {filteredHistory.length === 0 && (
+                                                    <tr><td colSpan="6" className="p-20 text-center text-slate-300 italic font-medium">ไม่พบข้อมูลตามเงื่อนไขที่เลือก...</td></tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -436,6 +486,58 @@
                             </div>
                         )}
                     </main>
+
+                    {/* PDF HIDDEN CONTENT (Landscape Sarabun) */}
+                    <div id="report-pdf" className="pdf-content" style={{ width: '280mm' }}>
+                        <div style={{ padding: '20mm' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '15mm' }}>
+                                <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>รายงานสรุป ER Medication Errors</h1>
+                                <p style={{ fontSize: '14px' }}>ประจำงวด: {filterType === 'day' ? filterDate : filterMonth}</p>
+                                <div style={{ marginTop: '5mm', fontSize: '12px' }}>
+                                    ใบสั่งยารวม: <strong>{stats.rx}</strong> ใบ | Error ทั้งหมด: <strong>{stats.errors}</strong> รายการ
+                                </div>
+                            </div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                                <thead>
+                                    <tr style={{ backgroundColor: '#f3f4f6' }}>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>กะรับยา</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>เวลา</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>HN</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>ความเสี่ยง</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>รายละเอียด</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>รุนแรง</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>ผู้ตรวจ</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>รคส.</th>
+                                        <th style={{ border: '1px solid #ddd', padding: '8px' }}>ผู้บันทึก</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredHistory.map((h, i) => (
+                                        <tr key={i}>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{h.shiftDate}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center' }}>{h.time}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center', fontWeight: 'bold' }}>{h.hn}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>{h.errorType}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>{h.details}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px', textAlign: 'center', fontWeight: 'bold' }}>{h.severity}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>{h.inspector}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>{h.doctor}</td>
+                                            <td style={{ border: '1px solid #ddd', padding: '6px' }}>{h.recorder}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div style={{ marginTop: '20mm', display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                <div style={{ textAlign: 'center' }}>
+                                    <p>ลงชื่อ............................................................</p>
+                                    <p style={{ marginTop: '5mm' }}>หัวหน้ากลุ่มงานเภสัชกรรม</p>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <p>พิมพ์เมื่อ: {new Date().toLocaleDateString('th-TH')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         };
