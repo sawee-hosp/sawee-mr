@@ -11,11 +11,19 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f1f5f9; }
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap');
+        
+        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
         .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; }
-        .datalist-input::-webkit-calendar-picker-indicator { display: block !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { position: absolute; left: 0; top: 0; width: 100%; font-family: 'Sarabun', sans-serif; font-size: 10pt; }
+            .no-print { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -38,10 +46,10 @@
         const actions = ["แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ และให้บันทึกรายการยาตามหลัง", "แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ"];
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('form'); // 'form' or 'history'
+            const [activeTab, setActiveTab] = useState('form');
             const [isLoading, setIsLoading] = useState(true);
             const [data, setData] = useState({ drugs: [], inspectors: [], doctors: [], recorders: [], history: [] });
-
+            
             // Form States
             const [form, setForm] = useState({
                 date: new Date().toISOString().split('T')[0],
@@ -51,17 +59,19 @@
                 details: '', riskType: '', severity: '', action: '',
                 inspector: '', doctor: '', recorder: ''
             });
+            
             const [isTotalRxLocked, setIsTotalRxLocked] = useState(false);
             const [isSubmitting, setIsSubmitting] = useState(false);
-            const [status, setStatus] = useState(null);
+            const [showSuccessModal, setShowSuccessModal] = useState(false);
+            const [isDrugDropdownOpen, setIsDrugDropdownOpen] = useState(false);
+            const [drugSearch, setDrugSearch] = useState('');
 
-            // History Filter States
-            const [filterType, setFilterType] = useState('day'); // 'day' or 'month'
+            // History Filtering
+            const [filterType, setFilterType] = useState('day');
             const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
             const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
             const [searchTerm, setSearchTerm] = useState('');
 
-            // Fetch Data
             const fetchData = async () => {
                 setIsLoading(true);
                 try {
@@ -74,7 +84,7 @@
 
             useEffect(() => { fetchData(); }, []);
 
-            // Shift Calculation
+            // Shift Calculation (Format: 6-7/04/2026)
             useEffect(() => {
                 const [hour, min] = form.time.split(':').map(Number);
                 const selDate = new Date(form.date);
@@ -82,32 +92,30 @@
 
                 if (hour < 8) {
                     const pD = new Date(selDate); pD.setDate(pD.getDate() - 1);
-                    sD = String(pD.getDate()).padStart(2, '0'); sM = String(pD.getMonth() + 1).padStart(2, '0'); sY = pD.getFullYear();
-                    eD = String(selDate.getDate()).padStart(2, '0'); eM = String(selDate.getMonth() + 1).padStart(2, '0'); eY = selDate.getFullYear();
+                    sD = pD.getDate(); sM = String(pD.getMonth() + 1).padStart(2, '0'); sY = pD.getFullYear();
+                    eD = selDate.getDate(); eM = String(selDate.getMonth() + 1).padStart(2, '0'); eY = selDate.getFullYear();
                 } else {
                     const nD = new Date(selDate); nD.setDate(nD.getDate() + 1);
-                    sD = String(selDate.getDate()).padStart(2, '0'); sM = String(selDate.getMonth() + 1).padStart(2, '0'); sY = selDate.getFullYear();
-                    eD = String(nD.getDate()).padStart(2, '0'); eM = String(nD.getMonth() + 1).padStart(2, '0'); eY = nD.getFullYear();
+                    sD = selDate.getDate(); sM = String(selDate.getMonth() + 1).padStart(2, '0'); sY = selDate.getFullYear();
+                    eD = nD.getDate(); eM = String(nD.getMonth() + 1).padStart(2, '0'); eY = nD.getFullYear();
                 }
                 const fmt = (sM === eM) ? `${sD}-${eD}/${sM}/${sY}` : `${sD}/${sM}-${eD}/${eM}/${eY}`;
                 setForm(prev => ({ ...prev, shiftDate: fmt }));
             }, [form.date, form.time]);
 
-            // Auto-fill existing shift data
+            // Shift Logic: Sync count and totalRx
             useEffect(() => {
-                const shiftInHistory = data.history.find(h => h.shiftDate === form.shiftDate);
-                if (shiftInHistory) {
-                    setForm(prev => ({ 
-                        ...prev, 
-                        totalRx: shiftInHistory.totalRx, 
-                        sequence: data.history.filter(h => h.shiftDate === form.shiftDate).length + 1,
-                        totalErrors: data.history.filter(h => h.shiftDate === form.shiftDate && h.errorType !== errorOptions[0]).length
-                    }));
-                    setIsTotalRxLocked(true);
-                } else {
-                    setForm(prev => ({ ...prev, totalRx: '', sequence: 1, totalErrors: 0 }));
-                    setIsTotalRxLocked(false);
-                }
+                const historyInShift = data.history.filter(h => h.shiftDate === form.shiftDate);
+                const shiftWithTotalRx = historyInShift.find(h => h.totalRx && h.totalRx !== "");
+                const errorCount = historyInShift.filter(h => h.errorType !== errorOptions[0]).length;
+
+                setForm(prev => ({
+                    ...prev,
+                    totalRx: shiftWithTotalRx ? shiftWithTotalRx.totalRx : '',
+                    sequence: historyInShift.length + 1,
+                    totalErrors: errorCount
+                }));
+                setIsTotalRxLocked(!!shiftWithTotalRx);
             }, [form.shiftDate, data.history]);
 
             // Auto Details
@@ -115,8 +123,19 @@
                 if (form.errorType !== errorOptions[0]) {
                     const dStr = form.selectedDrugs.join(', ') || '...';
                     setForm(prev => ({ ...prev, details: `HN ${form.hn || '...'} ${form.errorType} คือ ${dStr}` }));
+                } else {
+                    setForm(prev => ({ ...prev, details: '' }));
                 }
             }, [form.hn, form.errorType, form.selectedDrugs]);
+
+            const handlePaste = async (field) => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    setForm(prev => ({ ...prev, [field]: text }));
+                } catch (err) {
+                    console.error('Failed to read clipboard', err);
+                }
+            };
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
@@ -126,21 +145,21 @@
                     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const resJson = await res.json();
                     if(resJson.status === 'success') {
-                        setStatus('success');
+                        setShowSuccessModal(true);
                         await fetchData();
-                        setForm(prev => ({ ...prev, errorType: errorOptions[0], hn: '', selectedDrugs: [], details: '' }));
-                        setTimeout(() => setStatus(null), 3000);
-                    } else { setStatus('error'); }
-                } catch (e) { setStatus('error'); }
+                        setForm(prev => ({ ...prev, errorType: errorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '' }));
+                        setTimeout(() => setShowSuccessModal(false), 2000);
+                    }
+                } catch (e) { alert("เกิดข้อผิดพลาดในการบันทึก"); }
                 setIsSubmitting(false);
             };
 
-            // History Filtering
             const filteredHistory = useMemo(() => {
                 return data.history.filter(item => {
                     const matchesSearch = item.hn.includes(searchTerm) || item.details.toLowerCase().includes(searchTerm.toLowerCase());
                     if (filterType === 'day') {
-                        return item.date.includes(filterDate.split('-').reverse().join('/')) && matchesSearch;
+                        const fmtDate = filterDate.split('-').reverse().join('/');
+                        return (item.date && item.date.includes(fmtDate)) && matchesSearch;
                     } else {
                         const [y, m] = filterMonth.split('-');
                         return item.shiftDate.includes(`/${m}/${y}`) && matchesSearch;
@@ -148,220 +167,332 @@
                 });
             }, [data.history, filterType, filterDate, filterMonth, searchTerm]);
 
-            if (isLoading && data.history.length === 0) return <div className="h-screen flex items-center justify-center text-xl font-bold text-blue-600">กำลังโหลดระบบ...</div>;
+            // Dashboard Stats
+            const stats = useMemo(() => {
+                const uniqueShifts = new Set();
+                let rxSum = 0;
+                filteredHistory.forEach(h => {
+                    if (h.totalRx && !uniqueShifts.has(h.shiftDate)) {
+                        rxSum += parseInt(h.totalRx) || 0;
+                        uniqueShifts.add(h.shiftDate);
+                    }
+                });
+                return {
+                    totalPrescriptions: rxSum,
+                    totalErrors: filteredHistory.filter(h => h.errorType !== errorOptions[0]).length
+                };
+            }, [filteredHistory]);
+
+            const handlePrint = () => {
+                window.print();
+            };
+
+            const filteredDrugs = data.drugs.filter(d => d.toLowerCase().includes(drugSearch.toLowerCase()));
 
             return (
-                <div className="min-h-screen pb-10">
-                    {/* Navigation Bar */}
-                    <nav className="bg-white shadow-md sticky top-0 z-50">
-                        <div className="max-w-5xl mx-auto flex justify-around">
-                            <button onClick={() => setActiveTab('form')} className={`py-4 px-6 font-bold flex items-center gap-2 ${activeTab === 'form' ? 'tab-active' : 'text-gray-500'}`}>
-                                📝 บันทึกรายงาน
+                <div className="min-h-screen">
+                    {/* Success Modal */}
+                    {showSuccessModal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade">
+                            <div className="bg-white p-8 rounded-3xl shadow-2xl text-center transform transition-all scale-110">
+                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-800">บันทึกเรียบร้อย</h3>
+                                <p className="text-gray-500 mt-2">ระบบรีเซ็ตฟอร์มให้คุณแล้ว</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <nav className="bg-white shadow-sm border-b sticky top-0 z-40 no-print">
+                        <div className="max-w-5xl mx-auto flex">
+                            <button onClick={() => setActiveTab('form')} className={`flex-1 py-4 font-bold text-center ${activeTab === 'form' ? 'tab-active' : 'text-gray-400'}`}>
+                                📝 บันทึกข้อมูล
                             </button>
-                            <button onClick={() => setActiveTab('history')} className={`py-4 px-6 font-bold flex items-center gap-2 ${activeTab === 'history' ? 'tab-active' : 'text-gray-500'}`}>
-                                📊 ดูประวัติย้อนหลัง
+                            <button onClick={() => setActiveTab('history')} className={`flex-1 py-4 font-bold text-center ${activeTab === 'history' ? 'tab-active' : 'text-gray-400'}`}>
+                                📊 ประวัติ & รายงาน
                             </button>
                         </div>
                     </nav>
 
-                    <main className="max-w-5xl mx-auto mt-6 px-4">
+                    <main className="max-w-5xl mx-auto mt-6 px-4 mb-20 no-print">
                         {activeTab === 'form' ? (
-                            /* --- Form Page --- */
-                            <div className="bg-white rounded-3xl shadow-lg p-6 md:p-10 animate-fade border border-gray-100">
-                                <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">แบบฟอร์มบันทึก ER ERROR</h2>
-                                
-                                {status === 'success' && <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl border border-green-200">✅ บันทึกข้อมูลสำเร็จ!</div>}
-                                {status === 'error' && <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl border border-red-200">❌ บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง</div>}
+                            <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10 border border-gray-100 animate-fade">
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-bold text-gray-800">แบบฟอร์มบันทึก ER ERROR</h2>
+                                    <p className="text-blue-600 font-medium">โดยเภสัชกรเวรเช้าประจำวัน</p>
+                                </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-8">
-                                    {/* Row 1: Time */}
-                                    <div className="bg-blue-50 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Date & Time Section */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-200">
                                         <div>
-                                            <label className="text-sm font-bold text-gray-600">วันที่เกิดเหตุ</label>
-                                            <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full p-3 rounded-xl border mt-1" required />
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">วันที่เกิดเหตุ</label>
+                                            <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 outline-none transition-all" required />
                                         </div>
                                         <div>
-                                            <label className="text-sm font-bold text-gray-600">เวลา (น.)</label>
-                                            <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full p-3 rounded-xl border mt-1" required />
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">เวลา (น.)</label>
+                                            <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 outline-none transition-all" required />
                                         </div>
-                                        <div className="md:col-span-2 flex flex-col md:flex-row justify-between bg-white p-4 rounded-xl border border-blue-200 gap-4">
-                                            <div>
-                                                <div className="text-xs font-bold text-blue-500 uppercase">กะรับยา (อัตโนมัติ)</div>
-                                                <div className="text-xl font-bold text-blue-900">{form.shiftDate}</div>
+                                        
+                                        <div className="md:col-span-2 flex flex-col md:flex-row items-center justify-between bg-white p-5 rounded-2xl border-2 border-blue-100 gap-4">
+                                            <div className="text-center md:text-left">
+                                                <div className="text-[10px] font-black text-blue-400 uppercase tracking-tighter">กะรับยาประจำวันที่</div>
+                                                <div className="text-2xl font-black text-blue-700">{form.shiftDate}</div>
                                             </div>
-                                            <div className="flex gap-6 border-l pl-6">
-                                                <div className="text-center">
-                                                    <div className="text-xs text-gray-400">ลำดับที่</div>
-                                                    <div className="text-xl font-bold">{form.sequence}</div>
-                                                </div>
-                                                <div className="text-center">
-                                                    <div className="text-xs text-red-400">Error วันนี้</div>
-                                                    <div className="text-xl font-bold text-red-600">{form.totalErrors}</div>
+                                            <div className="flex gap-4">
+                                                <div className="bg-slate-100 px-4 py-2 rounded-xl text-center min-w-[100px]">
+                                                    <div className="text-[10px] text-slate-400 font-bold uppercase">ลำดับที่ / Error</div>
+                                                    <div className="text-xl font-bold text-slate-700">{form.sequence} / <span className="text-red-500">{form.totalErrors}</span></div>
                                                 </div>
                                             </div>
                                         </div>
+
                                         <div className="md:col-span-2">
-                                            <label className="text-sm font-bold text-gray-600">จำนวนใบสั่งยาทั้งหมดของกะนี้</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase">จำนวนใบสั่งยาทั้งหมดของกะนี้</label>
                                             <div className="flex gap-2 mt-1">
-                                                <input type="number" value={form.totalRx} onChange={e => setForm({...form, totalRx: e.target.value})} disabled={isTotalRxLocked} className="flex-1 p-3 rounded-xl border disabled:bg-gray-100" required />
-                                                {isTotalRxLocked && <button type="button" onClick={()=>setIsTotalRxLocked(false)} className="px-4 text-blue-600 font-bold border rounded-xl">แก้ไข</button>}
+                                                <input type="number" value={form.totalRx} onChange={e => setForm({...form, totalRx: e.target.value})} disabled={isTotalRxLocked} className="flex-1 p-3 rounded-2xl border-2 border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 text-lg font-bold" required placeholder="ระบุจำนวนใบสั่งยา..." />
+                                                {isTotalRxLocked && <button type="button" onClick={()=>setIsTotalRxLocked(false)} className="px-5 bg-white text-blue-600 border-2 border-blue-600 rounded-2xl font-bold hover:bg-blue-50">แก้ไข</button>}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Error Type */}
+                                    {/* Risk Selection */}
                                     <div className="space-y-4">
                                         <label className="text-lg font-bold text-gray-800">ความเสี่ยงที่พบ</label>
-                                        <select value={form.errorType} onChange={e => setForm({...form, errorType: e.target.value})} className={`w-full p-4 rounded-2xl border-2 font-bold outline-none ${form.errorType === errorOptions[0] ? 'border-green-300 bg-green-50 text-green-700' : 'border-red-300 bg-red-50 text-red-700'}`}>
-                                            {errorOptions.map(o => <option key={o} value={o}>{o}</option>)}
-                                        </select>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                            {errorOptions.map(opt => (
+                                                <button key={opt} type="button" onClick={() => setForm({...form, errorType: opt})} 
+                                                    className={`p-3 text-left rounded-xl text-sm transition-all border-2 ${form.errorType === opt ? 'bg-blue-600 border-blue-600 text-white font-bold' : 'bg-white border-slate-100 hover:border-blue-200 text-slate-600'}`}>
+                                                    {opt}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    {/* Details */}
+                                    {/* Conditional Form */}
                                     {form.errorType !== errorOptions[0] && (
-                                        <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100 grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade">
-                                            <div>
-                                                <label className="text-sm font-bold text-gray-700">HN</label>
-                                                <input type="text" value={form.hn} onChange={e => setForm({...form, hn: e.target.value})} className="w-full p-3 rounded-xl border mt-1" required />
-                                            </div>
-                                            <div className="relative">
-                                                <label className="text-sm font-bold text-gray-700">ยาที่เกี่ยวข้อง</label>
-                                                <div className="w-full p-3 bg-white border rounded-xl mt-1 min-h-[50px] cursor-pointer flex flex-wrap gap-1" onClick={()=>setForm({...form, isDrugDropdownOpen: !form.isDrugDropdownOpen})}>
-                                                    {form.selectedDrugs.length === 0 ? <span className="text-gray-400 text-sm">คลิกเพื่อเลือกยา...</span> : form.selectedDrugs.map(d=>(
-                                                        <span key={d} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-                                                            {d} <span onClick={(e)=>{ e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}}>×</span>
-                                                        </span>
-                                                    ))}
+                                        <div className="bg-red-50 p-6 rounded-3xl border border-red-100 space-y-6 animate-fade">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="relative">
+                                                    <label className="text-sm font-bold text-red-800">HN</label>
+                                                    <div className="flex gap-2 mt-1">
+                                                        <input type="text" value={form.hn} onChange={e => setForm({...form, hn: e.target.value})} className="flex-1 p-3 rounded-xl border border-red-200 bg-white" required />
+                                                        <button type="button" onClick={() => handlePaste('hn')} className="px-4 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 font-bold text-xs">วาง</button>
+                                                    </div>
                                                 </div>
-                                                {form.isDrugDropdownOpen && (
-                                                    <div className="absolute z-10 w-full bg-white border shadow-2xl rounded-xl mt-1 max-h-48 overflow-y-auto">
-                                                        {data.drugs.map(d => (
-                                                            <div key={d} onClick={()=>{ setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})}} className="p-3 hover:bg-red-50 text-sm cursor-pointer">{d}</div>
+
+                                                <div className="relative">
+                                                    <label className="text-sm font-bold text-red-800">ยาที่เกี่ยวข้อง</label>
+                                                    <div className="relative">
+                                                        <div onClick={() => setIsDrugDropdownOpen(!isDrugDropdownOpen)} className="w-full mt-1 p-3 rounded-xl border border-red-200 bg-white min-h-[50px] flex flex-wrap gap-1 cursor-pointer">
+                                                            {form.selectedDrugs.length === 0 ? <span className="text-slate-400 text-sm">คลิกเพื่อเลือกยา...</span> : form.selectedDrugs.map(d=>(
+                                                                <span key={d} className="bg-red-200 text-red-800 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1">
+                                                                    {d} <span onClick={(e)=>{ e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}} className="text-red-500">×</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                        {isDrugDropdownOpen && (
+                                                            <div className="absolute z-50 w-full mt-2 bg-white border-2 border-red-100 shadow-2xl rounded-2xl overflow-hidden animate-fade">
+                                                                <div className="p-2 border-b bg-red-50 flex items-center gap-2">
+                                                                    <input type="text" value={drugSearch} onChange={e=>setDrugSearch(e.target.value)} placeholder="ค้นหายา..." className="flex-1 p-2 rounded-lg border text-sm" onClick={e=>e.stopPropagation()} />
+                                                                    <button type="button" onClick={() => setIsDrugDropdownOpen(false)} className="px-3 py-1 bg-white text-red-500 border border-red-200 rounded-lg text-xs font-bold">ปิด</button>
+                                                                </div>
+                                                                <div className="max-h-60 overflow-y-auto">
+                                                                    {filteredDrugs.map(d => (
+                                                                        <div key={d} onClick={()=>{ setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})}} className={`p-3 text-sm cursor-pointer hover:bg-red-50 border-b last:border-0 ${form.selectedDrugs.includes(d) ? 'bg-red-50 text-red-700 font-bold' : ''}`}>{d}</div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className="text-sm font-bold text-red-800">รายละเอียดเพิ่มเติม (Auto Text)</label>
+                                                    <textarea value={form.details} onChange={e => setForm({...form, details: e.target.value})} className="w-full mt-1 p-3 rounded-xl border border-red-200 bg-orange-50 h-24 focus:bg-white" />
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className="text-sm font-bold text-red-800 block mb-2">ประเภทความเสี่ยง</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {riskTypes.map(rt => (
+                                                            <button key={rt} type="button" onClick={() => setForm({...form, riskType: rt})} 
+                                                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${form.riskType === rt ? 'bg-red-600 border-red-600 text-white' : 'bg-white border-red-200 text-red-400 hover:bg-red-100'}`}>
+                                                                {rt}
+                                                            </button>
                                                         ))}
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <label className="text-sm font-bold text-gray-700">รายละเอียดเพิ่มเติม</label>
-                                                <textarea value={form.details} onChange={e => setForm({...form, details: e.target.value})} className="w-full p-3 rounded-xl border mt-1 h-24 bg-yellow-50" />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm font-bold text-gray-700">ประเภทความเสี่ยง</label>
-                                                <select value={form.riskType} onChange={e=>setForm({...form, riskType: e.target.value})} className="w-full p-3 border rounded-xl mt-1 bg-white" required>
-                                                    <option value="">-- เลือก --</option>
-                                                    {riskTypes.map(t=><option key={t} value={t}>{t}</option>)}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-sm font-bold text-gray-700">ความรุนแรง</label>
-                                                <select value={form.severity} onChange={e=>setForm({...form, severity: e.target.value})} className="w-full p-3 border rounded-xl mt-1 bg-white" required>
-                                                    <option value="">-- เลือก --</option>
-                                                    {severities.map(s=><option key={s} value={s}>{s}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <label className="text-sm font-bold text-gray-700">การแก้ไข</label>
-                                                <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full p-3 border rounded-xl mt-1 bg-white" required>
-                                                    <option value="">-- เลือก --</option>
-                                                    {actions.map(a=><option key={a} value={a}>{a}</option>)}
-                                                </select>
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className="text-sm font-bold text-red-800 block mb-2">ระดับความรุนแรง</label>
+                                                    <div className="flex gap-2">
+                                                        {severities.map(sv => (
+                                                            <button key={sv} type="button" onClick={() => setForm({...form, severity: sv})} 
+                                                                className={`w-10 h-10 rounded-xl font-black text-lg transition-all border-2 ${form.severity === sv ? 'bg-red-600 border-red-600 text-white scale-110' : 'bg-white border-red-100 text-red-300'}`}>
+                                                                {sv}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className="text-sm font-bold text-red-800">การแก้ไข</label>
+                                                    <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full mt-1 p-3 border border-red-200 rounded-xl bg-white" required>
+                                                        <option value="">-- เลือก --</option>
+                                                        {actions.map(a=><option key={a} value={a}>{a}</option>)}
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Staff */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div>
-                                            <label className="text-sm font-bold text-gray-700">ผู้ตรวจ (พยาบาล)</label>
-                                            <input list="inspectors" value={form.inspector} onChange={e=>setForm({...form, inspector: e.target.value})} className="w-full p-3 border rounded-xl mt-1" required />
-                                            <datalist id="inspectors">{data.inspectors.map(n=><option key={n} value={n}/>)}</datalist>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-bold text-gray-700">รคส. (แพทย์)</label>
-                                            <input list="doctors" value={form.doctor} onChange={e=>setForm({...form, doctor: e.target.value})} className="w-full p-3 border rounded-xl mt-1" required />
-                                            <datalist id="doctors">{data.doctors.map(n=><option key={n} value={n}/>)}</datalist>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-bold text-gray-700">ผู้บันทึก (เภสัชกร)</label>
-                                            <input list="recorders" value={form.recorder} onChange={e=>setForm({...form, recorder: e.target.value})} className="w-full p-3 border rounded-xl mt-1" required />
-                                            <datalist id="recorders">{data.recorders.map(n=><option key={n} value={n}/>)}</datalist>
-                                        </div>
+                                    {/* Staff Section */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                                        {[
+                                            { label: 'ผู้ตรวจ (พยาบาล)', field: 'inspector', list: 'inspectors' },
+                                            { label: 'รคส. (แพทย์)', field: 'doctor', list: 'doctors' },
+                                            { label: 'ผู้บันทึก (เภสัชกร)', field: 'recorder', list: 'recorders' }
+                                        ].map(item => (
+                                            <div key={item.field}>
+                                                <label className="text-xs font-bold text-slate-500 uppercase">{item.label}</label>
+                                                <div className="flex gap-1 mt-1">
+                                                    <input list={item.list} value={form[item.field]} onChange={e=>setForm({...form, [item.field]: e.target.value})} className="flex-1 p-3 rounded-xl border border-slate-200 text-sm focus:border-blue-500" required />
+                                                    {item.field !== 'recorder' && (
+                                                        <button type="button" onClick={() => handlePaste(item.field)} className="px-2 text-blue-500 hover:text-blue-700 font-bold text-[10px] border border-blue-100 rounded-lg">วาง</button>
+                                                    )}
+                                                </div>
+                                                <datalist id={item.list}>{data[item.list].map(n=><option key={n} value={n}/>)}</datalist>
+                                            </div>
+                                        ))}
                                     </div>
 
-                                    <button type="submit" disabled={isSubmitting} className={`w-full p-4 rounded-2xl text-xl font-bold text-white shadow-lg transition-all ${isSubmitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                        {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกรายงาน'}
+                                    <button type="submit" disabled={isSubmitting} className={`w-full p-5 rounded-3xl text-xl font-bold text-white shadow-2xl transition-all ${isSubmitting ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700 active:scale-95'}`}>
+                                        {isSubmitting ? 'กำลังส่งข้อมูล...' : 'บันทึกรายงาน'}
                                     </button>
                                 </form>
                             </div>
                         ) : (
-                            /* --- History Page --- */
-                            <div className="bg-white rounded-3xl shadow-lg p-6 animate-fade border border-gray-100 min-h-[600px]">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                                    <h2 className="text-2xl font-bold text-gray-800">ประวัติรายการย้อนหลัง</h2>
-                                    <div className="flex flex-wrap gap-2">
-                                        <button onClick={()=>setFilterType('day')} className={`px-4 py-2 rounded-xl text-sm font-bold ${filterType === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>รายวัน</button>
-                                        <button onClick={()=>setFilterType('month')} className={`px-4 py-2 rounded-xl text-sm font-bold ${filterType === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>รายเดือน</button>
-                                        <button onClick={fetchData} className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-bold text-gray-600">🔄 รีเฟรช</button>
+                            /* --- History & Report Tab --- */
+                            <div className="animate-fade space-y-6">
+                                {/* Dashboard */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-white p-6 rounded-3xl shadow-md border-b-4 border-blue-500">
+                                        <div className="text-slate-400 text-xs font-bold uppercase">ใบสั่งยารวม</div>
+                                        <div className="text-3xl font-black text-blue-600">{stats.totalPrescriptions} <span className="text-sm font-normal text-slate-400">ใบ</span></div>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-3xl shadow-md border-b-4 border-red-500">
+                                        <div className="text-slate-400 text-xs font-bold uppercase">Error รวม</div>
+                                        <div className="text-3xl font-black text-red-600">{stats.totalErrors} <span className="text-sm font-normal text-slate-400">รายการ</span></div>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-3xl shadow-md border-b-4 border-green-500 flex items-center justify-center">
+                                        <button onClick={handlePrint} className="w-full h-full flex flex-col items-center justify-center gap-1 hover:text-green-600 transition-colors">
+                                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2h6a2 2 0 002 2z"></path></svg>
+                                            <span className="font-bold">สร้างรายงาน (A4)</span>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                    <div className="md:col-span-1">
-                                        <label className="text-xs font-bold text-gray-400 uppercase">ค้นหา (HN/รายละเอียด)</label>
-                                        <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="เช่น 6100..." className="w-full p-3 border rounded-xl mt-1" />
+                                <div className="bg-white rounded-3xl shadow-lg p-6 md:p-8">
+                                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-8">
+                                        <div className="flex gap-2">
+                                            <button onClick={()=>setFilterType('day')} className={`px-4 py-2 rounded-xl text-xs font-bold ${filterType === 'day' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>รายวัน</button>
+                                            <button onClick={()=>setFilterType('month')} className={`px-4 py-2 rounded-xl text-xs font-bold ${filterType === 'month' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>รายเดือน</button>
+                                        </div>
+                                        <div className="flex-1 max-w-sm">
+                                            <input type="text" placeholder="ค้นหา HN / รายละเอียด..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="w-full p-2 border-2 rounded-xl text-sm" />
+                                        </div>
+                                        <div className="w-full md:w-auto">
+                                            {filterType === 'day' ? <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="p-2 border-2 rounded-xl text-sm w-full" /> 
+                                            : <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="p-2 border-2 rounded-xl text-sm w-full" />}
+                                        </div>
                                     </div>
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase">ตัวกรองช่วงเวลา</label>
-                                        {filterType === 'day' ? (
-                                            <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="w-full p-3 border rounded-xl mt-1" />
-                                        ) : (
-                                            <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="w-full p-3 border rounded-xl mt-1" />
-                                        )}
-                                    </div>
-                                </div>
 
-                                <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
-                                    <table className="w-full text-left border-collapse text-sm">
-                                        <thead className="bg-gray-50 text-gray-600 font-bold">
-                                            <tr>
-                                                <th className="p-4 border-b">วันที่ (ช่วงรับยา)</th>
-                                                <th className="p-4 border-b">ลำดับ</th>
-                                                <th className="p-4 border-b">เวลา</th>
-                                                <th className="p-4 border-b">HN</th>
-                                                <th className="p-4 border-b">ความเสี่ยง</th>
-                                                <th className="p-4 border-b w-1/4">รายละเอียด</th>
-                                                <th className="p-4 border-b">ความรุนแรง</th>
-                                                <th className="p-4 border-b">ผู้บันทึก</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {filteredHistory.length === 0 ? (
-                                                <tr><td colSpan="8" className="p-10 text-center text-gray-400">ไม่พบข้อมูลในช่วงที่เลือก</td></tr>
-                                            ) : (
-                                                filteredHistory.map((item, idx) => (
-                                                    <tr key={idx} className="hover:bg-gray-50">
-                                                        <td className="p-4 whitespace-nowrap font-medium">{item.shiftDate}</td>
-                                                        <td className="p-4">{item.sequence}</td>
-                                                        <td className="p-4">{item.time}</td>
-                                                        <td className="p-4 text-blue-600 font-bold">{item.hn || '-'}</td>
-                                                        <td className={`p-4 font-bold ${item.errorType === errorOptions[0] ? 'text-green-600' : 'text-red-600'}`}>{item.errorType}</td>
-                                                        <td className="p-4 text-xs text-gray-500">{item.details || '-'}</td>
-                                                        <td className="p-4 text-center font-bold">{item.severity || '-'}</td>
+                                    <div className="overflow-x-auto rounded-2xl border">
+                                        <table className="w-full text-left text-sm border-collapse">
+                                            <thead className="bg-slate-50 text-slate-500 font-bold">
+                                                <tr>
+                                                    <th className="p-4 border-b">กะรับยา</th>
+                                                    <th className="p-4 border-b">HN</th>
+                                                    <th className="p-4 border-b">ความเสี่ยง</th>
+                                                    <th className="p-4 border-b w-1/3">รายละเอียด</th>
+                                                    <th className="p-4 border-b">ระดับ</th>
+                                                    <th className="p-4 border-b">ผู้บันทึก</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y">
+                                                {filteredHistory.map((item, idx) => (
+                                                    <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+                                                        <td className="p-4 whitespace-nowrap text-xs font-bold text-slate-600">{item.shiftDate}</td>
+                                                        <td className="p-4 text-blue-600 font-black">{item.hn || '-'}</td>
+                                                        <td className={`p-4 text-xs font-bold ${item.errorType === errorOptions[0] ? 'text-green-500' : 'text-red-500'}`}>{item.errorType}</td>
+                                                        <td className="p-4 text-[11px] text-slate-500 italic">{item.details || '-'}</td>
+                                                        <td className="p-4 text-center font-black">{item.severity || '-'}</td>
                                                         <td className="p-4 text-xs">{item.recorder}</td>
                                                     </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                                <div className="mt-6 p-4 bg-gray-50 rounded-xl flex justify-between items-center text-sm">
-                                    <div>รายการทั้งหมดที่พบ: <span className="font-bold text-blue-600">{filteredHistory.length}</span> รายการ</div>
-                                    <div className="text-red-600 font-bold">Error ที่เกิดขึ้น: {filteredHistory.filter(h=>h.errorType !== errorOptions[0]).length} รายการ</div>
+                                                ))}
+                                                {filteredHistory.length === 0 && <tr><td colSpan="6" className="p-20 text-center text-slate-400 italic">ไม่พบข้อมูล...</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </main>
+
+                    {/* Print Section (A4 Horizontal Layout) */}
+                    <div id="print-section" className="hidden">
+                        <div className="p-8">
+                            <div className="text-center mb-6">
+                                <h1 className="text-xl font-bold">รายงานสรุป ER Medication Errors</h1>
+                                <p className="text-sm">ประจำช่วงเวลา: {filterType === 'day' ? filterDate.split('-').reverse().join('/') : filterMonth}</p>
+                                <div className="mt-2 text-xs flex justify-center gap-6">
+                                    <span>จำนวนใบสั่งยาทั้งหมด: <strong>{stats.totalPrescriptions}</strong> ใบ</span>
+                                    <span>จำนวน Error ทั้งหมด: <strong>{stats.totalErrors}</strong> รายการ</span>
+                                </div>
+                            </div>
+                            <table className="w-full border-collapse border border-black text-[10px]">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="border border-black p-1">กะรับยา</th>
+                                        <th className="border border-black p-1">เวลา</th>
+                                        <th className="border border-black p-1">HN</th>
+                                        <th className="border border-black p-1">ความเสี่ยงที่พบ</th>
+                                        <th className="border border-black p-1">รายละเอียด</th>
+                                        <th className="border border-black p-1">ความรุนแรง</th>
+                                        <th className="border border-black p-1">ผู้ตรวจ</th>
+                                        <th className="border border-black p-1">แพทย์</th>
+                                        <th className="border border-black p-1">ผู้บันทึก</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredHistory.filter(h => h.errorType !== errorOptions[0]).map((h, i) => (
+                                        <tr key={i}>
+                                            <td className="border border-black p-1 text-center">{h.shiftDate}</td>
+                                            <td className="border border-black p-1 text-center">{h.time}</td>
+                                            <td className="border border-black p-1 text-center">{h.hn}</td>
+                                            <td className="border border-black p-1">{h.errorType}</td>
+                                            <td className="border border-black p-1">{h.details}</td>
+                                            <td className="border border-black p-1 text-center">{h.severity}</td>
+                                            <td className="border border-black p-1">{h.inspector}</td>
+                                            <td className="border border-black p-1">{h.doctor}</td>
+                                            <td className="border border-black p-1">{h.recorder}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="mt-10 flex justify-between text-xs px-10">
+                                <div className="text-center">
+                                    <p>ลงชื่อ............................................................</p>
+                                    <p className="mt-2">หัวหน้างานเภสัชกรรม</p>
+                                </div>
+                                <div className="text-center">
+                                    <p>วันที่พิมพ์: {new Date().toLocaleDateString('th-TH')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         };
