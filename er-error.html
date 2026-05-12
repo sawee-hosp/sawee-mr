@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ER ERROR Report System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f1f5f9; }
+        .tab-active { border-bottom: 4px solid #2563eb; color: #2563eb; }
+        .datalist-input::-webkit-calendar-picker-indicator { display: block !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.3s ease-out; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyEL06mYIlpEnvw6McVa63_57GLCWeSiiqx7DQzjAJymqbncpmb4Au_F6J4g5DAMPf6/exec"; 
+
+        const errorOptions = [
+            "❌ไม่พบ Error", "ไม่ติดสติกเกอร์ในใบนำทาง (ไม่ใช่ error)", "ไม่ปฏิบัติตามแนวทาง (ไม่ใช่error)",
+            "ไม่จ่ายยาที่มีใน stock", "จ่ายยาผิดชนิด", "จ่ายยาผิดความแรง", "จ่ายยาจำนวนขาด/เกิน",
+            "จ่ายยาโดยไม่มีคำสั่งแพทย์", "จ่ายยาผิดคน", "ไม่สั่งใช้ยาใน HosXp แต่มีการใช้",
+            "สั่งขนาดยาไม่เหมาะสม", "สั่งวิธีใช้ผิด/ไม่ระบุวิธีใช้", "สั่งยาโดยไม่มีข้อบ่งใช้", "สั่งยาซ้ำ"
+        ];
+
+        const riskTypes = ["Prescribing error", "Pre-dispensing error", "Dispensing error", "Transcribing error"];
+        const severities = ["A", "B", "C", "D", "E", "F"];
+        const actions = ["แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ และให้บันทึกรายการยาตามหลัง", "แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ"];
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('form'); // 'form' or 'history'
+            const [isLoading, setIsLoading] = useState(true);
+            const [data, setData] = useState({ drugs: [], inspectors: [], doctors: [], recorders: [], history: [] });
+
+            // Form States
+            const [form, setForm] = useState({
+                date: new Date().toISOString().split('T')[0],
+                time: `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
+                shiftDate: '', totalRx: '', sequence: 1, totalErrors: 0,
+                errorType: errorOptions[0], hn: '', selectedDrugs: [],
+                details: '', riskType: '', severity: '', action: '',
+                inspector: '', doctor: '', recorder: ''
+            });
+            const [isTotalRxLocked, setIsTotalRxLocked] = useState(false);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [status, setStatus] = useState(null);
+
+            // History Filter States
+            const [filterType, setFilterType] = useState('day'); // 'day' or 'month'
+            const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+            const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
+            const [searchTerm, setSearchTerm] = useState('');
+
+            // Fetch Data
+            const fetchData = async () => {
+                setIsLoading(true);
+                try {
+                    const res = await fetch(GAS_URL);
+                    const json = await res.json();
+                    setData(json);
+                } catch (e) { console.error(e); }
+                setIsLoading(false);
+            };
+
+            useEffect(() => { fetchData(); }, []);
+
+            // Shift Calculation
+            useEffect(() => {
+                const [hour, min] = form.time.split(':').map(Number);
+                const selDate = new Date(form.date);
+                let sD, sM, sY, eD, eM, eY;
+
+                if (hour < 8) {
+                    const pD = new Date(selDate); pD.setDate(pD.getDate() - 1);
+                    sD = String(pD.getDate()).padStart(2, '0'); sM = String(pD.getMonth() + 1).padStart(2, '0'); sY = pD.getFullYear();
+                    eD = String(selDate.getDate()).padStart(2, '0'); eM = String(selDate.getMonth() + 1).padStart(2, '0'); eY = selDate.getFullYear();
+                } else {
+                    const nD = new Date(selDate); nD.setDate(nD.getDate() + 1);
+                    sD = String(selDate.getDate()).padStart(2, '0'); sM = String(selDate.getMonth() + 1).padStart(2, '0'); sY = selDate.getFullYear();
+                    eD = String(nD.getDate()).padStart(2, '0'); eM = String(nD.getMonth() + 1).padStart(2, '0'); eY = nD.getFullYear();
+                }
+                const fmt = (sM === eM) ? `${sD}-${eD}/${sM}/${sY}` : `${sD}/${sM}-${eD}/${eM}/${eY}`;
+                setForm(prev => ({ ...prev, shiftDate: fmt }));
+            }, [form.date, form.time]);
+
+            // Auto-fill existing shift data
+            useEffect(() => {
+                const shiftInHistory = data.history.find(h => h.shiftDate === form.shiftDate);
+                if (shiftInHistory) {
+                    setForm(prev => ({ 
+                        ...prev, 
+                        totalRx: shiftInHistory.totalRx, 
+                        sequence: data.history.filter(h => h.shiftDate === form.shiftDate).length + 1,
+                        totalErrors: data.history.filter(h => h.shiftDate === form.shiftDate && h.errorType !== errorOptions[0]).length
+                    }));
+                    setIsTotalRxLocked(true);
+                } else {
+                    setForm(prev => ({ ...prev, totalRx: '', sequence: 1, totalErrors: 0 }));
+                    setIsTotalRxLocked(false);
+                }
+            }, [form.shiftDate, data.history]);
+
+            // Auto Details
+            useEffect(() => {
+                if (form.errorType !== errorOptions[0]) {
+                    const dStr = form.selectedDrugs.join(', ') || '...';
+                    setForm(prev => ({ ...prev, details: `HN ${form.hn || '...'} ${form.errorType} คือ ${dStr}` }));
+                }
+            }, [form.hn, form.errorType, form.selectedDrugs]);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                const payload = { ...form, drugs: form.selectedDrugs.join(', ') };
+                try {
+                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const resJson = await res.json();
+                    if(resJson.status === 'success') {
+                        setStatus('success');
+                        await fetchData();
+                        setForm(prev => ({ ...prev, errorType: errorOptions[0], hn: '', selectedDrugs: [], details: '' }));
+                        setTimeout(() => setStatus(null), 3000);
+                    } else { setStatus('error'); }
+                } catch (e) { setStatus('error'); }
+                setIsSubmitting(false);
+            };
+
+            // History Filtering
+            const filteredHistory = useMemo(() => {
+                return data.history.filter(item => {
+                    const matchesSearch = item.hn.includes(searchTerm) || item.details.toLowerCase().includes(searchTerm.toLowerCase());
+                    if (filterType === 'day') {
+                        return item.date.includes(filterDate.split('-').reverse().join('/')) && matchesSearch;
+                    } else {
+                        const [y, m] = filterMonth.split('-');
+                        return item.shiftDate.includes(`/${m}/${y}`) && matchesSearch;
+                    }
+                });
+            }, [data.history, filterType, filterDate, filterMonth, searchTerm]);
+
+            if (isLoading && data.history.length === 0) return <div className="h-screen flex items-center justify-center text-xl font-bold text-blue-600">กำลังโหลดระบบ...</div>;
+
+            return (
+                <div className="min-h-screen pb-10">
+                    {/* Navigation Bar */}
+                    <nav className="bg-white shadow-md sticky top-0 z-50">
+                        <div className="max-w-5xl mx-auto flex justify-around">
+                            <button onClick={() => setActiveTab('form')} className={`py-4 px-6 font-bold flex items-center gap-2 ${activeTab === 'form' ? 'tab-active' : 'text-gray-500'}`}>
+                                📝 บันทึกรายงาน
+                            </button>
+                            <button onClick={() => setActiveTab('history')} className={`py-4 px-6 font-bold flex items-center gap-2 ${activeTab === 'history' ? 'tab-active' : 'text-gray-500'}`}>
+                                📊 ดูประวัติย้อนหลัง
+                            </button>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-5xl mx-auto mt-6 px-4">
+                        {activeTab === 'form' ? (
+                            /* --- Form Page --- */
+                            <div className="bg-white rounded-3xl shadow-lg p-6 md:p-10 animate-fade border border-gray-100">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">แบบฟอร์มบันทึก ER ERROR</h2>
+                                
+                                {status === 'success' && <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl border border-green-200">✅ บันทึกข้อมูลสำเร็จ!</div>}
+                                {status === 'error' && <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl border border-red-200">❌ บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง</div>}
+
+                                <form onSubmit={handleSubmit} className="space-y-8">
+                                    {/* Row 1: Time */}
+                                    <div className="bg-blue-50 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="text-sm font-bold text-gray-600">วันที่เกิดเหตุ</label>
+                                            <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full p-3 rounded-xl border mt-1" required />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-bold text-gray-600">เวลา (น.)</label>
+                                            <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full p-3 rounded-xl border mt-1" required />
+                                        </div>
+                                        <div className="md:col-span-2 flex flex-col md:flex-row justify-between bg-white p-4 rounded-xl border border-blue-200 gap-4">
+                                            <div>
+                                                <div className="text-xs font-bold text-blue-500 uppercase">กะรับยา (อัตโนมัติ)</div>
+                                                <div className="text-xl font-bold text-blue-900">{form.shiftDate}</div>
+                                            </div>
+                                            <div className="flex gap-6 border-l pl-6">
+                                                <div className="text-center">
+                                                    <div className="text-xs text-gray-400">ลำดับที่</div>
+                                                    <div className="text-xl font-bold">{form.sequence}</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div className="text-xs text-red-400">Error วันนี้</div>
+                                                    <div className="text-xl font-bold text-red-600">{form.totalErrors}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-sm font-bold text-gray-600">จำนวนใบสั่งยาทั้งหมดของกะนี้</label>
+                                            <div className="flex gap-2 mt-1">
+                                                <input type="number" value={form.totalRx} onChange={e => setForm({...form, totalRx: e.target.value})} disabled={isTotalRxLocked} className="flex-1 p-3 rounded-xl border disabled:bg-gray-100" required />
+                                                {isTotalRxLocked && <button type="button" onClick={()=>setIsTotalRxLocked(false)} className="px-4 text-blue-600 font-bold border rounded-xl">แก้ไข</button>}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Error Type */}
+                                    <div className="space-y-4">
+                                        <label className="text-lg font-bold text-gray-800">ความเสี่ยงที่พบ</label>
+                                        <select value={form.errorType} onChange={e => setForm({...form, errorType: e.target.value})} className={`w-full p-4 rounded-2xl border-2 font-bold outline-none ${form.errorType === errorOptions[0] ? 'border-green-300 bg-green-50 text-green-700' : 'border-red-300 bg-red-50 text-red-700'}`}>
+                                            {errorOptions.map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+
+                                    {/* Details */}
+                                    {form.errorType !== errorOptions[0] && (
+                                        <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100 grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade">
+                                            <div>
+                                                <label className="text-sm font-bold text-gray-700">HN</label>
+                                                <input type="text" value={form.hn} onChange={e => setForm({...form, hn: e.target.value})} className="w-full p-3 rounded-xl border mt-1" required />
+                                            </div>
+                                            <div className="relative">
+                                                <label className="text-sm font-bold text-gray-700">ยาที่เกี่ยวข้อง</label>
+                                                <div className="w-full p-3 bg-white border rounded-xl mt-1 min-h-[50px] cursor-pointer flex flex-wrap gap-1" onClick={()=>setForm({...form, isDrugDropdownOpen: !form.isDrugDropdownOpen})}>
+                                                    {form.selectedDrugs.length === 0 ? <span className="text-gray-400 text-sm">คลิกเพื่อเลือกยา...</span> : form.selectedDrugs.map(d=>(
+                                                        <span key={d} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs flex items-center gap-1">
+                                                            {d} <span onClick={(e)=>{ e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}}>×</span>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                {form.isDrugDropdownOpen && (
+                                                    <div className="absolute z-10 w-full bg-white border shadow-2xl rounded-xl mt-1 max-h-48 overflow-y-auto">
+                                                        {data.drugs.map(d => (
+                                                            <div key={d} onClick={()=>{ setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})}} className="p-3 hover:bg-red-50 text-sm cursor-pointer">{d}</div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="text-sm font-bold text-gray-700">รายละเอียดเพิ่มเติม</label>
+                                                <textarea value={form.details} onChange={e => setForm({...form, details: e.target.value})} className="w-full p-3 rounded-xl border mt-1 h-24 bg-yellow-50" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-bold text-gray-700">ประเภทความเสี่ยง</label>
+                                                <select value={form.riskType} onChange={e=>setForm({...form, riskType: e.target.value})} className="w-full p-3 border rounded-xl mt-1 bg-white" required>
+                                                    <option value="">-- เลือก --</option>
+                                                    {riskTypes.map(t=><option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-bold text-gray-700">ความรุนแรง</label>
+                                                <select value={form.severity} onChange={e=>setForm({...form, severity: e.target.value})} className="w-full p-3 border rounded-xl mt-1 bg-white" required>
+                                                    <option value="">-- เลือก --</option>
+                                                    {severities.map(s=><option key={s} value={s}>{s}</option>)}
+                                                </select>
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="text-sm font-bold text-gray-700">การแก้ไข</label>
+                                                <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full p-3 border rounded-xl mt-1 bg-white" required>
+                                                    <option value="">-- เลือก --</option>
+                                                    {actions.map(a=><option key={a} value={a}>{a}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Staff */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <label className="text-sm font-bold text-gray-700">ผู้ตรวจ (พยาบาล)</label>
+                                            <input list="inspectors" value={form.inspector} onChange={e=>setForm({...form, inspector: e.target.value})} className="w-full p-3 border rounded-xl mt-1" required />
+                                            <datalist id="inspectors">{data.inspectors.map(n=><option key={n} value={n}/>)}</datalist>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-bold text-gray-700">รคส. (แพทย์)</label>
+                                            <input list="doctors" value={form.doctor} onChange={e=>setForm({...form, doctor: e.target.value})} className="w-full p-3 border rounded-xl mt-1" required />
+                                            <datalist id="doctors">{data.doctors.map(n=><option key={n} value={n}/>)}</datalist>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-bold text-gray-700">ผู้บันทึก (เภสัชกร)</label>
+                                            <input list="recorders" value={form.recorder} onChange={e=>setForm({...form, recorder: e.target.value})} className="w-full p-3 border rounded-xl mt-1" required />
+                                            <datalist id="recorders">{data.recorders.map(n=><option key={n} value={n}/>)}</datalist>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" disabled={isSubmitting} className={`w-full p-4 rounded-2xl text-xl font-bold text-white shadow-lg transition-all ${isSubmitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                        {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกรายงาน'}
+                                    </button>
+                                </form>
+                            </div>
+                        ) : (
+                            /* --- History Page --- */
+                            <div className="bg-white rounded-3xl shadow-lg p-6 animate-fade border border-gray-100 min-h-[600px]">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                                    <h2 className="text-2xl font-bold text-gray-800">ประวัติรายการย้อนหลัง</h2>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button onClick={()=>setFilterType('day')} className={`px-4 py-2 rounded-xl text-sm font-bold ${filterType === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>รายวัน</button>
+                                        <button onClick={()=>setFilterType('month')} className={`px-4 py-2 rounded-xl text-sm font-bold ${filterType === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>รายเดือน</button>
+                                        <button onClick={fetchData} className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-bold text-gray-600">🔄 รีเฟรช</button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div className="md:col-span-1">
+                                        <label className="text-xs font-bold text-gray-400 uppercase">ค้นหา (HN/รายละเอียด)</label>
+                                        <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="เช่น 6100..." className="w-full p-3 border rounded-xl mt-1" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase">ตัวกรองช่วงเวลา</label>
+                                        {filterType === 'day' ? (
+                                            <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="w-full p-3 border rounded-xl mt-1" />
+                                        ) : (
+                                            <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="w-full p-3 border rounded-xl mt-1" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+                                    <table className="w-full text-left border-collapse text-sm">
+                                        <thead className="bg-gray-50 text-gray-600 font-bold">
+                                            <tr>
+                                                <th className="p-4 border-b">วันที่ (ช่วงรับยา)</th>
+                                                <th className="p-4 border-b">ลำดับ</th>
+                                                <th className="p-4 border-b">เวลา</th>
+                                                <th className="p-4 border-b">HN</th>
+                                                <th className="p-4 border-b">ความเสี่ยง</th>
+                                                <th className="p-4 border-b w-1/4">รายละเอียด</th>
+                                                <th className="p-4 border-b">ความรุนแรง</th>
+                                                <th className="p-4 border-b">ผู้บันทึก</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {filteredHistory.length === 0 ? (
+                                                <tr><td colSpan="8" className="p-10 text-center text-gray-400">ไม่พบข้อมูลในช่วงที่เลือก</td></tr>
+                                            ) : (
+                                                filteredHistory.map((item, idx) => (
+                                                    <tr key={idx} className="hover:bg-gray-50">
+                                                        <td className="p-4 whitespace-nowrap font-medium">{item.shiftDate}</td>
+                                                        <td className="p-4">{item.sequence}</td>
+                                                        <td className="p-4">{item.time}</td>
+                                                        <td className="p-4 text-blue-600 font-bold">{item.hn || '-'}</td>
+                                                        <td className={`p-4 font-bold ${item.errorType === errorOptions[0] ? 'text-green-600' : 'text-red-600'}`}>{item.errorType}</td>
+                                                        <td className="p-4 text-xs text-gray-500">{item.details || '-'}</td>
+                                                        <td className="p-4 text-center font-bold">{item.severity || '-'}</td>
+                                                        <td className="p-4 text-xs">{item.recorder}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div className="mt-6 p-4 bg-gray-50 rounded-xl flex justify-between items-center text-sm">
+                                    <div>รายการทั้งหมดที่พบ: <span className="font-bold text-blue-600">{filteredHistory.length}</span> รายการ</div>
+                                    <div className="text-red-600 font-bold">Error ที่เกิดขึ้น: {filteredHistory.filter(h=>h.errorType !== errorOptions[0]).length} รายการ</div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
