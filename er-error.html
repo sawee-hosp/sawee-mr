@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medication Error Report System</title>
-    <!-- Google Fonts (Noto Sans Thai) & Tailwind -->
+    <title>ศูนย์บันทึกอุบัติการณ์ ฝ่ายเภสัชกรรม รพ.สวี</title>
+    <!-- Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Libraries -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- React & Libraries -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- PDFMake Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
@@ -19,23 +20,35 @@
     <style>
         body { 
             font-family: 'Noto Sans Thai', sans-serif; 
-            color: #1e293b;
+            color: #0f172a;
             font-size: 13px;
+            background-color: #f8fafc;
         }
-        .card-shadow {
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        .text-gradient-er {
+            background: linear-gradient(135deg, #b91c1c 0%, #e11d48 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .text-gradient-mr {
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-gradient-er { background: linear-gradient(135deg, #dc2626 0%, #be123c 100%); }
+        .bg-gradient-mr { background: linear-gradient(135deg, #059669 0%, #0f766e 100%); }
+        
+        .compact-card { box-shadow: 0 4px 15px -3px rgb(0 0 0 / 0.1); border-radius: 12px; }
+        .compact-input { padding: 4px 8px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; }
+        .compact-input:focus { border-color: #64748b; box-shadow: 0 0 0 2px rgba(100,116,139,0.1); }
+        
+        .btn-radio:checked + label {
+            box-shadow: inset 0 0 0 2px currentColor;
+            font-weight: 700;
         }
         
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* Input styling overrides */
-        input[type="date"], input[type="time"], input[type="number"], input[type="text"], select, textarea {
-            padding: 0.35rem 0.5rem !important;
-            font-size: 0.8rem !important;
-        }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -52,109 +65,69 @@
             "จ่ายยาโดยไม่มีคำสั่งแพทย์", "จ่ายยาผิดคน", "ไม่สั่งใช้ยาใน HosXp แต่มีการใช้",
             "สั่งขนาดยาไม่เหมาะสม", "สั่งวิธีใช้ผิด/ไม่ระบุวิธีใช้", "สั่งยาโดยไม่มีข้อบ่งใช้", "สั่งยาซ้ำ"
         ];
-
         const riskTypes = ["Prescribing error", "Pre-dispensing error", "Dispensing error", "Transcribing error"];
         const severities = ["A", "B", "C", "D", "E", "F"];
         const actions = ["แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ และให้บันทึกรายการยาตามหลัง", "แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ"];
 
         const App = () => {
-            const [systemMode, setSystemMode] = useState('ER'); // 'ER' or 'MR'
+            const [systemMode, setSystemMode] = useState('ER');
             const [activeTab, setActiveTab] = useState('form');
             const [isLoading, setIsLoading] = useState(true);
             const [isPdfReady, setIsPdfReady] = useState(false);
             const [data, setData] = useState({ drugs: [], inspectors: [], doctors: [], recorders: [], history: [] });
             
-            // Form State
             const [form, setForm] = useState({
                 date: new Date().toISOString().split('T')[0],
                 time: `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
-                shiftDate: '', totalRx: '', sequence: 1, totalErrors: 0,
-                errorType: errorOptions[0], hn: '', selectedDrugs: [],
-                details: '', riskType: '', severity: '', action: '',
+                shiftDate: '', totalRx: '', sequence: '-', totalErrors: '-',
+                errorType: errorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '',
                 inspector: '', doctor: '', recorder: ''
             });
             const [isTotalRxLocked, setIsTotalRxLocked] = useState(false);
             const [isDrugDropdownOpen, setIsDrugDropdownOpen] = useState(false);
             const [drugSearch, setDrugSearch] = useState('');
             const [isSubmitting, setIsSubmitting] = useState(false);
-            const [showModal, setShowModal] = useState(false);
 
-            // History Filter
             const [filterType, setFilterType] = useState('day');
             const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
             const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
-            const [searchTerm, setSearchTerm] = useState('');
             const [excludeNoError, setExcludeNoError] = useState(true);
 
-            // Theme Generator
-            const theme = useMemo(() => {
-                if (systemMode === 'ER') {
-                    return {
-                        bgApp: 'bg-gradient-to-br from-red-50 to-rose-100 min-h-screen',
-                        primary: 'text-rose-600',
-                        btnGradient: 'bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-700 hover:to-red-600 text-white',
-                        border: 'border-rose-200',
-                        lightBg: 'bg-rose-50',
-                        radioChecked: 'bg-rose-50 border-rose-500 text-rose-700 font-bold',
-                        title: 'text-red-800'
-                    };
-                } else {
-                    return {
-                        bgApp: 'bg-gradient-to-br from-emerald-50 to-teal-100 min-h-screen',
-                        primary: 'text-emerald-600',
-                        btnGradient: 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white',
-                        border: 'border-emerald-200',
-                        lightBg: 'bg-emerald-50',
-                        radioChecked: 'bg-emerald-50 border-emerald-500 text-emerald-700 font-bold',
-                        title: 'text-emerald-800'
-                    };
-                }
-            }, [systemMode]);
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
 
-            // Initialize Fonts for PDFMake
+            const theme = useMemo(() => ({
+                bgApp: systemMode === 'ER' ? 'bg-red-50/30' : 'bg-teal-50/30',
+                textGrad: systemMode === 'ER' ? 'text-gradient-er' : 'text-gradient-mr',
+                bgGrad: systemMode === 'ER' ? 'bg-gradient-er' : 'bg-gradient-mr',
+                primaryStr: systemMode === 'ER' ? '#e11d48' : '#059669',
+                borderActive: systemMode === 'ER' ? 'border-red-500 text-red-700' : 'border-teal-500 text-teal-700',
+                lightBg: systemMode === 'ER' ? 'bg-red-50' : 'bg-teal-50',
+            }), [systemMode]);
+
             useEffect(() => {
                 const loadPdfFonts = async () => {
                     try {
                         const getBase64Font = async (url) => {
                             const res = await fetch(url);
                             const blob = await res.blob();
-                            return new Promise((resolve, reject) => {
+                            return new Promise((resolve) => {
                                 const reader = new FileReader();
                                 reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                                reader.onerror = reject;
                                 reader.readAsDataURL(blob);
                             });
                         };
-
-                        // Fetching THSarabunNew TTF files
                         const [regular, bold] = await Promise.all([
-                            getBase64Font('https://cdn.jsdelivr.net/npm/font-th-sarabun-new@1.0.0/fonts/THSarabunNew.ttf'),
-                            getBase64Font('https://cdn.jsdelivr.net/npm/font-th-sarabun-new@1.0.0/fonts/THSarabunNew-Bold.ttf')
+                            getBase64Font('https://fonts.gstatic.com/s/sarabun/v13/DtVjJx26TKEr37c9aAFjnA.ttf'),
+                            getBase64Font('https://fonts.gstatic.com/s/sarabun/v13/DtVmJx26TKEr37c9YK5sulo.ttf')
                         ]);
-
-                        window.pdfMake.vfs = {
-                            ...window.pdfMake.vfs,
-                            'Sarabun-Regular.ttf': regular,
-                            'Sarabun-Bold.ttf': bold
-                        };
-
-                        window.pdfMake.fonts = {
-                            Sarabun: {
-                                normal: 'Sarabun-Regular.ttf',
-                                bold: 'Sarabun-Bold.ttf',
-                                italics: 'Sarabun-Regular.ttf',
-                                bolditalics: 'Sarabun-Bold.ttf'
-                            }
-                        };
+                        window.pdfMake.vfs = { ...window.pdfMake.vfs, 'Sarabun-Regular.ttf': regular, 'Sarabun-Bold.ttf': bold };
+                        window.pdfMake.fonts = { Sarabun: { normal: 'Sarabun-Regular.ttf', bold: 'Sarabun-Bold.ttf', italics: 'Sarabun-Regular.ttf', bolditalics: 'Sarabun-Bold.ttf' } };
                         setIsPdfReady(true);
-                    } catch (error) {
-                        console.error("Error loading PDF fonts:", error);
-                        // Even if fetch fails, let user continue without PDF or with default fonts
-                        setIsPdfReady(true); 
-                    }
+                    } catch (error) { console.error("PDF Font error", error); setIsPdfReady(true); }
                 };
-
                 loadPdfFonts();
+                fetchData();
             }, []);
 
             const fetchData = async () => {
@@ -163,478 +136,362 @@
                     const res = await fetch(GAS_URL);
                     const json = await res.json();
                     setData(json);
-                } catch (e) { console.error("Load failed", e); }
+                } catch (e) {}
                 setIsLoading(false);
             };
 
-            useEffect(() => { fetchData(); }, []);
-
-            // Shift Logic: D-D/MM/YYYY
             useEffect(() => {
                 const [h, m] = form.time.split(':').map(Number);
                 const d = new Date(form.date);
                 let sD, sM, sY, eD, eM, eY;
-
                 if (h < 8) {
-                    const prev = new Date(d); prev.setDate(prev.getDate() - 1);
-                    sD = prev.getDate(); sM = String(prev.getMonth() + 1).padStart(2, '0'); sY = prev.getFullYear();
+                    const p = new Date(d); p.setDate(p.getDate() - 1);
+                    sD = p.getDate(); sM = String(p.getMonth() + 1).padStart(2, '0'); sY = p.getFullYear();
                     eD = d.getDate(); eM = String(d.getMonth() + 1).padStart(2, '0'); eY = d.getFullYear();
                 } else {
-                    const next = new Date(d); next.setDate(next.getDate() + 1);
+                    const n = new Date(d); n.setDate(n.getDate() + 1);
                     sD = d.getDate(); sM = String(d.getMonth() + 1).padStart(2, '0'); sY = d.getFullYear();
-                    eD = next.getDate(); eM = String(next.getMonth() + 1).padStart(2, '0'); eY = d.getFullYear();
+                    eD = n.getDate(); eM = String(n.getMonth() + 1).padStart(2, '0'); eY = d.getFullYear();
                 }
-                const fmt = (sM === eM) ? `${sD}-${eD}/${sM}/${sY}` : `${sD}/${sM}-${eD}/${eM}/${eY}`;
-                setForm(prev => ({ ...prev, shiftDate: fmt }));
+                setForm(prev => ({ ...prev, shiftDate: (sM === eM) ? `${sD}-${eD}/${sM}/${sY}` : `${sD}/${sM}-${eD}/${eM}/${eY}` }));
             }, [form.date, form.time]);
 
-            // Sync Stats & Assume Error Logic
             useEffect(() => {
                 const itemsInShift = data.history.filter(h => h.shiftDate === form.shiftDate);
                 const shiftTotalRx = itemsInShift.find(h => h.totalRx && h.totalRx !== "")?.totalRx;
-                const previousErrorsCount = itemsInShift.filter(h => h.errorType !== errorOptions[0]).length;
                 
-                const isError = form.errorType !== errorOptions[0];
+                // นับเฉพาะรายการที่เป็น Error จริงๆ
+                const actualErrorsCount = itemsInShift.filter(h => h.errorType !== errorOptions[0]).length;
+                const isErrorNow = form.errorType !== errorOptions[0];
                 
                 setForm(prev => ({
                     ...prev,
                     totalRx: shiftTotalRx || prev.totalRx,
-                    sequence: isError ? previousErrorsCount + 1 : '-',
-                    totalErrors: isError ? previousErrorsCount + 1 : previousErrorsCount
+                    sequence: isErrorNow ? actualErrorsCount + 1 : '-',
+                    totalErrors: isErrorNow ? actualErrorsCount + 1 : '-'
                 }));
                 setIsTotalRxLocked(!!shiftTotalRx);
             }, [form.shiftDate, data.history, form.errorType]);
 
-            // Auto Generate Details
             useEffect(() => {
                 if (form.errorType !== errorOptions[0]) {
                     const drugs = form.selectedDrugs.length > 0 ? form.selectedDrugs.join(', ') : '...';
                     setForm(prev => ({ ...prev, details: `HN ${form.hn || '...'} ${form.errorType} คือ ${drugs}` }));
-                } else {
-                    setForm(prev => ({ ...prev, details: '' }));
-                }
+                } else setForm(prev => ({ ...prev, details: '' }));
             }, [form.hn, form.errorType, form.selectedDrugs]);
-
-            const handlePaste = async (field) => {
-                try {
-                    const text = await navigator.clipboard.readText();
-                    setForm(prev => ({ ...prev, [field]: text }));
-                } catch (err) { console.warn("Paste failed", err); }
-            };
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 setIsSubmitting(true);
-                const payload = { ...form, drugs: form.selectedDrugs.join(', ') };
+                const payload = { ...form, systemMode, drugs: form.selectedDrugs.join(', ') };
                 try {
                     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const json = await res.json();
                     if(json.status === 'success') {
-                        setShowModal(true);
                         await fetchData();
                         setForm(prev => ({ ...prev, errorType: errorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '' }));
-                        setTimeout(() => setShowModal(false), 1500);
                     }
-                } catch (e) { alert("เกิดข้อผิดพลาด"); }
+                } catch (e) {}
                 setIsSubmitting(false);
             };
 
             const filteredHistory = useMemo(() => {
                 if (!data.history) return [];
                 return data.history.filter(item => {
-                    const matchSearch = (item.hn || '').includes(searchTerm) || (item.details || '').toLowerCase().includes(searchTerm.toLowerCase());
-                    const matchDate = filterType === 'day' 
-                        ? (item.date || '').includes(filterDate.split('-').reverse().join('/'))
-                        : (item.shiftDate || '').includes(`/${filterMonth.split('-')[1]}/${filterMonth.split('-')[0]}`);
-                    
+                    const matchSystem = item.systemMode === systemMode || (!item.systemMode && systemMode === 'ER');
+                    const matchDate = filterType === 'day' ? (item.date || '').includes(filterDate.split('-').reverse().join('/')) : (item.shiftDate || '').includes(`/${filterMonth.split('-')[1]}/${filterMonth.split('-')[0]}`);
                     if (excludeNoError && item.errorType === errorOptions[0]) return false;
-                    return matchDate && matchSearch;
+                    return matchSystem && matchDate;
                 });
-            }, [data.history, filterType, filterDate, filterMonth, searchTerm, excludeNoError]);
+            }, [data.history, systemMode, filterType, filterDate, filterMonth, excludeNoError]);
 
-            // Dashboard Stats
             const stats = useMemo(() => {
                 const rxByShift = {};
-                filteredHistory.forEach(h => {
-                    if (h.totalRx) rxByShift[h.shiftDate] = parseInt(h.totalRx);
-                });
+                filteredHistory.forEach(h => { if (h.totalRx) rxByShift[h.shiftDate] = parseInt(h.totalRx); });
+                const rx = Object.values(rxByShift).reduce((a, b) => a + b, 0);
+                const errors = filteredHistory.filter(h => h.errorType !== errorOptions[0]).length;
+                const percent = rx > 0 ? ((errors / rx) * 100).toFixed(2) : "0.00";
                 
-                const totalRxSum = Object.values(rxByShift).reduce((a, b) => a + b, 0);
-                const actualErrors = filteredHistory.filter(h => h.errorType !== errorOptions[0]);
-                const errorCount = actualErrors.length;
-                const percent = totalRxSum > 0 ? ((errorCount / totalRxSum) * 100).toFixed(2) : "0.00";
+                const typeCounts = {};
+                filteredHistory.filter(h => h.errorType !== errorOptions[0]).forEach(h => {
+                    typeCounts[h.errorType] = (typeCounts[h.errorType] || 0) + 1;
+                });
 
-                return { rx: totalRxSum, errors: errorCount, percent };
+                return { rx, errors, percent, typeCounts };
             }, [filteredHistory]);
 
-            const generateReportPDF = () => {
-                if (!isPdfReady) {
-                    alert("กำลังโหลดฟอนต์สำหรับสร้าง PDF กรุณารอสักครู่...");
-                    return;
+            useEffect(() => {
+                if (activeTab === 'history' && chartRef.current) {
+                    if (chartInstance.current) chartInstance.current.destroy();
+                    const ctx = chartRef.current.getContext('2d');
+                    
+                    const labels = Object.keys(stats.typeCounts);
+                    const dataVals = Object.values(stats.typeCounts);
+                    const bgColors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'];
+
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels.length ? labels : ['ไม่มีข้อมูล'],
+                            datasets: [{ data: dataVals.length ? dataVals : [1], backgroundColor: dataVals.length ? bgColors : ['#e2e8f0'], borderWidth: 0 }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { family: 'Noto Sans Thai', size: 10 } } } } }
+                    });
                 }
+            }, [activeTab, stats.typeCounts]);
 
-                const periodText = filterType === 'day' ? filterDate : filterMonth;
-                const generatedDate = new Date().toLocaleString('th-TH');
-
-                // Construct Table Body
-                const tableBody = [
-                    [
-                        { text: 'กะรับยา\nเวลา', style: 'tableHeader' },
-                        { text: 'HN', style: 'tableHeader' },
-                        { text: 'ความเสี่ยง (ระดับ)', style: 'tableHeader' },
-                        { text: 'รายละเอียด', style: 'tableHeader' },
-                        { text: 'ผู้เกี่ยวข้อง\n(ตรวจ/รคส./บันทึก)', style: 'tableHeader' }
-                    ]
-                ];
-
+            const generateReportPDF = () => {
+                if (!isPdfReady) { alert("กำลังเตรียมฟอนต์ กรุณารอสักครู่"); return; }
+                const period = filterType === 'day' ? filterDate.split('-').reverse().join('/') : filterMonth;
+                const tbBody = [[
+                    { text: 'กะรับยา\nเวลา', style: 'th' }, { text: 'HN', style: 'th' }, { text: 'ความเสี่ยง (ระดับ)', style: 'th' },
+                    { text: 'รายละเอียด', style: 'th' }, { text: 'ผู้บันทึก', style: 'th' }
+                ]];
+                
                 filteredHistory.forEach(h => {
                     const isNoError = h.errorType === errorOptions[0];
-                    tableBody.push([
+                    tbBody.push([
                         { text: `${h.shiftDate}\n${h.time}`, alignment: 'center', margin: [0, 2] },
                         { text: h.hn || '-', alignment: 'center', bold: true, margin: [0, 2] },
-                        { 
-                            text: isNoError ? h.errorType : `${h.errorType}\n${h.severity ? `(Lv.${h.severity})` : ''}`, 
-                            color: isNoError ? '#10b981' : (systemMode === 'ER' ? '#e11d48' : '#059669'), 
-                            bold: true,
-                            margin: [0, 2]
-                        },
+                        { text: isNoError ? h.errorType : `${h.errorType}\n${h.severity ? `(Lv.${h.severity})` : ''}`, color: isNoError ? '#10b981' : theme.primaryStr, bold: true, margin: [0, 2] },
                         { text: h.details || '-', margin: [0, 2] },
-                        { text: `${h.inspector || '-'}\n${h.doctor || '-'}\n${h.recorder || '-'}`, fontSize: 13, margin: [0, 2] }
+                        { text: `${h.inspector||'-'}\n${h.doctor||'-'}\n${h.recorder||'-'}`, fontSize: 11, margin: [0, 2] }
                     ]);
                 });
-
-                if (filteredHistory.length === 0) {
-                    tableBody.push([{ text: 'ไม่พบข้อมูลในช่วงเวลาที่เลือก', colSpan: 5, alignment: 'center', margin: [0, 10], color: '#64748b' }, {}, {}, {}, {}]);
-                }
+                
+                if (filteredHistory.length === 0) tbBody.push([{ text: 'ไม่พบข้อมูล', colSpan: 5, alignment: 'center', margin: [0, 10] }, {}, {}, {}, {}]);
 
                 const docDefinition = {
-                    pageSize: 'A4',
-                    pageOrientation: 'landscape',
-                    pageMargins: [30, 20, 30, 20],
-                    defaultStyle: {
-                        font: 'Sarabun',
-                        fontSize: 14 // THSarabunNew requires larger size to match normal view
-                    },
+                    pageSize: 'A4', pageOrientation: 'landscape', pageMargins: [30, 20, 30, 20],
+                    defaultStyle: { font: 'Sarabun', fontSize: 14 },
                     content: [
-                        { 
-                            text: `รายงานสรุป ${systemMode} Medication Errors`, 
-                            style: 'header', 
-                            alignment: 'center' 
-                        },
-                        { 
-                            text: `ช่วงเวลา: ${periodText}  |  ใบสั่งยารวม: ${stats.rx} ใบ  |  Error รวม: ${stats.errors} รายการ (${stats.percent}%)`, 
-                            alignment: 'center', 
-                            margin: [0, 0, 0, 10],
-                            color: '#4b5563'
-                        },
+                        { text: `รายงานสรุป ${systemMode} Medication Errors`, style: 'header', alignment: 'center' },
+                        { text: `ช่วงเวลา: ${period}  |  ใบสั่งยารวม: ${stats.rx} ใบ  |  Error รวม: ${stats.errors} รายการ (${stats.percent}%)`, alignment: 'center', margin: [0, 0, 0, 10], color: '#4b5563' },
                         {
-                            table: {
-                                headerRows: 1,
-                                widths: ['15%', '15%', '20%', '*', '20%'],
-                                body: tableBody
-                            },
-                            layout: {
-                                hLineWidth: function (i, node) { return (i === 0 || i === node.table.body.length) ? 1 : 0.5; },
-                                vLineWidth: function (i, node) { return (i === 0 || i === node.table.widths.length) ? 1 : 0.5; },
-                                hLineColor: function (i, node) { return '#cbd5e1'; },
-                                vLineColor: function (i, node) { return '#cbd5e1'; },
-                                paddingLeft: function(i, node) { return 4; },
-                                paddingRight: function(i, node) { return 4; },
-                                paddingTop: function(i, node) { return 4; },
-                                paddingBottom: function(i, node) { return 4; }
-                            }
-                        },
-                        {
-                            columns: [
-                                { 
-                                    text: '\n\n\n............................................................\nหัวหน้ากลุ่มงานเภสัชกรรม', 
-                                    alignment: 'center' 
-                                },
-                                { 
-                                    text: `\n\n\nพิมพ์เมื่อ: ${generatedDate}\nMED ERROR System v3.0`, 
-                                    alignment: 'right', 
-                                    fontSize: 12, 
-                                    color: '#64748b' 
-                                }
-                            ]
+                            table: { headerRows: 1, widths: ['15%', '15%', '25%', '*', '15%'], body: tbBody },
+                            layout: { hLineWidth: ()=>0.5, vLineWidth: ()=>0.5, hLineColor: ()=>'#cbd5e1', vLineColor: ()=>'#cbd5e1', paddingLeft: ()=>4, paddingRight: ()=>4 }
                         }
                     ],
-                    styles: {
-                        header: {
-                            fontSize: 22,
-                            bold: true,
-                            margin: [0, 0, 0, 5],
-                            color: '#1e293b'
-                        },
-                        tableHeader: {
-                            bold: true,
-                            fontSize: 15,
-                            fillColor: '#f1f5f9',
-                            color: '#334155',
-                            alignment: 'center',
-                            margin: [0, 2]
-                        }
-                    }
+                    styles: { header: { fontSize: 20, bold: true, margin: [0, 0, 0, 5], color: theme.primaryStr }, th: { bold: true, fontSize: 14, fillColor: '#f1f5f9', alignment: 'center', margin: [0, 2] } }
                 };
-
-                // Generate and open in new tab
                 pdfMake.createPdf(docDefinition).open();
             };
 
-            if (isLoading && data.history.length === 0) return (
-                <div className="h-screen flex flex-col items-center justify-center gap-2">
-                    <div className="w-8 h-8 border-4 border-slate-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500 font-medium text-xs animate-pulse">กำลังโหลดข้อมูล...</p>
-                </div>
-            );
+            if (isLoading && data.history.length === 0) return <div className="h-screen flex items-center justify-center font-bold text-slate-500">กำลังโหลดระบบ...</div>;
 
             return (
-                <div className={`${theme.bgApp} pb-10 transition-colors duration-500`}>
+                <div className={`${theme.bgApp} min-h-screen pb-10 transition-colors duration-300`}>
                     
-                    {/* Compact Modal Success */}
-                    {showModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                            <div className={`${theme.btnGradient} px-6 py-5 rounded-xl text-white text-center shadow-xl scale-110 border border-white/20`}>
-                                <h3 className="text-lg font-bold">✓ บันทึกเรียบร้อย</h3>
+                    {/* Top Main Navigation (Modes) */}
+                    <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+                        <div className="max-w-5xl mx-auto flex items-end">
+                            <button onClick={()=>setSystemMode('ER')} className={`px-8 py-3 font-bold text-sm tracking-wide ${systemMode==='ER' ? 'border-b-4 border-red-600 text-red-700 bg-red-50' : 'text-slate-400 hover:bg-slate-50'}`}>ER ERRORs</button>
+                            <button onClick={()=>setSystemMode('MR')} className={`px-8 py-3 font-bold text-sm tracking-wide ${systemMode==='MR' ? 'border-b-4 border-teal-600 text-teal-700 bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}>MR ERRORs</button>
+                        </div>
+                    </div>
+
+                    <main className="max-w-5xl mx-auto p-3 md:p-5">
+                        {/* Huge Title Area */}
+                        <div className="text-center md:text-left my-6">
+                            <h1 className={`text-3xl md:text-4xl font-black tracking-tight ${theme.textGrad}`}>ศูนย์บันทึกอุบัติการณ์ ฝ่ายเภสัชกรรม รพ.สวี</h1>
+                            <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                                <span className={`text-xs font-bold px-3 py-1 rounded-full text-white shadow-sm animate-pulse ${theme.bgGrad}`}>อยู่ในโหมดกำลังพัฒนา</span>
+                                <span className="text-slate-500 font-medium text-sm">| ระบบบันทึกความคลาดเคลื่อนทางยา</span>
                             </div>
                         </div>
-                    )}
 
-                    <main className="max-w-4xl mx-auto p-2 md:p-4">
-                        
-                        {/* Header & Controls (Compact) */}
-                        <div className="bg-white rounded-xl card-shadow p-3 mb-3 flex flex-col md:flex-row justify-between items-center gap-3 border border-white/50">
-                            <div className="flex items-center gap-2">
-                                <h1 className={`text-lg font-bold tracking-tight ${theme.title}`}>แบบฟอร์มบันทึก {systemMode} ERRORs</h1>
-                                <span className="bg-amber-400 text-amber-900 text-[9px] px-2 py-0.5 rounded-full font-bold animate-pulse shadow-sm">อยู่ในโหมดกำลังพัฒนา</span>
+                        {/* Sub-Header & Local Tabs */}
+                        <div className="flex flex-col md:flex-row justify-between items-center bg-white p-2 rounded-xl compact-card mb-4 border border-slate-100">
+                            <div className="flex gap-1 w-full md:w-auto">
+                                <button onClick={()=>setActiveTab('form')} className={`flex-1 md:flex-none px-6 py-2 text-xs font-bold rounded-lg transition-all ${activeTab==='form' ? theme.bgGrad+' text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>บันทึกข้อมูล</button>
+                                <button onClick={()=>setActiveTab('history')} className={`flex-1 md:flex-none px-6 py-2 text-xs font-bold rounded-lg transition-all ${activeTab==='history' ? theme.bgGrad+' text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>รายงานย้อนหลัง</button>
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setSystemMode(systemMode === 'ER' ? 'MR' : 'ER')} className="px-3 py-1.5 bg-slate-800 text-white text-[10px] rounded-lg font-bold hover:bg-slate-700 shadow-sm">
-                                    สลับโหมด: {systemMode === 'ER' ? 'MR' : 'ER'}
-                                </button>
-                                <button onClick={()=>setActiveTab('form')} className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${activeTab === 'form' ? theme.btnGradient + ' shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                    📝 บันทึกข้อมูล
-                                </button>
-                                <button onClick={()=>setActiveTab('history')} className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all ${activeTab === 'history' ? theme.btnGradient + ' shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                    📊 ประวัติ/รายงาน
-                                </button>
+                            <div className="hidden md:block px-4">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">Current Mode: {systemMode}</span>
                             </div>
                         </div>
 
                         {activeTab === 'form' ? (
-                            <div className="bg-white rounded-xl card-shadow p-4 md:p-5 border border-slate-100">
+                            <div className="bg-white p-5 rounded-2xl compact-card border border-slate-100">
                                 <form onSubmit={handleSubmit} className="space-y-4">
-                                    {/* Shift Info Header (Compact) */}
-                                    <div className="bg-slate-50 p-3 rounded-lg flex flex-wrap gap-3 items-center border border-slate-200">
-                                        <div className="flex-1 min-w-[120px]">
-                                            <label className="text-[10px] font-bold text-slate-500 block mb-0.5">วันที่เกิดเหตุ</label>
-                                            <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="w-full border rounded-md outline-none focus:border-slate-400" required />
+                                    {/* Shift Box */}
+                                    <div className={`${theme.lightBg} p-3 rounded-xl flex flex-wrap gap-3 items-center border border-white/50`}>
+                                        <div className="flex-1 min-w-[110px]">
+                                            <label className="text-[10px] font-bold text-slate-500 mb-1 block">วันที่</label>
+                                            <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="w-full compact-input" required />
                                         </div>
                                         <div className="flex-1 min-w-[90px]">
-                                            <label className="text-[10px] font-bold text-slate-500 block mb-0.5">เวลา</label>
-                                            <input type="time" value={form.time} onChange={e=>setForm({...form, time: e.target.value})} className="w-full border rounded-md outline-none focus:border-slate-400" required />
+                                            <label className="text-[10px] font-bold text-slate-500 mb-1 block">เวลา</label>
+                                            <input type="time" value={form.time} onChange={e=>setForm({...form, time: e.target.value})} className="w-full compact-input" required />
                                         </div>
-                                        <div className="flex-[2] min-w-[200px] flex items-center justify-between bg-white px-3 py-1.5 rounded-md border border-slate-200 shadow-sm">
+                                        <div className="flex-[2] min-w-[220px] flex justify-between bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-100 items-center">
                                             <div>
-                                                <span className={`text-[9px] font-bold block ${theme.primary}`}>กะรับยา {form.shiftDate}</span>
-                                                <div className="flex items-center gap-1 mt-0.5">
-                                                    <span className="text-[10px] font-bold text-slate-600">ใบสั่งยารวม</span>
-                                                    <input type="number" value={form.totalRx} onChange={e=>setForm({...form, totalRx: e.target.value})} disabled={isTotalRxLocked} className="w-12 text-xs font-bold border-b border-slate-200 outline-none disabled:bg-transparent text-center" required />
-                                                    {isTotalRxLocked && <button type="button" onClick={()=>setIsTotalRxLocked(false)} className="text-[9px] text-slate-400 hover:text-slate-800 underline">แก้ไข</button>}
+                                                <div className={`text-[10px] font-bold ${theme.textGrad}`}>กะรับยา {form.shiftDate}</div>
+                                                <div className="flex gap-2 items-center mt-0.5">
+                                                    <span className="text-[10px] font-bold text-slate-500">ใบสั่งยารวม</span>
+                                                    <input type="number" value={form.totalRx} onChange={e=>setForm({...form, totalRx: e.target.value})} disabled={isTotalRxLocked} className="w-14 compact-input text-center font-bold text-slate-700 disabled:bg-transparent disabled:border-transparent" required />
+                                                    {isTotalRxLocked && <span onClick={()=>setIsTotalRxLocked(false)} className="text-[9px] text-blue-500 cursor-pointer font-bold underline">แก้ไข</span>}
                                                 </div>
                                             </div>
-                                            <div className="text-right border-l pl-3">
-                                                <span className="text-[9px] text-slate-400 font-bold block">ลำดับ / Errors</span>
-                                                <div className="font-bold text-slate-700 text-sm">
-                                                    {form.sequence} / <span className={theme.primary}>{form.totalErrors}</span>
-                                                </div>
+                                            <div className="text-right border-l border-slate-100 pl-3">
+                                                <div className="text-[10px] font-bold text-slate-400">ลำดับ / Errors</div>
+                                                <div className="text-base font-black text-slate-700">{form.sequence} / <span style={{color: theme.primaryStr}}>{form.totalErrors}</span></div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Error Type Dropdown */}
                                     <div>
-                                        <label className="text-[11px] font-bold text-slate-600 mb-1 block">ความเสี่ยงที่พบ</label>
-                                        <select value={form.errorType} onChange={e=>setForm({...form, errorType: e.target.value})} 
-                                            className={`w-full text-sm rounded-lg border-2 font-bold outline-none transition-all ${form.errorType === errorOptions[0] ? 'border-green-200 bg-green-50 text-green-700' : theme.border + ' ' + theme.lightBg + ' ' + theme.primary}`}>
+                                        <label className="text-xs font-bold text-slate-700 mb-1 block">ความเสี่ยงที่พบ</label>
+                                        <select value={form.errorType} onChange={e=>setForm({...form, errorType: e.target.value})} className={`w-full p-2.5 text-sm font-bold rounded-lg border outline-none ${form.errorType===errorOptions[0] ? 'border-green-300 bg-green-50 text-green-700' : 'border-slate-300 bg-white text-slate-800'}`}>
                                             {errorOptions.map(o => <option key={o} value={o}>{o}</option>)}
                                         </select>
                                     </div>
 
-                                    {/* Conditional Section (Compact) */}
                                     {form.errorType !== errorOptions[0] && (
-                                        <div className={`space-y-4 p-4 rounded-xl border ${theme.border} ${theme.lightBg}`}>
+                                        <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-4">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-slate-700 block mb-0.5">HN ผู้ป่วย</label>
+                                                <div className="flex flex-col">
+                                                    <label className="text-[10px] font-bold text-slate-600 mb-1">HN</label>
                                                     <div className="flex gap-1">
-                                                        <input type="text" value={form.hn} onChange={e=>setForm({...form, hn: e.target.value})} className="flex-1 border border-slate-200 rounded-md outline-none" required placeholder="เช่น 6400..." />
-                                                        <button type="button" onClick={()=>handlePaste('hn')} className="px-2.5 bg-white border border-slate-200 rounded-md text-[10px] font-bold hover:bg-slate-50 shadow-sm">วาง</button>
+                                                        <input type="text" value={form.hn} onChange={e=>setForm({...form, hn: e.target.value})} className="flex-1 compact-input" required />
+                                                        <button type="button" onClick={()=>handlePaste('hn')} className="px-3 bg-white border border-slate-300 text-slate-600 font-bold text-[10px] rounded-md shadow-sm">วาง</button>
                                                     </div>
                                                 </div>
-
-                                                <div className="relative">
-                                                    <label className="text-[10px] font-bold text-slate-700 block mb-0.5">ยาที่เกี่ยวข้อง</label>
-                                                    <div className="relative">
-                                                        <div onClick={()=>setIsDrugDropdownOpen(!isDrugDropdownOpen)} className="w-full p-1.5 border border-slate-200 bg-white rounded-md min-h-[30px] flex flex-wrap gap-1 cursor-pointer">
-                                                            {form.selectedDrugs.length === 0 ? <span className="text-slate-400 text-[10px] italic pt-0.5">เลือกรายการยา...</span> : form.selectedDrugs.map(d=>(
-                                                                <span key={d} className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 border border-slate-200">
-                                                                    {d} <span onClick={(e)=>{e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}} className="hover:text-red-500">×</span>
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                        {isDrugDropdownOpen && (
-                                                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 shadow-lg rounded-md overflow-hidden">
-                                                                <div className="p-1.5 border-b flex gap-1 bg-slate-50">
-                                                                    <input type="text" placeholder="ค้นหายา..." value={drugSearch} onChange={e=>setDrugSearch(e.target.value)} className="flex-1 p-1 border rounded text-[10px] outline-none" onClick={e=>e.stopPropagation()} />
-                                                                    <button type="button" onClick={()=>setIsDrugDropdownOpen(false)} className="text-[10px] font-bold text-slate-500 px-1">ปิด</button>
-                                                                </div>
-                                                                <div className="max-h-32 overflow-y-auto">
-                                                                    {data.drugs.filter(d=>d.toLowerCase().includes(drugSearch.toLowerCase())).map(d=>(
-                                                                        <div key={d} onClick={()=>setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})} className={`p-1.5 text-[10px] border-b last:border-0 cursor-pointer hover:bg-slate-50 ${form.selectedDrugs.includes(d)?'bg-slate-100 font-bold':''}`}>{d}</div>
-                                                                    ))}
-                                                                </div>
+                                                <div className="relative flex flex-col">
+                                                    <label className="text-[10px] font-bold text-slate-600 mb-1">ยาที่เกี่ยวข้อง</label>
+                                                    <div onClick={()=>setIsDrugDropdownOpen(!isDrugDropdownOpen)} className="w-full min-h-[32px] compact-input bg-white cursor-pointer flex flex-wrap gap-1 items-center">
+                                                        {form.selectedDrugs.length === 0 ? <span className="text-[10px] text-slate-400">เลือก...</span> : form.selectedDrugs.map(d=>(
+                                                            <span key={d} className={`px-1.5 py-0.5 text-[9px] font-bold rounded-sm text-white ${theme.bgGrad}`}>{d} <span onClick={(e)=>{e.stopPropagation(); setForm({...form, selectedDrugs: form.selectedDrugs.filter(x=>x!==d)})}}>×</span></span>
+                                                        ))}
+                                                    </div>
+                                                    {isDrugDropdownOpen && (
+                                                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 shadow-xl rounded-lg z-50 overflow-hidden">
+                                                            <div className="p-1 flex gap-1 bg-slate-100"><input type="text" value={drugSearch} onChange={e=>setDrugSearch(e.target.value)} className="flex-1 compact-input" placeholder="ค้นหา..." onClick={e=>e.stopPropagation()}/><button type="button" onClick={()=>setIsDrugDropdownOpen(false)} className="px-2 text-[10px] font-bold">ปิด</button></div>
+                                                            <div className="max-h-32 overflow-y-auto">
+                                                                {data.drugs.filter(d=>d.toLowerCase().includes(drugSearch.toLowerCase())).map(d=>(
+                                                                    <div key={d} onClick={()=>setForm({...form, selectedDrugs: form.selectedDrugs.includes(d)?form.selectedDrugs.filter(x=>x!==d):[...form.selectedDrugs, d]})} className={`p-1.5 text-[10px] border-b cursor-pointer hover:bg-slate-50 ${form.selectedDrugs.includes(d)?theme.lightBg+' font-bold':''}`}>{d}</div>
+                                                                ))}
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-
                                                 <div className="md:col-span-2">
-                                                    <label className="text-[10px] font-bold text-slate-700 block mb-0.5">รายละเอียด</label>
-                                                    <textarea value={form.details} onChange={e=>setForm({...form, details: e.target.value})} className="w-full border border-slate-200 rounded-md bg-white/50 h-14 outline-none focus:bg-white text-[11px]" />
+                                                    <label className="text-[10px] font-bold text-slate-600 mb-1">รายละเอียด (แก้ไขได้)</label>
+                                                    <textarea value={form.details} onChange={e=>setForm({...form, details: e.target.value})} className="w-full compact-input h-12 bg-white" />
                                                 </div>
-
                                                 <div className="md:col-span-2">
-                                                    <label className="text-[10px] font-bold text-slate-700 block mb-1">ประเภทความเสี่ยง</label>
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+                                                    <label className="text-[10px] font-bold text-slate-600 mb-1">ประเภท</label>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
                                                         {riskTypes.map(rt => (
                                                             <div key={rt}>
-                                                                <input type="radio" id={`rt-${rt}`} name="riskType" value={rt} checked={form.riskType === rt} onChange={e=>setForm({...form, riskType: e.target.value})} className="hidden peer" />
-                                                                <label htmlFor={`rt-${rt}`} className={`block w-full py-1.5 text-center rounded-md border bg-white text-[10px] cursor-pointer transition-all ${form.riskType === rt ? theme.radioChecked : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                                                                    {rt}
-                                                                </label>
+                                                                <input type="radio" id={`rt-${rt}`} name="riskType" value={rt} checked={form.riskType===rt} onChange={e=>setForm({...form, riskType: e.target.value})} className="hidden btn-radio" style={{color: theme.primaryStr}}/>
+                                                                <label htmlFor={`rt-${rt}`} className="block w-full py-1.5 text-center bg-white border border-slate-200 rounded-md text-[10px] cursor-pointer transition-all">{rt}</label>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
-
                                                 <div className="md:col-span-2">
-                                                    <label className="text-[10px] font-bold text-slate-700 block mb-1">ระดับความรุนแรง</label>
-                                                    <div className="flex gap-1.5">
+                                                    <label className="text-[10px] font-bold text-slate-600 mb-1">ความรุนแรง</label>
+                                                    <div className="flex gap-1">
                                                         {severities.map(sv => (
                                                             <div key={sv} className="flex-1">
-                                                                <input type="radio" id={`sv-${sv}`} name="severity" value={sv} checked={form.severity === sv} onChange={e=>setForm({...form, severity: e.target.value})} className="hidden peer" />
-                                                                <label htmlFor={`sv-${sv}`} className={`block w-full py-1.5 text-center rounded-md border bg-white text-xs font-bold cursor-pointer transition-all ${form.severity === sv ? theme.radioChecked : 'border-slate-200 text-slate-400 hover:bg-slate-50'}`}>
-                                                                    {sv}
-                                                                </label>
+                                                                <input type="radio" id={`sv-${sv}`} name="severity" value={sv} checked={form.severity===sv} onChange={e=>setForm({...form, severity: e.target.value})} className="hidden btn-radio" style={{color: theme.primaryStr}}/>
+                                                                <label htmlFor={`sv-${sv}`} className="block w-full py-1.5 text-center bg-white border border-slate-200 rounded-md text-[11px] cursor-pointer transition-all">{sv}</label>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 </div>
-
                                                 <div className="md:col-span-2">
-                                                    <label className="text-[10px] font-bold text-slate-700 block mb-0.5">การแก้ไขเบื้องต้น</label>
-                                                    <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full border border-slate-200 rounded-md bg-white outline-none" required>
-                                                        <option value="">-- เลือกรายการ --</option>
-                                                        {actions.map(a=><option key={a} value={a}>{a}</option>)}
-                                                    </select>
+                                                    <label className="text-[10px] font-bold text-slate-600 mb-1">การแก้ไข</label>
+                                                    <select value={form.action} onChange={e=>setForm({...form, action: e.target.value})} className="w-full compact-input bg-white" required><option value="">-- เลือก --</option>{actions.map(a=><option key={a} value={a}>{a}</option>)}</select>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Staff Section */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                        {[
-                                            { label: 'ผู้ตรวจ', field: 'inspector', list: 'inspectors' },
-                                            { label: 'รคส.', field: 'doctor', list: 'doctors' },
-                                            { label: 'ผู้บันทึก', field: 'recorder', list: 'recorders' }
-                                        ].map(item => (
-                                            <div key={item.field}>
-                                                <label className="text-[10px] font-bold text-slate-500 block mb-0.5">{item.label}</label>
-                                                <div className="flex gap-1">
-                                                    <input list={item.list} value={form[item.field]} onChange={e=>setForm({...form, [item.field]: e.target.value})} className="flex-1 border border-slate-200 rounded-md outline-none" required />
-                                                    <button type="button" onClick={()=>handlePaste(item.field)} className="bg-white px-2 border border-slate-200 rounded-md text-[10px] font-bold text-slate-600 shadow-sm hover:bg-slate-50">วาง</button>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {['inspector:ผู้ตรวจ', 'doctor:รคส.', 'recorder:ผู้บันทึก'].map(pair => {
+                                            const [field, label] = pair.split(':');
+                                            return (
+                                                <div key={field}>
+                                                    <label className="text-[10px] font-bold text-slate-500 mb-1 block">{label}</label>
+                                                    <div className="flex gap-1">
+                                                        <input list={field+'s'} value={form[field]} onChange={e=>setForm({...form, [field]: e.target.value})} className="flex-1 compact-input" required />
+                                                        <button type="button" onClick={()=>handlePaste(field)} className="px-2 bg-white border border-slate-300 text-[9px] font-bold rounded-md">วาง</button>
+                                                    </div>
+                                                    <datalist id={field+'s'}>{data[field+'s'].map(n=><option key={n} value={n}/>)}</datalist>
                                                 </div>
-                                                <datalist id={item.list}>{data[item.list].map(n=><option key={n} value={n}/>)}</datalist>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
-                                    <button type="submit" disabled={isSubmitting} className={`w-full p-3 rounded-xl text-sm font-bold shadow-md transform active:scale-[0.98] transition-all ${isSubmitting ? 'bg-slate-300 text-slate-500' : theme.btnGradient}`}>
-                                        {isSubmitting ? 'กำลังบันทึก...' : `บันทึกรายงาน ${systemMode} ERROR`}
+                                    <button type="submit" disabled={isSubmitting} className={`w-full py-3 rounded-lg text-sm font-bold text-white shadow-md transform active:scale-[0.98] transition-all ${isSubmitting ? 'bg-slate-400' : theme.bgGrad}`}>
+                                        {isSubmitting ? 'กำลังบันทึก...' : `บันทึกรายการ`}
                                     </button>
                                 </form>
                             </div>
                         ) : (
-                            /* --- History Tab (Compact) --- */
                             <div className="space-y-4">
-                                {/* Compact Dashboard */}
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div className="bg-white p-3 rounded-xl card-shadow border-t-2 border-slate-300 text-center">
-                                        <div className="text-[9px] font-bold text-slate-400 uppercase">ใบสั่งยารวม</div>
-                                        <div className="text-xl font-black text-slate-700">{stats.rx}</div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div className="col-span-1 md:col-span-2 bg-white rounded-2xl compact-card p-4 border border-slate-100 grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col justify-center border-r border-slate-100 pr-4">
+                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ใบสั่งยารวม ({systemMode})</div>
+                                            <div className="text-3xl font-black text-slate-700">{stats.rx} <span className="text-[10px] font-normal text-slate-400">ใบ</span></div>
+                                            <div className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Error ที่พบ</div>
+                                            <div className="text-3xl font-black" style={{color: theme.primaryStr}}>{stats.errors} <span className="text-[10px] font-bold text-slate-400">({stats.percent}%)</span></div>
+                                        </div>
+                                        <div className="relative h-32 w-full flex items-center justify-center">
+                                            <canvas ref={chartRef}></canvas>
+                                        </div>
                                     </div>
-                                    <div className={`bg-white p-3 rounded-xl card-shadow border-t-2 text-center ${systemMode==='ER'?'border-rose-400':'border-emerald-400'}`}>
-                                        <div className="text-[9px] font-bold text-slate-400 uppercase">Error / สัดส่วน</div>
-                                        <div className={`text-xl font-black ${theme.primary}`}>{stats.errors} <span className="text-[10px] font-bold text-slate-400">({stats.percent}%)</span></div>
-                                    </div>
-                                    <div className="bg-white p-2 rounded-xl card-shadow flex items-center justify-center">
-                                        <button onClick={generateReportPDF} className={`w-full h-full flex flex-col items-center justify-center gap-1 rounded-lg text-white text-[10px] font-bold shadow-sm transition-all ${theme.btnGradient}`}>
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                            สร้าง PDF
+                                    <div className="bg-white rounded-2xl compact-card p-4 border border-slate-100 flex items-center justify-center">
+                                        <button onClick={generateReportPDF} className={`w-full h-full min-h-[100px] flex flex-col items-center justify-center gap-2 rounded-xl text-white font-bold shadow-sm ${theme.bgGrad}`}>
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <span className="text-xs">สร้างรายงาน PDF</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Filters Card */}
-                                <div className="bg-white rounded-xl card-shadow p-4 border border-slate-100">
-                                    <div className="flex flex-col md:flex-row justify-between gap-3 mb-3">
-                                        <div className="flex gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
-                                            <button onClick={()=>setFilterType('day')} className={`px-3 py-1 rounded-md text-[10px] font-bold ${filterType==='day'?'bg-white shadow-sm text-slate-800':'text-slate-400'}`}>รายวัน</button>
-                                            <button onClick={()=>setFilterType('month')} className={`px-3 py-1 rounded-md text-[10px] font-bold ${filterType==='month'?'bg-white shadow-sm text-slate-800':'text-slate-400'}`}>รายเดือน</button>
+                                <div className="bg-white rounded-xl compact-card p-4 border border-slate-100">
+                                    <div className="flex flex-wrap gap-2 mb-3 justify-between items-center">
+                                        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                                            <button onClick={()=>setFilterType('day')} className={`px-3 py-1 rounded text-[10px] font-bold ${filterType==='day'?'bg-white shadow-sm':'text-slate-500'}`}>รายวัน</button>
+                                            <button onClick={()=>setFilterType('month')} className={`px-3 py-1 rounded text-[10px] font-bold ${filterType==='month'?'bg-white shadow-sm':'text-slate-500'}`}>รายเดือน</button>
                                         </div>
-                                        <div className="flex-1">
-                                            <input type="text" placeholder="ค้นหา HN / ยา..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="w-full border border-slate-200 rounded-lg text-xs outline-none" />
-                                        </div>
-                                        <div>
-                                            {filterType==='day' ? 
-                                                <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="w-full border border-slate-200 rounded-lg text-xs" /> : 
-                                                <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="w-full border border-slate-200 rounded-lg text-xs" />
-                                            }
+                                        <div className="flex flex-1 gap-2 min-w-[200px]">
+                                            <input type="text" placeholder="ค้นหา HN..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="flex-1 compact-input" />
+                                            {filterType==='day' ? <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="compact-input w-28" /> : <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="compact-input w-28" />}
                                         </div>
                                     </div>
-                                    
-                                    <div className="flex items-center gap-1.5 mb-3">
-                                        <input type="checkbox" id="no-error-check" checked={excludeNoError} onChange={e=>setExcludeNoError(e.target.checked)} className="w-3 h-3 rounded" />
-                                        <label htmlFor="no-error-check" className="text-[10px] font-bold text-slate-500">ซ่อนรายการ ❌ไม่พบ Error</label>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <input type="checkbox" id="noerr" checked={excludeNoError} onChange={e=>setExcludeNoError(e.target.checked)} className="w-3 h-3" />
+                                        <label htmlFor="noerr" className="text-[10px] font-bold text-slate-500">ซ่อน ❌ไม่พบ Error (คำนวณกราฟเฉพาะ Error)</label>
                                     </div>
-
-                                    <div className="overflow-x-auto rounded-lg border border-slate-100">
+                                    <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-[400px]">
                                         <table className="w-full text-left text-[10px]">
-                                            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                            <thead className="bg-slate-50 text-slate-600 sticky top-0 border-b border-slate-200 shadow-sm">
                                                 <tr>
-                                                    <th className="p-2">กะรับยา/เวลา</th>
-                                                    <th className="p-2">HN</th>
-                                                    <th className="p-2">ความเสี่ยง/ระดับ</th>
-                                                    <th className="p-2">รายละเอียด</th>
-                                                    <th className="p-2">ผู้บันทึก</th>
+                                                    <th className="p-2 font-bold">กะ/เวลา</th>
+                                                    <th className="p-2 font-bold">HN</th>
+                                                    <th className="p-2 font-bold">ความเสี่ยง (ระดับ)</th>
+                                                    <th className="p-2 font-bold">รายละเอียด</th>
+                                                    <th className="p-2 font-bold">ผู้บันทึก</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
                                                 {filteredHistory.map((h, i)=>(
                                                     <tr key={i} className="hover:bg-slate-50">
-                                                        <td className="p-2"><span className="font-bold text-slate-700">{h.shiftDate}</span><br/><span className="text-[9px] text-slate-400">{h.time}</span></td>
-                                                        <td className={`p-2 font-black ${theme.primary}`}>{h.hn || '-'}</td>
+                                                        <td className="p-2 whitespace-nowrap"><span className="font-bold text-slate-800">{h.shiftDate}</span><br/><span className="text-[9px] text-slate-400">{h.time}</span></td>
+                                                        <td className="p-2 font-black" style={{color: theme.primaryStr}}>{h.hn || '-'}</td>
                                                         <td className="p-2">
-                                                            <div className={`font-bold ${h.errorType===errorOptions[0]?'text-green-500':theme.primary}`}>{h.errorType}</div>
-                                                            {h.severity && <div className="text-[9px] bg-slate-100 inline-block px-1 rounded font-black mt-0.5">{h.severity}</div>}
+                                                            <div className="font-bold" style={{color: h.errorType===errorOptions[0] ? '#10b981' : theme.primaryStr}}>{h.errorType}</div>
+                                                            {h.severity && <div className="text-[9px] bg-slate-200 text-slate-700 px-1 py-0.5 rounded font-black inline-block mt-0.5">{h.severity}</div>}
                                                         </td>
-                                                        <td className="p-2 text-[9px] text-slate-500 truncate max-w-[150px]">{h.details || '-'}</td>
-                                                        <td className="p-2 text-slate-400">{h.recorder}</td>
+                                                        <td className="p-2 text-[10px] text-slate-500 min-w-[150px]">{h.details || '-'}</td>
+                                                        <td className="p-2 text-slate-400 whitespace-nowrap">{h.recorder}</td>
                                                     </tr>
                                                 ))}
-                                                {filteredHistory.length === 0 && (<tr><td colSpan="5" className="p-8 text-center text-slate-400">ไม่พบข้อมูล...</td></tr>)}
+                                                {filteredHistory.length===0 && <tr><td colSpan="5" className="p-10 text-center text-slate-400">ไม่พบข้อมูล</td></tr>}
                                             </tbody>
                                         </table>
                                     </div>
