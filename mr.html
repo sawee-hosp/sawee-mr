@@ -1,603 +1,241 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard ห้องยา รพ.สวี</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+/**
+ * ระบบบันทึกอุบัติการณ์ ฝ่ายเภสัชกรรม รพ.สวี
+ * รวมการจัดการข้อมูล ER และ MR ไว้ใน Script เดียว (เวอร์ชันปรับปรุงป้องกัน Error)
+ */
+
+// --- CONFIGURATION ---
+const SS_ID_ER = "1clByvjX7xVl0FjcF3oHw0-AiUX9Ubk2oRu2GgrRXPCU";
+const SS_ID_MR = "1c3DXVSB0ZqJJWEE-EL3q-xrS9PMbKBqJgKBpk4NVOpQ";
+const SS_ID_DRUG = "1iO7pGLGGoK3zkZE4ckr5HofV-6rBeoVMCWZZOawhEyY";
+
+const SHEETS = {
+  ER_HISTORY: "ER ERROR", // ⚠️ ต้องตรงกับชื่อแท็บในไฟล์ ER เป๊ะๆ
+  MR_HISTORY: "MR ERROR", // ⚠️ ต้องตรงกับชื่อแท็บในไฟล์ MR เป๊ะๆ
+  MR_CATEGORY: "ERROR CATEGORY",
+  DRUG_LIST: "full_drugcode"
+};
+
+function doGet(e) {
+  try {
+    const ssEr = SpreadsheetApp.openById(SS_ID_ER);
+    const ssMr = SpreadsheetApp.openById(SS_ID_MR);
+    const ssDrug = SpreadsheetApp.openById(SS_ID_DRUG);
+
+    // 1. ดึงข้อมูลยา (Col C) พร้อมระบบป้องกันถ้าหาชีตไม่เจอ
+    let drugs = [];
+    const drugSheet = ssDrug.getSheetByName(SHEETS.DRUG_LIST);
+    if (drugSheet) {
+      // ดึงจากคอลัมน์ C (3) และกรองค่าว่างออก
+      drugs = drugSheet.getRange(2, 3, drugSheet.getLastRow() - 1, 1).getValues().flat().filter(String);
+    }
+
+    // 2. ดึงข้อมูล MR Category
+    let mrCategories = [];
+    const catSheet = ssMr.getSheetByName(SHEETS.MR_CATEGORY);
+    if (catSheet && catSheet.getLastRow() > 1) {
+      mrCategories = catSheet.getRange(2, 1, catSheet.getLastRow() - 1, 3).getValues().map(r => ({
+        id: r[0],
+        type: r[1],
+        error: r[2]
+      }));
+    }
+
+    // 3. ดึงข้อมูลประวัติ (History) รวมทั้ง 2 ฝั่งเพื่อแสดงผล Dashboard
+    const erHistory = getSheetData(ssEr.getSheetByName(SHEETS.ER_HISTORY), "ER");
+    const mrHistory = getSheetData(ssMr.getSheetByName(SHEETS.MR_HISTORY), "MR");
     
-    <style>
-        body {
-            font-family: 'Noto Sans Thai', sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevent all scrollbars on TV */
-            box-sizing: border-box;
-            background-size: 200% 200%;
-            animation: gradientMove 15s ease infinite;
-            color: #1e293b;
-            transition: background-image 1s ease;
+    // รวมประวัติ
+    const allHistory = [...erHistory, ...mrHistory];
+
+    // 4. คำนวณ ERROR ID ล่าสุดของ MR
+    let lastId = 0;
+    const mrHistorySheet = ssMr.getSheetByName(SHEETS.MR_HISTORY);
+    if (mrHistorySheet && mrHistorySheet.getLastRow() > 1) {
+       lastId = Number(mrHistorySheet.getRange(mrHistorySheet.getLastRow(), 1).getValue()) || 0;
+    }
+
+    // 5. ข้อมูลพื้นฐานสำหรับ Dropdown (ดึงจากประวัติเก่า)
+    const result = {
+      status: "success", 
+      drugs: drugs,
+      errorCategories: mrCategories,
+      inspectors: getUniqueColumn(ssEr.getSheetByName(SHEETS.ER_HISTORY), 11), // Col 11 คือผู้ตรวจ
+      doctors: getUniqueColumn(mrHistorySheet, 12),    // Col 12 (L) ใน MR
+      recorders: getUniqueColumn(mrHistorySheet, 13),  // Col 13 (M) ใน MR
+      lastId: lastId,
+      history: allHistory
+    };
+
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ 
+      status: "error", 
+      message: error.toString(),
+      hint: "โปรดตรวจสอบ 1.ชื่อ Sheet ถูกต้องไหม 2.กดยืนยันสิทธิ์หรือยัง"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    const p = JSON.parse(e.postData.contents);
+    
+    // โหมดลบข้อมูล
+    if (p.action === "DELETE") {
+      return deleteData(p);
+    }
+    
+    // โหมดบันทึกข้อมูล
+    const mode = p.systemMode;
+    if (mode === "ER") {
+      return saveErData(p);
+    } else {
+      return saveMrData(p);
+    }
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// --- HELPER FUNCTIONS ---
+
+function deleteData(p) {
+  const ss = p.systemMode === "ER" ? SpreadsheetApp.openById(SS_ID_ER) : SpreadsheetApp.openById(SS_ID_MR);
+  const sheetName = p.systemMode === "ER" ? SHEETS.ER_HISTORY : SHEETS.MR_HISTORY;
+  const sheet = ss.getSheetByName(sheetName);
+  
+  if (!sheet) throw new Error("ไม่พบชีตชื่อ " + sheetName);
+  
+  const rows = sheet.getDataRange().getValues();
+  // ค้นหาแถวที่ตรงกับ ID ที่ส่งมา (คอลัมน์แรก index 0)
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === String(p.id)) {
+      sheet.deleteRow(i + 1); // +1 เพราะ index ของ getValues เริ่มจาก 0 แต่ deleteRow เริ่มจาก 1
+      return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "ไม่พบข้อมูลที่ต้องการลบ" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveErData(p) {
+  const ss = SpreadsheetApp.openById(SS_ID_ER);
+  const sheet = ss.getSheetByName(SHEETS.ER_HISTORY);
+  if (!sheet) throw new Error("ไม่พบชีตชื่อ " + SHEETS.ER_HISTORY);
+  
+  // คำนวณค่า Col C จำนวน Error (1 หรือ 0)
+  const errorCount = p.errorType === "❌ไม่พบ Error" ? 0 : 1;
+  
+  // คำนวณลำดับที่ (ถ้าเป็น - ให้ส่งค่า 0 ไปแทน)
+  const seq = p.sequence === '-' ? 0 : p.sequence;
+
+  // แปลงวันที่สำหรับ Col N เป็น DD/MM/YYYY
+  const d = new Date(p.date);
+  const formattedDate = Utilities.formatDate(d, "GMT+7", "dd/MM/yyyy");
+
+  // บันทึกลงเรียงตาม Column A -> N (และต่อด้วย O, P)
+  sheet.appendRow([
+    p.shiftDate,   // Col A: กะ (เวรรับยา)
+    p.totalRx,     // Col B: จำนวนใบสั่งยา
+    errorCount,    // Col C: จำนวน Error
+    seq,           // Col D: ลำดับที่
+    p.time,        // Col E: เวลา
+    p.errorType,   // Col F: ความเสี่ยงที่พบ
+    p.details,     // Col G: รายละเอียด
+    p.riskType,    // Col H: ประเภทความเสี่ยง
+    p.severity,    // Col I: ระดับ
+    p.action,      // Col J: การแก้ไข
+    p.inspector,   // Col K: ผู้ตรวจเช็ค
+    p.doctor,      // Col L: รคส.
+    p.recorder,    // Col M: ผู้บันทึก
+    formattedDate, // Col N: วันที่ (DD/MM/YYYY)
+    p.hn,          // Col O: HN
+    p.drugs,       // Col P: รายการยา
+    "ER"           // Col Q: System Mode Flag
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveMrData(p) {
+  const ss = SpreadsheetApp.openById(SS_ID_MR);
+  const sheet = ss.getSheetByName(SHEETS.MR_HISTORY);
+  if (!sheet) throw new Error("ไม่พบชีตชื่อ " + SHEETS.MR_HISTORY);
+  
+  // คำนวณ ERROR ID ล่าสุด
+  const lastRow = sheet.getLastRow();
+  const nextId = lastRow > 1 ? Number(sheet.getRange(lastRow, 1).getValue()) + 1 : 1;
+  
+  // แปลงวันที่
+  const d = new Date(p.date);
+  const formattedDate = Utilities.formatDate(d, "GMT+7", "dd/MM/yyyy"); // สำหรับ Col B
+  const monthStr = Utilities.formatDate(d, "GMT+7", "yyyy-MM"); // สำหรับ Col R
+
+  sheet.appendRow([
+    nextId,        // Col A: ลำดับที่ (ERROR ID)
+    formattedDate, // Col B: วันที่ (DD/MM/YYYY)
+    p.type,        // Col C: ความคลาดเคลื่อน (Category)
+    p.error,       // Col D: รายการ Error
+    p.details,     // Col E: รายละเอียด (Auto Text จากหน้าเว็บ)
+    p.department,  // Col F: หน่วยงานที่เกิด
+    p.severity,    // Col G: ระดับความรุนแรง
+    p.policy,      // Col H: นโยบายยา
+    p.hn,          // Col I: HN
+    p.drug1,       // Col J: ยา 1
+    p.drug2,       // Col K: ยา 2
+    p.doctor,      // Col L: แพทย์
+    p.recorder,    // Col M: เภสัชกร
+    p.qty,         // Col N: จำนวน (เม็ด)
+    "",            // Col O: ชื่อผู้ป่วย
+    "",            // Col P: โทรศัพท์
+    "Active",      // Col Q: สถานะ
+    monthStr,      // Col R: รายเดือน
+    "MR"           // Col S: System Mode Flag (ใช้แยกข้อมูลตอนดึงกลับ)
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({ status: "success", id: nextId })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheetData(sheet, mode) {
+  if (!sheet) return [];
+  
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  
+  // ดึง 300 รายการล่าสุดเพื่อความรวดเร็วในการแสดงผล
+  const startRow = Math.max(1, rows.length - 300);
+  const data = [];
+  
+  for (let i = rows.length - 1; i >= startRow; i--) {
+    const obj = {};
+    headers.forEach((h, idx) => {
+      let val = rows[i][idx];
+      
+      // ป้องกันเวลาเพี้ยนเป็น 1899
+      if (val instanceof Date) {
+        if (val.getFullYear() === 1899) {
+          val = Utilities.formatDate(val, "GMT+7", "HH:mm");
+        } else {
+          val = Utilities.formatDate(val, "GMT+7", "yyyy-MM-dd");
         }
+      }
+      
+      // ป้องกัน Error จากคอลัมน์ที่เว้นว่างไว้ หรือมีการเคาะ Spacebar ผิดใน Header
+      if (h) {
+        obj[h.toString().trim()] = val;
+      }
+    });
+    
+    obj.systemMode = mode; // บังคับใส่ Mode เพื่อให้ UI หน้าเว็บแยกสถิติถูก
+    data.push(obj);
+  }
+  return data;
+}
 
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* สีประจำวันแบบ "สีสด จัดจ้าน" */
-        /* อาทิตย์ - แดงสด */
-        .bg-sun { background-image: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
-        /* จันทร์ - เหลืองสด */
-        .bg-mon { background-image: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
-        /* อังคาร - ชมพูสด */
-        .bg-tue { background-image: linear-gradient(135deg, #ff007f 0%, #ff758c 100%); }
-        /* พุธ - เขียวสด */
-        .bg-wed { background-image: linear-gradient(135deg, #0ba360 0%, #3cba92 100%); }
-        /* พฤหัสบดี - ส้มสด (ส้มจริงๆ) */
-        .bg-thu { background-image: linear-gradient(135deg, #ff7e00 0%, #ff4500 100%); } 
-        /* ศุกร์ - ฟ้าสด */
-        .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
-        /* เสาร์ - ม่วงสด */
-        .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
-
-        /* ภาพพื้นหลังจางๆ มุมขวาล่าง */
-        .bg-watermark {
-            position: fixed;
-            bottom: -5vh;
-            right: -2vw;
-            font-size: 50vh;
-            color: #ffffff;
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: -1;
-            transform: rotate(-15deg);
-            text-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-
-        .glow-orb {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 70vh;
-            height: 70vh;
-            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: -1;
-            filter: blur(50px);
-        }
-
-        /* Glass Panel หลัก (ปรับให้ทึบขึ้นนิดนึงสู้สีพื้นหลัง) */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-top: 2px solid rgba(255, 255, 255, 0.9);
-            border-left: 2px solid rgba(255, 255, 255, 0.9);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            border-right: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            border-radius: 1rem;
-        }
-
-        /* 3D Card (นูน เด้ง ดูมีมิติสุดๆ) */
-        .card-3d {
-            background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
-            /* เงาตกกระทบด้านล่าง + เงาสะท้อนแสงด้านบน + เงาเจาะลึก(Inset) */
-            box-shadow: 
-                5px 5px 10px rgba(0, 0, 0, 0.15), 
-                -3px -3px 8px rgba(255, 255, 255, 0.9),
-                inset 1px 1px 2px rgba(255, 255, 255, 1),
-                inset -1px -1px 2px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(255,255,255,0.8);
-            border-radius: 0.75rem;
-        }
-        
-        /* Colored 3D Cards for alerts */
-        .card-3d-green { background: linear-gradient(145deg, #dcfce7, #f0fdf4); }
-        .card-3d-red { background: linear-gradient(145deg, #ffe4e6, #fff1f2); }
-        .card-3d-amber { background: linear-gradient(145deg, #fef3c7, #fffbeb); }
-        .card-3d-blue { background: linear-gradient(145deg, #e0f2fe, #f0f9ff); }
-        .card-3d-purple { background: linear-gradient(145deg, #fae8ff, #fdf4ff); }
-        .card-3d-pink { background: linear-gradient(145deg, #fce7f3, #fdf2f8); }
-
-        /* Animation กระพริบแบบนุ่มนวล */
-        @keyframes pulse-light {
-            0%, 100% { transform: scale(1); box-shadow: 5px 5px 10px rgba(0,0,0,0.15), -3px -3px 8px rgba(255,255,255,0.9); }
-            50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(52, 211, 153, 0.6), inset 1px 1px 2px rgba(255,255,255,1); }
-        }
-        .alert-new { animation: pulse-light 2s infinite ease-in-out; }
-
-        /* สถานะพนักงาน (Active / Inactive / Ending) */
-        .staff-active {
-            opacity: 1;
-            filter: none;
-            transition: all 0.3s;
-        }
-        .staff-inactive {
-            opacity: 0.25;
-            filter: grayscale(100%);
-            box-shadow: none; /* เอาเงาออกเพื่อให้ดูแบนลง */
-            transform: scale(0.95);
-            transition: all 0.3s;
-        }
-        
-        @keyframes flash-urgent {
-            0%, 100% { opacity: 1; border-color: #ef4444; background: #fee2e2; }
-            50% { opacity: 0.5; border-color: transparent; background: rgba(255,255,255,0.8); }
-        }
-        .staff-ending { animation: flash-urgent 0.8s infinite; }
-
-        /* รูปโปรไฟล์เจาะลึก */
-        .profile-img {
-            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.8);
-            border: 2px solid white;
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Fade transition for news ticker */
-        .fade-text {
-            transition: opacity 0.5s ease-in-out;
-        }
-
-        /* เส้นแบ่ง Divider Gradient */
-        .divider-gradient {
-            height: 1.5px;
-            background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent);
-            margin: 4px 0;
-            width: 90%;
-            align-self: center;
-        }
-    </style>
-</head>
-
-<body class="h-screen w-screen flex flex-col p-2 gap-2 text-[11px] bg-thu" id="main-body">
-    <div class="glow-orb"></div>
-    <i class="fas fa-pills bg-watermark"></i>
-
-    <!-- Header (1 Line, High Contrast) -->
-    <header class="w-full px-4 py-1.5 flex justify-between items-center shrink-0 rounded-xl glass-panel">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-inner">
-                <i class="fas fa-hospital text-blue-600 text-lg"></i>
-            </div>
-            <h1 class="text-lg font-black tracking-wide text-slate-800 uppercase" style="text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
-        </div>
-        <div class="flex items-center gap-4 bg-white/50 px-4 py-1 rounded-full shadow-sm border border-white/60">
-            <div class="text-sm font-black text-slate-700" id="date-display">กำลังโหลด...</div>
-            <div class="w-[2px] h-4 bg-slate-400 rounded"></div>
-            <div class="text-xl font-black text-slate-900 font-mono tracking-widest" id="clock-display">--:--</div>
-        </div>
-    </header>
-
-    <!-- Main Content Grid (3 Columns) -->
-    <main class="flex-1 w-full grid grid-cols-3 gap-2 overflow-hidden min-h-0">
-        
-        <!-- Column 1: เภสัชกรประจำวัน -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-2">
-            <div class="flex justify-between items-center border-b-2 border-slate-300/40 pb-1 mb-1.5 shrink-0">
-                <h2 class="text-[14px] font-black text-slate-800 tracking-wide drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-1.5"></i>เภสัชกรประจำวัน</h2>
-                <span class="text-[11px] font-bold text-white bg-indigo-500 px-2.5 py-0.5 rounded-full shadow-md border border-indigo-400" id="active-staff-count">กำลังโหลด...</span>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1 pb-1" id="staff-grid">
-                
-                <!-- Set 1: คีย์, ใน, จพ.เช้า -->
-                <div class="flex justify-center gap-4">
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="key">
-                        <img src="https://placehold.co/100x100/38bdf8/ffffff?text=คีย์" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.คีย์</span>
-                    </div>
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="ipd">
-                        <img src="https://placehold.co/100x100/34d399/ffffff?text=ใน" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.ผป.ใน</span>
-                    </div>
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="tech">
-                        <img src="https://placehold.co/100x100/f472b6/ffffff?text=จพ" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">จพ.เช้า</span>
-                    </div>
-                </div>
-
-                <div class="divider-gradient"></div>
-
-                <!-- Set 2: เช็ค 1, 2, 3 -->
-                <div class="flex justify-center gap-4">
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="check">
-                        <img src="https://placehold.co/100x100/a78bfa/ffffff?text=ช1" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.เช็ค 1</span>
-                    </div>
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="check">
-                        <img src="https://placehold.co/100x100/a78bfa/ffffff?text=ช2" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.เช็ค 2</span>
-                    </div>
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="check">
-                        <img src="https://placehold.co/100x100/a78bfa/ffffff?text=ช3" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.เช็ค 3</span>
-                    </div>
-                </div>
-
-                <div class="divider-gradient"></div>
-
-                <!-- Set 3: จ่าย 1, 2, 3 -->
-                <div class="flex justify-center gap-4">
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="dispense">
-                        <img src="https://placehold.co/100x100/fb923c/ffffff?text=จ1" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.จ่าย 1</span>
-                    </div>
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="dispense">
-                        <img src="https://placehold.co/100x100/fb923c/ffffff?text=จ2" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.จ่าย 2</span>
-                    </div>
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="dispense3">
-                        <img src="https://placehold.co/100x100/fb923c/ffffff?text=จ3" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.จ่าย 3</span>
-                    </div>
-                </div>
-
-                <div class="divider-gradient"></div>
-
-                <!-- Set 4: คลินิก -->
-                <div class="flex justify-center gap-4">
-                    <div class="staff-item card-3d p-1.5 flex flex-col items-center justify-center w-[65px]" data-role="clinic">
-                        <img src="https://placehold.co/100x100/f87171/ffffff?text=คลินิก" class="w-10 h-10 rounded-full object-cover profile-img mb-1">
-                        <span class="text-[10px] font-black text-slate-700 leading-none">ภ.คลินิก</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Afternoon Shift (Static names) -->
-            <div class="mt-1 pt-1.5 border-t-2 border-slate-300/40 shrink-0">
-                <h2 class="text-[12px] font-black text-slate-800 mb-1.5 drop-shadow-sm"><i class="fas fa-moon text-amber-500 mr-1.5"></i>เวรบ่าย & On Call</h2>
-                <div class="card-3d p-1.5 flex justify-around items-center bg-slate-50/50">
-                    <div class="flex items-center gap-1.5">
-                        <img src="https://placehold.co/100x100/818cf8/ffffff?text=บ่าย" class="w-8 h-8 rounded-full profile-img">
-                        <div class="flex flex-col">
-                            <span class="text-[8px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span>
-                            <span class="text-[10px] font-black text-slate-800 leading-none">วิภาวดี</span>
-                        </div>
-                    </div>
-                    <div class="w-[1px] h-6 bg-slate-300 mx-1"></div>
-                    <div class="flex items-center gap-1.5">
-                        <img src="https://placehold.co/100x100/c084fc/ffffff?text=จพ" class="w-8 h-8 rounded-full profile-img">
-                        <div class="flex flex-col">
-                            <span class="text-[8px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span>
-                            <span class="text-[10px] font-black text-slate-800 leading-none">สมปอง</span>
-                        </div>
-                    </div>
-                    <div class="w-[1px] h-6 bg-slate-300 mx-1"></div>
-                    <div class="flex items-center gap-1.5">
-                        <img src="https://placehold.co/100x100/f87171/ffffff?text=On" class="w-8 h-8 rounded-full profile-img">
-                        <div class="flex flex-col">
-                            <span class="text-[8px] font-bold text-slate-500 leading-none mb-0.5">ภ.Oncall</span>
-                            <span class="text-[10px] font-black text-slate-800 leading-none">สมชาย</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Column 2: ผู้ป่วยใน (IPD) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-2">
-            <div class="flex justify-between items-center border-b-2 border-slate-300/40 pb-1 mb-1.5 shrink-0">
-                <h2 class="text-[14px] font-black text-slate-800 tracking-wide drop-shadow-sm"><i class="fas fa-procedures text-blue-600 mr-1.5"></i>ผู้ป่วยใน (IPD)</h2>
-            </div>
-
-            <!-- Ultra Compact IPD List -->
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1.5 pb-1">
-                
-                <div class="card-3d card-3d-green px-1.5 py-1 flex items-center justify-between alert-new">
-                    <div class="flex items-center gap-1.5 truncate">
-                        <span class="bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded shadow-sm text-[9px] min-w-[2rem] text-center border border-emerald-700">M21</span>
-                        <span class="text-slate-800 font-bold text-[10px] truncate w-16">สมชาย จ.</span>
-                        <span class="text-slate-500 text-[9px] font-mono">6912345</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-emerald-700 font-black text-[9px] drop-shadow-sm">ADMIT</span>
-                        <i class="fas fa-check-circle text-emerald-600 text-[10px]"></i>
-                    </div>
-                </div>
-
-                <div class="card-3d card-3d-red px-1.5 py-1 flex items-center justify-between">
-                    <div class="flex items-center gap-1.5 truncate">
-                        <span class="bg-rose-500 text-white font-black px-1.5 py-0.5 rounded shadow-sm text-[9px] min-w-[2rem] text-center border border-rose-600">F25</span>
-                        <span class="text-slate-800 font-bold text-[10px] truncate w-16">วันดี ใ.</span>
-                        <span class="text-slate-500 text-[9px] font-mono">6500123</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-rose-600 font-black text-[9px] drop-shadow-sm">D/C</span>
-                        <i class="fas fa-check-circle text-rose-500 text-[10px]"></i>
-                    </div>
-                </div>
-
-                <div class="card-3d card-3d-amber px-1.5 py-1 flex items-center justify-between">
-                    <div class="flex items-center gap-1.5 truncate">
-                        <span class="bg-amber-500 text-white font-black px-1.5 py-0.5 rounded shadow-sm text-[9px] min-w-[2rem] text-center border border-amber-600">P2</span>
-                        <span class="text-slate-800 font-bold text-[10px] truncate w-16">ด.ช.พีร น.</span>
-                        <span class="text-slate-500 text-[9px] font-mono">6811222</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <span class="text-amber-700 font-black text-[9px] drop-shadow-sm">อื่นๆ</span>
-                        <i class="fas fa-check-circle text-amber-500 text-[10px]"></i>
-                    </div>
-                </div>
-
-                <!-- More dummy entries to show 10 items fit -->
-                <div class="card-3d card-3d-green px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">M10</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">วิเชียร ม.</span><span class="text-slate-500 text-[9px] font-mono">6788123</span></div><div class="flex items-center gap-1"><span class="text-emerald-700 font-black text-[9px]">ADMIT</span><i class="fas fa-check-circle text-emerald-600 text-[10px]"></i></div></div>
-                <div class="card-3d card-3d-green px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">F12</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">สุนทรี ว.</span><span class="text-slate-500 text-[9px] font-mono">6612345</span></div><div class="flex items-center gap-1"><span class="text-emerald-700 font-black text-[9px]">ADMIT</span><i class="fas fa-check-circle text-emerald-600 text-[10px]"></i></div></div>
-                <div class="card-3d card-3d-green px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">ICU1</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">ประยุทธ์ จ.</span><span class="text-slate-500 text-[9px] font-mono">6400999</span></div><div class="flex items-center gap-1"><span class="text-emerald-700 font-black text-[9px]">ADMIT</span><i class="fas fa-check-circle text-emerald-600 text-[10px]"></i></div></div>
-                <div class="card-3d card-3d-red px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-rose-500 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">M05</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">ทวี ส.</span><span class="text-slate-500 text-[9px] font-mono">6301122</span></div><div class="flex items-center gap-1"><span class="text-rose-600 font-black text-[9px]">D/C</span><i class="fas fa-check-circle text-rose-500 text-[10px]"></i></div></div>
-                <div class="card-3d card-3d-red px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-rose-500 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">F30</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">นฤมล พ.</span><span class="text-slate-500 text-[9px] font-mono">6900111</span></div><div class="flex items-center gap-1"><span class="text-rose-600 font-black text-[9px]">D/C</span><i class="fas fa-check-circle text-rose-500 text-[10px]"></i></div></div>
-                <div class="card-3d card-3d-amber px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-amber-500 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">P5</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">ฟ้า ร.</span><span class="text-slate-500 text-[9px] font-mono">6822333</span></div><div class="flex items-center gap-1"><span class="text-amber-700 font-black text-[9px]">อื่นๆ</span><i class="fas fa-check-circle text-amber-500 text-[10px]"></i></div></div>
-                <div class="card-3d card-3d-green px-1.5 py-1 flex items-center justify-between"><div class="flex items-center gap-1.5 truncate"><span class="bg-emerald-600 text-white font-black px-1.5 py-0.5 rounded text-[9px] min-w-[2rem] text-center">M22</span><span class="text-slate-800 font-bold text-[10px] truncate w-16">สมศักดิ์ ค.</span><span class="text-slate-500 text-[9px] font-mono">6912346</span></div><div class="flex items-center gap-1"><span class="text-emerald-700 font-black text-[9px]">ADMIT</span><i class="fas fa-check-circle text-emerald-600 text-[10px]"></i></div></div>
-            </div>
-
-            <!-- Patient Count -->
-            <div class="flex justify-between mt-1 pt-1 border-t-2 border-slate-300/40 shrink-0">
-                <div class="card-3d px-2 py-1 flex flex-col items-center flex-1 mx-0.5"><span class="text-[9px] font-bold text-slate-500">IPD ชาย</span><span class="text-[12px] font-black text-slate-800">28</span></div>
-                <div class="card-3d px-2 py-1 flex flex-col items-center flex-1 mx-0.5"><span class="text-[9px] font-bold text-slate-500">IPD หญิง</span><span class="text-[12px] font-black text-slate-800">32</span></div>
-                <div class="card-3d px-2 py-1 flex flex-col items-center flex-1 mx-0.5"><span class="text-[9px] font-bold text-slate-500">OPD</span><span class="text-[12px] font-black text-slate-800">15</span></div>
-                <div class="card-3d px-2 py-1 flex flex-col items-center flex-1 mx-0.5 bg-red-50/50"><span class="text-[9px] font-bold text-red-500">ER</span><span class="text-[12px] font-black text-red-600 animate-pulse">2</span></div>
-            </div>
-        </section>
-
-        <!-- Column 3: การแจ้งเตือนใหม่ -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-2">
-            <div class="flex justify-between items-center border-b-2 border-slate-300/40 pb-1 mb-1.5 shrink-0">
-                <h2 class="text-[14px] font-black text-slate-800 tracking-wide drop-shadow-sm"><i class="fas fa-bell text-rose-500 mr-1.5"></i>การแจ้งเตือนใหม่</h2>
-            </div>
-
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1.5 pb-1">
-                
-                <div class="card-3d card-3d-green p-1.5 flex items-center gap-2 alert-new">
-                    <div class="w-6 flex justify-center"><i class="fas fa-box-open text-emerald-600 text-sm drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-[10px] font-bold text-slate-800 truncate">เบิกยา: <span class="font-black">ตึกผู้ป่วยในชาย</span></span>
-                        <span class="text-[9px] text-emerald-700 font-black ml-1 bg-emerald-100 px-1 rounded border border-emerald-200 shadow-sm">14:50</span>
-                    </div>
-                </div>
-
-                <div class="card-3d card-3d-blue p-1.5 flex items-center gap-2">
-                    <div class="w-6 flex justify-center"><i class="fas fa-calendar-times text-blue-500 text-sm drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-[10px] font-bold text-slate-800 truncate">Amoxicillin 500mg <span class="text-slate-500 font-medium">(ชั้น 2 C)</span></span>
-                        <span class="text-[9px] text-blue-700 font-black ml-1 bg-blue-100 px-1 rounded border border-blue-200 shadow-sm">31/05/69</span>
-                    </div>
-                </div>
-
-                <div class="card-3d card-3d-purple p-1.5 flex items-center gap-2">
-                    <div class="w-6 flex justify-center"><i class="fab fa-line text-purple-500 text-sm drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-[10px] font-bold text-slate-800 truncate">ถามยา: <span class="font-black">คุณสมร ศรีxxxx</span></span>
-                        <span class="text-[9px] text-purple-700 font-black ml-1 bg-purple-100 px-1 rounded border border-purple-200 shadow-sm">12:25</span>
-                    </div>
-                </div>
-
-                <div class="card-3d card-3d-pink p-1.5 flex items-center gap-2">
-                    <div class="w-6 flex justify-center"><i class="fas fa-hand-holding-medical text-pink-500 text-sm drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-[10px] font-bold text-slate-800 truncate">ยืมยา: <span class="font-black">Meropenem 1g 10v</span></span>
-                        <span class="text-[9px] text-pink-700 font-black ml-1 bg-pink-100 px-1 rounded border border-pink-200 shadow-sm">11:40</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer News & Weather -->
-            <div class="mt-1 pt-1.5 border-t-2 border-slate-300/40 flex items-stretch gap-1.5 shrink-0 h-10">
-                
-                <!-- Real-time News Ticker (Thairath) -->
-                <div class="flex-1 overflow-hidden relative card-3d p-1.5 flex items-center bg-white">
-                    <i class="fas fa-newspaper text-rose-600 mr-2 text-[12px] drop-shadow-sm"></i>
-                    <div class="flex-1 overflow-hidden">
-                        <div id="news-container" class="text-[10px] font-black text-slate-800 truncate w-full fade-text">กำลังโหลดข่าวสารล่าสุด...</div>
-                    </div>
-                </div>
-                
-                <!-- Weather Widget -->
-                <div class="card-3d p-1 flex items-center justify-center gap-1.5 min-w-[3.5rem] bg-white">
-                    <div id="weather-icon" class="text-[14px] text-slate-400 drop-shadow-sm"><i class="fas fa-spinner fa-spin"></i></div>
-                    <div id="weather-temp" class="text-[12px] font-black text-slate-800">--°C</div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <script>
-        // --- 1. Clock & Daily Colors ---
-        function updateClock() {
-            const now = new Date();
-            const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false };
-            document.getElementById('clock-display').textContent = now.toLocaleTimeString('th-TH', timeOptions);
-
-            const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-            const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            
-            const dayName = thaiDays[now.getDay()];
-            const date = now.getDate();
-            const month = thaiMonthsShort[now.getMonth()];
-            const year = now.getFullYear() + 543;
-
-            document.getElementById('date-display').textContent = `วัน${dayName} ${date} ${month} ${year}`;
-            
-            checkStaffShifts(now);
-        }
-
-        function setBackgroundByDay() {
-            const dayOfWeek = new Date().getDay();
-            const body = document.getElementById('main-body');
-            body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
-            const bgClasses = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat'];
-            body.classList.add(bgClasses[dayOfWeek]);
-        }
-
-        // --- 2. Staff Shift Logic ---
-        function checkStaffShifts(now) {
-            const currentMins = now.getHours() * 60 + now.getMinutes();
-
-            // Defined shift blocks in minutes based on requirement
-            const roles = {
-                'key': [
-                    { start: 8 * 60, end: 11 * 60 + 30 },
-                    { start: 12 * 60 + 30, end: 16 * 60 }
-                ],
-                'ipd': [
-                    { start: 8 * 60, end: 12 * 60 },
-                    { start: 13 * 60, end: 16 * 60 }
-                ],
-                'tech': [
-                    { start: 8 * 60, end: 11 * 60 },
-                    { start: 12 * 60, end: 16 * 60 }
-                ],
-                'check': [
-                    { start: 8 * 60, end: 12 * 60 + 30 },
-                    { start: 13 * 60 + 30, end: 16 * 60 }
-                ],
-                'dispense': [ // ภ.จ่าย 1,2
-                    { start: 8 * 60, end: 12 * 60 + 30 },
-                    { start: 13 * 60 + 30, end: 16 * 60 }
-                ],
-                'dispense3': [ // สมมติ ภ.จ่าย 3 เวลาเดียวกัน
-                    { start: 8 * 60, end: 12 * 60 + 30 },
-                    { start: 13 * 60 + 30, end: 16 * 60 }
-                ],
-                'clinic': [ // ใช้เวลา default หรือเวลาทำการ
-                    { start: 8 * 60, end: 12 * 60 },
-                    { start: 13 * 60, end: 16 * 60 }
-                ]
-            };
-
-            let activeCount = 0;
-
-            document.querySelectorAll('.staff-item').forEach(el => {
-                const role = el.dataset.role;
-                const shifts = roles[role];
-                if (!shifts) return;
-
-                let isActive = false;
-                let isEndingSoon = false;
-
-                for (let s of shifts) {
-                    if (currentMins >= s.start && currentMins < s.end) {
-                        isActive = true;
-                        if (s.end - currentMins <= 5) {
-                            isEndingSoon = true;
-                        }
-                    }
-                }
-
-                if (isActive) activeCount++;
-
-                if (isEndingSoon) {
-                    el.classList.add('staff-ending', 'staff-active');
-                    el.classList.remove('staff-inactive');
-                } else if (isActive) {
-                    el.classList.add('staff-active');
-                    el.classList.remove('staff-inactive', 'staff-ending');
-                } else {
-                    el.classList.add('staff-inactive');
-                    el.classList.remove('staff-active', 'staff-ending');
-                }
-            });
-
-            document.getElementById('active-staff-count').textContent = `${activeCount} คน`;
-        }
-
-        // --- 3. Real News Fetcher (Thairath via RSS2JSON) ---
-        let newsArticles = [];
-        let currentNewsIndex = 0;
-
-        async function fetchNews() {
-            try {
-                // Use rss2json API to bypass CORS for Thairath RSS feed
-                const rssUrl = encodeURIComponent('https://www.thairath.co.th/rss/news');
-                const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
-                const data = await response.json();
-                
-                if (data.status === 'ok' && data.items.length > 0) {
-                    newsArticles = data.items;
-                    showNews();
-                } else {
-                    document.getElementById('news-container').textContent = "ไม่มีข่าวสารใหม่ในขณะนี้";
-                }
-            } catch (error) {
-                console.error("Error fetching news:", error);
-                document.getElementById('news-container').textContent = "ไม่สามารถโหลดข่าวได้";
-            }
-        }
-
-        function showNews() {
-            if (newsArticles.length === 0) return;
-            
-            const container = document.getElementById('news-container');
-            // Fade out
-            container.style.opacity = 0;
-            
-            setTimeout(() => {
-                // Change text and Fade in
-                container.textContent = newsArticles[currentNewsIndex].title;
-                container.style.opacity = 1;
-                
-                // Move to next news item
-                currentNewsIndex = (currentNewsIndex + 1) % newsArticles.length;
-            }, 500); // 500ms matches CSS transition
-        }
-
-        // --- 4. Weather Fetcher (Open-Meteo for Sawi) ---
-        async function fetchWeather() {
-            try {
-                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current_weather=true');
-                const data = await response.json();
-                
-                const temp = Math.round(data.current_weather.temperature);
-                const code = data.current_weather.weathercode;
-                
-                document.getElementById('weather-temp').textContent = `${temp}°C`;
-                
-                let iconClass = 'fas fa-cloud';
-                let iconColor = 'text-slate-400';
-                
-                if (code === 0) { iconClass = 'fas fa-sun'; iconColor = 'text-amber-500'; }
-                else if (code >= 1 && code <= 3) { iconClass = 'fas fa-cloud-sun'; iconColor = 'text-blue-400'; }
-                else if (code >= 51 && code <= 67) { iconClass = 'fas fa-cloud-rain'; iconColor = 'text-blue-500'; }
-                else if (code >= 80 && code <= 82) { iconClass = 'fas fa-cloud-showers-heavy'; iconColor = 'text-blue-600'; }
-                else if (code >= 95) { iconClass = 'fas fa-bolt'; iconColor = 'text-amber-600'; }
-
-                document.getElementById('weather-icon').innerHTML = `<i class="${iconClass} ${iconColor}"></i>`;
-                
-            } catch (error) {
-                document.getElementById('weather-icon').innerHTML = `<i class="fas fa-cloud text-slate-400"></i>`;
-                document.getElementById('weather-temp').textContent = "N/A";
-            }
-        }
-
-        // --- 5. Initialization ---
-        window.onload = function() {
-            updateClock();
-            setBackgroundByDay();
-            fetchWeather();
-            fetchNews();
-            
-            // 1. Clock Update: Every second
-            setInterval(updateClock, 1000); 
-            
-            // 2. Rotate News Text: Every 10 seconds
-            setInterval(showNews, 10000);
-
-            // 3. Background & Weather Update: Every 30 mins (1,800,000 ms)
-            setInterval(() => {
-                setBackgroundByDay();
-                fetchWeather();
-            }, 1800000);
-
-            // 4. Fetch Fresh News XML: Every 1 hour (3,600,000 ms)
-            setInterval(fetchNews, 3600000);
-        };
-    </script>
-</body>
-</html>
+function getUniqueColumn(sheet, colIndex) {
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const vals = sheet.getRange(2, colIndex, sheet.getLastRow() - 1, 1).getValues().flat();
+  return [...new Set(vals)].filter(String).map(s => s.toString().trim()).sort();
+}
