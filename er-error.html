@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ศูนย์จัดการอุบัติการณ์ ฝ่ายเภสัชกรรม รพ.สวี</title>
     
-    <!-- Favicon รูป Alert -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚠️</text></svg>">
+    <!-- Favicon รูปวงกลมสีแดง -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ef4444%22/></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- โหลดเฉพาะ Noto Sans Thai เพื่อบังคับใช้ทั้งระบบ -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Config Tailwind ให้ใช้ Noto Sans Thai เป็น Default Sans -->
     <script>
         tailwind.config = {
             theme: {
@@ -32,7 +30,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     
@@ -41,40 +38,15 @@
             font-family: 'Noto Sans Thai', sans-serif !important; 
             color: #0f172a; 
             font-size: 14px; 
-            background-color: #0f172a; /* Fallback */
+            background-color: #0f172a;
         }
-        
-        .compact-input { 
-            padding: 12px 16px; 
-            border-radius: 12px; 
-            border: 1px solid #cbd5e1; 
-            outline: none; 
-            transition: all 0.2s; 
-            font-size: 1rem; 
-        }
-        .compact-input:focus { 
-            border-color: #94a3b8; 
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1); 
-        }
-        
-        .calendar-grid { 
-            display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            gap: 1px; 
-            background-color: #f1f5f9; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 16px; 
-            overflow: hidden; 
-        }
+        .compact-input { padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; outline: none; transition: all 0.2s; font-size: 1rem; }
+        .compact-input:focus { border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
         .calendar-day { background-color: white; min-height: 90px; padding: 8px; }
         .calendar-header { background-color: #f8fafc; padding: 12px; text-align: center; font-weight: 700; font-size: 12px; color: #64748b; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
-        
         .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -87,7 +59,8 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
         
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyWAbFSTICYEwz0cdNLSRtYP68aFLaDSPrOwqQiXQrSmz-pwXKwHPpyQDtzkapw_mLenw/exec";
+        // GAS URL อัปเดตล่าสุด
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz8y9YIjm-vWKpAS8MhuWmFZqkDLtJ1XsgmSvJevvQy7QSzwZVxkleVxsWewUXsK65hyw/exec";
 
         const erErrorOptions = [
             "❌ไม่พบ Error", "ไม่ติดสติกเกอร์ในใบนำทาง (ไม่ใช่ error)", "ไม่ปฏิบัติตามแนวทาง (ไม่ใช่error)",
@@ -101,10 +74,7 @@
         const mrDepartments = ['OPD', 'ER', 'IPDชาย', 'IPDหญิง', 'LR', 'อื่นๆ'];
         const mrPolicies = ['HAD', 'LASA', 'ADR', 'Med reconcile', 'DI'];
 
-        const THAI_MONTHS = [
-            "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-            "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
-        ];
+        const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
         const PasteIcon = () => (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,12 +160,9 @@
             
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [showModal, setShowModal] = useState(false);
-
-            // ตัวแปรสำหรับ Delete Modal
             const [deleteConfirm, setDeleteConfirm] = useState(null);
             const [isDeleting, setIsDeleting] = useState(false);
 
-            // ตัวกรอง (Filters)
             const [filterType, setFilterType] = useState('month');
             const [filterDateStart, setFilterDateStart] = useState(() => {
                 const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0];
@@ -205,25 +172,18 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [excludeNoError, setExcludeNoError] = useState(true);
             
-            // เปลี่ยน Policy เป็น Array สำหรับ Multiple Check
             const [filterPolicyArray, setFilterPolicyArray] = useState([]);
-            // เพิ่ม Filter Error Type สำหรับ MR
             const [filterErrorTypeArray, setFilterErrorTypeArray] = useState([]);
 
             const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null });
             const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null) };
-            
             const lastAutoText = useRef('');
 
             const theme = useMemo(() => ({
-                bgApp: systemMode === 'ER' 
-                    ? 'bg-gradient-to-br from-rose-950 via-red-900 to-red-950' 
-                    : 'bg-gradient-to-br from-teal-950 via-emerald-900 to-teal-950',
+                bgApp: systemMode === 'ER' ? 'bg-gradient-to-br from-rose-950 via-red-900 to-red-950' : 'bg-gradient-to-br from-teal-950 via-emerald-900 to-teal-950',
                 primaryStr: systemMode === 'ER' ? '#e11d48' : '#059669',
                 btnColorStr: systemMode === 'ER' ? 'bg-red-500' : 'bg-emerald-500',
-                btnActiveClass: systemMode === 'ER' 
-                    ? 'bg-red-600 text-white font-bold border-red-600 shadow-md scale-105' 
-                    : 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-md scale-105',
+                btnActiveClass: systemMode === 'ER' ? 'bg-red-600 text-white font-bold border-red-600 shadow-md scale-105' : 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-md scale-105',
                 btnInactiveClass: 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50',
                 lightBg: systemMode === 'ER' ? 'bg-red-50/50' : 'bg-teal-50/50',
                 btnSubmit: systemMode === 'ER' ? 'bg-red-600 hover:bg-red-700 shadow-red-600/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30',
@@ -269,7 +229,7 @@
                 if (mode !== systemMode) {
                     setSystemMode(mode);
                     setActiveTab('form');
-                    setFilterPolicyArray([]); // Reset filters
+                    setFilterPolicyArray([]); 
                     setFilterErrorTypeArray([]);
                     setForm(prev => ({
                         ...initialFormState,
@@ -281,15 +241,9 @@
 
             const handleDateChange = (e) => {
                 const newDate = e.target.value;
-                setForm(prev => ({
-                    ...initialFormState,
-                    date: newDate,
-                    time: prev.time,
-                    errorType: erErrorOptions[0]
-                }));
+                setForm(prev => ({ ...initialFormState, date: newDate, time: prev.time, errorType: erErrorOptions[0] }));
             };
 
-            // ล้างคำค้นหาเมื่อปิด Dropdown
             useEffect(() => { if (!isDrugDropdownOpen) setErDrugSearch(''); }, [isDrugDropdownOpen]);
             useEffect(() => { if (!isDrug1Open) setMrDrug1Search(''); }, [isDrug1Open]);
             useEffect(() => { if (!isDrug2Open) setMrDrug2Search(''); }, [isDrug2Open]);
@@ -313,7 +267,7 @@
                     }
                     
                     const calcShiftDate = `${sD}-${eD}/${sM}/${sY}`;
-                    const targetShift = calcShiftDate.replace(/\s+/g, '');
+                    const targetShift = String(calcShiftDate).replace(/\s+/g, '');
                     
                     const shiftItems = data.history.filter(h => {
                         const isER = (h.systemMode === 'ER' || !h.systemMode);
@@ -342,7 +296,6 @@
                 }
             }, [form.date, form.time, data.history, form.errorType, systemMode]);
 
-            // ระบบ Auto-text
             useEffect(() => {
                 let currentHNStr = `HN ${form.hn || '.....'}`;
                 let baseText = '';
@@ -361,9 +314,7 @@
 
                 setForm(p => {
                     if (p.details === newAutoText) return p;
-
                     let updatedDetails = p.details || '';
-
                     if (!updatedDetails || updatedDetails === lastAutoText.current) {
                         updatedDetails = newAutoText;
                     } else if (lastAutoText.current && updatedDetails.includes(lastAutoText.current)) {
@@ -374,20 +325,13 @@
                             updatedDetails = currentHNStr + ' ' + updatedDetails;
                         }
                     }
-
                     lastAutoText.current = newAutoText;
-                    
-                    if (updatedDetails !== p.details) {
-                        return { ...p, details: updatedDetails };
-                    }
+                    if (updatedDetails !== p.details) return { ...p, details: updatedDetails };
                     return p;
                 });
             }, [form.hn, form.errorType, form.mrError, form.selectedDrugs, form.drug1, form.drug2, form.qty, systemMode]);
 
-            // Helper สำหรับ Toggle Filter
-            const toggleFilterArray = (setter, val) => {
-                setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
-            };
+            const toggleFilterArray = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
 
             const baseFiltered = useMemo(() => {
                 if (!data.history) return [];
@@ -399,17 +343,12 @@
                     const matchSearch = String(item.hn || item['HN'] || '').includes(searchTerm) || 
                                       String(item.details || item['รายละเอียด'] || '').toLowerCase().includes(searchTerm.toLowerCase());
                     
-                    // ระบบ Multiple Check Filters สำหรับ MR
                     let matchPolicy = true;
                     let matchErrorType = true;
                     
                     if (systemMode === 'MR') {
-                        if (filterPolicyArray.length > 0) {
-                            matchPolicy = filterPolicyArray.some(p => String(item.policy || item['นโยบายยา'] || '').includes(p));
-                        }
-                        if (filterErrorTypeArray.length > 0) {
-                            matchErrorType = filterErrorTypeArray.includes(item.type || item['ความคลาดเคลื่อน'] || '');
-                        }
+                        if (filterPolicyArray.length > 0) matchPolicy = filterPolicyArray.some(p => String(item.policy || item['นโยบายยา'] || '').includes(p));
+                        if (filterErrorTypeArray.length > 0) matchErrorType = filterErrorTypeArray.includes(item.type || item['ความคลาดเคลื่อน'] || '');
                     }
                     
                     return matchMode && matchDate && matchSearch && matchPolicy && matchErrorType;
@@ -426,7 +365,6 @@
                 const daily = {};
                 let totalRxCount = 0;
                 const seenShifts = new Set();
-
                 const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, policy: {}, sev: {} };
 
                 baseFiltered.forEach(h => {
@@ -571,9 +509,7 @@
                 try {
                     const text = await navigator.clipboard.readText();
                     setForm(p => ({ ...p, [field]: text }));
-                } catch (err) {
-                    console.error('Clipboard access denied');
-                }
+                } catch (err) { console.error('Clipboard access denied'); }
             };
 
             const handleDeleteRow = async (id) => {
@@ -587,12 +523,8 @@
                     if (json.status === 'success') {
                         await fetchData();
                         setDeleteConfirm(null);
-                    } else {
-                        alert("ลบไม่สำเร็จ: " + json.message);
-                    }
-                } catch (e) {
-                    console.error("Delete Error", e);
-                }
+                    } else { alert("ลบไม่สำเร็จ: " + json.message); }
+                } catch (e) { console.error("Delete Error", e); }
                 setIsDeleting(false);
             };
 
@@ -686,24 +618,38 @@
                 pdfMake.createPdf(doc).open();
             };
 
-            const handleSubmit = async (e) => {
+            const handleSubmit = (e) => {
                 e.preventDefault();
                 setIsSubmitting(true);
-                try {
-                    const payload = systemMode === 'ER' 
-                        ? { ...form, systemMode, drugs: form.selectedDrugs.join(', ') }
-                        : { ...form, systemMode, type: form.mrType, error: form.mrError, policy: form.policy.join(', ') };
-                    
-                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const json = await res.json();
-                    if(json.status === 'success') {
-                        await fetchData();
-                        setForm(p => ({ ...p, errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '', mrType: '', mrError: '', drug1: '', drug2: '', qty: '', policy: [], department: '' }));
-                        lastAutoText.current = ''; 
-                        setShowModal(true);
-                    }
-                } catch(e) { console.error(e); }
+                
+                const payload = systemMode === 'ER' 
+                    ? { ...form, systemMode, drugs: form.selectedDrugs.join(', ') }
+                    : { ...form, systemMode, type: form.mrType, error: form.mrError, policy: form.policy.join(', ') };
+                
+                // 1. ตอบสนอง UI ทันที! โชว์ Modal 
+                setShowModal(true);
                 setIsSubmitting(false);
+
+                // 2. ล้าง Form เป็นหน้าว่างเปล่าทันที
+                setForm(p => ({ 
+                    ...p, 
+                    errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '', 
+                    mrType: '', mrError: '', drug1: '', drug2: '', qty: '', policy: [], department: '' 
+                }));
+                lastAutoText.current = ''; 
+                
+                // ปิด Modal อัตโนมัติใน 1.5 วินาที
+                setTimeout(() => setShowModal(false), 1500);
+
+                // 3. ส่งข้อมูลไปเซฟเบื้องหลัง (Background Process)
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
+                    .then(res => res.json())
+                    .then(json => {
+                        if(json.status === 'success') {
+                            fetchData(); // ดึงข้อมูลสถิติใหม่เงียบๆ
+                        }
+                    })
+                    .catch(e => console.error(e));
             };
 
             const renderCalendar = () => {
@@ -767,7 +713,6 @@
                                 {activeTab === 'form' ? '📊 ดูรายงานสถิติ' : '📝 กลับไปบันทึกข้อมูล'}
                             </button>
 
-                            {}
                             {activeTab === 'form' ? (
                                 <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5 animate-fadeIn max-w-4xl mx-auto mt-6 md:mt-2">
                                     
@@ -1088,7 +1033,7 @@
 
                                     <button type="submit" disabled={isSubmitting} className={`w-full py-4 md:py-5 rounded-2xl text-white font-black text-lg md:text-xl shadow-xl hover:shadow-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : theme.btnSubmit}`}>
                                         {isSubmitting ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>}
-                                        {isSubmitting ? 'กำลังเชื่อมต่อฐานข้อมูล...' : `ส่งรายงาน ${systemMode} ERRORs`}
+                                        {isSubmitting ? 'กำลังบันทึก...' : `ส่งรายงาน ${systemMode} ERRORs`}
                                     </button>
                                 </form>
                             ) : (
@@ -1370,7 +1315,7 @@
                         </div>
                     </main>
 
-                    {}
+                    {/* Modal บันทึกสำเร็จที่จางหายอัตโนมัติ 1.5 วิ */}
                     {showModal && (
                         <div onClick={() => setShowModal(false)} className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-md animate-fadeIn cursor-pointer" title="คลิกเพื่อปิดหน้าต่าง">
                             <div className={`${theme.btnSubmit} px-14 py-12 rounded-[40px] text-white text-center shadow-2xl scale-110 border border-white/20 animate-bounce`}>
@@ -1378,11 +1323,12 @@
                                     <svg className="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
                                 <h3 className="text-4xl font-black mb-3">บันทึกสำเร็จ!</h3>
-                                <p className="text-white/80 font-bold text-base">ข้อมูลถูกบันทึกในระบบเรียบร้อยแล้ว<br/><span className="text-sm font-normal mt-2 block opacity-80">(คลิกที่ใดก็ได้เพื่อปิด)</span></p>
+                                <p className="text-white/80 font-bold text-base">ข้อมูลถูกบันทึกในระบบเรียบร้อยแล้ว</p>
                             </div>
                         </div>
                     )}
 
+                    {/* Modal ยืนยันการลบ */}
                     {deleteConfirm && (
                         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
                             <div className="bg-white p-8 rounded-[30px] shadow-2xl max-w-sm w-full mx-4 border border-slate-200">
