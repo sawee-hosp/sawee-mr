@@ -8,10 +8,12 @@
     <!-- Favicon รูปวงกลมสีแดง -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ef4444%22/></svg>">
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    
+    <!-- Preconnect ช่วยโหลด Font เร็วขึ้น -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -24,10 +26,10 @@
         }
     </script>
 
+    <!-- โหลด Library พื้นฐาน -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -54,7 +56,14 @@
     </style>
 </head>
 <body class="font-sans">
-    <div id="root"></div>
+    <!-- โครงสร้างเปล่าให้เนียนตา รอ React โหลดขึ้นมาทับทันที -->
+    <div id="root">
+        <div class="bg-gradient-to-br from-rose-950 via-red-900 to-red-950 min-h-screen pb-24 transition-colors duration-700">
+            <header class="pt-8 pb-4 text-center">
+                <h1 class="text-3xl md:text-4xl font-black text-white drop-shadow-lg tracking-tight">ศูนย์จัดการอุบัติการณ์ ฝ่ายเภสัชกรรม รพ.สวี</h1>
+            </header>
+        </div>
+    </div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
@@ -68,8 +77,20 @@
             "จ่ายยาโดยไม่มีคำสั่งแพทย์", "จ่ายยาผิดคน", "ไม่สั่งใช้ยาใน HosXp แต่มีการใช้",
             "สั่งขนาดยาไม่เหมาะสม", "สั่งวิธีใช้ผิด/ไม่ระบุวิธีใช้", "สั่งยาโดยไม่มีข้อบ่งใช้", "สั่งยาซ้ำ"
         ];
+        
         const erRiskTypes = ["Prescribing error", "Pre-dispensing error", "Dispensing error", "Transcribing error"];
         const severities = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+        const severityDescriptions = {
+            "A": "เหตุการณ์ซึ่งมีโอกาสก่อให้เกิดความคลาดเคลื่อน",
+            "B": "เกิดความคลาดเคลื่อนขึ้น แต่ยาไปไม่ถึงผู้ป่วย",
+            "C": "ยาไปถึงผู้ป่วย แต่ไม่ทำให้เกิดอันตราย",
+            "D": "ยาไปถึงผู้ป่วย และต้องมีการเฝ้าระวังติดตาม",
+            "E": "เกิดอันตรายชั่วคราว และต้องมีการรักษา/แก้ไข",
+            "F": "เกิดอันตรายชั่วคราว และต้องนอน รพ. หรือยืดเวลาการนอน รพ.",
+            "G": "เกิดอันตรายถาวร",
+            "H": "ต้องทำการช่วยชีวิต",
+            "I": "เสียชีวิต"
+        };
         const erActions = ["แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ และให้บันทึกรายการยาตามหลัง", "แจ้งเจ้าหน้าที่ที่เกี่ยวข้องทราบ"];
         const mrDepartments = ['OPD', 'ER', 'IPDชาย', 'IPDหญิง', 'LR', 'อื่นๆ'];
         const mrPolicies = ['HAD', 'LASA', 'ADR', 'Med reconcile', 'DI'];
@@ -179,17 +200,44 @@
             const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null) };
             const lastAutoText = useRef('');
 
-            const theme = useMemo(() => ({
-                bgApp: systemMode === 'ER' ? 'bg-gradient-to-br from-rose-950 via-red-900 to-red-950' : 'bg-gradient-to-br from-teal-950 via-emerald-900 to-teal-950',
-                primaryStr: systemMode === 'ER' ? '#e11d48' : '#059669',
-                btnColorStr: systemMode === 'ER' ? 'bg-red-500' : 'bg-emerald-500',
-                btnActiveClass: systemMode === 'ER' ? 'bg-red-600 text-white font-bold border-red-600 shadow-md scale-105' : 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-md scale-105',
-                btnInactiveClass: 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50',
-                lightBg: systemMode === 'ER' ? 'bg-red-50/50' : 'bg-teal-50/50',
-                btnSubmit: systemMode === 'ER' ? 'bg-red-600 hover:bg-red-700 shadow-red-600/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30',
-                tabActive: systemMode === 'ER' ? 'bg-white text-red-600 font-black shadow-lg rounded-t-2xl' : 'bg-white text-emerald-600 font-black shadow-lg rounded-t-2xl',
-                tabInactive: 'bg-black/20 text-white/60 hover:bg-black/40 hover:text-white rounded-t-2xl font-bold backdrop-blur-sm transition-all'
-            }), [systemMode]);
+            const theme = useMemo(() => {
+                let base = {};
+                if (systemMode === 'ER') {
+                    base = { 
+                        bgApp: 'bg-gradient-to-br from-rose-950 via-red-900 to-red-950', 
+                        primaryStr: '#e11d48', 
+                        btnColorStr: 'bg-red-500', 
+                        btnActiveClass: 'bg-red-600 text-white font-bold border-red-600 shadow-md scale-105', 
+                        lightBg: 'bg-red-50/50', 
+                        btnSubmit: 'bg-red-600 hover:bg-red-700 shadow-red-600/30', 
+                        tabActive: 'bg-white text-red-600 font-black shadow-lg rounded-t-2xl' 
+                    };
+                } else if (systemMode === 'MR') {
+                    base = { 
+                        bgApp: 'bg-gradient-to-br from-teal-950 via-emerald-900 to-teal-950', 
+                        primaryStr: '#059669', 
+                        btnColorStr: 'bg-emerald-500', 
+                        btnActiveClass: 'bg-emerald-600 text-white font-bold border-emerald-600 shadow-md scale-105', 
+                        lightBg: 'bg-teal-50/50', 
+                        btnSubmit: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30', 
+                        tabActive: 'bg-white text-emerald-600 font-black shadow-lg rounded-t-2xl' 
+                    };
+                } else if (systemMode === 'LASA') {
+                    base = { 
+                        bgApp: 'bg-gradient-to-br from-amber-950 via-yellow-900 to-amber-950', 
+                        primaryStr: '#d97706', 
+                        btnColorStr: 'bg-yellow-500', 
+                        btnActiveClass: 'bg-yellow-600 text-white font-bold border-yellow-600 shadow-md scale-105', 
+                        lightBg: 'bg-yellow-50/50', 
+                        btnSubmit: 'bg-yellow-600 hover:bg-yellow-700 shadow-yellow-600/30', 
+                        tabActive: 'bg-white text-yellow-600 font-black shadow-lg rounded-t-2xl' 
+                    };
+                }
+                
+                base.tabInactive = 'bg-black/20 text-white/60 hover:bg-black/40 hover:text-white rounded-t-2xl font-bold backdrop-blur-sm transition-all';
+                base.btnInactiveClass = 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50';
+                return base;
+            }, [systemMode]);
 
             const fetchData = async () => {
                 setIsLoading(true);
@@ -252,18 +300,20 @@
                 if (systemMode === 'ER') {
                     const [h, m] = form.time.split(':').map(Number);
                     const d = new Date(form.date);
-                    let sD, sM, sY, eD;
+                    let sD, sM, sY, eD, eM, eY;
                     
                     if (h < 8) {
                         const p = new Date(d); p.setDate(p.getDate() - 1);
                         sD = p.getDate(); eD = d.getDate();
                         sM = String(p.getMonth() + 1).padStart(2, '0');
-                        sY = p.getFullYear();
+                        eM = String(d.getMonth() + 1).padStart(2, '0');
+                        sY = p.getFullYear(); eY = d.getFullYear();
                     } else {
                         const n = new Date(d); n.setDate(n.getDate() + 1);
                         sD = d.getDate(); eD = n.getDate();
                         sM = String(d.getMonth() + 1).padStart(2, '0');
-                        sY = d.getFullYear();
+                        eM = String(n.getMonth() + 1).padStart(2, '0');
+                        sY = d.getFullYear(); eY = n.getFullYear();
                     }
                     
                     const calcShiftDate = `${sD}-${eD}/${sM}/${sY}`;
@@ -639,11 +689,9 @@
                     ? { ...form, systemMode, drugs: form.selectedDrugs.join(', ') }
                     : { ...form, systemMode, type: form.mrType, error: form.mrError, policy: form.policy.join(', ') };
                 
-                // 1. ตอบสนอง UI ทันที! โชว์ Modal 
                 setShowModal(true);
                 setIsSubmitting(false);
 
-                // 2. ล้าง Form เป็นหน้าว่างเปล่าทันที
                 setForm(p => ({ 
                     ...p, 
                     errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '', 
@@ -651,15 +699,13 @@
                 }));
                 lastAutoText.current = ''; 
                 
-                // ปิด Modal อัตโนมัติใน 1.5 วินาที
                 setTimeout(() => setShowModal(false), 1500);
 
-                // 3. ส่งข้อมูลไปเซฟเบื้องหลัง (Background Process)
                 fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
                     .then(res => res.json())
                     .then(json => {
                         if(json.status === 'success') {
-                            fetchData(); // ดึงข้อมูลสถิติใหม่เงียบๆ
+                            fetchData();
                         }
                     })
                     .catch(e => console.error(e));
@@ -687,13 +733,6 @@
                 return grid;
             };
 
-            if (isLoading && data.history.length === 0) return (
-                <div className="h-screen flex flex-col items-center justify-center gap-4 bg-slate-900">
-                    <div className="w-12 h-12 border-4 border-slate-700 border-t-white rounded-full animate-spin"></div>
-                    <div className="font-bold text-white/50 animate-pulse tracking-widest text-sm">กำลังเชื่อมต่อฐานข้อมูล...</div>
-                </div>
-            );
-
             return (
                 <div className={`${theme.bgApp} min-h-screen pb-24 transition-colors duration-700 font-sans`}>
                     
@@ -703,32 +742,49 @@
 
                     <main className="max-w-6xl mx-auto relative mt-2 px-2 md:px-0">
                         
-                        <div className="flex max-w-[320px] md:max-w-md mx-auto px-4 translate-y-[1px] relative z-10 gap-1">
+                        <div className="flex max-w-[340px] md:max-w-xl mx-auto px-4 translate-y-[1px] relative z-10 gap-1">
                             <button onClick={()=>handleModeChange('ER')} 
-                                className={`flex-1 py-3 px-2 text-base md:text-lg border border-b-0 
+                                className={`flex-1 py-3 px-2 text-sm md:text-lg border border-b-0 
                                 ${systemMode === 'ER' ? theme.tabActive : theme.tabInactive}`}>
                                 ER ERRORs
                             </button>
                             <button onClick={()=>handleModeChange('MR')} 
-                                className={`flex-1 py-3 px-2 text-base md:text-lg border border-b-0 
+                                className={`flex-1 py-3 px-2 text-sm md:text-lg border border-b-0 
                                 ${systemMode === 'MR' ? theme.tabActive : theme.tabInactive}`}>
                                 MR ERRORs
+                            </button>
+                            <button onClick={()=>handleModeChange('LASA')} 
+                                className={`flex-1 py-3 px-2 text-sm md:text-lg border border-b-0 
+                                ${systemMode === 'LASA' ? theme.tabActive : theme.tabInactive}`}>
+                                LASA
                             </button>
                         </div>
 
                         {/* กล่องเนื้อหาหลัก */}
                         <div className="bg-white rounded-3xl md:rounded-[40px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] p-5 md:p-10 relative z-20 mx-1 md:mx-4">
                             
-                            <button 
-                                onClick={() => setActiveTab(activeTab === 'form' ? 'history' : 'form')}
-                                className="absolute top-4 right-4 md:top-6 md:right-6 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all flex items-center gap-1.5 z-30 border border-slate-200"
-                            >
-                                {activeTab === 'form' ? '📊 ดูรายงานสถิติ' : '📝 กลับไปบันทึกข้อมูล'}
-                            </button>
+                            {systemMode !== 'LASA' && (
+                                <button 
+                                    onClick={() => setActiveTab(activeTab === 'form' ? 'history' : 'form')}
+                                    className="absolute top-4 right-4 md:top-6 md:right-6 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all flex items-center gap-1.5 z-30 border border-slate-200"
+                                >
+                                    {activeTab === 'form' ? '📊 ดูรายงานสถิติ' : '📝 กลับไปบันทึกข้อมูล'}
+                                </button>
+                            )}
 
-                            {activeTab === 'form' ? (
+                            {}
+                            {systemMode === 'LASA' ? (
+                                <div className="bg-white rounded-3xl p-10 md:p-20 text-center animate-fadeIn mx-2 mt-4 border border-yellow-100">
+                                    <div className="w-24 h-24 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    </div>
+                                    <h2 className="text-3xl font-black text-slate-800 mb-2">LASA Management</h2>
+                                    <p className="text-lg font-bold text-slate-500">ระบบนี้อยู่ระหว่างการพัฒนา...</p>
+                                </div>
+                            ) : activeTab === 'form' ? (
                                 <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5 animate-fadeIn max-w-4xl mx-auto mt-6 md:mt-2">
                                     
+                                    {}
                                     {/* Top Section ER */}
                                     {systemMode === 'ER' && (
                                         <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl flex flex-wrap gap-4 items-center border border-slate-100/50 shadow-inner`}>
@@ -757,6 +813,7 @@
                                         </div>
                                     )}
 
+                                    {}
                                     {/* ER FORM SECTION */}
                                     {systemMode === 'ER' && (
                                         <div className="space-y-4 md:space-y-5 animate-fadeIn">
@@ -834,12 +891,17 @@
                                                         <label className="text-xs md:text-sm font-bold text-slate-500 mb-1.5 block uppercase">ระดับความรุนแรง (Severity)</label>
                                                         <div className="flex flex-wrap gap-2 md:gap-3">
                                                             {severities.map(sv => (
-                                                                <button key={sv} type="button" onClick={()=>setForm({...form, severity: sv})} 
+                                                                <button key={sv} type="button" onClick={()=>setForm({...form, severity: form.severity === sv ? '' : sv})} 
                                                                     className={`flex-1 min-w-[35px] py-2 rounded-xl text-sm md:text-base border-2 transition-all ${form.severity===sv ? theme.btnActiveClass : theme.btnInactiveClass}`}>
                                                                     {sv}
                                                                 </button>
                                                             ))}
                                                         </div>
+                                                        {form.severity && (
+                                                            <div className="mt-2 text-sm font-bold animate-fadeIn" style={{color: theme.primaryStr}}>
+                                                                * {severityDescriptions[form.severity]}
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <div>
@@ -854,6 +916,7 @@
                                         </div>
                                     )}
 
+                                    {}
                                     {/* MR FORM SECTION (COMPACT LAYOUT) */}
                                     {systemMode === 'MR' && (
                                         <div className="space-y-4 md:space-y-5 animate-fadeIn">
@@ -977,12 +1040,17 @@
                                                 <label className="text-xs md:text-sm font-black text-slate-400 uppercase mb-1.5 block">ระดับความรุนแรง</label>
                                                 <div className="flex flex-wrap gap-2">
                                                     {severities.map(sv => (
-                                                        <button key={sv} type="button" onClick={()=>setForm({...form, severity: sv})} 
+                                                        <button key={sv} type="button" onClick={()=>setForm({...form, severity: form.severity === sv ? '' : sv})} 
                                                             className={`flex-1 min-w-[35px] py-2 rounded-xl text-sm md:text-base font-bold border-2 transition-all ${form.severity === sv ? theme.btnActiveClass : theme.btnInactiveClass}`}>
                                                             {sv}
                                                         </button>
                                                     ))}
                                                 </div>
+                                                {form.severity && (
+                                                    <div className="mt-2 text-sm font-bold animate-fadeIn" style={{color: theme.primaryStr}}>
+                                                        * {severityDescriptions[form.severity]}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* บรรทัด 7: Policy */}
@@ -1003,6 +1071,7 @@
                                         </div>
                                     )}
 
+                                    {}
                                     {/* พนักงาน Section */}
                                     {systemMode === 'ER' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
@@ -1051,6 +1120,7 @@
                                 </form>
                             ) : (
                                 <div className="space-y-6 animate-fadeIn mt-8 md:mt-2">
+                                    {}
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                                         <div className="md:col-span-3 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden relative">
                                             <div className="flex flex-wrap gap-3 mb-4 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 items-center relative z-10">
@@ -1121,6 +1191,7 @@
                                         </button>
                                     </div>
 
+                                    {}
                                     <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
                                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                                             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">คลังข้อมูลอุบัติการณ์ ({displayList.length})</h3>
@@ -1239,6 +1310,7 @@
                                         )}
                                     </div>
 
+                                    {}
                                     {systemMode === 'ER' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="md:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm h-[450px] flex flex-col">
@@ -1328,6 +1400,7 @@
                         </div>
                     </main>
 
+                    {}
                     {/* Modal บันทึกสำเร็จที่จางหายอัตโนมัติ 1.5 วิ */}
                     {showModal && (
                         <div onClick={() => setShowModal(false)} className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-md animate-fadeIn cursor-pointer" title="คลิกเพื่อปิดหน้าต่าง">
