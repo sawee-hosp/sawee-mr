@@ -37,7 +37,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     
     <style>
-        /* บังคับ Font ทั้ง Body ให้เป็น Noto Sans Thai */
         body { 
             font-family: 'Noto Sans Thai', sans-serif !important; 
             color: #0f172a; 
@@ -107,7 +106,6 @@
             "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
         ];
 
-        // Component Icon สำหรับปุ่มวาง (Paste)
         const PasteIcon = () => (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -193,6 +191,10 @@
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [showModal, setShowModal] = useState(false);
 
+            // ตัวแปรสำหรับ Delete Modal
+            const [deleteConfirm, setDeleteConfirm] = useState(null);
+            const [isDeleting, setIsDeleting] = useState(false);
+
             // ตัวกรอง (Filters)
             const [filterType, setFilterType] = useState('month');
             const [filterDateStart, setFilterDateStart] = useState(() => {
@@ -202,9 +204,12 @@
             const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
             const [searchTerm, setSearchTerm] = useState('');
             const [excludeNoError, setExcludeNoError] = useState(true);
-            const [filterPolicy, setFilterPolicy] = useState('All'); // ตัวกรองนโยบาย (เฉพาะ MR)
+            
+            // เปลี่ยน Policy เป็น Array สำหรับ Multiple Check
+            const [filterPolicyArray, setFilterPolicyArray] = useState([]);
+            // เพิ่ม Filter Error Type สำหรับ MR
+            const [filterErrorTypeArray, setFilterErrorTypeArray] = useState([]);
 
-            // Ref สำหรับ Chart.js
             const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null });
             const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null) };
             
@@ -264,7 +269,8 @@
                 if (mode !== systemMode) {
                     setSystemMode(mode);
                     setActiveTab('form');
-                    setFilterPolicy('All');
+                    setFilterPolicyArray([]); // Reset filters
+                    setFilterErrorTypeArray([]);
                     setForm(prev => ({
                         ...initialFormState,
                         date: prev.date,
@@ -283,6 +289,7 @@
                 }));
             };
 
+            // ล้างคำค้นหาเมื่อปิด Dropdown
             useEffect(() => { if (!isDrugDropdownOpen) setErDrugSearch(''); }, [isDrugDropdownOpen]);
             useEffect(() => { if (!isDrug1Open) setMrDrug1Search(''); }, [isDrug1Open]);
             useEffect(() => { if (!isDrug2Open) setMrDrug2Search(''); }, [isDrug2Open]);
@@ -306,12 +313,11 @@
                     }
                     
                     const calcShiftDate = `${sD}-${eD}/${sM}/${sY}`;
-                    const cleanStr = (s) => String(s || '').replace(/\s+/g, '');
-                    const targetShift = cleanStr(calcShiftDate);
+                    const targetShift = calcShiftDate.replace(/\s+/g, '');
                     
                     const shiftItems = data.history.filter(h => {
                         const isER = (h.systemMode === 'ER' || !h.systemMode);
-                        const hShift = cleanStr(h.shiftDate || h['วันที่'] || h['กะ']); 
+                        const hShift = String(h.shiftDate || h['วันที่'] || h['กะ'] || '').replace(/\s+/g, ''); 
                         return isER && hShift === targetShift;
                     });
                     
@@ -336,12 +342,13 @@
                 }
             }, [form.date, form.time, data.history, form.errorType, systemMode]);
 
+            // ระบบ Auto-text
             useEffect(() => {
                 let currentHNStr = `HN ${form.hn || '.....'}`;
                 let baseText = '';
                 
                 if (systemMode === 'ER') {
-                    if (form.errorType !== erErrorOptions[0]) baseText += ` ${form.errorType}`;
+                    if (form.errorType && form.errorType !== erErrorOptions[0]) baseText += ` ${form.errorType}`;
                     if (form.selectedDrugs.length > 0) baseText += ` ได้แก่ยา ${form.selectedDrugs.join(', ')}`;
                 } else {
                     if (form.mrError) baseText += ` ${form.mrError}`;
@@ -353,24 +360,34 @@
                 const newAutoText = (currentHNStr + baseText).trim();
 
                 setForm(p => {
-                    // หากข้อความเหมือนเดิมเป๊ะ ไม่ต้องทำอะไร
                     if (p.details === newAutoText) return p;
 
-                    // เขียนทับหากช่องรายละเอียดยังว่างอยู่ หรือผู้ใช้ไม่ได้แก้ทับระบบที่เรา Gen ให้
-                    if (!p.details || p.details === lastAutoText.current) {
-                        lastAutoText.current = newAutoText;
-                        return { ...p, details: newAutoText };
+                    let updatedDetails = p.details || '';
+
+                    if (!updatedDetails || updatedDetails === lastAutoText.current) {
+                        updatedDetails = newAutoText;
+                    } else if (lastAutoText.current && updatedDetails.includes(lastAutoText.current)) {
+                        updatedDetails = updatedDetails.replace(lastAutoText.current, newAutoText);
+                    } else {
+                        updatedDetails = updatedDetails.replace(/^HN\s\S+/, currentHNStr);
+                        if (!/^HN\s/.test(updatedDetails)) {
+                            updatedDetails = currentHNStr + ' ' + updatedDetails;
+                        }
                     }
 
-                    // หากผู้ใช้พิมพ์ข้อความไว้เองแล้ว เราจะอัปเดตแค่เลข HN อย่างเดียว
-                    const updatedDetails = p.details.replace(/^HN\s\S+/, currentHNStr);
+                    lastAutoText.current = newAutoText;
+                    
                     if (updatedDetails !== p.details) {
                         return { ...p, details: updatedDetails };
                     }
-
                     return p;
                 });
             }, [form.hn, form.errorType, form.mrError, form.selectedDrugs, form.drug1, form.drug2, form.qty, systemMode]);
+
+            // Helper สำหรับ Toggle Filter
+            const toggleFilterArray = (setter, val) => {
+                setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
+            };
 
             const baseFiltered = useMemo(() => {
                 if (!data.history) return [];
@@ -382,11 +399,22 @@
                     const matchSearch = String(item.hn || item['HN'] || '').includes(searchTerm) || 
                                       String(item.details || item['รายละเอียด'] || '').toLowerCase().includes(searchTerm.toLowerCase());
                     
-                    const matchPolicy = filterPolicy === 'All' ? true : String(item.policy || item['นโยบายยา'] || '').includes(filterPolicy);
+                    // ระบบ Multiple Check Filters สำหรับ MR
+                    let matchPolicy = true;
+                    let matchErrorType = true;
                     
-                    return matchMode && matchDate && matchSearch && matchPolicy;
+                    if (systemMode === 'MR') {
+                        if (filterPolicyArray.length > 0) {
+                            matchPolicy = filterPolicyArray.some(p => String(item.policy || item['นโยบายยา'] || '').includes(p));
+                        }
+                        if (filterErrorTypeArray.length > 0) {
+                            matchErrorType = filterErrorTypeArray.includes(item.type || item['ความคลาดเคลื่อน'] || '');
+                        }
+                    }
+                    
+                    return matchMode && matchDate && matchSearch && matchPolicy && matchErrorType;
                 });
-            }, [data.history, systemMode, filterType, filterDateStart, filterDateEnd, filterMonth, searchTerm, filterPolicy]);
+            }, [data.history, systemMode, filterType, filterDateStart, filterDateEnd, filterMonth, searchTerm, filterPolicyArray, filterErrorTypeArray]);
 
             const displayList = useMemo(() => baseFiltered.filter(i => {
                 const errVal = i.errorType || i['ความเสี่ยงที่พบ'] || i['ความเสี่ยง'] || i['Error'] || i.error || i['รายการ Error'] || '';
@@ -409,7 +437,7 @@
                     if (systemMode === 'ER') {
                         const shiftVal = h.shiftDate || h['วันที่'] || h['กะ']; 
                         const rxVal = h.totalRx || h['จำนวนใบสั่งยา'] || h['ใบสั่งยารวม'];
-                        const shiftId = shiftVal ? `${shiftVal}` : null;
+                        const shiftId = shiftVal ? String(shiftVal).replace(/\s+/g, '') : null;
                         if (rxVal && shiftId && !seenShifts.has(shiftId)) {
                             seenShifts.add(shiftId);
                             totalRxCount += parseInt(rxVal) || 0;
@@ -473,16 +501,21 @@
                         } 
                     };
                     
-                    if (canvasRefs.bar.current && systemMode === 'ER') {
+                    if (canvasRefs.bar.current) {
                         if (chartsRef.current.bar) chartsRef.current.bar.destroy();
                         const sorted = Object.keys(stats.daily).sort();
+                        
+                        const datasets = systemMode === 'ER' ? [
+                            { label: 'ปกติ (ไม่มี Error)', data: sorted.map(d => Math.max(0, stats.daily[d].rx - stats.daily[d].err)), backgroundColor: '#10b981', stack: 'a', borderRadius: 4 },
+                            { label: 'Error', data: sorted.map(d => stats.daily[d].err), backgroundColor: '#ef4444', stack: 'a', borderRadius: 4 }
+                        ] : [
+                            { label: 'จำนวน Error', data: sorted.map(d => stats.daily[d].err), backgroundColor: '#10b981', borderRadius: 4 }
+                        ];
+
                         chartsRef.current.bar = new Chart(canvasRefs.bar.current, {
                             type: 'bar', data: {
                                 labels: sorted.map(d => formatDisplayDate(d)),
-                                datasets: [
-                                    { label: 'ปกติ (ไม่มี Error)', data: sorted.map(d => Math.max(0, stats.daily[d].rx - stats.daily[d].err)), backgroundColor: '#10b981', stack: 'a', borderRadius: 4 },
-                                    { label: 'Error', data: sorted.map(d => stats.daily[d].err), backgroundColor: '#ef4444', stack: 'a', borderRadius: 4 }
-                                ]
+                                datasets: datasets
                             }, options: { ...opt, scales: { x: { stacked: true }, y: { stacked: true } } }
                         });
                     }
@@ -541,6 +574,26 @@
                 } catch (err) {
                     console.error('Clipboard access denied');
                 }
+            };
+
+            const handleDeleteRow = async (id) => {
+                setIsDeleting(true);
+                try {
+                    const res = await fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'DELETE', systemMode: 'MR', id: id })
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        await fetchData();
+                        setDeleteConfirm(null);
+                    } else {
+                        alert("ลบไม่สำเร็จ: " + json.message);
+                    }
+                } catch (e) {
+                    console.error("Delete Error", e);
+                }
+                setIsDeleting(false);
             };
 
             const genPDF = () => {
@@ -633,15 +686,6 @@
                 pdfMake.createPdf(doc).open();
             };
 
-            // เอฟเฟกต์สำหรับนับเวลาถอยหลังเพื่อปิดหน้าต่าง Modal
-            useEffect(() => {
-                let timer;
-                if (showModal) {
-                    timer = setTimeout(() => setShowModal(false), 3000); // 3 วินาทีปิดอัตโนมัติ
-                }
-                return () => clearTimeout(timer);
-            }, [showModal]);
-
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 setIsSubmitting(true);
@@ -654,7 +698,6 @@
                     const json = await res.json();
                     if(json.status === 'success') {
                         await fetchData();
-                        // Reset Form แบบหมดจดสำหรับการกรอกครั้งใหม่
                         setForm(p => ({ ...p, errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '', mrType: '', mrError: '', drug1: '', drug2: '', qty: '', policy: [], department: '' }));
                         lastAutoText.current = ''; 
                         setShowModal(true);
@@ -724,11 +767,12 @@
                                 {activeTab === 'form' ? '📊 ดูรายงานสถิติ' : '📝 กลับไปบันทึกข้อมูล'}
                             </button>
 
+                            {}
                             {activeTab === 'form' ? (
                                 <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5 animate-fadeIn max-w-4xl mx-auto mt-6 md:mt-2">
                                     
-                                    {/* Top Section */}
-                                    {systemMode === 'ER' ? (
+                                    {/* Top Section ER */}
+                                    {systemMode === 'ER' && (
                                         <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl flex flex-wrap gap-4 items-center border border-slate-100/50 shadow-inner`}>
                                             <div className="flex-1 min-w-[140px]">
                                                 <label className="text-xs md:text-sm font-bold text-slate-500 mb-1.5 block uppercase tracking-wide">วันที่พบ</label>
@@ -751,25 +795,6 @@
                                                     <div className="text-xs font-bold text-slate-400 uppercase">ลำดับที่</div>
                                                     <div className="text-2xl md:text-3xl font-black">{form.sequence} <span className="text-slate-200 text-xl">/</span> <span style={{color: theme.primaryStr}}>{form.totalErrors}</span></div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        // บรรทัด 1 ของ MR
-                                        <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end border border-emerald-100/50 shadow-inner`}>
-                                            <div className="md:col-span-1">
-                                                <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">วันที่พบ</label>
-                                                <input type="date" value={form.date} onChange={handleDateChange} className="w-full compact-input font-bold text-sm md:text-base border-emerald-200 focus:ring-2 focus:ring-emerald-100 !py-2.5" required />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">HN ผู้ป่วย</label>
-                                                <div className="flex gap-2">
-                                                    <input type="text" value={form.hn} onChange={e=>setForm({...form, hn: e.target.value})} className="w-full compact-input font-bold text-sm md:text-base border-emerald-200 focus:ring-2 focus:ring-emerald-100 !py-2.5" placeholder="000XXX" required />
-                                                    <button type="button" onClick={()=>handlePaste('hn')} className="px-4 bg-white text-emerald-600 rounded-xl text-xs font-bold hover:bg-emerald-50 border border-emerald-200 transition-colors flex items-center justify-center shadow-sm" title="วางข้อมูล HN จากคลิปบอร์ด"><PasteIcon /></button>
-                                                </div>
-                                            </div>
-                                            <div className="md:col-span-1 h-[46px] bg-white px-4 rounded-xl border border-emerald-200 shadow-sm flex items-center justify-between">
-                                                <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Error ID:</span>
-                                                <span className="text-xl md:text-2xl font-black text-emerald-600 leading-none">{data.lastId + 1}</span>
                                             </div>
                                         </div>
                                     )}
@@ -871,10 +896,29 @@
                                         </div>
                                     )}
 
-                                    {/* MR FORM SECTION */}
+                                    {/* MR FORM SECTION (COMPACT LAYOUT) */}
                                     {systemMode === 'MR' && (
                                         <div className="space-y-4 md:space-y-5 animate-fadeIn">
                                             
+                                            {/* บรรทัด 1: วันที่ / HN / Error ID */}
+                                            <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end border border-emerald-100/50 shadow-inner`}>
+                                                <div className="md:col-span-1">
+                                                    <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">วันที่พบ</label>
+                                                    <input type="date" value={form.date} onChange={handleDateChange} className="w-full compact-input font-bold text-sm md:text-base border-emerald-200 focus:ring-2 focus:ring-emerald-100 !py-2.5" required />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">HN ผู้ป่วย</label>
+                                                    <div className="flex gap-2">
+                                                        <input type="text" value={form.hn} onChange={e=>setForm({...form, hn: e.target.value})} className="w-full compact-input font-bold text-sm md:text-base border-emerald-200 focus:ring-2 focus:ring-emerald-100 !py-2.5" placeholder="000XXX" required />
+                                                        <button type="button" onClick={()=>handlePaste('hn')} className="px-4 bg-white text-emerald-600 rounded-xl text-xs font-bold hover:bg-emerald-50 border border-emerald-200 transition-colors flex items-center justify-center shadow-sm" title="วางข้อมูล HN จากคลิปบอร์ด"><PasteIcon /></button>
+                                                    </div>
+                                                </div>
+                                                <div className="md:col-span-1 h-[46px] bg-white px-4 rounded-xl border border-emerald-200 shadow-sm flex items-center justify-between">
+                                                    <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Error ID:</span>
+                                                    <span className="text-xl md:text-2xl font-black text-emerald-600 leading-none">{data.lastId + 1}</span>
+                                                </div>
+                                            </div>
+
                                             {/* บรรทัด 2: Type & Error */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
@@ -1001,7 +1045,7 @@
                                         </div>
                                     )}
 
-                                    {/* พนักงาน Section (ลด padding) */}
+                                    {/* พนักงาน Section */}
                                     {systemMode === 'ER' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
                                             {[
@@ -1051,7 +1095,7 @@
                                 <div className="space-y-6 animate-fadeIn mt-8 md:mt-2">
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                                         <div className="md:col-span-3 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden relative">
-                                            <div className="flex flex-wrap gap-3 mb-8 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 items-center relative z-10">
+                                            <div className="flex flex-wrap gap-3 mb-4 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 items-center relative z-10">
                                                 <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
                                                     <button onClick={()=>setFilterType('day')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${filterType==='day'? theme.btnColorStr + ' text-white shadow-md':'text-slate-500 hover:bg-slate-50'}`}>กำหนดช่วงเวลา</button>
                                                     <button onClick={()=>setFilterType('month')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${filterType==='month'? theme.btnColorStr + ' text-white shadow-md':'text-slate-500 hover:bg-slate-50'}`}>รายเดือน</button>
@@ -1061,17 +1105,43 @@
                                                 ) : (
                                                     <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="compact-input text-sm w-44 !py-2 shadow-sm" />
                                                 )}
-                                                
-                                                {/* Policy Filter เฉพาะโหมด MR */}
-                                                {systemMode === 'MR' && (
-                                                    <select value={filterPolicy} onChange={e=>setFilterPolicy(e.target.value)} className="compact-input text-sm !py-2 shadow-sm font-bold text-slate-600 bg-white cursor-pointer">
-                                                        <option value="All">ทุกนโยบายยา</option>
-                                                        {mrPolicies.map(p => <option key={p} value={p}>{p}</option>)}
-                                                    </select>
-                                                )}
-
                                                 <input type="text" placeholder="ค้นหา HN หรือ รายละเอียด..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="flex-1 compact-input text-sm !py-2 shadow-sm" />
                                             </div>
+
+                                            {/* Filters สำหรับ MR Dashboard */}
+                                            {systemMode === 'MR' && (
+                                                <div className="mb-6 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 shadow-inner flex flex-col gap-3">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-xs font-bold text-emerald-700 w-20">นโยบายยา:</span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {mrPolicies.map(p => {
+                                                                const isSel = filterPolicyArray.includes(p);
+                                                                return (
+                                                                    <button key={p} onClick={()=>toggleFilterArray(setFilterPolicyArray, p)} 
+                                                                        className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-bold transition-all border ${isSel ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-emerald-300'}`}>
+                                                                        {p}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-xs font-bold text-emerald-700 w-20">Error Type:</span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {[...new Set(data.errorCategories.map(c => c.type))].map(t => {
+                                                                const isSel = filterErrorTypeArray.includes(t);
+                                                                return (
+                                                                    <button key={t} onClick={()=>toggleFilterArray(setFilterErrorTypeArray, t)} 
+                                                                        className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-bold transition-all border ${isSel ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-500 hover:border-emerald-300'}`}>
+                                                                        {t}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <div className="grid grid-cols-2 gap-8 md:gap-12 px-2 pb-2 relative z-10">
                                                 {systemMode === 'ER' && (
                                                     <div>
@@ -1150,6 +1220,7 @@
                                                                     <th className="p-4 font-black uppercase text-slate-400 border-b w-32">ยา(1)</th>
                                                                     <th className="p-4 font-black uppercase text-slate-400 border-b w-24">แพทย์</th>
                                                                     <th className="p-4 font-black uppercase text-slate-400 border-b w-24">เภสัชกร</th>
+                                                                    <th className="p-4 font-black uppercase text-slate-400 border-b w-16 text-center">จัดการ</th>
                                                                 </>
                                                             )}
                                                         </tr>
@@ -1194,11 +1265,16 @@
                                                                         <td className="p-4 align-top text-slate-600 text-[11px]">{h.drug1 || h['ยา/ความแรงที่เกี่ยวข้อง(1)'] || h.drugs || '-'}</td>
                                                                         <td className="p-4 align-top text-slate-600 text-[11px]">{h.doctor || h['แพทย์'] || '-'}</td>
                                                                         <td className="p-4 align-top font-black text-slate-700 text-[11px]">{h.recorder || h['เภสัชกร'] || '-'}</td>
+                                                                        <td className="p-4 align-top text-center">
+                                                                            <button onClick={() => setDeleteConfirm(h)} className="p-1.5 bg-white text-red-500 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-lg transition-colors shadow-sm" title="ลบข้อมูล">
+                                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                                            </button>
+                                                                        </td>
                                                                     </tr>
                                                                 )
                                                             }
                                                         })}
-                                                        {displayList.length===0 && <tr><td colSpan="11" className="p-20 text-center text-slate-400 font-black text-base uppercase bg-slate-50/50">ไม่พบข้อมูลในระบบ</td></tr>}
+                                                        {displayList.length===0 && <tr><td colSpan="12" className="p-20 text-center text-slate-400 font-black text-base uppercase bg-slate-50/50">ไม่พบข้อมูลในระบบ</td></tr>}
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -1223,7 +1299,6 @@
                                             </div>
                                         </div>
                                     ) : (
-                                        // Dashboard พิเศษสำหรับ MR (4 Pie Charts)
                                         <div className="space-y-6">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[350px] flex flex-col items-center">
@@ -1295,6 +1370,7 @@
                         </div>
                     </main>
 
+                    {}
                     {showModal && (
                         <div onClick={() => setShowModal(false)} className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-md animate-fadeIn cursor-pointer" title="คลิกเพื่อปิดหน้าต่าง">
                             <div className={`${theme.btnSubmit} px-14 py-12 rounded-[40px] text-white text-center shadow-2xl scale-110 border border-white/20 animate-bounce`}>
@@ -1303,6 +1379,26 @@
                                 </div>
                                 <h3 className="text-4xl font-black mb-3">บันทึกสำเร็จ!</h3>
                                 <p className="text-white/80 font-bold text-base">ข้อมูลถูกบันทึกในระบบเรียบร้อยแล้ว<br/><span className="text-sm font-normal mt-2 block opacity-80">(คลิกที่ใดก็ได้เพื่อปิด)</span></p>
+                            </div>
+                        </div>
+                    )}
+
+                    {deleteConfirm && (
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+                            <div className="bg-white p-8 rounded-[30px] shadow-2xl max-w-sm w-full mx-4 border border-slate-200">
+                                <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                </div>
+                                <h3 className="text-xl font-black text-center text-slate-800 mb-2">ยืนยันการลบข้อมูล?</h3>
+                                <p className="text-center text-slate-500 text-sm mb-8">คุณต้องการลบข้อมูล ID: <span className="font-bold text-slate-700">{deleteConfirm.id || deleteConfirm['ลำดับที่']}</span> ใช่หรือไม่?<br/>การกระทำนี้ไม่สามารถกู้คืนได้</p>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setDeleteConfirm(null)} disabled={isDeleting} className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-colors disabled:opacity-50">
+                                        ยกเลิก
+                                    </button>
+                                    <button onClick={() => handleDeleteRow(deleteConfirm.id || deleteConfirm['ลำดับที่'])} disabled={isDeleting} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-colors shadow-md shadow-red-500/30 flex items-center justify-center gap-2 disabled:opacity-50">
+                                        {isDeleting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'ยืนยันลบข้อมูล'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
