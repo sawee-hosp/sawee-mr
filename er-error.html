@@ -548,7 +548,20 @@
                         { text: 'พยาบาล', style: 'th' }, { text: 'ผู้บันทึก', style: 'th' }
                     ]);
 
-                    displayList.forEach((h, i) => {
+                    const sortedERList = [...displayList].sort((a, b) => {
+                        const dateA = normalizeDateToISO(a.date || a['Date'] || a['วันที่'] || a['Timestamp']);
+                        const dateB = normalizeDateToISO(b.date || b['Date'] || b['วันที่'] || b['Timestamp']);
+                        if (dateA < dateB) return -1;
+                        if (dateA > dateB) return 1;
+                        
+                        const timeA = formatTime(a.time || a['เวลา (น.)'] || a['เวลา']);
+                        const timeB = formatTime(b.time || b['เวลา (น.)'] || b['เวลา']);
+                        if (timeA < timeB) return -1;
+                        if (timeA > timeB) return 1;
+                        return 0;
+                    });
+
+                    sortedERList.forEach((h, i) => {
                         const errVal = h.errorType || h['ความเสี่ยงที่พบ'] || h['ความเสี่ยง'] || h.error || h['รายการ Error'] || h['Error'] || '-';
                         const isNoErr = !errVal || errVal === erErrorOptions[0];
                         body.push([
