@@ -15,7 +15,6 @@
             font-family: 'Noto Sans Thai', sans-serif !important;
             margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;
             color: #1e293b;
-            /* Day of week gradient background animation */
             background-size: 200% 200%;
             animation: gradientMove 15s ease infinite;
             transition: background-image 1s ease;
@@ -36,36 +35,39 @@
         .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
         .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
 
-        /* Ambient Clouds Background */
+        /* Ambient Clouds Background - ทำให้เห็นชัดขึ้นและอยู่ใต้ Cards */
+        .cloud-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            overflow: hidden; z-index: 1; pointer-events: none;
+        }
         .cloud {
             position: absolute;
             border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.5;
-            z-index: 0;
-            animation: floatCloud 20s infinite alternate ease-in-out;
-            pointer-events: none;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: floatCloud 15s infinite alternate ease-in-out;
         }
         .cloud-1 {
-            width: 50vw; height: 50vw;
-            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            width: 40vw; height: 40vw;
+            background: rgba(255, 255, 255, 0.4);
             top: -10%; left: -10%;
         }
         .cloud-2 {
-            width: 60vw; height: 60vw;
-            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            width: 50vw; height: 50vw;
+            background: rgba(255, 255, 255, 0.3);
             bottom: -20%; right: -10%;
             animation-delay: -5s;
         }
         .cloud-3 {
-            width: 40vw; height: 40vw;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            width: 30vw; height: 30vw;
+            background: rgba(255, 255, 255, 0.2);
             top: 40%; left: 30%;
             animation-delay: -10s;
         }
         @keyframes floatCloud {
             0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(5%, 10%) scale(1.1); }
+            100% { transform: translate(8%, 15%) scale(1.2); }
         }
 
         /* Glass Panel */
@@ -99,17 +101,15 @@
             transition: all 0.3s ease;
         }
 
-        /* แถบเตียงแบบแนบขอบซ้าย เต็มความสูง */
         .ipd-badge {
             position: absolute; left: 0; top: 0; bottom: 0;
-            width: 48px; /* w-12 */
+            width: 48px;
             display: flex; align-items: center; justify-content: center;
             color: white; font-weight: 900; font-size: 15px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
             border-right: 1px solid rgba(0,0,0,0.1);
         }
 
-        /* เอฟเฟกต์กระพริบโดยเปลี่ยน Background */
         @keyframes pulse-bg-ipd {
             0%, 100% { background-color: rgba(255, 255, 255, 0.85); }
             50% { background-color: rgba(167, 243, 208, 0.6); }
@@ -126,7 +126,6 @@
             text-shadow: 0 0 8px rgba(255,255,255,0.3);
         }
         
-        /* สีเวลาแบบ Rainbow สว่างๆ คมๆ ไม่เบลอ */
         .text-rainbow {
             background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30);
             background-size: 200% auto;
@@ -134,38 +133,45 @@
             -webkit-background-clip: text;
             background-clip: text;
             animation: shine 4s linear infinite;
-            line-height: 0.8; /* ให้เวลาแสดงครบ ไม่ถูกตัดซ่อน */
+            line-height: 0.8; 
             padding-bottom: 2px;
         }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* สถานะพนักงาน */
         .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
         .staff-inactive { opacity: 0.35; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
         
-        /* กระพริบ Countdown นุ่มนวล ไม่มีกรอบแดง */
         @keyframes soft-pulse { 
             0%, 100% { opacity: 1; } 
             50% { opacity: 0.6; } 
         }
         .staff-ending { animation: soft-pulse 1.5s infinite; }
-        .countdown-text { color: #ef4444; font-weight: 900; } /* สีแดงตอนนับถอยหลัง */
+        .countdown-text { color: #ef4444; font-weight: 900; } 
 
         .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .fade-text { transition: opacity 0.5s ease-in-out; }
         .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
+        
+        /* ตัดคำใน Line ให้อยู่ใน 2 บรรทัด */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
     </style>
 </head>
 
 <body class="h-screen w-screen flex flex-col relative z-0 bg-fri" id="main-body">
-    <!-- Ambient Clouds (ก้อนแสงวาบๆ) -->
-    <div class="cloud cloud-1"></div>
-    <div class="cloud cloud-2"></div>
-    <div class="cloud cloud-3"></div>
+    <!-- Ambient Clouds (อยู่ใต้ Header และ Main เสมอ) -->
+    <div class="cloud-wrapper">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
 
-    <!-- Header (บังคับ 1 บรรทัด) -->
     <header class="w-full px-6 py-2 flex justify-between items-center shrink-0 bg-slate-900/80 backdrop-blur-md relative border-b border-white/10 z-20 whitespace-nowrap flex-nowrap overflow-hidden">
         <div class="flex items-center gap-4 shrink-0">
             <h1 class="text-3xl font-black tracking-wide text-crystal leading-none">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
@@ -179,8 +185,7 @@
         </div>
     </header>
 
-    <!-- Main Grid (28:34:34) -->
-    <main class="flex-1 w-full flex justify-between gap-[2%] p-4 overflow-hidden z-10 relative">
+    <main class="flex-1 w-full flex justify-between gap-[2%] p-4 overflow-hidden z-20 relative">
         
         <!-- Column 1: เภสัชกรประจำวัน (28%) -->
         <section class="h-full flex flex-col min-h-0 glass-panel p-3" id="col-staff" style="width: 28%;">
@@ -190,7 +195,7 @@
             </div>
             
             <div class="flex-1 flex flex-col justify-around min-h-0 pb-1" id="staff-grid">
-                <!-- Set 1 -->
+                <!-- Set 1 (เพิ่ม จพ. เข้ามา) -->
                 <div class="flex justify-center gap-4">
                     <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;">
                         <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
@@ -200,6 +205,11 @@
                     <div class="staff-item flex flex-col items-center" data-role="ipd" id="card-ipd" style="display:none;">
                         <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                         <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.ใน</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                    </div>
+                    <div class="staff-item flex flex-col items-center" data-role="tech" id="card-tech" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">จพ.เช้า</span>
                         <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
                 </div>
@@ -234,12 +244,6 @@
                         <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย2</span>
                         <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
-                </div>
-
-                <div class="divider-gradient"></div>
-
-                <!-- Set 4 -->
-                <div class="flex justify-center gap-4">
                     <div class="staff-item flex flex-col items-center" data-role="clinic" id="card-clinic" style="display:none;">
                         <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                         <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text staff-clinic">ภ.คลินิก</span>
@@ -248,7 +252,7 @@
                 </div>
             </div>
 
-            <!-- Afternoon Shift (แค่ชื่อ ไม่มีรูป) -->
+            <!-- Afternoon Shift -->
             <div class="mt-1 pt-1 border-t-2 border-slate-400/30 shrink-0">
                 <h2 class="text-[14px] font-black text-slate-800 mb-1 drop-shadow-sm"><i class="fas fa-moon text-amber-500 mr-1"></i><span id="col-afternoon-title">เวรบ่าย & On Call</span></h2>
                 <div class="card-3d p-2 py-1.5 flex justify-around items-center bg-white/60">
@@ -270,7 +274,6 @@
             </div>
         </section>
 
-        <!-- Column 2: ผู้ป่วยใน (IPD) (34%) -->
         <section class="h-full flex flex-col min-h-0 glass-panel p-3" style="width: 34%;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-procedures text-blue-600 mr-2"></i>ผู้ป่วยใน (IPD)</h2>
@@ -353,7 +356,6 @@
                 </div>
             </div>
 
-            <!-- สรุปจำนวน เน้นตัวเลขใหญ่ๆ -->
             <div class="flex justify-between mt-1 pt-1 shrink-0 h-[65px] border-t-2 border-slate-400/30 gap-1.5">
                 <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
                     <div class="bg-rose-100 h-4 text-center border-b border-rose-300 flex items-center justify-center"><span class="text-[10px] font-black text-rose-800 leading-none">D/C</span></div>
@@ -382,36 +384,14 @@
             </div>
         </section>
 
-        <!-- Column 3: แจ้งเตือน & ข่าว (34%) -->
         <section class="h-full flex flex-col min-h-0 glass-panel p-3" style="width: 34%;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-bell text-rose-500 mr-2"></i>การแจ้งเตือนใหม่</h2>
             </div>
 
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1">
-                <div class="card-3d bg-emerald-50/90 p-2 flex items-center gap-3">
-                    <div class="w-8 flex justify-center"><i class="fas fa-box-open text-emerald-600 text-xl drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-xs font-bold text-slate-800 truncate">เบิกยา: <span class="font-black text-sm">ตึกผู้ป่วยในชาย</span></span>
-                        <span class="text-[10px] text-emerald-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-emerald-200">14:50</span>
-                    </div>
-                </div>
-
-                <div class="card-3d bg-blue-50/90 p-2 flex items-center gap-3">
-                    <div class="w-8 flex justify-center"><i class="fas fa-calendar-times text-blue-500 text-xl drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-xs font-bold text-slate-800 truncate">Amoxicillin 500mg <span class="text-slate-500">(ชั้น 2 C)</span></span>
-                        <span class="text-[10px] text-blue-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-blue-200">31/05/69</span>
-                    </div>
-                </div>
-
-                <div class="card-3d bg-purple-50/90 p-2 flex items-center gap-3">
-                    <div class="w-8 flex justify-center"><i class="fab fa-line text-purple-500 text-2xl drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-xs font-bold text-slate-800 truncate">ถามยา: <span class="font-black text-sm">คุณสมร ศรีxxxx</span></span>
-                        <span class="text-[10px] text-purple-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-purple-200">12:25</span>
-                    </div>
-                </div>
+            <!-- กล่องแจ้งเตือน อัปเดตจาก Line Bot -->
+            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1" id="notification-container">
+                <div class="text-center text-slate-500 text-sm mt-4 font-bold">กำลังโหลดข้อมูลแจ้งเตือน...</div>
             </div>
 
             <!-- News & Weather -->
@@ -437,50 +417,80 @@
     </main>
 
     <script>
-        // API ดึงข้อมูลจาก Google Sheets
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
         
         let staffSchedule = { today: null, tomorrow: null };
         let isDemoMode = false;
+        let lastAlertTime = 0; // เก็บเวลาแจ้งเตือนล่าสุดกันพูดซ้ำ
+        let isFirstLoadAlert = true;
 
-        // --- Voice TTS On Load ---
-        function playAlertVoice() {
-            const t1 = "มีการเบิกยาใหม่ จาก ตึกผู้ป่วยชาย ค่ะ";
-            const t2 = "มีการถามยาในไลน์ คุณสมรค่ะ";
-            
-            const u1 = new SpeechSynthesisUtterance(t1);
-            u1.lang = 'th-TH';
-            const u2 = new SpeechSynthesisUtterance(t2);
-            u2.lang = 'th-TH';
-            
-            u1.onend = () => window.speechSynthesis.speak(u2);
-            window.speechSynthesis.speak(u1);
+        // --- Voice TTS ---
+        function speakText(text) {
+            if(!window.audioEnabled) return;
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'th-TH';
+            window.speechSynthesis.speak(u);
         }
 
+        // อนุญาตให้ใช้เสียงเมื่อกดคลิกที่ใดๆ ก็ตามบนจอ
         window.addEventListener('click', () => {
-            if(!window.audioPlayed) {
-                playAlertVoice();
-                window.audioPlayed = true;
+            if(!window.audioEnabled) {
+                window.audioEnabled = true;
+                console.log("Audio Enabled!");
             }
-        }, {once: true});
+        });
 
-        setTimeout(() => { 
-            if(!window.audioPlayed) {
-                playAlertVoice();
-                window.audioPlayed = true; 
-            }
-        }, 1500);
-
-        // --- Fetch GAS Schedule ---
+        // --- Fetch GAS Data ---
         async function fetchSchedule() {
             try {
                 const res = await fetch(GAS_API_URL);
                 const data = await res.json();
                 staffSchedule = data;
+                
                 if(!isDemoMode) updateStaffUI(staffSchedule.today);
+                
+                // อัปเดตรายการแจ้งเตือน Line
+                if(data.alerts) updateAlertsUI(data.alerts);
+
             } catch(error) {
                 console.error("Error fetching GS:", error);
             }
+        }
+
+        // --- Update Line Alerts ---
+        function updateAlertsUI(alerts) {
+            const container = document.getElementById('notification-container');
+            container.innerHTML = '';
+
+            if(alerts.length === 0) {
+                container.innerHTML = `<div class="card-3d bg-slate-50/90 p-2 flex items-center justify-center h-full"><span class="text-slate-500 font-bold text-sm">ไม่มีข้อความใหม่ใน 1 ชั่วโมงที่ผ่านมา</span></div>`;
+                return;
+            }
+
+            alerts.forEach((alert, index) => {
+                // ถ้ามีข้อความที่ใหม่กว่าที่เคยจำไว้ ให้อ่านออกเสียง
+                if (alert.timestamp > lastAlertTime) {
+                    if (!isFirstLoadAlert) {
+                        speakText("มีการแจ้งเตือนไลน์ใหม่ ข้อความว่า " + alert.message);
+                    }
+                    if (index === 0) lastAlertTime = alert.timestamp; // จำอันใหม่สุดไว้ (อันบนสุด)
+                }
+
+                const cardHtml = `
+                <div class="card-3d bg-purple-50/90 p-2 flex gap-3 h-auto min-h-[48px]">
+                    <div class="w-8 flex justify-center items-start pt-1"><i class="fab fa-line text-purple-500 text-2xl drop-shadow-sm"></i></div>
+                    <div class="flex-1 flex flex-col justify-center overflow-hidden">
+                        <div class="flex justify-between items-start mb-0.5">
+                            <span class="text-xs font-black text-purple-800">ถามยา / แจ้งเตือน</span>
+                            <span class="text-[10px] text-purple-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-purple-200">${alert.timeStr}</span>
+                        </div>
+                        <span class="text-xs font-bold text-slate-800 line-clamp-2 leading-tight">${alert.message}</span>
+                    </div>
+                </div>`;
+                container.innerHTML += cardHtml;
+            });
+            
+            isFirstLoadAlert = false;
         }
 
         // --- Update UI logic ---
@@ -493,24 +503,20 @@
                 
                 const staff = data[prop];
                 
-                // ตรวจสอบข้อมูลและตัดวงเล็บออกเพื่อแสดงเฉพาะชื่อที่แท้จริง
                 if(!staff || !staff.name || staff.name.trim() === "") {
                     el.style.display = 'none';
                 } else {
                     el.style.display = 'flex';
                     
-                    // ตัดวงเล็บออก เช่น "สุวรรณา(แพ้ยา)" -> "สุวรรณา"
-                    let cleanName = staff.name.split('(')[0].trim();
-                    
                     const nameEl = el.querySelector('.staff-name');
-                    if(nameEl) nameEl.textContent = cleanName;
+                    if(nameEl) nameEl.textContent = staff.name;
                     
                     const imgEl = el.querySelector('.staff-img');
                     if(imgEl) {
                         if (staff.photo) {
                             imgEl.src = staff.photo;
                         } else {
-                            let initials = cleanName.substring(0, 2);
+                            let initials = staff.name.substring(0, 2);
                             imgEl.src = `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(initials)}`;
                         }
                     }
@@ -525,9 +531,9 @@
                 }
             };
 
-            // Map data
             mapData('card-key', 'key', 'ภ.คีย์');
             mapData('card-ipd', 'ipd', 'ภ.ใน');
+            mapData('card-tech', 'tech', 'จพ.เช้า');
             mapData('card-check1', 'check1', 'ภ.เช็ค1');
             mapData('card-check2', 'check2', 'ภ.เช็ค2');
             mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1');
@@ -544,15 +550,7 @@
             document.getElementById('div-oncall').style.display = cOnc ? 'block' : 'none';
         }
 
-        // --- Clock & Background Setup ---
-        function setBackgroundByDay() {
-            const dayOfWeek = new Date().getDay();
-            const body = document.getElementById('main-body');
-            body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
-            const bgClasses = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat'];
-            body.classList.add(bgClasses[dayOfWeek]);
-        }
-
+        // --- Clock & Countdown Logic ---
         function updateClock() {
             const now = new Date();
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -573,6 +571,7 @@
             const roles = {
                 'key': [{ start: 8 * 60, end: 11 * 60 + 30 }, { start: 12 * 60 + 30, end: 16 * 60 }],
                 'ipd': [{ start: 8 * 60, end: 12 * 60 }, { start: 13 * 60, end: 16 * 60 }],
+                'tech': [{ start: 8 * 60, end: 11 * 60 }, { start: 12 * 60, end: 16 * 60 }],
                 'check': [{ start: 8 * 60, end: 12 * 60 + 30 }, { start: 13 * 60 + 30, end: 16 * 60 }],
                 'dispense': [{ start: 8 * 60, end: 12 * 60 + 30 }, { start: 13 * 60 + 30, end: 16 * 60 }],
                 'clinic': [{ start: 8 * 60, end: 16 * 60 }] 
@@ -581,7 +580,7 @@
             let activeCount = 0;
 
             document.querySelectorAll('.staff-item').forEach(el => {
-                if (el.style.display === 'none') return;
+                if (el.style.display === 'none') return; 
 
                 const roleKey = el.dataset.role;
                 const shifts = roles[roleKey];
@@ -595,15 +594,9 @@
                     if (currentMins >= shift.start && currentMins < shift.end) {
                         isActive = true;
                         remainingSec = (shift.end * 60) - currentSecs;
-                        if (remainingSec <= 300) isEndingSoon = true;
+                        if (remainingSec <= 300) isEndingSoon = true; 
                         break;
                     }
-                }
-
-                if(roleKey === 'key') { 
-                    isActive = true; 
-                    isEndingSoon = true; 
-                    remainingSec = 150; 
                 }
 
                 el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
@@ -630,7 +623,7 @@
             document.getElementById('active-staff-count').textContent = activeCount + ' คน';
         }
 
-        // --- Info Mix (News/Gold/Oil) ---
+        // --- Info Mix ---
         let mixData = [
             { type: 'news', text: "สธ. ประกาศนโยบายยกระดับ รพ.ชุมชน ทั่วประเทศ พร้อมเพิ่มงบประมาณปี 2569", bg: "bg-white" },
             { type: 'gold', text: "ทองคำแท่ง รับซื้อ 41,000 ขายออก 41,100 (ขึ้น 100 บ.)", bg: "bg-yellow-100" },
@@ -649,9 +642,7 @@
             setTimeout(() => {
                 const item = mixData[currentMixIndex];
                 container.textContent = item.text;
-                
                 card.className = `flex-1 overflow-hidden relative card-3d p-3 transition-colors duration-500 ${item.bg}`;
-                
                 wrapper.style.opacity = 1;
                 currentMixIndex = (currentMixIndex + 1) % mixData.length;
             }, 500);
@@ -689,6 +680,14 @@
             }
         }
 
+        function setBackgroundByDay() {
+            const dayOfWeek = new Date().getDay();
+            const body = document.getElementById('main-body');
+            body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
+            const bgClasses = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat'];
+            body.classList.add(bgClasses[dayOfWeek]);
+        }
+
         // --- Tomorrow Demo Routine (ทุก 1 นาที) ---
         setInterval(() => {
             isDemoMode = true;
@@ -698,7 +697,6 @@
             
             if(staffSchedule.tomorrow) updateStaffUI(staffSchedule.tomorrow);
 
-            // กลับเป็นปกติหลัง 15 วินาที
             setTimeout(() => {
                 isDemoMode = false;
                 document.getElementById('col-staff').classList.remove('bg-white/95');
@@ -720,7 +718,7 @@
             
             setInterval(updateClock, 1000); 
             setInterval(showMixedInfo, 10000); 
-            setInterval(() => { setBackgroundByDay(); fetchWeather(); fetchSchedule(); }, 600000); 
+            setInterval(() => { setBackgroundByDay(); fetchWeather(); fetchSchedule(); }, 60000); // ดึงข้อมูลใหม่ทุก 1 นาที (รวมถึงเช็ค Line ใหม่ด้วย)
         };
     </script>
 </body>
