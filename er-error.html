@@ -56,7 +56,6 @@
     </style>
 </head>
 <body class="font-sans">
-    <!-- โครงสร้างเปล่าให้เนียนตา รอ React โหลดขึ้นมาทับทันที -->
     <div id="root">
         <div class="bg-gradient-to-br from-rose-950 via-red-900 to-red-950 min-h-screen pb-24 transition-colors duration-700">
             <header class="pt-8 pb-4 text-center">
@@ -68,7 +67,6 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
         
-        // GAS URL อัปเดตล่าสุด
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz8y9YIjm-vWKpAS8MhuWmFZqkDLtJ1XsgmSvJevvQy7QSzwZVxkleVxsWewUXsK65hyw/exec";
 
         const erErrorOptions = [
@@ -157,7 +155,7 @@
             const [isLoading, setIsLoading] = useState(true);
             const [isPdfReady, setIsPdfReady] = useState(false);
             
-            const [data, setData] = useState({ drugs: [], inspectors: [], doctors: [], recorders: [], history: [], errorCategories: [], lastId: 0 });
+            const [data, setData] = useState({ drugs: [], inspectors: [], doctors: [], recorders: [], history: [], errorCategories: [], lasaHistory: [], lastId: 0 });
             
             const initialFormState = {
                 date: new Date().toISOString().split('T')[0],
@@ -183,6 +181,10 @@
             const [showModal, setShowModal] = useState(false);
             const [deleteConfirm, setDeleteConfirm] = useState(null);
             const [isDeleting, setIsDeleting] = useState(false);
+
+            // LASA Edit State
+            const [editingLasa, setEditingLasa] = useState(null);
+            const [lasaForm, setLasaForm] = useState({ reason: '', management: '', pharmacist: '' });
 
             const [filterType, setFilterType] = useState('month');
             const [filterDateStart, setFilterDateStart] = useState(() => {
@@ -276,7 +278,11 @@
             const handleModeChange = (mode) => {
                 if (mode !== systemMode) {
                     setSystemMode(mode);
-                    setActiveTab('form');
+                    if (mode === 'LASA') {
+                        setActiveTab('history');
+                    } else {
+                        setActiveTab('form');
+                    }
                     setFilterPolicyArray([]); 
                     setFilterErrorTypeArray([]);
                     setForm(prev => ({
@@ -479,8 +485,31 @@
                 return { rx: totalRxCount, err: errors.length, pct: totalRxCount > 0 ? ((errors.length/totalRxCount)*100).toFixed(2) : '0.00', counts, daily };
             }, [baseFiltered, systemMode]);
 
+            const lasaFiltered = useMemo(() => {
+                if (!data.lasaHistory) return [];
+                return data.lasaHistory.filter(item => {
+                    const iso = normalizeDateToISO(item.date);
+                    const matchDate = filterType === 'day' ? (iso >= filterDateStart && iso <= filterDateEnd) : iso.startsWith(filterMonth);
+                    const matchSearch = String(item.drug1 || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                        String(item.drug2 || '').toLowerCase().includes(searchTerm.toLowerCase());
+                    return matchDate && matchSearch;
+                });
+            }, [data.lasaHistory, filterType, filterDateStart, filterDateEnd, filterMonth, searchTerm]);
+
+            const lasaPairs = useMemo(() => {
+                const pairs = {};
+                lasaFiltered.forEach(item => {
+                    if (item.drug1 && item.drug2) {
+                        const pairArr = [item.drug1, item.drug2].sort();
+                        const pairName = pairArr.join(' ↔ ');
+                        pairs[pairName] = (pairs[pairName] || 0) + 1;
+                    }
+                });
+                return Object.entries(pairs).sort((a,b) => b[1] - a[1]);
+            }, [lasaFiltered]);
+
             useEffect(() => {
-                if (activeTab === 'history' && !isLoading) {
+                if (activeTab === 'history' && !isLoading && systemMode !== 'LASA') {
                     const opt = { 
                         responsive: true, maintainAspectRatio: false, 
                         plugins: { 
@@ -577,6 +606,23 @@
                 } catch (e) { console.error("Delete Error", e); }
                 setIsDeleting(false);
             };
+
+            const handleUpdateLasa = async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                try {
+                    const res = await fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'UPDATE_LASA', rowIndex: editingLasa.rowIndex, ...lasaForm })
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        await fetchData();
+                        setEditingLasa(null);
+                    }
+                } catch (e) { console.error("Update LASA Error", e); }
+                setIsSubmitting(false);
+            }
 
             const genPDF = () => {
                 if(!isPdfReady) return;
@@ -772,19 +818,108 @@
                                 </button>
                             )}
 
-                            {}
                             {systemMode === 'LASA' ? (
-                                <div className="bg-white rounded-3xl p-10 md:p-20 text-center animate-fadeIn mx-2 mt-4 border border-yellow-100">
-                                    <div className="w-24 h-24 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <div className="space-y-6 animate-fadeIn mt-4">
+                                    <div className="bg-yellow-50 p-6 md:p-8 rounded-3xl border border-yellow-200 shadow-inner flex flex-col justify-between">
+                                        <div className="flex flex-wrap gap-4 items-center justify-between w-full mb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-14 h-14 bg-yellow-200 text-yellow-600 rounded-full flex items-center justify-center">
+                                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-2xl font-black text-yellow-800">LASA Management Dashboard</h2>
+                                                    <p className="text-sm font-bold text-yellow-600">จัดการและวิเคราะห์ข้อมูลยา Look-Alike Sound-Alike</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3 items-center bg-white p-3 rounded-2xl border border-yellow-100 shadow-sm">
+                                                <div className="flex bg-slate-50 p-1 rounded-xl shadow-inner border border-slate-200">
+                                                    <button onClick={()=>setFilterType('day')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${filterType==='day'? 'bg-yellow-500 text-white shadow-md' : 'text-slate-500'}`}>กำหนดช่วงเวลา</button>
+                                                    <button onClick={()=>setFilterType('month')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${filterType==='month'? 'bg-yellow-500 text-white shadow-md' : 'text-slate-500'}`}>รายเดือน</button>
+                                                </div>
+                                                {filterType === 'day' ? (
+                                                    <div className="flex gap-2 items-center"><input type="date" value={filterDateStart} onChange={e=>setFilterDateStart(e.target.value)} className="compact-input text-sm w-36 shadow-sm !py-2" /><span>-</span><input type="date" value={filterDateEnd} onChange={e=>setFilterDateEnd(e.target.value)} className="compact-input text-sm w-36 shadow-sm !py-2" /></div>
+                                                ) : (
+                                                    <input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="compact-input text-sm w-44 shadow-sm !py-2" />
+                                                )}
+                                                <input type="text" placeholder="ค้นหาชื่อยา..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="compact-input text-sm w-48 shadow-sm !py-2" />
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-yellow-100">
+                                            <h3 className="text-sm font-black text-yellow-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                <div className="w-4 h-1.5 bg-yellow-500 rounded-full"></div>คู่ยาที่เกิดข้อผิดพลาดสูงสุด (Top LASA Pairs)
+                                            </h3>
+                                            <div className="flex flex-wrap gap-3">
+                                                {lasaPairs.slice(0, 10).map(([pair, count]) => (
+                                                    <div key={pair} className="flex items-center gap-3 border border-slate-200 bg-white px-5 py-2.5 rounded-2xl text-xs font-black shadow-sm group hover:border-yellow-400 transition-all">
+                                                        <span className="text-slate-700 group-hover:text-yellow-800">{pair}</span>
+                                                        <span className={`px-3 py-1 rounded-lg text-white bg-yellow-500 shadow-sm`}>{count}</span>
+                                                    </div>
+                                                ))}
+                                                {lasaPairs.length === 0 && <span className="text-sm text-slate-400 italic">ไม่พบข้อมูลคู่ยาในช่วงเวลานี้</span>}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <h2 className="text-3xl font-black text-slate-800 mb-2">LASA Management</h2>
-                                    <p className="text-lg font-bold text-slate-500">ระบบนี้อยู่ระหว่างการพัฒนา...</p>
+
+                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                        <h3 className="text-sm font-black text-slate-600 uppercase tracking-widest mb-4">รายการเฝ้าระวัง LASA ({lasaFiltered.length})</h3>
+                                        <div className="overflow-x-auto border border-slate-100 rounded-2xl max-h-[500px] custom-scrollbar shadow-inner bg-slate-50/30">
+                                            <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+                                                <thead className="bg-white sticky top-0 z-20 shadow-sm">
+                                                    <tr>
+                                                        <th className="p-4 font-black uppercase text-slate-400 border-b w-24">วันที่</th>
+                                                        <th className="p-4 font-black uppercase text-slate-400 border-b w-48">คู่ยาที่เกิดปัญหา</th>
+                                                        <th className="p-4 font-black uppercase text-slate-400 border-b w-48">สาเหตุ (Reason)</th>
+                                                        <th className="p-4 font-black uppercase text-slate-400 border-b w-48">การจัดการ (Management)</th>
+                                                        <th className="p-4 font-black uppercase text-slate-400 border-b w-32">เภสัชกร</th>
+                                                        <th className="p-4 font-black uppercase text-slate-400 border-b w-24 text-center">จัดการ</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 bg-white">
+                                                    {lasaFiltered.map((h, i) => {
+                                                        const isEditing = editingLasa && editingLasa.rowIndex === h.rowIndex;
+                                                        const isIncomplete = !h.reason || !h.management || !h.pharmacist;
+                                                        return (
+                                                            <tr key={i} className={`transition-colors ${isIncomplete ? 'bg-yellow-50/50 hover:bg-yellow-50' : 'hover:bg-slate-50/80'}`}>
+                                                                <td className="p-4 align-top font-black text-slate-700">{formatDisplayDate(h.date)}</td>
+                                                                <td className="p-4 align-top">
+                                                                    <div className="font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded inline-block mb-1">{h.drug1}</div><br/>
+                                                                    <div className="font-bold text-rose-700 bg-rose-100 px-2 py-1 rounded inline-block">{h.drug2}</div>
+                                                                </td>
+                                                                <td className="p-4 align-top text-slate-600">
+                                                                    {isEditing ? <textarea value={lasaForm.reason} onChange={e=>setLasaForm({...lasaForm, reason: e.target.value})} className="w-full compact-input text-xs !p-2" placeholder="ระบุสาเหตุ..."/> : (h.reason || <span className="text-slate-300 italic">- ยังไม่ระบุ -</span>)}
+                                                                </td>
+                                                                <td className="p-4 align-top text-slate-600">
+                                                                    {isEditing ? <textarea value={lasaForm.management} onChange={e=>setLasaForm({...lasaForm, management: e.target.value})} className="w-full compact-input text-xs !p-2" placeholder="ระบุการจัดการ..."/> : (h.management || <span className="text-slate-300 italic">- ยังไม่ระบุ -</span>)}
+                                                                </td>
+                                                                <td className="p-4 align-top text-slate-600">
+                                                                    {isEditing ? <input list="lasaRec" value={lasaForm.pharmacist} onChange={e=>setLasaForm({...lasaForm, pharmacist: e.target.value})} className="w-full compact-input text-xs !p-2" placeholder="ชื่อเภสัชกร..."/> : (h.pharmacist || <span className="text-slate-300 italic">-</span>)}
+                                                                    {isEditing && <datalist id="lasaRec">{data.recorders?.map(n=><option key={n} value={n}/>)}</datalist>}
+                                                                </td>
+                                                                <td className="p-4 align-top text-center">
+                                                                    {isEditing ? (
+                                                                        <div className="flex gap-1 flex-col">
+                                                                            <button onClick={handleUpdateLasa} disabled={isSubmitting} className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold shadow-sm">บันทึก</button>
+                                                                            <button onClick={()=>setEditingLasa(null)} className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-lg text-[10px] font-bold">ยกเลิก</button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <button onClick={()=>{setEditingLasa(h); setLasaForm({reason: h.reason, management: h.management, pharmacist: h.pharmacist});}} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition-colors border ${isIncomplete ? 'bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>
+                                                                            {isIncomplete ? '✍️ เพิ่มข้อมูล' : 'แก้ไข'}
+                                                                        </button>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                    {lasaFiltered.length===0 && <tr><td colSpan="6" className="p-20 text-center text-slate-400 font-black text-base uppercase bg-slate-50/50">ไม่พบข้อมูลในระบบ</td></tr>}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : activeTab === 'form' ? (
                                 <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5 animate-fadeIn max-w-4xl mx-auto mt-6 md:mt-2">
                                     
-                                    {}
                                     {/* Top Section ER */}
                                     {systemMode === 'ER' && (
                                         <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl flex flex-wrap gap-4 items-center border border-slate-100/50 shadow-inner`}>
@@ -813,7 +948,6 @@
                                         </div>
                                     )}
 
-                                    {}
                                     {/* ER FORM SECTION */}
                                     {systemMode === 'ER' && (
                                         <div className="space-y-4 md:space-y-5 animate-fadeIn">
@@ -916,7 +1050,6 @@
                                         </div>
                                     )}
 
-                                    {}
                                     {/* MR FORM SECTION (COMPACT LAYOUT) */}
                                     {systemMode === 'MR' && (
                                         <div className="space-y-4 md:space-y-5 animate-fadeIn">
@@ -1071,7 +1204,6 @@
                                         </div>
                                     )}
 
-                                    {}
                                     {/* พนักงาน Section */}
                                     {systemMode === 'ER' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 md:p-6 rounded-3xl border border-slate-200">
@@ -1120,7 +1252,6 @@
                                 </form>
                             ) : (
                                 <div className="space-y-6 animate-fadeIn mt-8 md:mt-2">
-                                    {}
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                                         <div className="md:col-span-3 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between overflow-hidden relative">
                                             <div className="flex flex-wrap gap-3 mb-4 bg-slate-50/80 p-3 rounded-2xl border border-slate-100 items-center relative z-10">
@@ -1191,7 +1322,6 @@
                                         </button>
                                     </div>
 
-                                    {}
                                     <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
                                         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                                             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">คลังข้อมูลอุบัติการณ์ ({displayList.length})</h3>
@@ -1310,7 +1440,6 @@
                                         )}
                                     </div>
 
-                                    {}
                                     {systemMode === 'ER' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="md:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm h-[450px] flex flex-col">
@@ -1400,7 +1529,6 @@
                         </div>
                     </main>
 
-                    {}
                     {/* Modal บันทึกสำเร็จที่จางหายอัตโนมัติ 1.5 วิ */}
                     {showModal && (
                         <div onClick={() => setShowModal(false)} className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-md animate-fadeIn cursor-pointer" title="คลิกเพื่อปิดหน้าต่าง">
