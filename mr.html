@@ -13,14 +13,12 @@
     <style>
         body {
             font-family: 'Noto Sans Thai', sans-serif !important;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            box-sizing: border-box;
+            margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;
+            color: #1e293b;
+            /* Day of week gradient background animation */
             background-size: 200% 200%;
             animation: gradientMove 15s ease infinite;
-            color: #1e293b;
-            transition: background-image 1s ease, background-color 1s ease;
+            transition: background-image 1s ease;
         }
 
         @keyframes gradientMove {
@@ -29,6 +27,7 @@
             100% { background-position: 0% 50%; }
         }
 
+        /* สีประจำวัน */
         .bg-sun { background-image: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
         .bg-mon { background-image: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
         .bg-tue { background-image: linear-gradient(135deg, #ff007f 0%, #ff758c 100%); }
@@ -37,122 +36,85 @@
         .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
         .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
 
-        /* พื้นหลังและแสงเมฆเคลื่อนไหว (แทนที่ขวดยา) */
-        .dark-corner {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 80vw;
-            height: 80vh;
-            background: radial-gradient(circle at bottom right, rgba(0,0,0,0.3) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -2;
-        }
-        
-        .ambient-cloud {
-            position: fixed;
+        /* Ambient Clouds Background */
+        .cloud {
+            position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
+            filter: blur(60px);
+            opacity: 0.5;
+            z-index: 0;
+            animation: floatCloud 20s infinite alternate ease-in-out;
             pointer-events: none;
-            z-index: -1;
-            animation: floatCloud 20s ease-in-out infinite alternate;
         }
-        .cloud-1 { top: -10vh; left: -10vw; width: 45vw; height: 45vh; background: rgba(255, 255, 255, 0.35); animation-duration: 22s; }
-        .cloud-2 { bottom: -10vh; right: -5vw; width: 55vw; height: 50vh; background: rgba(255, 255, 255, 0.25); animation-duration: 28s; animation-delay: -5s; }
-        .cloud-3 { top: 30vh; left: 35vw; width: 35vw; height: 35vh; background: rgba(255, 255, 255, 0.15); animation-duration: 35s; animation-delay: -10s; }
-
+        .cloud-1 {
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            top: -10%; left: -10%;
+        }
+        .cloud-2 {
+            width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            bottom: -20%; right: -10%;
+            animation-delay: -5s;
+        }
+        .cloud-3 {
+            width: 40vw; height: 40vw;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            top: 40%; left: 30%;
+            animation-delay: -10s;
+        }
         @keyframes floatCloud {
             0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(6vw, 4vh) scale(1.15); }
+            100% { transform: translate(5%, 10%) scale(1.1); }
         }
 
+        /* Glass Panel */
         .glass-panel {
             background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border-top: 1px solid rgba(255, 255, 255, 0.6);
             border-left: 1px solid rgba(255, 255, 255, 0.6);
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             border-right: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             border-radius: 1rem;
-            transition: all 0.5s ease;
+            transition: background-color 0.5s;
         }
 
-        .col-tomorrow-mode { 
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; 
-            border: 2px solid #ffffff !important;
-            box-shadow: 0 0 25px rgba(255,255,255,0.8) !important;
-        }
-
+        /* 3D Card */
         .card-3d {
-            background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
-            box-shadow: 
-                3px 3px 6px rgba(0, 0, 0, 0.1), 
-                -2px -2px 5px rgba(255, 255, 255, 0.8),
-                inset 1px 1px 2px rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255,255,255,0.6);
+            background: linear-gradient(145deg, rgba(255,255,255,0.85), rgba(255,255,255,0.5));
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255,255,255,0.5);
             border-radius: 0.5rem;
         }
 
+        /* 3D Card IPD */
         .card-3d-ipd {
-            background: #ffffff;
-            box-shadow: inset 1px 1px 3px rgba(255, 255, 255, 1), inset -1px -2px 4px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255,255,255,0.9);
-            border-bottom: 1px solid rgba(0,0,0,0.15);
-            border-right: 1px solid rgba(0,0,0,0.15);
+            background: linear-gradient(145deg, rgba(255,255,255,0.85), rgba(255,255,255,0.65));
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255,255,255,0.7);
             border-radius: 0.5rem;
-            overflow: hidden; 
+            transition: all 0.3s ease;
         }
 
-        @keyframes pulse-inner {
-            0%, 100% { background-color: #ffffff; }
-            50% { background-color: #fef08a; }
-        }
-        .alert-new-ipd { animation: pulse-inner 1.5s infinite ease-in-out; }
-
-        .card-3d-green { background: linear-gradient(145deg, rgba(220,252,231,0.95), rgba(240,253,244,0.8)); }
-        .card-3d-blue { background: linear-gradient(145deg, rgba(224,242,254,0.95), rgba(240,249,255,0.8)); }
-        .card-3d-purple { background: linear-gradient(145deg, rgba(250,232,255,0.95), rgba(253,244,255,0.8)); }
-        .card-3d-pink { background: linear-gradient(145deg, rgba(252,231,243,0.95), rgba(253,242,248,0.8)); }
-
-        .news-type-gold { background-color: #fef08a; border-left: 4px solid #eab308; }
-        .news-type-oil { background-color: #e2e8f0; border-left: 4px solid #475569; }
-        .news-type-news { background-color: rgba(255,255,255,0.9); border-left: 4px solid #3b82f6; }
-
-        .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
-        .staff-inactive { opacity: 0.3; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
-        .staff-active-tomorrow { opacity: 1; filter: none; transform: scale(1.02); transition: all 0.3s; box-shadow: 0 0 10px rgba(255,255,255,0.8); }
-
-        /* เอฟเฟกต์เตือนใกล้หมดเวรกระพริบช้าลง ไม่มีกรอบแดง */
-        @keyframes pulse-slow { 
-            0%, 100% { opacity: 1; transform: scale(1); } 
-            50% { opacity: 0.6; transform: scale(0.98); } 
-        }
-        .staff-ending { 
-            animation: pulse-slow 2s infinite ease-in-out; 
-            border-radius: 0.5rem; 
+        /* แถบเตียงแบบแนบขอบซ้าย เต็มความสูง */
+        .ipd-badge {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            width: 48px; /* w-12 */
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 900; font-size: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            border-right: 1px solid rgba(0,0,0,0.1);
         }
 
-        /* กราฟฟิกเวลานับถอยหลังกระพริบช้าลง */
-        @keyframes countdown-flash {
-            0%, 100% { color: #e11d48; }
-            50% { color: #fb7185; }
+        /* เอฟเฟกต์กระพริบโดยเปลี่ยน Background */
+        @keyframes pulse-bg-ipd {
+            0%, 100% { background-color: rgba(255, 255, 255, 0.85); }
+            50% { background-color: rgba(167, 243, 208, 0.6); }
         }
-        .countdown-text {
-            animation: countdown-flash 2s infinite ease-in-out;
-            font-size: 11px !important;
-            font-weight: 900 !important;
-            border: none !important;
-            box-shadow: none !important;
-            letter-spacing: normal !important;
-        }
-
-        .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 2px rgba(255,255,255,0.8); border: 2px solid white; margin: 0; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .fade-text { transition: opacity 0.5s ease-in-out; }
-        .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.2), transparent); margin: 3px 0; width: 90%; align-self: center; }
+        .alert-new { animation: pulse-bg-ipd 1.5s infinite ease-in-out; }
 
         .text-crystal {
             background: linear-gradient(to right, #ffffff 0%, #cbd5e1 40%, #e2e8f0 60%, #ffffff 100%);
@@ -161,331 +123,428 @@
             -webkit-background-clip: text;
             background-clip: text;
             animation: shine 4s linear infinite;
-            text-shadow: 0 0 8px rgba(255,255,255,0.4);
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
         }
         
+        /* สีเวลาแบบ Rainbow สว่างๆ คมๆ ไม่เบลอ */
         .text-rainbow {
-            background: linear-gradient(to right, #ff2a2a, #ff7a00, #ffc800, #00d54b, #00a2ff, #f200ff, #ff2a2a);
+            background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30);
             background-size: 200% auto;
             color: transparent;
             -webkit-background-clip: text;
             background-clip: text;
-            animation: rainbow-shine 4s linear infinite;
+            animation: shine 4s linear infinite;
+            line-height: 0.8; /* ให้เวลาแสดงครบ ไม่ถูกตัดซ่อน */
+            padding-bottom: 2px;
         }
-        @keyframes rainbow-shine { 
-            0% { background-position: 0% center; }
-            100% { background-position: -200% center; }
-        }
+        @keyframes shine { to { background-position: 200% center; } }
 
-        .header-sweep-wrapper { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background-color: rgba(255,255,255,0.2); overflow: hidden; }
-        .header-sweep { width: 30%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent); position: absolute; animation: sweepLine 8s ease-in-out infinite; }
-        @keyframes sweepLine { 0% { left: -30%; } 15% { left: 100%; } 100% { left: 100%; } }
+        /* สถานะพนักงาน */
+        .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
+        .staff-inactive { opacity: 0.35; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
+        
+        /* กระพริบ Countdown นุ่มนวล ไม่มีกรอบแดง */
+        @keyframes soft-pulse { 
+            0%, 100% { opacity: 1; } 
+            50% { opacity: 0.6; } 
+        }
+        .staff-ending { animation: soft-pulse 1.5s infinite; }
+        .countdown-text { color: #ef4444; font-weight: 900; } /* สีแดงตอนนับถอยหลัง */
+
+        .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-text { transition: opacity 0.5s ease-in-out; }
+        .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
     </style>
 </head>
 
-<body class="h-screen w-screen flex flex-col bg-thu" id="main-body">
-    <div class="dark-corner"></div>
-    <div class="ambient-cloud cloud-1"></div>
-    <div class="ambient-cloud cloud-2"></div>
-    <div class="ambient-cloud cloud-3"></div>
+<body class="h-screen w-screen flex flex-col relative z-0 bg-fri" id="main-body">
+    <!-- Ambient Clouds (ก้อนแสงวาบๆ) -->
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
 
-    <header class="w-full px-5 flex justify-between items-center shrink-0 bg-slate-900/70 backdrop-blur-md relative border-b border-white/10 z-10 flex-nowrap whitespace-nowrap overflow-visible h-[45px]">
-        <div class="flex items-center shrink-0">
-            <h1 class="text-[24px] font-black tracking-wide text-crystal leading-none">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
+    <!-- Header (บังคับ 1 บรรทัด) -->
+    <header class="w-full px-6 py-2 flex justify-between items-center shrink-0 bg-slate-900/80 backdrop-blur-md relative border-b border-white/10 z-20 whitespace-nowrap flex-nowrap overflow-hidden">
+        <div class="flex items-center gap-4 shrink-0">
+            <h1 class="text-3xl font-black tracking-wide text-crystal leading-none">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
+            <div class="bg-rose-500/90 text-white text-lg font-black px-3 py-1 rounded-md shadow-[0_0_10px_rgba(244,63,94,0.4)] border border-rose-400">คลินิก ARV</div>
+            <div class="bg-emerald-500/90 text-white text-lg font-black px-3 py-1 rounded-md shadow-[0_0_10px_rgba(16,185,129,0.4)] border border-emerald-400">นัด: 124</div>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
-            <div class="bg-rose-500 text-white text-sm font-black px-3 py-1 rounded shadow-md border border-rose-400 tracking-wide flex items-center h-[30px] shrink-0">คลินิก ARV</div>
-            <div class="bg-teal-500 text-white text-sm font-black px-2 py-1 rounded shadow-md border border-teal-400 tracking-wide flex items-center h-[30px] mr-2 shrink-0">นัด: 124</div>
-            <div class="text-[24px] font-black text-crystal drop-shadow-md leading-none ml-2 shrink-0" id="date-display">กำลังโหลด...</div>
-            <div class="w-[2px] h-6 bg-slate-400/50 rounded mx-1 shrink-0"></div>
-            <div class="text-[46px] font-black text-rainbow tracking-widest shrink-0 ml-1" style="line-height: 0.8; margin-top: -4px;" id="clock-display">--:--:--</div>
+        <div class="flex items-center gap-4 shrink-0">
+            <div class="text-3xl font-black text-crystal drop-shadow-md leading-none" id="date-display">กำลังโหลด...</div>
+            <div class="w-[3px] h-8 bg-slate-500/50 rounded mx-2"></div>
+            <div class="text-[46px] font-black text-rainbow tracking-wider" id="clock-display">--:--:--</div>
         </div>
-        <div class="header-sweep-wrapper"><div class="header-sweep"></div></div>
     </header>
 
-    <main class="flex-1 w-full flex justify-between gap-[2%] p-2 overflow-hidden min-h-0 relative z-10">
+    <!-- Main Grid (28:34:34) -->
+    <main class="flex-1 w-full flex justify-between gap-[2%] p-4 overflow-hidden z-10 relative">
         
-        <section class="h-full flex flex-col min-h-0 glass-panel p-2.5 transition-colors duration-700" style="width: 28%;" id="col-staff">
-            <div class="flex justify-between items-center border-b border-slate-400/50 shrink-0 pb-1 mb-1">
-                <h2 id="staff-title" class="text-lg font-black text-slate-800 drop-shadow-sm leading-none m-0">เภสัชกรประจำวัน</h2>
-                <span class="text-[10px] font-bold text-white bg-indigo-500 px-2 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
+        <!-- Column 1: เภสัชกรประจำวัน (28%) -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-3" id="col-staff" style="width: 28%;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i><span id="col-staff-title">เภสัชกรประจำวัน</span></h2>
+                <span class="text-xs font-bold text-white bg-indigo-500 px-2 py-0.5 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
             </div>
             
-            <div class="flex-1 flex flex-col justify-around min-h-0 py-0.5" id="staff-grid">
-                <div class="flex justify-center gap-2">
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="key">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.คีย์">ภ.คีย์</span>
+            <div class="flex-1 flex flex-col justify-around min-h-0 pb-1" id="staff-grid">
+                <!-- Set 1 -->
+                <div class="flex justify-center gap-4">
+                    <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.คีย์</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="ipd">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.ใน">ภ.ใน</span>
-                    </div>
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="tech">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="จพ.เช้า">จพ.เช้า</span>
-                    </div>
-                </div>
-
-                <div class="divider-gradient"></div>
-
-                <div class="flex justify-center gap-2">
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="check">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.เช็ค1">ภ.เช็ค1</span>
-                    </div>
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="check">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.เช็ค2">ภ.เช็ค2</span>
-                    </div>
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="check">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.เช็ค3">ภ.เช็ค3</span>
+                    <div class="staff-item flex flex-col items-center" data-role="ipd" id="card-ipd" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.ใน</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
                 </div>
 
                 <div class="divider-gradient"></div>
 
-                <div class="flex justify-center gap-2">
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="dispense">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.จ่าย1">ภ.จ่าย1</span>
+                <!-- Set 2 -->
+                <div class="flex justify-center gap-4">
+                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check1" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค1</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="dispense">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.จ่าย2">ภ.จ่าย2</span>
-                    </div>
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="dispense">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.จ่าย3">ภ.จ่าย3</span>
+                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check2" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค2</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
                 </div>
 
                 <div class="divider-gradient"></div>
 
-                <div class="flex justify-center gap-2">
-                    <div class="staff-item card-3d p-0.5 flex flex-col items-center justify-center min-w-[60px]" data-role="clinic">
-                        <img src="https://lh3.googleusercontent.com/d/17qIp_XI_cKGTjFiEF_Sp4mveqF-JNwdM" class="w-[44px] h-[44px] rounded-full object-cover object-top profile-img mb-0.5">
-                        <span class="text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded" data-orig-text="ภ.คลินิก">ภ.คลินิก</span>
+                <!-- Set 3 -->
+                <div class="flex justify-center gap-4">
+                    <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense1" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย1</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                    </div>
+                    <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense2" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย2</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                    </div>
+                </div>
+
+                <div class="divider-gradient"></div>
+
+                <!-- Set 4 -->
+                <div class="flex justify-center gap-4">
+                    <div class="staff-item flex flex-col items-center" data-role="clinic" id="card-clinic" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text staff-clinic">ภ.คลินิก</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="border-t border-slate-400/50 shrink-0 pt-1 mt-1">
-                <h2 id="shift-title" class="text-xs font-black text-slate-800 drop-shadow-sm leading-none m-0 mb-1">เวรบ่าย & On Call</h2>
-                <div class="card-3d p-1 flex justify-around items-center h-[34px]">
-                    <div class="flex items-baseline gap-1">
-                        <span class="text-[10px] font-bold text-slate-500">บ่าย:</span>
-                        <span class="text-[12px] font-black text-slate-800">วิภาวดี</span>
+            <!-- Afternoon Shift (แค่ชื่อ ไม่มีรูป) -->
+            <div class="mt-1 pt-1 border-t-2 border-slate-400/30 shrink-0">
+                <h2 class="text-[14px] font-black text-slate-800 mb-1 drop-shadow-sm"><i class="fas fa-moon text-amber-500 mr-1"></i><span id="col-afternoon-title">เวรบ่าย & On Call</span></h2>
+                <div class="card-3d p-2 py-1.5 flex justify-around items-center bg-white/60">
+                    <div class="flex flex-col text-center" id="card-aft-pharm" style="display:none;">
+                        <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span>
+                        <span class="text-xs font-black text-slate-800 staff-name">--</span>
                     </div>
-                    <div class="w-[1px] h-4 bg-slate-300"></div>
-                    <div class="flex items-baseline gap-1">
-                        <span class="text-[10px] font-bold text-slate-500">จพ:</span>
-                        <span class="text-[12px] font-black text-slate-800">สมปอง</span>
+                    <div class="w-[2px] h-6 bg-slate-300" id="div-aft-tech1"></div>
+                    <div class="flex flex-col text-center" id="card-aft-tech1" style="display:none;">
+                        <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span>
+                        <span class="text-xs font-black text-slate-800 staff-name">--</span>
                     </div>
-                    <div class="w-[1px] h-4 bg-slate-300"></div>
-                    <div class="flex items-baseline gap-1">
-                        <span class="text-[10px] font-bold text-slate-500">Oncall:</span>
-                        <span class="text-[12px] font-black text-slate-800">สมชาย</span>
+                    <div class="w-[2px] h-6 bg-slate-300" id="div-oncall"></div>
+                    <div class="flex flex-col text-center" id="card-oncall" style="display:none;">
+                        <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span>
+                        <span class="text-xs font-black text-slate-800 staff-name">--</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="h-full flex flex-col min-h-0 glass-panel p-2.5" style="width: 34%;">
-            <div class="flex justify-between items-center border-b border-slate-400/50 shrink-0 pb-1 mb-1">
-                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm leading-none m-0">ผู้ป่วยใน (IPD)</h2>
-            </div>
-
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1.5 pb-1">
-                <div class="card-3d-ipd flex items-stretch h-[32px] alert-new-ipd shrink-0">
-                    <div class="w-12 bg-emerald-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">M21</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">123456789</span>
-                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 rounded border border-emerald-200">Admit</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] alert-new-ipd shrink-0">
-                    <div class="w-12 bg-rose-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">F25</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">987654321</span>
-                        <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 rounded border border-rose-200">D/C</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-hourglass-half text-amber-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-emerald-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">M10</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">112233445</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">Admit</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-emerald-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">F12</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">223344556</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">Admit</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-emerald-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">ICU</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">334455667</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">Admit</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-hourglass-half text-amber-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-rose-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">M05</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">445566778</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">D/C</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-amber-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">P2</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">556677889</span>
-                        <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 rounded border border-amber-200">อื่นๆ</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-emerald-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">M08</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">667788990</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">Admit</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-emerald-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">F04</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">778899001</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">Admit</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-                <div class="card-3d-ipd flex items-stretch h-[32px] bg-white shrink-0">
-                    <div class="w-12 bg-rose-500 text-white flex items-center justify-center font-black text-[15px] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">M15</div>
-                    <div class="flex-1 flex items-center justify-between px-2">
-                        <span class="text-[15px] font-black font-mono tracking-widest text-slate-800">889900112</span>
-                        <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 rounded border border-slate-200">D/C</span>
-                    </div>
-                    <div class="w-8 flex items-center justify-center border-l border-slate-200/50"><i class="fas fa-check-circle text-emerald-500 text-[14px]"></i></div>
-                </div>
-            </div>
-
-            <div class="flex justify-between border-t border-slate-400/50 gap-1.5 shrink-0 pt-1.5 mt-1" style="height: 40px;">
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 shadow-sm border border-slate-300">
-                    <div class="bg-rose-100/90 text-center flex items-center justify-center h-4"><span class="text-[9px] font-black text-rose-700 leading-none">D/C</span></div>
-                    <div class="flex-1 bg-white flex items-center justify-center"><span class="text-[22px] font-black text-rose-600 leading-none">6</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 shadow-sm border border-slate-300">
-                    <div class="bg-emerald-100/90 text-center flex items-center justify-center h-4"><span class="text-[9px] font-black text-emerald-700 leading-none">Admit</span></div>
-                    <div class="flex-1 bg-white flex items-center justify-center"><span class="text-[22px] font-black text-emerald-700 leading-none">4</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 shadow-sm border border-slate-300">
-                    <div class="bg-slate-200/90 text-center flex items-center justify-center h-4"><span class="text-[9px] font-bold text-slate-700 leading-none">ชาย</span></div>
-                    <div class="flex-1 bg-white flex items-center justify-center"><span class="text-[22px] font-black text-slate-800 leading-none">28</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 shadow-sm border border-slate-300">
-                    <div class="bg-slate-200/90 text-center flex items-center justify-center h-4"><span class="text-[9px] font-bold text-slate-700 leading-none">หญิง</span></div>
-                    <div class="flex-1 bg-white flex items-center justify-center"><span class="text-[22px] font-black text-slate-800 leading-none">32</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 shadow-sm border border-slate-300">
-                    <div class="bg-blue-100/90 text-center flex items-center justify-center h-4"><span class="text-[9px] font-bold text-blue-700 leading-none">OPD</span></div>
-                    <div class="flex-1 bg-white flex items-center justify-center"><span class="text-[22px] font-black text-blue-800 leading-none">15</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 shadow-sm border border-slate-300">
-                    <div class="bg-red-100/90 text-center flex items-center justify-center h-4"><span class="text-[9px] font-black text-red-700 leading-none">ER</span></div>
-                    <div class="flex-1 bg-white flex items-center justify-center"><span class="text-[22px] font-black text-red-600 animate-pulse leading-none">2</span></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="h-full flex flex-col min-h-0 glass-panel p-2.5" style="width: 34%;">
-            <div class="flex justify-between items-center border-b border-slate-400/50 shrink-0 pb-1 mb-1">
-                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm leading-none m-0">การแจ้งเตือนใหม่</h2>
+        <!-- Column 2: ผู้ป่วยใน (IPD) (34%) -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-3" style="width: 34%;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-procedures text-blue-600 mr-2"></i>ผู้ป่วยใน (IPD)</h2>
             </div>
 
             <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1">
-                <div class="card-3d card-3d-green p-2 flex items-center gap-2">
-                    <div class="w-8 flex justify-center"><i class="fas fa-box-open text-emerald-600 text-lg drop-shadow-sm"></i></div>
+                <div class="card-3d-ipd relative flex items-center justify-between alert-new h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-emerald-500">M21</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono tracking-widest leading-none">123456789</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-sm leading-none">Admit</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-check-circle text-emerald-500 text-lg drop-shadow-sm"></i></div>
+                </div>
+
+                <div class="card-3d-ipd relative flex items-center justify-between alert-new h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-rose-500">F25</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono tracking-widest leading-none">987654321</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-300 shadow-sm leading-none">D/C</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-hourglass-half text-amber-500 text-lg drop-shadow-sm"></i></div>
+                </div>
+
+                <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-emerald-500">M10</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">112233445</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">Admit</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-check-circle text-emerald-500 text-lg"></i></div>
+                </div>
+                <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-emerald-500">F12</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">223344556</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">Admit</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-check-circle text-emerald-500 text-lg"></i></div>
+                </div>
+                <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-emerald-500">ICU</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">334455667</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">Admit</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-hourglass-half text-amber-500 text-lg"></i></div>
+                </div>
+                <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-rose-500">M05</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">445566778</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">D/C</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-check-circle text-emerald-500 text-lg"></i></div>
+                </div>
+                <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-rose-500">F30</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">556677889</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">D/C</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-check-circle text-emerald-500 text-lg"></i></div>
+                </div>
+                <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-amber-500">P5</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">667788990</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">อื่นๆ</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-hourglass-half text-amber-500 text-lg"></i></div>
+                </div>
+                 <div class="card-3d-ipd relative flex items-center justify-between h-[32px] overflow-hidden pl-[48px]">
+                    <div class="ipd-badge bg-amber-500">P8</div>
+                    <div class="flex-1 flex items-center justify-between px-3">
+                        <span class="text-slate-800 font-black text-lg font-mono leading-none">778899001</span>
+                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none">อื่นๆ</span>
+                    </div>
+                    <div class="w-8 flex justify-center shrink-0"><i class="fas fa-check-circle text-emerald-500 text-lg"></i></div>
+                </div>
+            </div>
+
+            <!-- สรุปจำนวน เน้นตัวเลขใหญ่ๆ -->
+            <div class="flex justify-between mt-1 pt-1 shrink-0 h-[65px] border-t-2 border-slate-400/30 gap-1.5">
+                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
+                    <div class="bg-rose-100 h-4 text-center border-b border-rose-300 flex items-center justify-center"><span class="text-[10px] font-black text-rose-800 leading-none">D/C</span></div>
+                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-rose-600 leading-none">6</span></div>
+                </div>
+                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
+                    <div class="bg-emerald-100 h-4 text-center border-b border-emerald-300 flex items-center justify-center"><span class="text-[10px] font-black text-emerald-800 leading-none">Admit</span></div>
+                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-emerald-700 leading-none">4</span></div>
+                </div>
+                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
+                    <div class="bg-slate-200 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[10px] font-bold text-slate-800 leading-none">IPD ชาย</span></div>
+                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-slate-800 leading-none">28</span></div>
+                </div>
+                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
+                    <div class="bg-slate-200 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[10px] font-bold text-slate-800 leading-none">IPD หญิง</span></div>
+                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-slate-800 leading-none">32</span></div>
+                </div>
+                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
+                    <div class="bg-blue-100 h-4 text-center border-b border-blue-300 flex items-center justify-center"><span class="text-[10px] font-bold text-blue-800 leading-none">OPD</span></div>
+                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-blue-800 leading-none">15</span></div>
+                </div>
+                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
+                    <div class="bg-red-100 h-4 text-center border-b border-red-300 flex items-center justify-center"><span class="text-[10px] font-black text-red-800 leading-none">ER</span></div>
+                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-red-600 animate-pulse leading-none">2</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 3: แจ้งเตือน & ข่าว (34%) -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-3" style="width: 34%;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-bell text-rose-500 mr-2"></i>การแจ้งเตือนใหม่</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1">
+                <div class="card-3d bg-emerald-50/90 p-2 flex items-center gap-3">
+                    <div class="w-8 flex justify-center"><i class="fas fa-box-open text-emerald-600 text-xl drop-shadow-sm"></i></div>
                     <div class="flex-1 flex justify-between items-center truncate">
                         <span class="text-xs font-bold text-slate-800 truncate">เบิกยา: <span class="font-black text-sm">ตึกผู้ป่วยในชาย</span></span>
-                        <span class="text-[11px] text-emerald-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-emerald-200">14:50</span>
+                        <span class="text-[10px] text-emerald-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-emerald-200">14:50</span>
                     </div>
                 </div>
-                <div class="card-3d card-3d-blue p-2 flex items-center gap-2">
-                    <div class="w-8 flex justify-center"><i class="fas fa-calendar-times text-blue-500 text-lg drop-shadow-sm"></i></div>
+
+                <div class="card-3d bg-blue-50/90 p-2 flex items-center gap-3">
+                    <div class="w-8 flex justify-center"><i class="fas fa-calendar-times text-blue-500 text-xl drop-shadow-sm"></i></div>
                     <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-xs font-bold text-slate-800 truncate">Amoxicillin 500mg <span class="text-slate-500 font-medium">(ชั้น 2 C)</span></span>
-                        <span class="text-[11px] text-blue-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-blue-200">31/05/69</span>
+                        <span class="text-xs font-bold text-slate-800 truncate">Amoxicillin 500mg <span class="text-slate-500">(ชั้น 2 C)</span></span>
+                        <span class="text-[10px] text-blue-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-blue-200">31/05/69</span>
                     </div>
                 </div>
-                <div class="card-3d card-3d-purple p-2 flex items-center gap-2">
-                    <div class="w-8 flex justify-center"><i class="fab fa-line text-purple-500 text-xl drop-shadow-sm"></i></div>
+
+                <div class="card-3d bg-purple-50/90 p-2 flex items-center gap-3">
+                    <div class="w-8 flex justify-center"><i class="fab fa-line text-purple-500 text-2xl drop-shadow-sm"></i></div>
                     <div class="flex-1 flex justify-between items-center truncate">
                         <span class="text-xs font-bold text-slate-800 truncate">ถามยา: <span class="font-black text-sm">คุณสมร ศรีxxxx</span></span>
-                        <span class="text-[11px] text-purple-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-purple-200">12:25</span>
-                    </div>
-                </div>
-                <div class="card-3d card-3d-pink p-2 flex items-center gap-2">
-                    <div class="w-8 flex justify-center"><i class="fas fa-hand-holding-medical text-pink-500 text-lg drop-shadow-sm"></i></div>
-                    <div class="flex-1 flex justify-between items-center truncate">
-                        <span class="text-xs font-bold text-slate-800 truncate">ยืมยา: <span class="font-black text-sm">Meropenem 1g 10v</span></span>
-                        <span class="text-[11px] text-pink-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-pink-200">11:40</span>
+                        <span class="text-[10px] text-purple-700 font-black bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-purple-200">12:25</span>
                     </div>
                 </div>
             </div>
 
-            <div class="border-t border-slate-400/50 flex items-stretch gap-2 shrink-0 pt-1.5 mt-1" style="height: 70px;">
-                <!-- News / Market Data -->
-                <div class="flex-1 overflow-hidden relative card-3d p-1.5 bg-white/90 flex flex-col justify-center" id="news-container-wrapper">
-                    <div id="news-wrapper" class="flex items-start gap-2 h-full w-full fade-text">
-                        <div class="flex-1 overflow-hidden flex flex-col justify-center h-full">
-                            <div id="news-container" class="text-[11px] font-bold text-slate-800 line-clamp-3 leading-tight w-full">กำลังโหลดข้อมูล...</div>
-                        </div>
+            <!-- News & Weather -->
+            <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex items-stretch gap-2 shrink-0 h-[100px]">
+                
+                <!-- News/Gold/Oil Ticker -->
+                <div id="news-card" class="flex-1 overflow-hidden relative card-3d p-3 transition-colors duration-500">
+                    <div id="news-wrapper" class="flex items-center h-full w-full fade-text">
+                        <div id="news-container" class="text-sm font-bold text-slate-800 line-clamp-3 leading-snug w-full">กำลังโหลดข้อมูล...</div>
                     </div>
                 </div>
                 
-                <!-- Weather / PM 2.5 -->
-                <div class="card-3d p-1 flex flex-col justify-between items-center w-[50px] shrink-0 bg-white/90 shadow-none border-0 pt-1.5">
-                    <div id="weather-icon" class="text-sky-500 text-[26px] leading-none mb-1"><i class="fas fa-cloud"></i></div>
-                    <div class="flex flex-col items-center">
-                        <span id="weather-temp" class="text-[13px] font-black text-slate-800 leading-none">--°C</span>
-                        <span id="aqi-display" class="text-[10px] font-black text-slate-600 leading-none mt-0.5">PM:--</span>
+                <!-- Weather Widget -->
+                <div class="card-3d p-2 flex flex-col items-center justify-center gap-1 min-w-[5.5rem] bg-white/80">
+                    <div id="weather-icon" class="text-4xl">
+                        <i class="fas fa-spinner fa-spin text-slate-400"></i>
                     </div>
+                    <span id="weather-temp" class="text-2xl font-black text-slate-800 leading-none mt-1">--°C</span>
+                    <span id="weather-pm" class="text-[10px] font-black leading-none mt-1">PM2.5: --</span>
                 </div>
             </div>
         </section>
     </main>
 
     <script>
-        let isTomorrowMode = false;
-        let demoCountdownEndSecs = 0;
+        // API ดึงข้อมูลจาก Google Sheets
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
+        
+        let staffSchedule = { today: null, tomorrow: null };
+        let isDemoMode = false;
 
-        function updateClock() {
-            const now = new Date();
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            document.getElementById('clock-display').textContent = now.toLocaleTimeString('th-TH', timeOptions);
-
-            const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-            const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            const dayName = thaiDays[now.getDay()];
-            const date = now.getDate();
-            const month = thaiMonthsShort[now.getMonth()];
-            const year = now.getFullYear() + 543;
-
-            document.getElementById('date-display').textContent = `วัน${dayName} ${date} ${month} ${year}`;
-            checkStaffShifts(now);
+        // --- Voice TTS On Load ---
+        function playAlertVoice() {
+            const t1 = "มีการเบิกยาใหม่ จาก ตึกผู้ป่วยชาย ค่ะ";
+            const t2 = "มีการถามยาในไลน์ คุณสมรค่ะ";
+            
+            const u1 = new SpeechSynthesisUtterance(t1);
+            u1.lang = 'th-TH';
+            const u2 = new SpeechSynthesisUtterance(t2);
+            u2.lang = 'th-TH';
+            
+            u1.onend = () => window.speechSynthesis.speak(u2);
+            window.speechSynthesis.speak(u1);
         }
 
+        window.addEventListener('click', () => {
+            if(!window.audioPlayed) {
+                playAlertVoice();
+                window.audioPlayed = true;
+            }
+        }, {once: true});
+
+        setTimeout(() => { 
+            if(!window.audioPlayed) {
+                playAlertVoice();
+                window.audioPlayed = true; 
+            }
+        }, 1500);
+
+        // --- Fetch GAS Schedule ---
+        async function fetchSchedule() {
+            try {
+                const res = await fetch(GAS_API_URL);
+                const data = await res.json();
+                staffSchedule = data;
+                if(!isDemoMode) updateStaffUI(staffSchedule.today);
+            } catch(error) {
+                console.error("Error fetching GS:", error);
+            }
+        }
+
+        // --- Update UI logic ---
+        function updateStaffUI(data) {
+            if(!data) return;
+
+            const mapData = (elId, prop, defaultRole) => {
+                const el = document.getElementById(elId);
+                if(!el) return;
+                
+                const staff = data[prop];
+                
+                // ตรวจสอบข้อมูลและตัดวงเล็บออกเพื่อแสดงเฉพาะชื่อที่แท้จริง
+                if(!staff || !staff.name || staff.name.trim() === "") {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = 'flex';
+                    
+                    // ตัดวงเล็บออก เช่น "สุวรรณา(แพ้ยา)" -> "สุวรรณา"
+                    let cleanName = staff.name.split('(')[0].trim();
+                    
+                    const nameEl = el.querySelector('.staff-name');
+                    if(nameEl) nameEl.textContent = cleanName;
+                    
+                    const imgEl = el.querySelector('.staff-img');
+                    if(imgEl) {
+                        if (staff.photo) {
+                            imgEl.src = staff.photo;
+                        } else {
+                            let initials = cleanName.substring(0, 2);
+                            imgEl.src = `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(initials)}`;
+                        }
+                    }
+
+                    const roleEl = el.querySelector('.staff-role-text');
+                    if(roleEl && !roleEl.classList.contains('countdown-text')) {
+                        roleEl.textContent = defaultRole;
+                    }
+                    if(prop === 'clinic' && staff.clinicLabel) {
+                        el.querySelector('.staff-clinic').textContent = staff.clinicLabel;
+                    }
+                }
+            };
+
+            // Map data
+            mapData('card-key', 'key', 'ภ.คีย์');
+            mapData('card-ipd', 'ipd', 'ภ.ใน');
+            mapData('card-check1', 'check1', 'ภ.เช็ค1');
+            mapData('card-check2', 'check2', 'ภ.เช็ค2');
+            mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1');
+            mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2');
+            mapData('card-clinic', 'clinic', 'ภ.คลินิก');
+
+            mapData('card-aft-pharm', 'afternoon_pharm', '');
+            mapData('card-aft-tech1', 'afternoon_tech1', '');
+            mapData('card-oncall', 'oncall', '');
+
+            const cAft1 = document.getElementById('card-aft-tech1').style.display !== 'none';
+            const cOnc = document.getElementById('card-oncall').style.display !== 'none';
+            document.getElementById('div-aft-tech1').style.display = cAft1 ? 'block' : 'none';
+            document.getElementById('div-oncall').style.display = cOnc ? 'block' : 'none';
+        }
+
+        // --- Clock & Background Setup ---
         function setBackgroundByDay() {
             const dayOfWeek = new Date().getDay();
             const body = document.getElementById('main-body');
@@ -494,278 +553,175 @@
             body.classList.add(bgClasses[dayOfWeek]);
         }
 
-        // Logic เช็คสถานะเวร & ทำระบบนับถอยหลัง (Countdown)
-        function checkStaffShifts(now) {
-            const currentSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        function updateClock() {
+            const now = new Date();
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            document.getElementById('clock-display').textContent = now.toLocaleTimeString('th-TH', timeOptions);
+
+            const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             
+            document.getElementById('date-display').textContent = `วัน${thaiDays[now.getDay()]} ${now.getDate()} ${thaiMonthsShort[now.getMonth()]} ${now.getFullYear() + 543}`;
+            
+            checkStaffShifts(now);
+        }
+
+        function checkStaffShifts(now) {
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const currentSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
             const roles = {
-                'key': [{ start: 8 * 3600, end: 11 * 3600 + 30 * 60 }, { start: 12 * 3600 + 30 * 60, end: 16 * 3600 }],
-                'ipd': [{ start: 8 * 3600, end: 12 * 3600 }, { start: 13 * 3600, end: 16 * 3600 }],
-                'tech': [{ start: 8 * 3600, end: 11 * 3600 }, { start: 12 * 3600, end: 16 * 3600 }],
-                'check': [{ start: 8 * 3600, end: 12 * 3600 + 30 * 60 }, { start: 13 * 3600 + 30 * 60, end: 16 * 3600 }],
-                'dispense': [{ start: 8 * 3600, end: 12 * 3600 + 30 * 60 }, { start: 13 * 3600 + 30 * 60, end: 16 * 3600 }],
-                'clinic': [{ start: 8 * 3600, end: 16 * 3600 }] 
+                'key': [{ start: 8 * 60, end: 11 * 60 + 30 }, { start: 12 * 60 + 30, end: 16 * 60 }],
+                'ipd': [{ start: 8 * 60, end: 12 * 60 }, { start: 13 * 60, end: 16 * 60 }],
+                'check': [{ start: 8 * 60, end: 12 * 60 + 30 }, { start: 13 * 60 + 30, end: 16 * 60 }],
+                'dispense': [{ start: 8 * 60, end: 12 * 60 + 30 }, { start: 13 * 60 + 30, end: 16 * 60 }],
+                'clinic': [{ start: 8 * 60, end: 16 * 60 }] 
             };
 
             let activeCount = 0;
-            
+
             document.querySelectorAll('.staff-item').forEach(el => {
-                const role = el.dataset.role;
-                const spanEl = el.querySelector('span[data-orig-text]');
-                const origText = spanEl ? spanEl.dataset.origText : '';
-                const shifts = roles[role];
+                if (el.style.display === 'none') return;
+
+                const roleKey = el.dataset.role;
+                const shifts = roles[roleKey];
                 if (!shifts) return;
 
                 let isActive = false;
                 let isEndingSoon = false;
-                let countdownStr = "";
+                let remainingSec = 0;
 
-                // DEMO Logic: ทำให้ "ภ.คีย์" มีเวลานับถอยหลัง 2:30 นาที เมื่อเปิดเว็บ
-                if (role === 'key' && demoCountdownEndSecs > currentSecs) {
-                    isActive = true;
-                    let remainSecs = demoCountdownEndSecs - currentSecs;
-                    if (remainSecs <= 300) {
-                        isEndingSoon = true;
-                        let m = Math.floor(remainSecs / 60).toString().padStart(2, '0');
-                        let s = (remainSecs % 60).toString().padStart(2, '0');
-                        countdownStr = `${m}:${s}`;
-                    }
-                } else {
-                    // Logic ปกติ
-                    for (let shift of shifts) {
-                        if (currentSecs >= shift.start && currentSecs < shift.end) {
-                            isActive = true;
-                            let remainSecs = shift.end - currentSecs;
-                            if (remainSecs <= 300 && remainSecs > 0) { // เตือน 5 นาทีสุดท้าย
-                                isEndingSoon = true;
-                                let m = Math.floor(remainSecs / 60).toString().padStart(2, '0');
-                                let s = (remainSecs % 60).toString().padStart(2, '0');
-                                countdownStr = `${m}:${s}`;
-                            }
-                            break;
-                        }
+                for (let shift of shifts) {
+                    if (currentMins >= shift.start && currentMins < shift.end) {
+                        isActive = true;
+                        remainingSec = (shift.end * 60) - currentSecs;
+                        if (remainingSec <= 300) isEndingSoon = true;
+                        break;
                     }
                 }
 
-                // รีเซ็ตคลาส
-                el.classList.remove('staff-active', 'staff-inactive', 'staff-ending', 'staff-active-tomorrow');
-                
-                // ถ้าระบบโชว์เวรวันพรุ่งนี้
-                if (isTomorrowMode) {
-                    el.classList.add('staff-active-tomorrow');
-                    if(spanEl) {
-                        spanEl.textContent = origText;
-                        spanEl.className = "text-[11px] font-black text-slate-700 leading-tight bg-white/90 px-2 py-0.5 rounded shadow-sm border border-slate-200";
-                    }
-                    activeCount++; 
-                } else {
-                    // วันปกติ
-                    if (isActive) {
-                        activeCount++;
-                        el.classList.add(isEndingSoon ? 'staff-ending' : 'staff-active');
-                        
-                        if (isEndingSoon && spanEl) {
-                            // แสดงเวลานับถอยหลัง โดยไม่ต้องมีกรอบ
-                            spanEl.textContent = countdownStr;
-                            spanEl.className = "countdown-text leading-tight bg-white/70 px-2 rounded";
-                        } else if (spanEl) {
-                            // แสดงชื่อปกติ
-                            spanEl.textContent = origText;
-                            spanEl.className = "text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded";
-                        }
+                if(roleKey === 'key') { 
+                    isActive = true; 
+                    isEndingSoon = true; 
+                    remainingSec = 150; 
+                }
+
+                el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
+                const roleTextEl = el.querySelector('.staff-role-text');
+
+                if (isActive) {
+                    activeCount++;
+                    if (isEndingSoon) {
+                        el.classList.add('staff-ending');
+                        const m = Math.floor(remainingSec / 60).toString().padStart(2, '0');
+                        const s = (remainingSec % 60).toString().padStart(2, '0');
+                        roleTextEl.textContent = `${m}:${s}`;
+                        roleTextEl.classList.add('countdown-text');
                     } else {
-                        el.classList.add('staff-inactive');
-                        if (spanEl) {
-                            spanEl.textContent = origText;
-                            spanEl.className = "text-[11px] font-black text-slate-700 leading-tight bg-white/70 px-2 rounded";
-                        }
+                        el.classList.add('staff-active');
+                        roleTextEl.classList.remove('countdown-text');
                     }
+                } else {
+                    el.classList.add('staff-inactive');
+                    roleTextEl.classList.remove('countdown-text');
                 }
             });
 
-            const activeCountEl = document.getElementById('active-staff-count');
-            if (activeCountEl) {
-                activeCountEl.textContent = isTomorrowMode ? 'พรุ่งนี้' : activeCount + ' คน';
-            }
+            document.getElementById('active-staff-count').textContent = activeCount + ' คน';
         }
 
-        function cycleTomorrowMode() {
-            setInterval(() => {
-                enableTomorrowMode(true);
-                setTimeout(() => { enableTomorrowMode(false); }, 15000); 
-            }, 60000); 
-        }
+        // --- Info Mix (News/Gold/Oil) ---
+        let mixData = [
+            { type: 'news', text: "สธ. ประกาศนโยบายยกระดับ รพ.ชุมชน ทั่วประเทศ พร้อมเพิ่มงบประมาณปี 2569", bg: "bg-white" },
+            { type: 'gold', text: "ทองคำแท่ง รับซื้อ 41,000 ขายออก 41,100 (ขึ้น 100 บ.)", bg: "bg-yellow-100" },
+            { type: 'news', text: "รพ.สวี จัดกิจกรรม IC Day สร้างความตระหนักเรื่องการควบคุมการติดเชื้อ", bg: "bg-white" },
+            { type: 'oil', text: "ราคาน้ำมัน แก๊สโซฮอล์ 95: 38.50 บ/ลิตร, ดีเซล: 32.94 บ/ลิตร", bg: "bg-slate-200" }
+        ];
+        let currentMixIndex = 0;
 
-        function enableTomorrowMode(enable) {
-            isTomorrowMode = enable;
-            const staffColumn = document.getElementById('col-staff');
-            const staffTitle = document.getElementById('staff-title');
-            const shiftTitle = document.getElementById('shift-title');
-
-            if (enable) {
-                staffColumn.classList.add('col-tomorrow-mode');
-                staffTitle.innerHTML = 'เภสัชกรประจำวัน <span class="text-rose-600 text-sm ml-1"><i class="fas fa-forward"></i> พรุ่งนี้</span>';
-                shiftTitle.innerHTML = 'เวรบ่าย & On Call <span class="text-rose-600 text-[10px] ml-1">(พรุ่งนี้)</span>';
-            } else {
-                staffColumn.classList.remove('col-tomorrow-mode');
-                staffTitle.innerHTML = 'เภสัชกรประจำวัน';
-                shiftTitle.innerHTML = 'เวรบ่าย & On Call';
-            }
-            checkStaffShifts(new Date());
-        }
-
-        let mixedContent = [];
-        let currentContentIndex = 0;
-
-        function fetchMarketData() {
-            const goldBuy = 40500 + Math.floor(Math.random() * 200 - 100);
-            const goldSell = goldBuy + 100;
-            const oil95 = (38.50 + Math.random() * 0.5 - 0.25).toFixed(2);
-            const oilE20 = (36.40 + Math.random() * 0.5 - 0.25).toFixed(2);
-            return [
-                { type: 'gold', title: `ราคาทองคำแท่ง: รับซื้อ ${goldBuy.toLocaleString()} บ. / ขายออก ${goldSell.toLocaleString()} บ. (สมาคมค้าทองคำ)` },
-                { type: 'oil', title: `ราคาน้ำมันวันนี้: แก๊สโซฮอล์ 95 ${oil95} บ/ลิตร, E20 ${oilE20} บ/ลิตร (PTT/Bangchak)` }
-            ];
-        }
-
-        async function fetchNews() {
-            let fetchedNews = [];
-            try {
-                const targetUrl = encodeURIComponent('https://news.google.com/rss?hl=th&gl=TH&ceid=TH:th');
-                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${targetUrl}&api_key=`; 
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                if (data.status === 'ok') {
-                    fetchedNews = data.items.slice(0, 10).map(item => ({ type: 'news', title: item.title.split(' - ')[0] }));
-                }
-            } catch (error) {
-                fetchedNews = [
-                    { type: 'news', title: "สธ. เน้นย้ำนโยบายความปลอดภัยผู้ป่วย (Patient Safety) ในโรงพยาบาล" },
-                    { type: 'news', title: "การดูแลยาฉุกเฉินและ High Alert Drug ต้องทำตามระเบียบอย่างเคร่งครัด" }
-                ];
-            }
-
-            const marketData = fetchMarketData();
-            mixedContent = [];
-            for (let i = 0; i < fetchedNews.length; i++) {
-                mixedContent.push(fetchedNews[i]);
-                if (i === 1) mixedContent.push(marketData[0]); 
-                if (i === 3) mixedContent.push(marketData[1]); 
-            }
-            if(mixedContent.length === 0) mixedContent = marketData;
-            showContent();
-        }
-
-        function showContent() {
-            if (mixedContent.length === 0) return;
+        function showMixedInfo() {
             const wrapper = document.getElementById('news-wrapper');
             const container = document.getElementById('news-container');
-            const bgWrapper = document.getElementById('news-container-wrapper');
+            const card = document.getElementById('news-card');
             
             wrapper.style.opacity = 0;
+            
             setTimeout(() => {
-                const item = mixedContent[currentContentIndex];
-                bgWrapper.className = "flex-1 overflow-hidden relative p-1.5 flex flex-col justify-center transition-colors duration-500 rounded-lg shadow-sm";
+                const item = mixData[currentMixIndex];
+                container.textContent = item.text;
                 
-                if(item.type === 'gold') {
-                    bgWrapper.classList.add('news-type-gold');
-                    container.className = "text-[11px] font-bold text-yellow-900 line-clamp-3 leading-tight w-full";
-                } else if(item.type === 'oil') {
-                    bgWrapper.classList.add('news-type-oil');
-                    container.className = "text-[11px] font-bold text-slate-800 line-clamp-3 leading-tight w-full";
-                } else {
-                    bgWrapper.classList.add('news-type-news');
-                    container.className = "text-[11px] font-bold text-slate-800 line-clamp-3 leading-tight w-full";
-                }
-
-                container.innerHTML = item.title;
+                card.className = `flex-1 overflow-hidden relative card-3d p-3 transition-colors duration-500 ${item.bg}`;
+                
                 wrapper.style.opacity = 1;
-                currentContentIndex = (currentContentIndex + 1) % mixedContent.length;
+                currentMixIndex = (currentMixIndex + 1) % mixData.length;
             }, 500);
         }
 
+        // --- Weather & PM 2.5 ---
         async function fetchWeather() {
             try {
-                const weatherRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2333&longitude=99.0833&current_weather=true'); 
-                const weatherData = await weatherRes.json();
-                const temp = Math.round(weatherData.current_weather.temperature);
-                const code = weatherData.current_weather.weathercode;
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&air_quality=pm2_5');
+                const data = await res.json();
+                
+                const temp = Math.round(data.current.temperature_2m);
+                const code = data.current.weather_code;
+                const pm25 = data.current.pm2_5 ? Math.round(data.current.pm2_5) : 15; 
                 
                 let iconClass = 'fas fa-cloud';
                 let iconColor = 'text-slate-400';
                 
                 if (code === 0) { iconClass = 'fas fa-sun'; iconColor = 'text-amber-500'; }
                 else if (code >= 1 && code <= 3) { iconClass = 'fas fa-cloud-sun'; iconColor = 'text-sky-400'; }
-                else if (code >= 45 && code <= 48) { iconClass = 'fas fa-smog'; iconColor = 'text-slate-400'; }
                 else if (code >= 51 && code <= 67) { iconClass = 'fas fa-cloud-rain'; iconColor = 'text-blue-500'; }
-                else if (code >= 80 && code <= 82) { iconClass = 'fas fa-cloud-showers-heavy'; iconColor = 'text-blue-600'; }
                 else if (code >= 95) { iconClass = 'fas fa-bolt'; iconColor = 'text-purple-500'; }
 
-                document.getElementById('weather-icon').innerHTML = `<i class="${iconClass} ${iconColor} drop-shadow-sm"></i>`;
+                document.getElementById('weather-icon').innerHTML = `<i class="${iconClass} ${iconColor}"></i>`;
                 document.getElementById('weather-temp').textContent = `${temp}°C`;
                 
-                const aqiRes = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2333&longitude=99.0833&current=pm2_5');
-                const aqiData = await aqiRes.json();
-                const pm25 = Math.round(aqiData.current.pm2_5);
-                const aqiBadge = document.getElementById('aqi-display');
+                const pmEl = document.getElementById('weather-pm');
+                pmEl.textContent = `PM2.5: ${pm25}`;
+                if(pm25 > 50) pmEl.className = "text-[10px] font-black leading-none mt-1 text-red-500";
+                else if(pm25 > 25) pmEl.className = "text-[10px] font-black leading-none mt-1 text-orange-500";
+                else pmEl.className = "text-[10px] font-black leading-none mt-1 text-emerald-600";
                 
-                aqiBadge.textContent = `PM:${pm25}`;
-                aqiBadge.className = 'text-[10px] font-black mt-0.5 leading-none transition-colors ';
-                if(pm25 <= 25) aqiBadge.classList.add('text-emerald-600');
-                else if(pm25 <= 50) aqiBadge.classList.add('text-amber-600');
-                else if(pm25 <= 100) aqiBadge.classList.add('text-orange-600');
-                else aqiBadge.classList.add('text-rose-600', 'animate-pulse');
-
             } catch (error) {
-                document.getElementById('weather-icon').innerHTML = `<i class="fas fa-exclamation-triangle text-rose-400"></i>`;
-                document.getElementById('weather-temp').textContent = "--°C";
+                console.error(error);
             }
         }
 
-        let audioPlayed = false;
-        
-        function playDemoAlerts() {
-            if (audioPlayed || !('speechSynthesis' in window)) return;
-            audioPlayed = true; 
-            window.speechSynthesis.cancel();
+        // --- Tomorrow Demo Routine (ทุก 1 นาที) ---
+        setInterval(() => {
+            isDemoMode = true;
+            document.getElementById('col-staff').classList.add('bg-white/95'); 
+            document.getElementById('col-staff-title').textContent = "เภสัชกรประจำวัน (พรุ่งนี้)";
+            document.getElementById('col-afternoon-title').textContent = "เวรบ่าย & On Call (พรุ่งนี้)";
             
-            const msg1 = new SpeechSynthesisUtterance("มีการเบิกยาใหม่ จาก ตึกผู้ป่วยชาย ค่ะ");
-            msg1.lang = 'th-TH';
-            msg1.rate = 0.9; 
-            
-            const msg2 = new SpeechSynthesisUtterance("มีการถามยาในไลน์ คุณสมรค่ะ");
-            msg2.lang = 'th-TH';
-            msg2.rate = 0.9;
+            if(staffSchedule.tomorrow) updateStaffUI(staffSchedule.tomorrow);
 
-            msg1.onend = function() {
-                setTimeout(() => { window.speechSynthesis.speak(msg2); }, 1000);
-            };
+            // กลับเป็นปกติหลัง 15 วินาที
+            setTimeout(() => {
+                isDemoMode = false;
+                document.getElementById('col-staff').classList.remove('bg-white/95');
+                document.getElementById('col-staff-title').textContent = "เภสัชกรประจำวัน";
+                document.getElementById('col-afternoon-title').textContent = "เวรบ่าย & On Call";
+                
+                if(staffSchedule.today) updateStaffUI(staffSchedule.today);
+            }, 15000);
 
-            window.speechSynthesis.speak(msg1);
-        }
+        }, 60000);
 
+        // --- Init ---
         window.onload = function() {
-            // ตั้งเวลา Demo เวรคีย์ ให้นับถอยหลัง 2 นาที 30 วินาที ตอนเปิดหน้าเว็บ
-            const loadNow = new Date();
-            demoCountdownEndSecs = loadNow.getHours() * 3600 + loadNow.getMinutes() * 60 + loadNow.getSeconds() + 150;
-
-            updateClock();
             setBackgroundByDay();
+            updateClock();
             fetchWeather();
-            fetchNews();
-            cycleTomorrowMode(); 
+            fetchSchedule();
+            showMixedInfo();
             
             setInterval(updateClock, 1000); 
-            setInterval(showContent, 8000); 
-            setInterval(() => { setBackgroundByDay(); fetchWeather(); }, 1800000); 
-            setInterval(fetchNews, 3600000); 
-
-            // เล่นเสียงแจ้งเตือน
-            setTimeout(playDemoAlerts, 1500);
+            setInterval(showMixedInfo, 10000); 
+            setInterval(() => { setBackgroundByDay(); fetchWeather(); fetchSchedule(); }, 600000); 
         };
-
-        // Fallback กรณีเสียงถูกบล็อก ให้กด 1 ครั้งที่หน้าจอ
-        document.body.addEventListener('click', playDemoAlerts, { once: true });
     </script>
 </body>
 </html>
