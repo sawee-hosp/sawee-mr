@@ -1586,6 +1586,13 @@
       if(isCanvasBlank(cvs)) return Swal.fire('กรุณาเซ็นชื่อผู้เบิก');
 
       isSubmitting = true;
+      
+      // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
+      const btn = document.getElementById('btn-submit-order');
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังสร้าง PDF ใบเบิก...';
+      btn.disabled = true;
+
       const sign = cvs.toDataURL();
       const orderData = {
           box: curBoxOrder,
@@ -1594,7 +1601,12 @@
           items: cart
       };
 
-      Swal.fire({ title: 'กำลังบันทึก...', didOpen: ()=>Swal.showLoading() });
+      Swal.fire({ 
+          title: 'กำลังประมวลผล', 
+          html: 'ระบบกำลังบันทึกข้อมูลและสร้างใบเบิก (PDF)...<br>กรุณารอสักครู่',
+          allowOutsideClick: false,
+          didOpen: ()=>Swal.showLoading() 
+      });
       
       try {
           const res = await callApi('submitOrder', { orderData });
@@ -1616,6 +1628,9 @@
           Swal.fire('Error', 'การเชื่อมต่อผิดพลาด', 'error');
       } finally {
           isSubmitting = false;
+          // คืนค่าปุ่มกลับเหมือนเดิม
+          btn.innerHTML = origText;
+          btn.disabled = false;
       }
   }
 
