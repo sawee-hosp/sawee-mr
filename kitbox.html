@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <!-- เพิ่ม HTML5 QR Code Library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
     :root {
@@ -25,7 +27,7 @@
         font-family: var(--font-main) !important; 
     }
     
-    body { background-color: var(--bg); color: var(--text); padding-bottom: 70px; user-select: none; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; user-select: none; }
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn 0.4s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -130,11 +132,9 @@
     .btn-711-green { background: var(--primary); color: white; border: none; font-weight: bold; }
     .btn-711-purple { background: #673ab7; color: white; border: none; font-weight: bold; }
 
-    .fab-print { position: fixed; bottom: 80px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    
-    .fab-print-stock { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #2196f3; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; white-space: nowrap; }
-    
-    .fab-edit-lg { position: fixed; bottom: 80px; right: 15px; background: var(--secondary); color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
+    .fab-print { position: fixed; bottom: 85px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .fab-print-stock { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: #2196f3; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; white-space: nowrap; }
+    .fab-edit-lg { position: fixed; bottom: 85px; right: 15px; background: var(--secondary); color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
     
     .nav-tabs .nav-link { color: #666; font-size: 0.95rem; }
     .nav-tabs .nav-link.active { color: var(--primary); font-weight: 800; border-bottom: 3px solid var(--primary); }
@@ -153,17 +153,29 @@
     .btn-qty:active { background: var(--secondary); color: white; transform: scale(0.9); }
     .inp-qty { width: 60px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.5rem; color: var(--text); }
 
+    /* ปรับแต่งเมนู Bottom Navigation ใหม่ให้มี 5 ปุ่ม */
     .btm-nav { 
         position: fixed; bottom: 0; left: 0; right: 0; height: 65px; 
-        background: var(--primary); display: flex; justify-content: space-around; align-items: center; 
+        background: var(--primary); display: flex; justify-content: space-between; align-items: center; 
         z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); border-top: 4px solid var(--secondary);
     }
-    .nav-item { text-align: center; color: rgba(255,255,255,0.7); font-size: 0.75rem; width: 25%; cursor: pointer; transition: 0.2s; padding: 5px 0; }
+    .nav-item { text-align: center; color: rgba(255,255,255,0.7); font-size: 0.75rem; width: 20%; cursor: pointer; transition: 0.2s; padding: 5px 0; position: relative;}
     .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 2px; }
     .nav-item.active { color: white; font-weight: 700; transform: translateY(-2px); }
     
-    .nav-badge-alert { position: absolute; top: -5px; right: -8px; background: var(--secondary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; }
-    .nav-badge-red { position: absolute; top: -5px; right: -8px; background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; animation: blink 1s linear infinite; }
+    /* สไตล์สำหรับปุ่มสแกน QR ตรงกลาง */
+    .scan-btn-wrapper { width: 20%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
+    .scan-btn-circle {
+        width: 55px; height: 55px; background: var(--secondary); color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; position: absolute; bottom: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 4px solid var(--primary);
+        transition: transform 0.2s; z-index: 1001;
+    }
+    .scan-btn-circle:active { transform: scale(0.9); }
+    
+    .nav-badge-alert { position: absolute; top: -5px; right: 5px; background: var(--secondary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; }
+    .nav-badge-red { position: absolute; top: -5px; right: 5px; background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; animation: blink 1s linear infinite; }
 
     .box-grid-item {
         background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px;
@@ -294,6 +306,7 @@
     </div>
   </div>
 
+  <!-- Bottom Navigation Layout ใหม่ -->
   <div class="btm-nav">
     <div class="nav-item active" onclick="nav('tab-hist', this)">
         <div class="icon-wrap">
@@ -302,14 +315,35 @@
         </div>
         <span>รายการเบิก</span>
     </div>
-    <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-box"></i><span>เช็คสต็อกและกล่อง</span></div>
+    <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-box"></i><span>สต็อก</span></div>
+    
+    <!-- ปุ่มสแกน QR ลอยตัวตรงกลาง -->
+    <div class="scan-btn-wrapper" onclick="openScanner()">
+        <div class="scan-btn-circle"><i class="fas fa-qrcode"></i></div>
+    </div>
+    
     <div class="nav-item" onclick="nav('tab-search', this)"><i class="fas fa-search"></i><span>ค้นหา</span></div>
     <div class="nav-item" onclick="nav('tab-expire', this)">
         <div class="icon-wrap">
             <i class="fas fa-calendar-times"></i>
             <div id="nav-badge-expire" class="nav-badge-red hidden">0</div>
         </div>
-        <span>ยาหมดอายุ</span>
+        <span>หมดอายุ</span>
+    </div>
+  </div>
+
+  <!-- Modal: สแกน QR Code -->
+  <div class="modal fade" id="mdlScanner" tabindex="-1" style="z-index: 2300;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header text-white" style="background:var(--primary)">
+            <h5 class="modal-title fw-bold"><i class="fas fa-qrcode"></i> สแกน QR Code ยา</h5>
+            <button type="button" class="btn-close btn-close-white" onclick="closeScanner()"></button>
+        </div>
+        <div class="modal-body text-center bg-light">
+            <div id="qr-reader" style="width:100%; max-width:350px; margin:auto; background:white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -535,15 +569,17 @@
               return window.btoa(binary);
           };
 
-          const [b64Reg, b64Bold] = await Promise.all([
+          const [b64Reg, b64Bold, b64Light] = await Promise.all([
               fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Regular.ttf'),
-              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Bold.ttf')
+              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Bold.ttf'),
+              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Light.ttf') // ดึงฟอนต์ตัวบางเพื่อแบบฟอร์ม PDF
           ]);
 
           window.pdfMake = window.pdfMake || {};
           window.pdfMake.vfs = window.pdfMake.vfs || {};
           window.pdfMake.vfs['Sarabun-Regular.ttf'] = b64Reg;
           window.pdfMake.vfs['Sarabun-Bold.ttf'] = b64Bold;
+          window.pdfMake.vfs['Sarabun-Light.ttf'] = b64Light;
           
           window.pdfMake.fonts = {
               Sarabun: {
@@ -551,6 +587,12 @@
                   bold: 'Sarabun-Bold.ttf',
                   italics: 'Sarabun-Regular.ttf',
                   bolditalics: 'Sarabun-Bold.ttf'
+              },
+              SarabunLight: {
+                  normal: 'Sarabun-Light.ttf',
+                  bold: 'Sarabun-Light.ttf',
+                  italics: 'Sarabun-Light.ttf',
+                  bolditalics: 'Sarabun-Light.ttf'
               }
           };
           pdfMakeReady = true;
@@ -576,6 +618,63 @@
           return { status: false, message: err.message };
       }
   }
+
+  // --- HTML5 QR Scanner Logic ---
+  let html5QrcodeScanner;
+  function openScanner() {
+      const mdl = new bootstrap.Modal(document.getElementById('mdlScanner'));
+      mdl.show();
+      setTimeout(() => {
+          if (!html5QrcodeScanner) {
+              html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+          }
+          html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+      }, 300);
+  }
+
+  function closeScanner() {
+      if (html5QrcodeScanner) {
+          html5QrcodeScanner.clear().catch(error => { console.error("Failed to clear scanner", error); });
+      }
+      const mdlInstance = bootstrap.Modal.getInstance(document.getElementById('mdlScanner'));
+      if(mdlInstance) mdlInstance.hide();
+  }
+
+  // ดักจับเวลา User กดปิด Modal ด้วยวิธีอื่นๆ ให้กล้องดับไปด้วย
+  document.getElementById('mdlScanner').addEventListener('hidden.bs.modal', function () {
+      if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => console.log(e));
+  });
+
+  async function onScanSuccess(decodedText, decodedResult) {
+      closeScanner();
+      Swal.showLoading();
+      const res = await callApi('findBoxByInvId', { invId: decodedText });
+      
+      if(res.status && res.action === 'OPEN' && res.invId) {
+          const boxName = res.boxName;
+          const itemsRes = await callApi('getItems', { boxName: boxName });
+          Swal.close();
+          if(itemsRes.status) {
+              const item = itemsRes.data.find(i => String(i.invId) === String(res.invId));
+              if(item) {
+                  // ให้ระบบนำทางไปที่ Tab สต็อก และเปิดกล่องนั้นโดยตรง
+                  nav('tab-stock', document.querySelectorAll('.btm-nav .nav-item')[1]);
+                  openBoxForce(boxName, ''); 
+                  // เรียก Modal Edit ขึ้นมา (เพื่อความสะดวกในการจัดการสต็อก / สติกเกอร์)
+                  editStk(item.invId, item.name, item.itemId, item.amount, item.actual, item.expire, item.location);
+              } else {
+                  Swal.fire('ไม่พบยา', 'ไม่พบรายการยานี้ในกล่อง ' + boxName, 'error');
+              }
+          } else {
+              Swal.fire('Error', itemsRes.message, 'error');
+          }
+      } else {
+          Swal.close();
+          Swal.fire('ไม่พบข้อมูล', 'ไม่พบ QR Code นี้ในระบบคลังยา', 'error');
+      }
+  }
+  function onScanFailure(error) { /* handle quietly */ }
+  // ---------------------------------
 
   window.onload = async () => {
       mdlEdit = new bootstrap.Modal('#mdlEdit'); 
@@ -640,7 +739,9 @@
 
   function nav(pid, el){
       document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
-      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
+      document.querySelectorAll('.btm-nav .nav-item').forEach(x=>x.classList.remove('active')); 
+      if(el) el.classList.add('active'); // allow null
+      
       if(pid === 'tab-hist') loadHist();
       if(pid === 'tab-expire') loadExpiredItems();
       
@@ -722,7 +823,6 @@
       renderHist(curHistStatus);
   }
 
-  window.utterances = []; 
   function playSound(text) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -840,6 +940,24 @@
       document.getElementById('stock-grouped-list').innerHTML = html;
   }
 
+  // Helper สำหรับเปิด UI กล่องแบบบังคับ (ใช้ตอนสแกน)
+  async function openBoxForce(name, imgRaw) {
+      curBoxStock = name;
+      document.getElementById('stock-landing').classList.add('hidden'); 
+      document.getElementById('stock-content-wrapper').classList.remove('hidden');
+      document.getElementById('stock-content').classList.remove('hidden');
+      document.getElementById('fab-edit').classList.remove('hidden'); 
+      document.getElementById('fab-print').classList.remove('hidden');
+      document.getElementById('fab-print-stock').classList.remove('hidden');
+      
+      document.getElementById('edit-box-name').value = name; 
+      document.getElementById('edit-box-img').value = imgRaw || '';
+      document.getElementById('preview-box-img').src = DEFAULT_IMG;
+      if(imgRaw) callApi('resolveImage',{input:imgRaw}).then(r=>{if(r.status) document.getElementById('preview-box-img').src=r.src});
+      
+      await loadStockItems(name);
+  }
+
   function selBox(name, imgRaw) {
       if (curBoxStock === name) {
           curBoxStock = '';
@@ -849,20 +967,7 @@
           document.getElementById('fab-print').classList.add('hidden');
           document.getElementById('fab-print-stock').classList.add('hidden');
       } else {
-          curBoxStock = name;
-          document.getElementById('stock-landing').classList.add('hidden'); 
-          document.getElementById('stock-content-wrapper').classList.remove('hidden');
-          document.getElementById('stock-content').classList.remove('hidden');
-          document.getElementById('fab-edit').classList.remove('hidden'); 
-          document.getElementById('fab-print').classList.remove('hidden');
-          document.getElementById('fab-print-stock').classList.remove('hidden');
-          
-          document.getElementById('edit-box-name').value = name; 
-          document.getElementById('edit-box-img').value = imgRaw;
-          document.getElementById('preview-box-img').src = DEFAULT_IMG;
-          if(imgRaw) callApi('resolveImage',{input:imgRaw}).then(r=>{if(r.status) document.getElementById('preview-box-img').src=r.src});
-          
-          loadStockItems(name);
+          openBoxForce(name, imgRaw);
       }
   }
 
@@ -1027,7 +1132,11 @@
         mdlEdit.hide(); 
         const overlay = document.getElementById('stock-spinner-overlay');
         overlay.classList.remove('hidden');
-        await loadStockItems(curBoxStock); 
+        
+        // บังคับให้เปลี่ยนหน้าจอไปยังกล่องนั้นเลย และโหลดข้อมูลล่าสุด
+        nav('tab-stock', document.querySelectorAll('.btm-nav .nav-item')[1]);
+        await openBoxForce(curBoxStock, '');
+        
         overlay.classList.add('hidden');
     } else {
         Swal.fire('Error', res.message, 'error');
@@ -1069,7 +1178,18 @@
   async function openLabelEdit(id) { const r = await callApi('getLabelInfo', {itemId:id}); if(r.status) { const d=r.data; document.getElementById('lbl-name').value=d.name; window.currentLabelItemId=id; mdlLabelEdit.show(); } }
   async function saveLabelInfo() { await callApi('updateLabelInfo', {itemId:window.currentLabelItemId, name:document.getElementById('lbl-name').value}); mdlLabelEdit.hide(); }
   
-  function addToStickerCartFromEdit() { stickerCart.push({itemId:document.getElementById('ed-itemid').value, qty:document.getElementById('stk-qty').value, name:document.getElementById('ed-name').innerText, expire:document.getElementById('ed-exp').value}); document.getElementById('badge-sticker').innerText=stickerCart.reduce((s,i)=>s+Number(i.qty),0); document.getElementById('badge-sticker').classList.remove('hidden'); Swal.fire({toast:true, icon:'success', title:'Added', position:'top-end', showConfirmButton:false, timer:1000}); }
+  function addToStickerCartFromEdit() { 
+      stickerCart.push({
+          itemId:document.getElementById('ed-itemid').value, 
+          qty:document.getElementById('stk-qty').value, 
+          name:document.getElementById('ed-name').innerText, 
+          expire:document.getElementById('ed-exp').value
+      }); 
+      document.getElementById('badge-sticker').innerText=stickerCart.reduce((s,i)=>s+Number(i.qty),0); 
+      document.getElementById('badge-sticker').classList.remove('hidden'); 
+      Swal.fire({toast:true, icon:'success', title:'เพิ่มใน Label Pool สำเร็จ', position:'top-end', showConfirmButton:false, timer:1000}); 
+  }
+
   function openStickerModal() { 
       const list = document.getElementById('sticker-list'); 
       list.innerHTML = stickerCart.length ? stickerCart.map((s,i)=>`<div class="list-group-item d-flex justify-content-between"><div>${s.name} x${s.qty}</div><i class="fas fa-trash text-danger" onclick="stickerCart.splice(${i},1);openStickerModal()"></i></div>`).join('') : '<div class="text-center p-3">ไม่มีรายการ</div>';
@@ -1303,16 +1423,16 @@
           const docDef = {
               pageSize: 'A4',
               pageMargins: [20, 30, 20, 30],
-              defaultStyle: { font: 'Sarabun', fontSize: 14 }, 
+              defaultStyle: { font: 'Sarabun', fontSize: 10 }, 
               content: [
-                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', fontSize: 20, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', font: 'SarabunLight', fontSize: 16, alignment: 'center', margin: [0, 0, 0, 10] },
                   {
                       columns: [
                           { text: `หน่วยงาน : ${groupName}`, width: '*' },
                           { text: `ชื่อหน่วยสำรองยา : ${curBoxStock}`, width: '*' },
                           { text: `วันที่ : ${dateStr}`, width: '*' }
                       ],
-                      fontSize: 16,
+                      fontSize: 12,
                       margin: [0, 0, 0, 10]
                   },
                   {
@@ -1328,11 +1448,11 @@
                           vLineColor: function (i, node) { return '#aaa'; }
                       }
                   },
-                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 16, margin: [0, 10, 0, 30] },
+                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 12, margin: [0, 10, 0, 30] },
                   {
                       columns: [
                           { text: '', width: '*' },
-                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 14 }
+                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 10 }
                       ]
                   }
               ]
