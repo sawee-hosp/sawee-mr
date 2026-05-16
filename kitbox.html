@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <!-- เพิ่ม HTML5 QR Code Library -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
@@ -153,7 +152,6 @@
     .btn-qty:active { background: var(--secondary); color: white; transform: scale(0.9); }
     .inp-qty { width: 60px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.5rem; color: var(--text); }
 
-    /* ปรับแต่งเมนู Bottom Navigation ใหม่ให้มี 5 ปุ่ม */
     .btm-nav { 
         position: fixed; bottom: 0; left: 0; right: 0; height: 65px; 
         background: var(--primary); display: flex; justify-content: space-between; align-items: center; 
@@ -163,12 +161,11 @@
     .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 2px; }
     .nav-item.active { color: white; font-weight: 700; transform: translateY(-2px); }
     
-    /* สไตล์สำหรับปุ่มสแกน QR ตรงกลาง */
-    .scan-btn-wrapper { width: 20%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
+    .scan-btn-wrapper { width: 20%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
     .scan-btn-circle {
         width: 55px; height: 55px; background: var(--secondary); color: white;
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-size: 1.6rem; position: absolute; bottom: 15px;
+        font-size: 1.6rem; position: absolute; bottom: 0px; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 4px solid var(--primary);
         transition: transform 0.2s; z-index: 1001;
     }
@@ -306,7 +303,6 @@
     </div>
   </div>
 
-  <!-- Bottom Navigation Layout ใหม่ -->
   <div class="btm-nav">
     <div class="nav-item active" onclick="nav('tab-hist', this)">
         <div class="icon-wrap">
@@ -315,9 +311,8 @@
         </div>
         <span>รายการเบิก</span>
     </div>
-    <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-box"></i><span>สต็อก</span></div>
+    <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-box"></i><span>เช็คสต็อกและกล่อง</span></div>
     
-    <!-- ปุ่มสแกน QR ลอยตัวตรงกลาง -->
     <div class="scan-btn-wrapper" onclick="openScanner()">
         <div class="scan-btn-circle"><i class="fas fa-qrcode"></i></div>
     </div>
@@ -328,11 +323,10 @@
             <i class="fas fa-calendar-times"></i>
             <div id="nav-badge-expire" class="nav-badge-red hidden">0</div>
         </div>
-        <span>หมดอายุ</span>
+        <span>ยาหมดอายุ</span>
     </div>
   </div>
 
-  <!-- Modal: สแกน QR Code -->
   <div class="modal fade" id="mdlScanner" tabindex="-1" style="z-index: 2300;">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
@@ -572,7 +566,7 @@
           const [b64Reg, b64Bold, b64Light] = await Promise.all([
               fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Regular.ttf'),
               fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Bold.ttf'),
-              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Light.ttf') // ดึงฟอนต์ตัวบางเพื่อแบบฟอร์ม PDF
+              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Light.ttf') 
           ]);
 
           window.pdfMake = window.pdfMake || {};
@@ -619,7 +613,6 @@
       }
   }
 
-  // --- HTML5 QR Scanner Logic ---
   let html5QrcodeScanner;
   function openScanner() {
       const mdl = new bootstrap.Modal(document.getElementById('mdlScanner'));
@@ -640,7 +633,6 @@
       if(mdlInstance) mdlInstance.hide();
   }
 
-  // ดักจับเวลา User กดปิด Modal ด้วยวิธีอื่นๆ ให้กล้องดับไปด้วย
   document.getElementById('mdlScanner').addEventListener('hidden.bs.modal', function () {
       if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => console.log(e));
   });
@@ -657,10 +649,8 @@
           if(itemsRes.status) {
               const item = itemsRes.data.find(i => String(i.invId) === String(res.invId));
               if(item) {
-                  // ให้ระบบนำทางไปที่ Tab สต็อก และเปิดกล่องนั้นโดยตรง
                   nav('tab-stock', document.querySelectorAll('.btm-nav .nav-item')[1]);
                   openBoxForce(boxName, ''); 
-                  // เรียก Modal Edit ขึ้นมา (เพื่อความสะดวกในการจัดการสต็อก / สติกเกอร์)
                   editStk(item.invId, item.name, item.itemId, item.amount, item.actual, item.expire, item.location);
               } else {
                   Swal.fire('ไม่พบยา', 'ไม่พบรายการยานี้ในกล่อง ' + boxName, 'error');
@@ -673,8 +663,7 @@
           Swal.fire('ไม่พบข้อมูล', 'ไม่พบ QR Code นี้ในระบบคลังยา', 'error');
       }
   }
-  function onScanFailure(error) { /* handle quietly */ }
-  // ---------------------------------
+  function onScanFailure(error) { }
 
   window.onload = async () => {
       mdlEdit = new bootstrap.Modal('#mdlEdit'); 
@@ -740,7 +729,7 @@
   function nav(pid, el){
       document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
       document.querySelectorAll('.btm-nav .nav-item').forEach(x=>x.classList.remove('active')); 
-      if(el) el.classList.add('active'); // allow null
+      if(el) el.classList.add('active');
       
       if(pid === 'tab-hist') loadHist();
       if(pid === 'tab-expire') loadExpiredItems();
@@ -823,6 +812,7 @@
       renderHist(curHistStatus);
   }
 
+  window.utterances = []; 
   function playSound(text) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -940,7 +930,6 @@
       document.getElementById('stock-grouped-list').innerHTML = html;
   }
 
-  // Helper สำหรับเปิด UI กล่องแบบบังคับ (ใช้ตอนสแกน)
   async function openBoxForce(name, imgRaw) {
       curBoxStock = name;
       document.getElementById('stock-landing').classList.add('hidden'); 
@@ -1133,8 +1122,6 @@
         const overlay = document.getElementById('stock-spinner-overlay');
         overlay.classList.remove('hidden');
         
-        // บังคับให้เปลี่ยนหน้าจอไปยังกล่องนั้นเลย และโหลดข้อมูลล่าสุด
-        nav('tab-stock', document.querySelectorAll('.btm-nav .nav-item')[1]);
         await openBoxForce(curBoxStock, '');
         
         overlay.classList.add('hidden');
@@ -1303,7 +1290,7 @@
 
   function openPrintLabel() { document.getElementById('lbl-signer').innerText = currentUser.name; mdlSignLabel.show(); setTimeout(fixCvsLabel,500); }
   
-  async function submitLabel() { 
+async function submitLabel() { 
       const signDataUrl = cvsLabel.toDataURL(); 
       mdlSignLabel.hide(); 
       if(!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
@@ -1329,12 +1316,12 @@
                       widths: ['*'], 
                       body: [[ { 
                         text: [
-                          { text: 'กล่องหมดอายุ\n', fontSize: 18, bold: true, color: 'white' }, 
-                          { text: data.expStr, fontSize: 24, bold: true, color: 'white' }
+                          { text: 'กล่องหมดอายุ\n', fontSize: 16, bold: true, color: 'white' }, 
+                          { text: data.expStr, fontSize: 22, bold: true, color: 'white' }
                         ], 
                         alignment: 'center', 
                         fillColor: 'black',
-                        margin: [5, 5, 5, 5] 
+                        margin: [2, 5, 2, 5] 
                       } ]] 
                     },
                     layout: 'noBorders',
@@ -1408,14 +1395,23 @@
               if (item.keepCool) remarks.push('Keep 2-8°C');
               if (item.highAlert) remarks.push('High Alert');
 
+              let rowColor = '#000000';
+              if (item.expire && item.expire !== '-') {
+                  const expD = new Date(item.expire);
+                  if (!isNaN(expD)) {
+                      const diffDays = (expD - new Date()) / (1000 * 3600 * 24);
+                      if (diffDays < 30) rowColor = '#d32f2f';
+                  }
+              }
+
               tableBody.push([
-                  { text: index + 1, alignment: 'center' },
-                  { text: item.name },
-                  { text: item.amount || 0, alignment: 'center' },
-                  { text: actualQty, alignment: 'center' },
-                  { text: item.expire || '-', alignment: 'center' },
-                  { text: price.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right' },
-                  { text: value.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right' },
+                  { text: index + 1, alignment: 'center', color: rowColor },
+                  { text: item.name, color: rowColor },
+                  { text: item.amount || 0, alignment: 'center', color: rowColor },
+                  { text: actualQty, alignment: 'center', color: rowColor },
+                  { text: item.expire || '-', alignment: 'center', color: rowColor },
+                  { text: price.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right', color: rowColor },
+                  { text: value.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right', color: rowColor },
                   { text: remarks.join(', '), fontSize: 10, color: 'red' }
               ]);
           });
@@ -1423,16 +1419,16 @@
           const docDef = {
               pageSize: 'A4',
               pageMargins: [20, 30, 20, 30],
-              defaultStyle: { font: 'Sarabun', fontSize: 10 }, 
+              defaultStyle: { font: 'Sarabun', fontSize: 12 }, 
               content: [
-                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', font: 'SarabunLight', fontSize: 16, alignment: 'center', margin: [0, 0, 0, 10] },
+                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', font: 'SarabunLight', fontSize: 18, alignment: 'center', margin: [0, 0, 0, 10] },
                   {
                       columns: [
                           { text: `หน่วยงาน : ${groupName}`, width: '*' },
                           { text: `ชื่อหน่วยสำรองยา : ${curBoxStock}`, width: '*' },
                           { text: `วันที่ : ${dateStr}`, width: '*' }
                       ],
-                      fontSize: 12,
+                      fontSize: 14,
                       margin: [0, 0, 0, 10]
                   },
                   {
@@ -1448,11 +1444,11 @@
                           vLineColor: function (i, node) { return '#aaa'; }
                       }
                   },
-                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 12, margin: [0, 10, 0, 30] },
+                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 14, margin: [0, 10, 0, 30] },
                   {
                       columns: [
                           { text: '', width: '*' },
-                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 10 }
+                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 12 }
                       ]
                   }
               ]
