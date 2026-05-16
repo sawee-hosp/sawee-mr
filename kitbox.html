@@ -9,19 +9,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 
   <style>
     :root {
       --font-main: "Sarabun", sans-serif;
-      /* 7-Eleven Theme V2 */
-      --primary: #007a33;  /* 7-Eleven Green */
-      --secondary: #f27024; /* 7-Eleven Orange */
-      --accent: #ed1c24;    /* 7-Eleven Red */
+      --primary: #007a33;  
+      --secondary: #f27024; 
+      --accent: #ed1c24;    
       --bg: #f8f9fa;
       --text: #333;
     }
     
-    /* Font & Reset */
     body, input, select, textarea, button, h1, h2, h3, h4, h5, h6, p, span, div, a, li, label { 
         font-family: var(--font-main) !important; 
     }
@@ -33,7 +32,13 @@
     @keyframes blink { 50% { opacity: 0.5; } }
     .blink { animation: blink 1s linear infinite; }
     
-    /* Login Overlay */
+    .spinner-overlay {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.7);
+        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        z-index: 100; border-radius: 15px;
+    }
+
     #login-overlay { 
         position: fixed; inset: 0; background: var(--primary); 
         z-index: 3000; 
@@ -44,7 +49,6 @@
         border: none; border-top: 8px solid var(--secondary); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     
-    /* Navbar */
     .app-nav { 
         position: fixed; top: 0; left: 0; right: 0; height: 60px; 
         background: var(--primary); color: white; 
@@ -56,28 +60,11 @@
     .nav-brand { font-weight: 700; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.5px; }
     .profile-mini { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
     
-    /* Box Scroller */
-    .box-scroller { display: flex; overflow-x: auto; padding: 15px 10px; gap: 10px; scrollbar-width: none; }
-    .box-btn { 
-      min-width: 90px; padding: 10px; 
-      background: white; 
-      color: var(--primary); border: 2px solid var(--primary); border-radius: 16px; 
-      text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: 0.2s; position: relative;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .box-btn.active { 
-        background: var(--primary); color: white; border: 2px solid var(--secondary); transform: scale(1.05); 
-    }
-    .box-icon { font-size: 2rem; margin-bottom: 2px; line-height: 1; }
-    .box-btn .badge-exp { position: absolute; top: -5px; right: -5px; font-size: 9px; padding: 2px 6px; border-radius: 10px; background: var(--accent); color: white; border: 2px solid white; z-index: 10; animation: blink 1s linear infinite; }
-    .box-btn .badge-hist-count { position: absolute; top: -5px; right: -5px; font-size: 10px; padding: 2px 6px; border-radius: 10px; background: var(--secondary); color: white; border:2px solid white; z-index: 10; font-weight:bold; }
-
-    /* REAL MEDICINE BOX CONTAINER */
     .real-box-container {
-        border: 3px solid #333; /* ขอบดำหนา */
-        border-radius: 15px; /* มุมมน */
+        border: 3px solid #333; 
+        border-radius: 15px; 
         padding: 15px;
-        box-shadow: 8px 8px 15px rgba(0,0,0,0.3); /* เงา */
+        box-shadow: 8px 8px 15px rgba(0,0,0,0.3); 
         background: #fafafa;
         margin-bottom: 20px;
         position: relative;
@@ -94,9 +81,8 @@
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
-    /* Stock View Items */
     .shelf-row-wrapper {
-        border-bottom: 2px solid #555; /* Solid line */
+        border-bottom: 2px solid #555; 
         padding-bottom: 15px;
         margin-bottom: 15px;
     }
@@ -116,96 +102,61 @@
     .shelf-item:active { transform: scale(0.95); }
     .shelf-item img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; margin-bottom: 5px; background: #eee; border: 1px solid #eee; }
     
-    /* UPDATED BADGE POSITION AND STYLE */
     .exp-badge-stock { 
-        position: absolute; 
-        top: -8px; 
-        right: -8px; 
-        font-size: 10px; 
-        padding: 2px 6px; 
-        border-radius: 10px; 
-        color: white; 
-        font-weight: bold; 
-        z-index: 20; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        border: 2px solid white;
-        min-width: 25px;
+        position: absolute; top: 5px; right: 5px; font-size: 10px; padding: 2px 6px; 
+        border-radius: 10px; color: white; font-weight: bold; z-index: 20; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid white; min-width: 25px;
     }
-    /* Specific Colors for Badge */
     .badge-expired { background-color: #d32f2f !important; color: white !important; }
     .badge-near-exp { background-color: #fbc02d !important; color: black !important; }
 
-    /* HAD Badge */
     .badge-ha {
-        position: absolute;
-        top: -5px;
-        left: -5px;
-        background-color: #ff0000;
-        color: white;
-        font-size: 10px;
-        padding: 4px 8px;
-        border-radius: 50%;
-        font-weight: 900;
-        z-index: 20;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        border: 2px solid white;
+        position: absolute; top: 5px; left: 5px; background-color: #ff0000; color: white;
+        font-size: 10px; padding: 4px 8px; border-radius: 50%; font-weight: 900; z-index: 20;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid white;
     }
 
     .bg-ha { border: 2px solid var(--accent); }
     .bg-cool { border: 2px solid #2196f3; }
     
-    /* Tables */
     .table-custom th { background: #e9ecef; font-size: 0.85rem; white-space: nowrap; color: #555; }
     .table-custom td { vertical-align: middle; font-size: 0.9rem; }
     .row-expired { background-color: #fff5f5; color: var(--accent); font-weight: bold; border-left: 4px solid var(--accent); }
     
-    /* Action Buttons (Red/Orange Theme) */
     .btn-711-primary { background: var(--secondary); color: white; border: none; font-weight: bold; }
     .btn-711-primary:hover { background: #d9631d; color: white; }
     .btn-711-accent { background: var(--accent); color: white; border: none; font-weight: bold; }
     .btn-711-accent:hover { background: #c41219; color: white; }
     .btn-711-green { background: var(--primary); color: white; border: none; font-weight: bold; }
-    .btn-711-purple { background: #673ab7; color: white; border: none; font-weight: bold; } /* For Double Label */
+    .btn-711-purple { background: #673ab7; color: white; border: none; font-weight: bold; }
 
     .fab-print { position: fixed; bottom: 80px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    
+    .fab-print-stock { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #2196f3; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; white-space: nowrap; }
+    
     .fab-edit-lg { position: fixed; bottom: 80px; right: 15px; background: var(--secondary); color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
     
-    /* Tabs */
     .nav-tabs .nav-link { color: #666; font-size: 0.95rem; }
     .nav-tabs .nav-link.active { color: var(--primary); font-weight: 800; border-bottom: 3px solid var(--primary); }
     .tab-badge { background: #eee; color: #333; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 5px; }
     .nav-link.active .tab-badge { background: var(--primary); color: white; }
     
-    /* Cards */
     .card-wait { background-color: #fff8e1; border-left: 5px solid var(--secondary); }
     .card-done { background-color: #e8f5e9; border-left: 5px solid var(--primary); }
     .card-recv { background-color: #e3f2fd; border-left: 5px solid #2196f3; }
 
-    /* Qty Button - Horizontal Layout */
     .qty-wrap {
-        display: flex;
-        flex-direction: row; /* Force horizontal */
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-        background: #f1f1f1;
-        border-radius: 30px;
-        padding: 5px 15px;
-        width: auto;
-        margin: 0 auto;
-        border: 1px solid #ddd;
+        display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 15px;
+        background: #f1f1f1; border-radius: 30px; padding: 5px 15px; width: auto; margin: 0 auto; border: 1px solid #ddd;
     }
     .btn-qty { width: 40px; height: 40px; background: white; border: 2px solid var(--secondary); border-radius: 50%; color: var(--secondary); font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; cursor: pointer; transition: 0.2s; }
     .btn-qty:active { background: var(--secondary); color: white; transform: scale(0.9); }
     .inp-qty { width: 60px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.5rem; color: var(--text); }
 
-    /* Bottom Nav */
     .btm-nav { 
         position: fixed; bottom: 0; left: 0; right: 0; height: 65px; 
         background: var(--primary); display: flex; justify-content: space-around; align-items: center; 
-        z-index: 1000; 
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        border-top: 4px solid var(--secondary);
+        z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); border-top: 4px solid var(--secondary);
     }
     .nav-item { text-align: center; color: rgba(255,255,255,0.7); font-size: 0.75rem; width: 25%; cursor: pointer; transition: 0.2s; padding: 5px 0; }
     .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 2px; }
@@ -214,14 +165,20 @@
     .nav-badge-alert { position: absolute; top: -5px; right: -8px; background: var(--secondary); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; }
     .nav-badge-red { position: absolute; top: -5px; right: -8px; background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; animation: blink 1s linear infinite; }
 
-    /* Group Filter Pills */
-    .group-pill { border: 1px solid #ddd; background: white; color: #555; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
-    .group-pill.active { background: var(--secondary); color: white; border-color: var(--secondary); box-shadow: 0 2px 5px rgba(242, 112, 36, 0.3); }
+    .box-grid-item {
+        background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px;
+        display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative;
+    }
+    .box-grid-item:active { transform: scale(0.98); background: #f8f9fa; }
+    .box-grid-icon { font-size: 1.8rem; line-height: 1; flex-shrink: 0; width: 40px; text-align: center; }
+    .box-grid-title { font-size: 0.95rem; font-weight: 700; color: #333; line-height: 1.2; word-break: break-word; }
+    .box-grid-subtitle { font-size: 0.75rem; color: #777; margin-top: 2px; }
+    .box-grid-badge { position: absolute; top: -5px; right: -5px; font-size: 10px; padding: 3px 8px; border-radius: 12px; background: var(--accent); color: white; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN OVERLAY -->
   <div id="login-overlay">
       <div class="login-box text-center fade-in">
           <div style="font-size:4rem;color:var(--primary);margin-bottom:10px">💊</div>
@@ -254,9 +211,10 @@
 
     <div class="tab-content" style="padding-top:70px">
       
-      <!-- History Tab -->
       <div id="tab-hist" class="page-sec container pt-2">
-         <div id="box-scroller-hist" class="box-scroller mb-2"></div>
+         <button class="btn btn-light border border-2 w-100 mb-3 fw-bold shadow-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBoxFilter" style="border-color: var(--secondary) !important; color: var(--primary);">
+            <i class="fas fa-filter text-secondary"></i> ตัวกรองดูข้อมูลกล่อง: <span id="current-hist-filter-name" class="text-dark">ทั้งหมด</span>
+         </button>
 
          <ul class="nav nav-tabs nav-fill mb-3 border-0">
             <li class="nav-item"><a class="nav-link active" onclick="filterHist('รอการจัดยา',this)">รอจัดยา <span id="bg-wait" class="tab-badge">0</span></a></li>
@@ -269,32 +227,33 @@
          <div id="hist-res"></div>
       </div>
 
-      <!-- Stock Tab -->
       <div id="tab-stock" class="page-sec hidden">
-        <div id="group-filter" class="d-flex gap-2 px-3 pb-2 overflow-auto" style="white-space:nowrap"></div>
-        <div id="box-scroller-stock" class="box-scroller"></div>
-        
-        <!-- Scan Landing -->
-        <div id="stock-landing" class="container mt-4 text-center">
-             <div class="card shadow-sm border-0 p-4" style="border-top: 5px solid var(--secondary) !important;">
-                 <h5 class="fw-bold text-dark mb-3">🔍 สแกน/ค้นหากล่อง</h5>
-                 <p class="small text-muted mb-3">สแกน QR, Inventory ID หรือพิมพ์ชื่อกล่อง</p>
-                 <div class="input-group mb-3">
-                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-qrcode text-muted"></i></span>
-                    <input type="text" id="scan-box-input" class="form-control form-control-lg text-center border-start-0" placeholder="ระบุข้อมูล..." onkeyup="if(event.key==='Enter') findBoxByScan()">
-                 </div>
-                 <button class="btn w-100 btn-lg btn-711-primary" onclick="findBoxByScan()">ค้นหากล่อง</button>
+        <div class="container pt-3">
+             <div class="input-group mb-3 shadow-sm rounded-pill" style="border: 2px solid var(--secondary); overflow: hidden;">
+                <span class="input-group-text bg-white border-0"><i class="fas fa-qrcode text-secondary"></i></span>
+                <input type="text" id="scan-box-input" class="form-control form-control-lg border-0" placeholder="สแกน หรือ ค้นหาชื่อกล่อง..." onkeyup="if(event.key==='Enter') findBoxByScan()">
+                <button class="btn btn-711-primary px-4" onclick="findBoxByScan()">ค้นหา</button>
              </div>
-             <div class="text-center mt-5 text-muted fw-bold" style="font-size:1.1rem; opacity:0.6;">เลือกกล่องด้านบน<br>เพื่อจัดการสต็อก</div>
+             <button class="btn btn-outline-success w-100 fw-bold mb-3 rounded-pill" onclick="mdlAddBox.show()"><i class="fas fa-plus-circle"></i> เพิ่มกล่องยาใหม่ (Add New Box)</button>
         </div>
 
-        <div id="stock-content" class="pb-5 px-3 hidden"></div>
+        <div id="stock-landing" class="container pb-5">
+             <div id="stock-grouped-list"></div>
+        </div>
+
+        <div id="stock-content-wrapper" class="position-relative">
+            <div id="stock-content" class="pb-5 px-3 hidden"></div>
+            <div id="stock-spinner-overlay" class="spinner-overlay hidden">
+                <div class="spinner-border text-primary mb-2" style="width: 3rem; height: 3rem;"></div>
+                <div class="fw-bold text-primary">กำลังอัปเดตข้อมูล...</div>
+            </div>
+        </div>
         
-        <div id="fab-print" class="fab-print hidden" onclick="openPrintLabel()">🖨️ พิมพ์ใบแปะกล่อง</div>
-        <div id="fab-edit" class="fab-edit-lg hidden" onclick="openBoxEditor()"><i class="fas fa-edit"></i> ปรับปรุงกล่อง</div>
+        <div id="fab-print" class="fab-print hidden" onclick="openPrintLabel()">🖨️ พิมพ์ใบแปะ</div>
+        <div id="fab-print-stock" class="fab-print-stock hidden" onclick="generateStockCheckPdf()">📋 ใบเช็คสต็อก</div>
+        <div id="fab-edit" class="fab-edit-lg hidden" onclick="openBoxEditor()"><i class="fas fa-edit"></i> แก้ไข</div>
       </div>
 
-      <!-- Search Tab -->
       <div id="tab-search" class="page-sec hidden container pt-3">
          <h5 class="fw-bold text-dark mb-3">จัดการฐานข้อมูลยา (Admin)</h5>
          <div class="d-flex gap-2 mb-3 position-relative">
@@ -319,7 +278,6 @@
          <div class="fab-edit-lg" onclick="openMasterEdit({isNew:true})"><i class="fas fa-plus"></i> เพิ่มยาใหม่</div>
       </div>
       
-      <!-- Expired Tab -->
       <div id="tab-expire" class="page-sec hidden container pt-3">
          <h5 class="fw-bold text-danger mb-3"><i class="fas fa-calendar-times"></i> รายการยาหมดอายุ</h5>
          <div id="expire-loader" class="text-center my-5 hidden"><div class="spinner-border text-danger"></div> กำลังโหลด...</div>
@@ -344,7 +302,7 @@
         </div>
         <span>รายการเบิก</span>
     </div>
-    <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-cubes"></i><span>สต็อก</span></div>
+    <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-box"></i><span>เช็คสต็อกและกล่อง</span></div>
     <div class="nav-item" onclick="nav('tab-search', this)"><i class="fas fa-search"></i><span>ค้นหา</span></div>
     <div class="nav-item" onclick="nav('tab-expire', this)">
         <div class="icon-wrap">
@@ -355,8 +313,35 @@
     </div>
   </div>
 
-  <!-- Modals -->
-  
+  <div class="offcanvas offcanvas-bottom" tabindex="-1" id="offcanvasBoxFilter" style="height: 60vh; border-radius: 20px 20px 0 0;">
+    <div class="offcanvas-header bg-light border-bottom">
+      <h5 class="offcanvas-title fw-bold text-primary"><i class="fas fa-filter"></i> เลือกกล่องเพื่อดูรายการ</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-2">
+        <div class="list-group list-group-flush" id="hist-box-list-menu"></div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="mdlAddBox" tabindex="-1" style="z-index: 2100;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header text-white" style="background:var(--primary)">
+            <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle"></i> เพิ่มกล่องยาใหม่</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body bg-light">
+          <div class="mb-3"><label class="form-label small fw-bold text-muted">ชื่อกล่อง / รหัสกล่อง <span class="text-danger">*</span></label><input type="text" id="new-box-name" class="form-control" placeholder="เช่น ER ตู้เย็น 1"></div>
+          <div class="mb-3"><label class="form-label small fw-bold text-muted">กลุ่ม / หน่วยงาน <span class="text-danger">*</span></label><input type="text" id="new-box-group" class="form-control" placeholder="เช่น แผนกฉุกเฉิน (ER)" list="group-datalist"><datalist id="group-datalist"></datalist></div>
+          <div class="mb-3"><label class="form-label small fw-bold text-muted">ประเภทกล่อง (ไอคอน)</label><select id="new-box-type" class="form-select"><option value="Box">📦 กล่องทั่วไป (Box)</option><option value="Cart">🛒 รถเข็นยา (Cart)</option><option value="Fridge">🧊 ตู้เย็น (Fridge)</option><option value="Cabinet">🗄️ ตู้เก็บยา (Cabinet)</option></select></div>
+          <div class="mb-3"><label class="form-label small fw-bold text-muted">สิทธิ์เข้าถึง (อ้างอิงกับรายชื่อผู้ใช้)</label><input type="text" id="new-box-perm" class="form-control" placeholder="เช่น ER"></div>
+          <div class="mb-3"><label class="form-label small fw-bold text-muted">รูปภาพกล่อง (Optional)</label><div class="d-flex gap-2"><input type="file" id="new-box-img" class="form-control" accept="image/*" onchange="previewNewBoxImg(this)"><img id="preview-new-img" src="" style="width:40px;height:40px;border-radius:4px;object-fit:cover;border:1px solid #ddd;display:none;"></div></div>
+          <button class="btn btn-711-primary w-100 rounded-pill py-2" onclick="saveNewBox()">บันทึกและสร้างกล่อง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="mdlSticker">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -479,7 +464,7 @@
           <div class="mt-2 text-center" id="ed-days-left"></div>
           <div class="mt-2 small text-muted text-center">ใช้งาน <span id="ed-change" class="fw-bold">0</span> ครั้ง (ล่าสุด: <span id="ed-time">-</span>)</div>
           
-          <button onclick="saveEdit()" class="btn btn-711-primary w-100 rounded-pill mt-3">บันทึก</button>
+          <button onclick="saveEdit()" id="btn-save-edit" class="btn btn-711-primary w-100 rounded-pill mt-3">บันทึก</button>
           
           <div class="border-top mt-3 pt-3">
               <label class="small mb-1">จำนวนสติกเกอร์ที่ต้องการพิมพ์</label>
@@ -521,39 +506,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // ==========================================
-  //  CONFIG & API LAYER (UPDATED FOR EXTERNAL HOSTING)
-  // ==========================================
-  
-  // ให้ใส่ URL ของ Web App ที่คุณ Deploy จาก Code.gs ใหม่ล่าสุด
-  const API_URL = "https://script.google.com/macros/s/AKfycbxAEEXecKRnWvY5XTvdjRY-ymSD_Nw6YWXY2KW-Gu3iWmaTgcqQEp2GFhp-LOIm5vcE6Q/exec";
-
-  // ฟังก์ชัน callApi แบบใหม่ที่จะเรียกใช้งานแทน google.script.run
-  async function callApi(action, payload = {}) {
-      try {
-          const response = await fetch(API_URL, {
-              method: 'POST',
-              body: JSON.stringify({ action: action, payload: payload })
-              // ไม่ใส่ header Content-Type เพื่อป้องกัน CORS Preflight แจ้งเตือนข้ามโดเมน
-          });
-
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-
-          const res = await response.json();
-          return res;
-      } catch (err) {
-          Swal.fire('Server Error', err.message, 'error');
-          return { status: false, message: err.message };
-      }
-  }
-
-
+  const API_URL = "https://script.google.com/macros/s/AKfycbwV8w7I53ilAwN6uSblnrrohfVeQSZd-Hm_O3jfyQRI4z3hDt_nTSxQCVgQ_BPPVsd9uQ/exec";
   const DEFAULT_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="; 
   let currentUser = {}, allBoxes = [], allHistory = [], stickerCart = [], shelfLabelCart = [];
   let curBoxStock = '', curHistBox = 'ALL', curHistStatus = 'รอการจัดยา';
-  let mdlEdit, mdlBoxEdit, mdlAddItem, mdlMasterEdit, mdlSignLabel, mdlSticker, mdlLabelEdit, mdlCheckOrder, mdlShelfLabel;
+  let mdlEdit, mdlBoxEdit, mdlAddItem, mdlMasterEdit, mdlSignLabel, mdlSticker, mdlLabelEdit, mdlCheckOrder, mdlShelfLabel, mdlAddBox;
   let searchTimeout, tempCheckOrderId;
   let curPage = 1, totalPages = 1, totalSearchItems = 0;
   
@@ -562,6 +519,64 @@
   const REFRESH_RATE = 60000;
   const SOUND_LOOP_RATE = 300000;
 
+  let pdfMakeReady = false;
+  async function initPdfMakeFonts() {
+      try {
+          const fetchBase64 = async (url) => {
+              const res = await fetch(url);
+              if (!res.ok) throw new Error("Font fetch failed");
+              const buffer = await res.arrayBuffer();
+              const bytes = new Uint8Array(buffer);
+              let binary = '';
+              const chunkSize = 8192;
+              for (let i = 0; i < bytes.length; i += chunkSize) {
+                  binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+              }
+              return window.btoa(binary);
+          };
+
+          const [b64Reg, b64Bold] = await Promise.all([
+              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Regular.ttf'),
+              fetchBase64('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Bold.ttf')
+          ]);
+
+          window.pdfMake = window.pdfMake || {};
+          window.pdfMake.vfs = window.pdfMake.vfs || {};
+          window.pdfMake.vfs['Sarabun-Regular.ttf'] = b64Reg;
+          window.pdfMake.vfs['Sarabun-Bold.ttf'] = b64Bold;
+          
+          window.pdfMake.fonts = {
+              Sarabun: {
+                  normal: 'Sarabun-Regular.ttf',
+                  bold: 'Sarabun-Bold.ttf',
+                  italics: 'Sarabun-Regular.ttf',
+                  bolditalics: 'Sarabun-Bold.ttf'
+              }
+          };
+          pdfMakeReady = true;
+          console.log("PDF Fonts Loaded Successfully!");
+      } catch (error) {
+          console.error("Failed to load PDF Fonts:", error);
+      }
+  }
+
+  async function callApi(action, payload = {}) {
+      try {
+          const response = await fetch(API_URL, {
+              method: 'POST',
+              redirect: 'follow', 
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: action, payload: payload })
+          });
+
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          return await response.json();
+      } catch (err) {
+          Swal.fire('Server Error', err.message, 'error');
+          return { status: false, message: err.message };
+      }
+  }
+
   window.onload = async () => {
       mdlEdit = new bootstrap.Modal('#mdlEdit'); 
       mdlBoxEdit = new bootstrap.Modal('#mdlBoxEdit'); mdlAddItem = new bootstrap.Modal('#mdlAddItem'); 
@@ -569,11 +584,13 @@
       mdlSticker = new bootstrap.Modal('#mdlSticker'); mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); 
       mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
       mdlShelfLabel = new bootstrap.Modal('#mdlShelfLabel');
+      mdlAddBox = new bootstrap.Modal('#mdlAddBox'); 
 
       document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
       document.getElementById('login-user').addEventListener('keyup', (e) => { if(e.key === 'Enter') doLogin(); });
       
       initCvsLabel(); initCvsCheck();
+      initPdfMakeFonts();
 
       setInterval(() => {
           if(currentUser.username) {
@@ -595,7 +612,7 @@
       Swal.showLoading();
       document.getElementById('btnLogin').disabled = true;
 
-      const res = await callApi('adminLogin', user); // Updated call signature for fetch
+      const res = await callApi('adminLogin', user); 
       
       Swal.close();
       document.getElementById('btnLogin').disabled = false;
@@ -615,8 +632,7 @@
       const resStock = await callApi('getBoxes', { showAll: true });
       if(resStock.status) { 
           allBoxes = resStock.boxes; 
-          renderBoxScroller('stock', allBoxes); 
-          renderStockGroups();
+          renderStockGroupsGrid(); 
       }
       loadHist(true); 
       loadExpiredItems(true); 
@@ -627,6 +643,14 @@
       document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
       if(pid === 'tab-hist') loadHist();
       if(pid === 'tab-expire') loadExpiredItems();
+      
+      if(pid === 'tab-stock' && curBoxStock === '') {
+          document.getElementById('stock-content-wrapper').classList.add('hidden');
+          document.getElementById('stock-landing').classList.remove('hidden');
+          document.getElementById('fab-edit').classList.add('hidden');
+          document.getElementById('fab-print').classList.add('hidden');
+          document.getElementById('fab-print-stock').classList.add('hidden');
+      }
   }
 
   async function loadExpiredItems(background = false) {
@@ -651,10 +675,22 @@
           document.getElementById('hist-loader').classList.add('hidden');
           if(res.status) { 
               allHistory = res.data; 
+              
               const boxCounts = allHistory.reduce((acc, r) => { acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
               const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
-              document.getElementById('box-scroller-hist').innerHTML = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.75rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
-                histBoxes.map(bName => `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span style="font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:70px">${bName}</span><span class="badge-hist-count">${boxCounts[bName]||0}</span></div>`).join('');
+              
+              let menuHtml = `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${curHistBox === 'ALL' ? 'active fw-bold' : ''}" onclick="selectHistBox('ALL')">
+                  <span>📋 ทุกกล่อง (ทั้งหมด)</span>
+                  <span class="badge bg-secondary rounded-pill">${allHistory.length}</span>
+              </button>`;
+              
+              histBoxes.forEach(bName => {
+                  menuHtml += `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${curHistBox === bName ? 'active fw-bold' : ''}" onclick="selectHistBox('${bName}')">
+                      <span>📦 ${bName}</span>
+                      <span class="badge bg-primary rounded-pill">${boxCounts[bName] || 0}</span>
+                  </button>`;
+              });
+              document.getElementById('hist-box-list-menu').innerHTML = menuHtml;
 
               const waitingOrders = allHistory.filter(r => r.status.includes('รอ'));
               const waitingCount = waitingOrders.length;
@@ -663,13 +699,11 @@
 
               const now = Date.now();
               const currentWaitingIds = new Set(waitingOrders.map(o => o.id));
-              
               const newOrders = waitingOrders.filter(o => !lastWaitingOrderIds.has(o.id));
               
               if (newOrders.length > 0) {
                   const newBoxes = [...new Set(newOrders.map(o => o.box))];
-                  const boxNames = newBoxes.join(' และ '); 
-                  playSound(`มีการเบิกยาใหม่ ${boxNames} ค่ะ`);
+                  playSound(`มีการเบิกยาใหม่ ${newBoxes.join(' และ ')} ค่ะ`);
                   lastSoundTime = now;
               } else if (waitingCount > 0 && (now - lastSoundTime > SOUND_LOOP_RATE)) {
                   playSound(`มียารอจัดอยู่ ${waitingCount} รายการค่ะ`); 
@@ -681,8 +715,14 @@
       }); 
   }
 
-  window.utterances = []; 
+  function selectHistBox(boxName) {
+      curHistBox = boxName;
+      document.getElementById('current-hist-filter-name').innerText = boxName === 'ALL' ? 'ทั้งหมด' : boxName;
+      bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasBoxFilter')).hide();
+      renderHist(curHistStatus);
+  }
 
+  window.utterances = []; 
   function playSound(text) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -697,8 +737,7 @@
           if ('speechSynthesis' in window) { 
               window.speechSynthesis.cancel();
               const u = new SpeechSynthesisUtterance(text); 
-              u.lang = 'th-TH'; 
-              u.rate = 1.0;
+              u.lang = 'th-TH'; u.rate = 1.0;
               const voices = window.speechSynthesis.getVoices();
               const thVoice = voices.find(v => v.lang.includes('th'));
               if(thVoice) u.voice = thVoice;
@@ -712,7 +751,6 @@
   function filterHist(status, el) {
       curHistStatus = status;
       document.querySelectorAll('.nav-tabs .nav-link').forEach(x=>x.classList.remove('active')); el.classList.add('active');
-      document.getElementById('box-scroller-hist').classList.remove('hidden'); 
       renderHist(status);
   }
 
@@ -767,48 +805,108 @@
       }, 500); 
   }
 
-  // --- STOCK LOGIC ---
-  async function renderStockGroups() {
-      const resGroups = await callApi('getBoxGroups');
-      if(resGroups.status) {
-          const groupCounts = allBoxes.reduce((acc, b) => { const g = b.group || 'Other'; acc[g] = (acc[g] || 0) + 1; return acc; }, {});
-          document.getElementById('group-filter').innerHTML = `<div class="group-pill active" onclick="filterStockBox('ALL',this)">ทั้งหมด (${allBoxes.length})</div>` + resGroups.groups.map(g => `<div class="group-pill" onclick="filterStockBox('${g}',this)">${g} (${groupCounts[g]||0})</div>`).join(''); 
-      }
+  async function renderStockGroupsGrid() {
+      const groups = [...new Set(allBoxes.map(b => b.group || 'อื่น ๆ'))].sort();
+      document.getElementById('group-datalist').innerHTML = groups.map(g => `<option value="${g}">`).join('');
+
+      let html = '';
+      const iconHelper = type => { const t=(type||"").toLowerCase(); return t.includes('cart')?'🛒':(t.includes('fridge')?'🧊':(t.includes('cabinet')?'🗄️':'📦')); };
+
+      groups.forEach(g => {
+          let boxesInGroup = allBoxes.filter(b => (b.group || 'อื่น ๆ') === g);
+          if (boxesInGroup.length === 0) return;
+          
+          html += `<div class="mt-4 mb-2 d-flex align-items-center">
+                      <h6 class="fw-bold m-0" style="color: var(--primary);"><i class="fas fa-layer-group me-1"></i> ${g}</h6>
+                      <span class="badge bg-light text-dark border ms-2">${boxesInGroup.length}</span>
+                   </div>
+                   <div class="row g-2">`;
+                   
+          boxesInGroup.forEach(b => {
+              html += `<div class="col-12 col-md-6">
+                          <div class="box-grid-item" onclick="selBox('${b.name}', '${b.imageRaw}')">
+                              <div class="box-grid-icon">${iconHelper(b.type)}</div>
+                              <div class="flex-grow-1">
+                                  <div class="box-grid-title">${b.name}</div>
+                                  <div class="box-grid-subtitle">รายการ: ${b.count || 0}</div>
+                              </div>
+                              ${b.hasExpired ? '<span class="box-grid-badge blink">หมดอายุ</span>' : ''}
+                              <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                          </div>
+                       </div>`;
+          });
+          html += `</div>`;
+      });
+      document.getElementById('stock-grouped-list').innerHTML = html;
   }
-  function filterStockBox(group, el) {
-      document.querySelectorAll('.group-pill').forEach(p => p.classList.remove('active'));
-      el.classList.add('active');
-      renderBoxScroller('stock', group==='ALL' ? allBoxes : allBoxes.filter(b=>b.group===group));
-  }
-  function renderBoxScroller(mode, boxes) {
-      const icon = type => { const t=(type||"").toLowerCase(); return t.includes('cart')?'🛒':(t.includes('fridge')?'🧊':(t.includes('cabinet')?'🗄️':'📦')); };
-      document.getElementById(`box-scroller-${mode}`).innerHTML = boxes.map(b=>`<div class="box-btn" onclick="selBox('${b.name}', this, '${mode}', '${b.imageRaw}')"><span class="box-icon">${icon(b.type)}</span><span style="font-size:0.75rem;line-height:1.1;font-weight:600">${b.name}</span>${b.hasExpired ? '<span class="badge-exp">หมดอายุ</span>' : ''}</div>`).join('');
-  }
-  async function selBox(name, el, mode, imgRaw) {
-      document.querySelectorAll(`#box-scroller-${mode} .box-btn`).forEach(x=>x.classList.remove('active')); if(el) el.classList.add('active');
-      if(mode === 'hist') { curHistBox = name; renderHist(curHistStatus); }
-      else {
-          if (curBoxStock === name) {
-             curBoxStock = '';
-             if(el) el.classList.remove('active');
-             document.getElementById('stock-content').classList.add('hidden');
-             document.getElementById('stock-landing').classList.remove('hidden'); 
-             document.getElementById('fab-edit').classList.add('hidden');
-             document.getElementById('fab-print').classList.add('hidden');
-          } else {
-             curBoxStock = name;
-             document.getElementById('stock-landing').classList.add('hidden'); 
-             document.getElementById('stock-content').classList.remove('hidden');
-             document.getElementById('fab-edit').classList.remove('hidden'); document.getElementById('fab-print').classList.remove('hidden');
-             document.getElementById('edit-box-name').value = name; document.getElementById('edit-box-img').value = imgRaw;
-             document.getElementById('preview-box-img').src = DEFAULT_IMG;
-             if(imgRaw) callApi('resolveImage',{input:imgRaw}).then(r=>{if(r.status) document.getElementById('preview-box-img').src=r.src});
-             loadStockItems(name);
-          }
+
+  function selBox(name, imgRaw) {
+      if (curBoxStock === name) {
+          curBoxStock = '';
+          document.getElementById('stock-content-wrapper').classList.add('hidden');
+          document.getElementById('stock-landing').classList.remove('hidden'); 
+          document.getElementById('fab-edit').classList.add('hidden');
+          document.getElementById('fab-print').classList.add('hidden');
+          document.getElementById('fab-print-stock').classList.add('hidden');
+      } else {
+          curBoxStock = name;
+          document.getElementById('stock-landing').classList.add('hidden'); 
+          document.getElementById('stock-content-wrapper').classList.remove('hidden');
+          document.getElementById('stock-content').classList.remove('hidden');
+          document.getElementById('fab-edit').classList.remove('hidden'); 
+          document.getElementById('fab-print').classList.remove('hidden');
+          document.getElementById('fab-print-stock').classList.remove('hidden');
+          
+          document.getElementById('edit-box-name').value = name; 
+          document.getElementById('edit-box-img').value = imgRaw;
+          document.getElementById('preview-box-img').src = DEFAULT_IMG;
+          if(imgRaw) callApi('resolveImage',{input:imgRaw}).then(r=>{if(r.status) document.getElementById('preview-box-img').src=r.src});
+          
+          loadStockItems(name);
       }
   }
 
-  // --- SCAN FEATURE (UPDATED) ---
+  function previewNewBoxImg(input) {
+      const file = input.files[0];
+      if(file) {
+          const reader = new FileReader();
+          reader.onload = e => {
+              document.getElementById('preview-new-img').src = e.target.result;
+              document.getElementById('preview-new-img').style.display = 'block';
+          }
+          reader.readAsDataURL(file);
+      }
+  }
+
+  async function saveNewBox() {
+      const name = document.getElementById('new-box-name').value.trim();
+      const group = document.getElementById('new-box-group').value.trim();
+      const type = document.getElementById('new-box-type').value;
+      const perm = document.getElementById('new-box-perm').value.trim();
+      const imgSrc = document.getElementById('preview-new-img').src;
+      
+      if(!name || !group) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อกล่องและหน่วยงาน', 'warning');
+      
+      Swal.showLoading();
+      const payload = {
+          name: name, group: group, type: type, perm: perm,
+          image: imgSrc.includes('base64') ? imgSrc : ''
+      };
+      
+      const res = await callApi('addNewBox', payload);
+      if(res.status) {
+          Swal.fire({icon: 'success', title: 'สำเร็จ', text: 'เพิ่มกล่องยาใหม่เรียบร้อย', timer: 1500});
+          mdlAddBox.hide();
+          const resStock = await callApi('getBoxes', { showAll: true });
+          if(resStock.status) { 
+              allBoxes = resStock.boxes; 
+              renderStockGroupsGrid(); 
+          }
+      } else {
+          Swal.fire('Error', res.message, 'error');
+      }
+  }
+
   async function findBoxByScan() {
       const id = document.getElementById('scan-box-input').value.trim();
       if(!id) return Swal.fire('ระบุข้อมูลค้นหา');
@@ -818,10 +916,12 @@
       
       if(res.status) {
          if (res.action === 'OPEN') {
-             openBoxByName(res.boxName);
+             document.getElementById('scan-box-input').value = '';
+             const boxData = allBoxes.find(b => b.name === res.boxName);
+             selBox(res.boxName, boxData ? boxData.imageRaw : '');
          } else if (res.action === 'SUGGEST') {
              const html = `<div class="list-group text-start">` + 
-                res.list.map(b => `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="Swal.close(); openBoxByName('${b.name}')"><span>${b.name}</span><small class="text-muted ms-2">${b.id}</small></button>`).join('') +
+                res.list.map(b => `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="Swal.close(); document.getElementById('scan-box-input').value=''; selBox('${b.name}', '')"><span>${b.name}</span><small class="text-muted ms-2">${b.id}</small></button>`).join('') +
                 `</div>`;
              
              Swal.fire({ title: 'เลือกกล่องที่ต้องการ', html: html, showConfirmButton: false, showCloseButton: true });
@@ -831,21 +931,15 @@
       }
   }
 
-  function openBoxByName(boxName) {
-      document.getElementById('scan-box-input').value = '';
-      const boxBtns = document.querySelectorAll('#box-scroller-stock .box-btn');
-      let targetBtn = null;
-      for(let btn of boxBtns) { if(btn.innerText.includes(boxName)) { targetBtn = btn; break; } }
-      selBox(boxName, targetBtn, 'stock', '');
-  }
-
   async function loadStockItems(box) {
-      const el = document.getElementById('stock-content'); el.innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
-      const res = await callApi('getItems', { boxName: box });
-      if(!res.status) return el.innerHTML = 'Error';
+      const el = document.getElementById('stock-content'); 
+      el.innerHTML = '<div class="text-center mt-5 text-muted"><div class="spinner-border text-secondary mb-2"></div><br>กำลังโหลด...</div>';
       
-      // *** UPDATED: WRAP CONTENT IN REAL BOX CONTAINER ***
-      let h = `<div class="real-box-container">
+      const res = await callApi('getItems', { boxName: box });
+      if(!res.status) return el.innerHTML = '<div class="alert alert-danger text-center">เกิดข้อผิดพลาดในการโหลด</div>';
+      
+      let h = `<button class="btn btn-light border mb-3 w-100 fw-bold text-secondary text-start" onclick="selBox('${box}','')"><i class="fas fa-chevron-left me-2"></i> กลับหน้ากล่อง</button>
+               <div class="real-box-container">
                <div class="real-box-label"><i class="fas fa-box-open me-2"></i>${box}</div>
                <div class="text-end mb-2 small text-muted">ยาในกล่อง: ${res.data.length} รายการ</div>`;
       
@@ -871,10 +965,16 @@
       h += '</div>'; 
       
       el.innerHTML = h;
-      document.getElementById('edit-box-items').innerHTML = res.data.map(i=>`<div class="col-12 d-flex align-items-center bg-white border p-2 rounded mb-1"><div class="flex-grow-1 ms-2 small"><div class="fw-bold text-truncate">${i.name}</div><div class="d-flex gap-2 align-items-center mt-1"><input class="form-control form-control-sm" style="width:70px" type="number" value="${i.amount}" onchange="updateInv('${i.invId}', 'amount', this.value)" placeholder="Qty"><input class="form-control form-control-sm" style="width:120px" value="${i.location}" onchange="updateInv('${i.invId}', 'location', this.value)" placeholder="Loc"></div></div><button class="btn btn-sm btn-outline-danger ms-2" onclick="removeBoxItem('${i.invId}')"><i class="fas fa-trash"></i></button></div>`).join('');
+      document.getElementById('edit-box-items').innerHTML = res.data.map(i=>`<div class="col-12 d-flex align-items-center bg-white border p-2 rounded mb-1"><div class="flex-grow-1 ms-2 small"><div class="fw-bold text-truncate">${i.name}</div><div class="d-flex gap-2 align-items-center mt-1"><input class="form-control form-control-sm" style="width:70px" type="number" value="${i.amount}" onchange="updateInvAsync('${i.invId}', 'amount', this.value)" placeholder="Qty"><input class="form-control form-control-sm" style="width:120px" value="${i.location}" onchange="updateInvAsync('${i.invId}', 'location', this.value)" placeholder="Loc"></div></div><button class="btn btn-sm btn-outline-danger ms-2" onclick="removeBoxItemAsync('${i.invId}')"><i class="fas fa-trash"></i></button></div>`).join('');
       lazyLoad();
   }
-  async function updateInv(id, field, val) { let pl = {invId:id}; pl[field]=val; await callApi('updateInventoryDetail', pl); }
+
+  async function updateInvAsync(id, field, val) { 
+      let pl = {invId:id}; pl[field]=val; 
+      document.getElementById('edit-box-items').style.opacity = '0.5';
+      await callApi('updateInventoryDetail', pl); 
+      document.getElementById('edit-box-items').style.opacity = '1';
+  }
   
   function editStk(id, n, itm, max, cur, e, loc) { 
       document.getElementById('ed-id').value = id; 
@@ -915,10 +1015,23 @@
         location: newLocation
     };
     
-    if((await callApi('saveEditItem',pl)).status) { 
+    document.getElementById('btn-save-edit').innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+    document.getElementById('btn-save-edit').disabled = true;
+
+    const res = await callApi('saveEditItem',pl);
+    
+    document.getElementById('btn-save-edit').innerHTML = 'บันทึก';
+    document.getElementById('btn-save-edit').disabled = false;
+
+    if(res.status) { 
         mdlEdit.hide(); 
-        loadStockItems(curBoxStock); 
-    } 
+        const overlay = document.getElementById('stock-spinner-overlay');
+        overlay.classList.remove('hidden');
+        await loadStockItems(curBoxStock); 
+        overlay.classList.add('hidden');
+    } else {
+        Swal.fire('Error', res.message, 'error');
+    }
   }
   
   function lazyLoad() { document.querySelectorAll('img.lazy').forEach(img => { if(img.dataset.loaded) return; const raw = img.dataset.raw; if(!raw || raw==='undefined') return; callApi('resolveImage', { input: raw }).then(res => { if(res.status) { img.src = res.src; img.classList.remove('loading'); img.dataset.loaded=true; } }); }); }
@@ -962,7 +1075,31 @@
       list.innerHTML = stickerCart.length ? stickerCart.map((s,i)=>`<div class="list-group-item d-flex justify-content-between"><div>${s.name} x${s.qty}</div><i class="fas fa-trash text-danger" onclick="stickerCart.splice(${i},1);openStickerModal()"></i></div>`).join('') : '<div class="text-center p-3">ไม่มีรายการ</div>';
       mdlSticker.show(); 
   }
-  async function generateStickerPdf() { if(!stickerCart.length)return; Swal.showLoading(); let items=[]; stickerCart.forEach(s=>{for(let i=0;i<s.qty;i++)items.push({itemId:s.itemId,name:s.name,expire:s.expire})}); const r=await callApi('generateLabelPdf',{items,user:currentUser.name}); if(r.status){ stickerCart=[]; mdlSticker.hide(); Swal.fire({icon:'success', html:`<a href="${r.pdf}" target="_blank" class="btn btn-primary w-100">Download</a>`}); } }
+  
+  async function generateStickerPdf() { 
+      if(!stickerCart.length) return;
+      
+      Swal.showLoading(); 
+      let items = [];
+      stickerCart.forEach(s => {
+          for(let i=0; i<s.qty; i++) {
+              items.push({ itemId: s.itemId, name: s.name, expire: s.expire });
+          }
+      });
+      
+      const r = await callApi('generateLabelPdf', { items: items, user: currentUser.name }); 
+      Swal.close();
+
+      if(r.status){ 
+          stickerCart=[]; mdlSticker.hide(); document.getElementById('badge-sticker').classList.add('hidden');
+          Swal.fire({
+              icon: 'success', 
+              html: `<a href="${r.pdf}" target="_blank" class="btn btn-711-primary w-100 rounded-pill">เปิดไฟล์สติกเกอร์ (PDF)</a>`
+          });
+      } else {
+          Swal.fire('Error', r.message, 'error');
+      }
+  }
   
   async function loadPoolHist() {
       document.getElementById('pool-list').innerHTML = 'Loading...';
@@ -979,11 +1116,26 @@
 
   function printDoubleLabel() {
     const name = document.getElementById('ed-name').innerText;
-    Swal.showLoading();
-    callApi('generateDoubleLabelPdf', {drugName: name, user: currentUser.name}).then(r => {
-        Swal.close();
-        if(r.status) window.open(r.pdf, '_blank');
-        else Swal.fire('Error', r.message, 'error');
+    if(!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
+
+    const pdfWindow = window.open('', '_blank');
+    pdfWindow.document.write('<html style="background:#f8f9fa;color:#333;display:flex;align-items:center;justify-content:center;height:100%;font-family:sans-serif;"><body><h2>⏳ กำลังสร้างเอกสาร PDF กรุณารอสักครู่...</h2></body></html>');
+
+    const docDef = {
+        pageSize: { width: 141.73, height: 85.04 }, 
+        pageMargins: [5, 10, 5, 5],
+        defaultStyle: { font: 'Sarabun' },
+        content: [
+            { text: 'สติกเกอร์คู่ใช้', fontSize: 10, alignment: 'center', margin: [0, 0, 0, 5] },
+            { text: name, fontSize: 12, bold: true, alignment: 'center' }
+        ]
+    };
+    
+    pdfMake.createPdf(docDef).getBase64((base64) => {
+        const dataUrl = 'data:application/pdf;base64,' + base64;
+        pdfWindow.document.open();
+        pdfWindow.document.write(`<html><head><title>Double Label</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+        pdfWindow.document.close();
     });
   }
 
@@ -1030,7 +1182,174 @@
   }
 
   function openPrintLabel() { document.getElementById('lbl-signer').innerText = currentUser.name; mdlSignLabel.show(); setTimeout(fixCvsLabel,500); }
-  async function submitLabel() { const s=cvsLabel.toDataURL(); mdlSignLabel.hide(); Swal.showLoading(); const r=await callApi('generateBoxLabel',{boxName:curBoxStock,signBase64:s,user:currentUser.name}); if(r.status) { clrCvsLabel(); Swal.fire({icon:'success',html:`<a href="${r.pdf}" target="_blank" class="btn btn-primary">PDF</a>`}); } }
+  
+  async function submitLabel() { 
+      const signDataUrl = cvsLabel.toDataURL(); 
+      mdlSignLabel.hide(); 
+      if(!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
+
+      const pdfWindow = window.open('', '_blank');
+      pdfWindow.document.write('<html style="background:#f8f9fa;color:#333;display:flex;align-items:center;justify-content:center;height:100%;font-family:sans-serif;"><body><h2>⏳ กำลังบันทึกลายเซ็นต์และสร้าง PDF...</h2></body></html>');
+
+      Swal.showLoading(); 
+      const res = await callApi('verifyBoxAndGetStats', { boxName: curBoxStock, user: currentUser.name, signBase64: signDataUrl });
+      Swal.close();
+      
+      if(res.status) { 
+          const data = res.data;
+          const nowStr = new Date().toLocaleString('th-TH');
+          const docDef = {
+              pageSize: { width: 170.08, height: 226.77 }, 
+              pageMargins: [10, 10, 10, 10],
+              defaultStyle: { font: 'Sarabun' },
+              content: [
+                  { text: 'ดูวันหมดอายุก่อนฉีกกล่องใช้', fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 5] },
+                  { 
+                    table: { 
+                      widths: ['*'], 
+                      body: [[ { 
+                        text: [
+                          { text: 'กล่องหมดอายุ\n', fontSize: 18, bold: true, color: 'white' }, 
+                          { text: data.expStr, fontSize: 24, bold: true, color: 'white' }
+                        ], 
+                        alignment: 'center', 
+                        fillColor: 'black',
+                        margin: [5, 5, 5, 5] 
+                      } ]] 
+                    },
+                    layout: 'noBorders',
+                    margin: [0, 0, 0, 5]
+                  },
+                  { text: `ชื่อกล่อง: ${curBoxStock}`, fontSize: 12, bold: true, margin: [0, 2, 0, 2] },
+                  { text: `ยาอายุสั้นสุด: ${data.earliestDrug}`, fontSize: 10, margin: [0, 0, 0, 5] },
+                  { image: signDataUrl, width: 60, alignment: 'center' },
+                  { text: `(${currentUser.name})`, alignment: 'center', fontSize: 10 },
+                  { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 1, color: '#ccc' }], margin: [0, 5, 0, 2] },
+                  { text: `เติมยาล่าสุด: ${nowStr}\nจำนวนครั้ง: ${data.changeCount}`, fontSize: 9 }
+              ]
+          };
+
+          clrCvsLabel(); 
+          pdfMake.createPdf(docDef).getBase64((base64) => {
+              const dataUrl = 'data:application/pdf;base64,' + base64;
+              pdfWindow.document.open();
+              pdfWindow.document.write(`<html><head><title>Box Label</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+              pdfWindow.document.close();
+          });
+      } else {
+          pdfWindow.close();
+          Swal.fire('Error', res.message, 'error');
+      }
+  }
+
+  async function generateStockCheckPdf() {
+      if (!curBoxStock) return;
+      if (!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
+
+      const pdfWindow = window.open('', '_blank');
+      pdfWindow.document.write('<html style="background:#f8f9fa;color:#333;display:flex;align-items:center;justify-content:center;height:100%;font-family:sans-serif;"><body><h2>⏳ กำลังสร้างเอกสาร PDF กรุณารอสักครู่...</h2></body></html>');
+
+      Swal.showLoading();
+      const res = await callApi('getItems', { boxName: curBoxStock });
+      Swal.close();
+
+      if (res.status) {
+          let items = res.data;
+          
+          items.sort((a, b) => (a.location || '').localeCompare(b.location || '', undefined, {numeric: true}));
+          
+          const boxData = allBoxes.find(b => b.name === curBoxStock) || {};
+          const groupName = boxData.group || '-';
+          const dateStr = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+          let tableBody = [
+              [
+                  { text: 'ที่', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'ชื่อยา', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'จำนวน', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'มีจริง', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'วันหมดอายุ', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'ราคา/หน่วย', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'มูลค่า', bold: true, alignment: 'center', fillColor: '#eeeeee' },
+                  { text: 'หมายเหตุ', bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+          ];
+
+          let totalValue = 0;
+
+          items.forEach((item, index) => {
+              let actualQty = Number(item.actual || item.amount || 0);
+              let price = Number(item.price || 0);
+              let value = actualQty * price;
+              totalValue += value;
+
+              let remarks = [];
+              if (item.protectLight) remarks.push('Protect Light');
+              if (item.keepCool) remarks.push('Keep 2-8°C');
+              if (item.highAlert) remarks.push('High Alert');
+
+              tableBody.push([
+                  { text: index + 1, alignment: 'center' },
+                  { text: item.name },
+                  { text: item.amount || 0, alignment: 'center' },
+                  { text: actualQty, alignment: 'center' },
+                  { text: item.expire || '-', alignment: 'center' },
+                  { text: price.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right' },
+                  { text: value.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right' },
+                  { text: remarks.join(', '), fontSize: 10, color: 'red' }
+              ]);
+          });
+
+          const docDef = {
+              pageSize: 'A4',
+              pageMargins: [20, 30, 20, 30],
+              defaultStyle: { font: 'Sarabun', fontSize: 14 }, 
+              content: [
+                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', fontSize: 20, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+                  {
+                      columns: [
+                          { text: `หน่วยงาน : ${groupName}`, width: '*' },
+                          { text: `ชื่อหน่วยสำรองยา : ${curBoxStock}`, width: '*' },
+                          { text: `วันที่ : ${dateStr}`, width: '*' }
+                      ],
+                      fontSize: 16,
+                      margin: [0, 0, 0, 10]
+                  },
+                  {
+                      table: {
+                          headerRows: 1,
+                          widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+                          body: tableBody
+                      },
+                      layout: {
+                          hLineWidth: function (i, node) { return (i === 0 || i === node.table.body.length) ? 1 : 0.5; },
+                          vLineWidth: function (i, node) { return (i === 0 || i === node.table.widths.length) ? 1 : 0.5; },
+                          hLineColor: function (i, node) { return '#aaa'; },
+                          vLineColor: function (i, node) { return '#aaa'; }
+                      }
+                  },
+                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 16, margin: [0, 10, 0, 30] },
+                  {
+                      columns: [
+                          { text: '', width: '*' },
+                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 14 }
+                      ]
+                  }
+              ]
+          };
+
+          pdfMake.createPdf(docDef).getBase64((base64) => {
+              const dataUrl = 'data:application/pdf;base64,' + base64;
+              pdfWindow.document.open();
+              pdfWindow.document.write(`<html><head><title>Stock Check - ${curBoxStock}</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+              pdfWindow.document.close();
+          });
+
+      } else {
+          pdfWindow.close();
+          Swal.fire('Error', res.message, 'error');
+      }
+  }
 
   let cvsLabel, ctxLabel, isDrawLabel=false, cvsCheck, ctxCheck, isDrawCheck=false;
   function initCvsLabel(){ cvsLabel=document.getElementById('cvs-label'); ctxLabel=cvsLabel.getContext('2d'); addDraw(cvsLabel, ctxLabel, ()=>isDrawLabel, v=>isDrawLabel=v); }
@@ -1046,10 +1365,33 @@
   function clrCvsCheck(){ ctxCheck.clearRect(0,0,cvsCheck.width,cvsCheck.height); }
   function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
   
-  function removeBoxItem(id) { if(confirm('ลบ?')) callApi('removeBoxItem',{invId:id}).then(()=>loadStockItems(curBoxStock)); }
+  async function removeBoxItemAsync(id) { 
+      if(confirm('ยืนยันลบรายการยานี้?')) {
+          document.getElementById('edit-box-items').style.opacity = '0.5';
+          await callApi('removeBoxItem',{invId:id});
+          await loadStockItems(curBoxStock); 
+          document.getElementById('edit-box-items').style.opacity = '1';
+      }
+  }
+  
   function uploadBoxImg(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ document.getElementById('preview-box-img').src=e.target.result; callApi('uploadImage',{base64:e.target.result,folderType:'BOX',name:f.name}).then(x=>{if(x.status)document.getElementById('edit-box-img').value=x.path})}; r.readAsDataURL(f); }
-  function saveBoxInfo() { if(confirm('บันทึก?')) callApi('updateBoxInfo',{oldName:curBoxStock,newName:document.getElementById('edit-box-name').value,newImage:document.getElementById('edit-box-img').value}).then(r=>{if(r.status)location.reload()}); }
-  function addItemToBox(id) { const a=prompt('จำนวน'); if(a) callApi('addBoxItem',{boxName:curBoxStock,itemId:id,amount:a}).then(()=>{mdlAddItem.hide();loadStockItems(curBoxStock)}); }
+  async function saveBoxInfo() { 
+      if(confirm('บันทึกข้อมูลกล่อง?')) {
+          const res = await callApi('updateBoxInfo',{oldName:curBoxStock,newName:document.getElementById('edit-box-name').value,newImage:document.getElementById('edit-box-img').value});
+          if(res.status) location.reload(); 
+      }
+  }
+  async function addItemToBox(id) { 
+      const a=prompt('จำนวนที่ต้องการเพิ่ม'); 
+      if(a) {
+          mdlAddItem.hide();
+          const overlay = document.getElementById('stock-spinner-overlay');
+          overlay.classList.remove('hidden');
+          await callApi('addBoxItem',{boxName:curBoxStock,itemId:id,amount:a});
+          await loadStockItems(curBoxStock);
+          overlay.classList.add('hidden');
+      }
+  }
   
   let searchMasterTimeout;
   function searchMasterDebounce() {
