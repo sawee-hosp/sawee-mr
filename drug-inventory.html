@@ -138,11 +138,30 @@
 </head>
 <body>
 
+  <!-- ========================================== -->
+  <!-- 1. DIRECT VIEW สำหรับสแกน QR Code จากใบสั่ง -->
+  <!-- ========================================== -->
+  <div id="direct-order-view" style="position:fixed; inset:0; background:#f4f6f9; z-index:9999; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+      <div class="card p-4 shadow-lg border-0 text-center" style="width: 100%; max-width: 400px; border-radius: 16px;">
+          <div style="font-size: 4rem; color: #198754; margin-bottom: 10px;"><i class="fas fa-box-open"></i></div>
+          <h3 class="fw-bold text-success mb-2">รับยาเข้าตึก</h3>
+          <div class="text-muted small mb-4" style="word-break: break-all; line-height: 1.4;">
+            รหัสใบเบิก:<br>
+            <span id="dv-order-id" class="fw-bold text-dark fs-6"></span>
+          </div>
+          <button class="btn btn-success w-100 py-3 rounded-pill fw-bold" style="font-size: 1.3rem; box-shadow: 0 4px 10px rgba(25,135,84,0.3);" onclick="confirmDirectReceive()">
+              <i class="fas fa-check-circle me-1"></i> ยืนยันรับยาเข้าตึก
+          </button>
+      </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. หน้าจอ Login ปกติ -->
+  <!-- ========================================== -->
   <div id="login-overlay" style="position:fixed;inset:0;background:#f4f6f9;z-index:3000;display:flex;align-items:center;justify-content:center;flex-direction:column;">
      <div style="font-size:3.5rem;color:var(--primary);margin-bottom:15px">💊</div>
      <h3 class="fw-bold m-0" style="font-size:1.8rem">Sawee Rxfill 2.0</h3>
      
-     <!-- New Login Form -->
      <div id="login-form-box" class="card p-4 mt-4 shadow-sm border-0 w-75 hidden" style="max-width:350px;">
         <div class="mb-3">
             <label class="form-label small text-muted">HosXP Username</label>
@@ -150,7 +169,6 @@
         </div>
         <button class="btn btn-primary w-100 rounded-pill" onclick="onLoginSubmit()">เข้าสู่ระบบ</button>
      </div>
-
      <div id="status-text" class="text-danger mt-3 text-center px-4 small"></div>
   </div>
 
@@ -171,6 +189,9 @@
      </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- 3. โครงสร้าง App หลัก -->
+  <!-- ========================================== -->
   <div id="app-main" class="hidden">
     <nav class="app-nav">
       <div class="nav-brand">Sawee Rxfill 2.0</div>
@@ -394,9 +415,7 @@
                     <label class="small text-muted">ชื่อกล่อง</label><input id="edit-box-name" class="form-control fw-bold mb-2">
                     <label class="small text-muted">รูปภาพกล่อง</label>
                     <div class="d-flex gap-2">
-                        <input type="file" id="inp-box-file" class="form-control" 
-                               accept="image/*" 
-                               onchange="uploadBoxImg(this)">
+                        <input type="file" id="inp-box-file" class="form-control" accept="image/*" onchange="uploadBoxImg(this)">
                         <input id="edit-box-img" type="hidden">
                         <img id="preview-box-img" src="" referrerpolicy="no-referrer" style="width:40px;height:40px;border-radius:4px;object-fit:cover;border:1px solid #ddd">
                     </div>
@@ -435,9 +454,8 @@
   let editTarget = null;
   let hosAuthValid = false;
   let hosAuthName = '';
-  let scanMode = 'ITEM'; // 'ITEM' or 'BOX'
+  let scanMode = 'ITEM'; 
   
-  // -- NEW GLOBAL TO PREVENT DOUBLE SUBMIT --
   let isSubmitting = false;
 
   // --- UTILS & HELPERS ---
@@ -462,7 +480,6 @@
       }); 
   }
 
-  // Convert dd/MM/yyyy to yyyy-MM-dd
   function thDateToIso(thDate) {
       if(!thDate) return '';
       if(thDate instanceof Date) return thDate.toISOString().split('T')[0];
@@ -491,31 +508,45 @@
           mdlLabelEdit = new bootstrap.Modal('#mdlLabelEdit'); mdlCheckOrder = new bootstrap.Modal('#mdlCheckOrder');
           mdlScanRes = new bootstrap.Modal('#mdlScanRes');
           
-          // -- FAST LOAD: CHECK CACHE --
+          // ===============================================
+          // 1. ตรวจสอบว่าเปิดผ่าน QR Code (มี orderIdParam)
+          // ===============================================
+          const params = new URLSearchParams(window.location.search);
+          const orderIdParam = params.get('orderId');
+
+          if (orderIdParam) {
+              // ถ้ามี Parameter ให้ซ่อนทุกอย่างของแอปลง และแสดงแค่กล่องรับยา
+              document.getElementById('login-overlay').style.display = 'none';
+              document.getElementById('app-main').classList.add('hidden');
+              document.querySelector('.btm-nav').style.display = 'none';
+              
+              const dv = document.getElementById('direct-order-view');
+              dv.style.display = 'flex';
+              
+              document.getElementById('dv-order-id').innerText = orderIdParam;
+              window.currentDirectOrderId = orderIdParam;
+              
+              // หยุดการทำงานอื่นไว้แค่นี้ ไม่ต้องเช็ค Login ใดๆ
+              return;
+          }
+
+          // ===============================================
+          // 2. ถ้าไม่ได้เปิดผ่าน QR Code ให้โหลดการทำงานแอปปกติ
+          // ===============================================
           const cachedUser = localStorage.getItem('saw_user_v2');
-          
           if (cachedUser) {
               currentUser = JSON.parse(cachedUser);
-              
-              // FORCE REFRESH IF DATA IS STALE (missing boxGroup which is critical now)
               if (currentUser.boxGroup === undefined) { 
                    localStorage.removeItem('saw_user_v2'); 
                    location.reload(); 
                    return;
               }
-
-              document.getElementById('login-overlay').classList.add('hidden');
+              document.getElementById('login-overlay').style.display = 'none';
               document.getElementById('app-main').classList.remove('hidden');
               document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
               document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
-              
-              const params = new URLSearchParams(window.location.search);
-              const boxIdParam = params.get('boxId');
-              
-              // Direct start app (no LIFF)
-              startApp(boxIdParam, true); 
+              startApp(); 
           } else {
-             // SHOW MANUAL LOGIN
              document.getElementById('login-form-box').classList.remove('hidden');
           }
 
@@ -547,11 +578,6 @@
                   currentUser.email = document.getElementById('reg-email').value;
                   currentUser.substock = subs; 
                   currentUser.boxGroup = grp;
-                  // If we didn't have a userId before (manual login flow), we don't know it until server returns success, 
-                  // but assuming the flow for manual is handled by registerUserFromLIFF correctly, 
-                  // for manual login we rely on local persistence.
-                  
-                  // For manual login, if user was null, we construct it now
                   if(!currentUser.userId) currentUser.userId = 'MANUAL_' + currentUser.username;
 
                   localStorage.setItem('saw_user_v2', JSON.stringify(currentUser)); // Update cache
@@ -573,6 +599,40 @@
       }
   };
 
+  // --- NEW: DIRECT RECEIVE ORDER ---
+  async function confirmDirectReceive() {
+      if (!window.currentDirectOrderId) return;
+      
+      Swal.fire({title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading()});
+      
+      try {
+          const res = await callApi('updateOrderStatus', { 
+              orderId: window.currentDirectOrderId, 
+              user: 'ผู้รับยาปลายทาง (สแกน QR)' 
+          });
+          
+          if(res.status) { 
+              Swal.fire({
+                  icon: 'success',
+                  title: 'รับยาสำเร็จ',
+                  text: 'ระบบได้บันทึกเวลาการรับยาเรียบร้อยแล้ว',
+                  confirmButtonText: 'ปิดหน้าต่าง'
+              });
+              // Disable button after success
+              const btn = document.querySelector('#direct-order-view button');
+              if(btn) {
+                  btn.disabled = true;
+                  btn.innerText = 'บันทึกสำเร็จแล้ว';
+                  btn.classList.replace('btn-success', 'btn-secondary');
+              }
+          } else {
+              Swal.fire('ข้อผิดพลาด', res.message, 'error');
+          }
+      } catch (e) {
+          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+      }
+  }
+
   // --- NEW LOGIN FUNCTION ---
   async function onLoginSubmit() {
      const username = document.getElementById('login-username').value.trim();
@@ -587,20 +647,17 @@
          statusDiv.innerHTML = '';
          
          if(res.status === 'FOUND') {
-            // Found existing app user
             currentUser = res.userData;
             localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
-            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-main').classList.remove('hidden');
             document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
             document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
             startApp();
          } else if (res.status === 'PARTIAL') {
-             // Found in HosXP but not in App -> Show Reg with Pre-filled Name
              currentUser = { username: username, photo: DEFAULT_IMG };
              prepareRegistration(username, res.name);
          } else {
-             // New User -> Show Reg Empty
              currentUser = { username: username, photo: DEFAULT_IMG };
              prepareRegistration(username, '');
          }
@@ -611,7 +668,7 @@
   }
 
   async function prepareRegistration(username, name) {
-      document.getElementById('login-overlay').classList.add('hidden');
+      document.getElementById('login-overlay').style.display = 'none';
       
       const opts = await callApi('getRegOptions');
       if(opts.status) {
@@ -632,20 +689,12 @@
       location.reload();
   }
 
-  // --- CORE APP LOGIC ---
-  function checkUser(uid, boxParam, isBackground) {
-      // NOTE: This legacy function is bypassed by the new manual login flow
-      // but kept for compatibility if needed later.
-  }
-
   function openProfile() {
       document.getElementById('pf-user').value = currentUser.username || '';
       document.getElementById('pf-name').value = currentUser.name || '';
-      // document.getElementById('pf-sub').value = currentUser.substock; // Hidden now
       document.getElementById('pf-pass').value = currentUser.password || '';
       document.getElementById('pf-email').value = currentUser.email || '';
       
-      // Display permissions nicely
       document.getElementById('display-substock').innerText = Array.isArray(currentUser.substock) ? currentUser.substock.join(', ') : (currentUser.substock || '-');
       document.getElementById('display-boxgroup').innerText = Array.isArray(currentUser.boxGroup) ? currentUser.boxGroup.join(', ') : (currentUser.boxGroup || '-');
       
@@ -663,23 +712,20 @@
 
   async function startApp(boxParam, fromCache=false) {
       if(!fromCache) {
-        document.getElementById('login-overlay').classList.add('hidden'); document.getElementById('app-main').classList.remove('hidden');
+        document.getElementById('login-overlay').style.display = 'none'; document.getElementById('app-main').classList.remove('hidden');
         document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
       }
       
-      // OPTIMIZED LOAD
       const res = await callApi('getInitialData', { user: currentUser });
       if(res.status && res.data) {
           const d = res.data;
           
-          // Order Boxes
           if (d.boxesOrder && d.boxesOrder.length > 0) {
              renderBoxScroller('order', d.boxesOrder);
           } else {
              document.getElementById('box-scroller-order').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาที่คุณมีสิทธิ์เบิก (Substock)</div>';
           }
           
-          // Stock Boxes
           allBoxes = d.boxesStock || [];
           if (allBoxes.length > 0) {
              renderBoxScroller('stock', allBoxes);
@@ -687,11 +733,10 @@
              document.getElementById('box-scroller-stock').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาในตึกของคุณ (Box Group)</div>';
           }
           
-          // Groups
           if(d.groups) {
               document.getElementById('group-filter').innerHTML = 
                 `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
-                    ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
+                   ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
                  </div>` + 
                 d.groups.map(g => {
                     let count = allBoxes.filter(b=>b.group===g).length;
@@ -701,7 +746,6 @@
                 }).join('');
           }
           
-          // History
           allHistory = d.history || [];
           document.getElementById('hist-loader').classList.add('hidden');
           if(allHistory.length > 0) {
@@ -722,10 +766,6 @@
               if(box) { nav('tab-stock', document.querySelectorAll('.nav-item')[1]); selBox(box.name, null, 'stock', box.imageRaw); }
           }
       }
-  }
-
-  async function renderStockGroups() {
-      // Replaced by getInitialData logic
   }
 
   function getBoxIcon(type) {
@@ -767,9 +807,6 @@
   function nav(pid, el){
       document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
       document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
-      if(pid === 'tab-hist') {
-          // loadHist(); // Now preloaded
-      }
   }
 
   async function selBox(name, el, mode, imgRaw) {
@@ -863,7 +900,6 @@
       lazyLoad();
   }
 
-  // --- MISSING FUNCTION ADDED ---
   function editStk(invId, name, itemId, amt, exp, count, time) {
       document.getElementById('ed-id').value = invId;
       document.getElementById('ed-itemid').value = itemId;
@@ -926,7 +962,7 @@
                 <div class="drug-info">
                     <div class="drug-name">${i.name}</div>
                     <div class="d-flex justify-content-between small text-muted mb-2"><span>จำนวนเบิก : ${i.req}</span><span class="text-primary fw-bold">${i.price} บ.</span></div>
-                    <div class="qty-wrap"><div class="btn-qty" onclick="adj('${i.itemId}',-1)">-</div><input class="inp-qty" id="qty-${i.itemId}" value="${i.req}" readonly><div class="btn-qty" onclick="adj('${i.itemId}',1,${i.amount})">+</div></div>
+                    <div class="qty-wrap"><div class="btn-qty" onclick="adj('${i.itemId}',-1)">-</div><input class="inp-qty" id="qty-${i.itemId}" value="${i.req}" readonly><div class="btn-qty" onclick="adj('${i.itemId}',1)">+</div></div>
                     <button class="btn btn-sm btn-primary w-100 mt-2 rounded-pill fw-bold" onclick="addCart('${i.itemId}')">ใส่ตะกร้า</button>
                 </div>
             </div>`).join('');
@@ -942,13 +978,11 @@
       nextChunk();
   }
 
-  // --- ACTIONS ---
   function openBoxEditor() { mdlBoxEdit.show(); }
   function addCart(id) { 
       let i = items.find(x=>x.itemId==id); 
       let ex = cart.find(x=>x.itemId==id); 
       if(ex) { 
-          if(ex.qty+i.req > i.amount) return Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); 
           ex.qty+=i.req; 
       } else {
           cart.push({...i, qty:i.req}); 
@@ -970,12 +1004,12 @@
       }
   }
 
-  function adj(id, v, max) { 
+  // --- ALLOW ANY AMOUNT TO BE REQUESTED ---
+  function adj(id, v) { 
       let i = items.find(x=>x.itemId==id); 
       if(!i) return; 
       let n = i.req + v; 
       if(n<1)n=1; 
-      if(max && n>max) { n=max; Swal.fire({toast:true,position:'center',icon:'warning',title:'เกินสต็อก'}); } 
       i.req = n; 
       const el = document.getElementById(`qty-${id}`);
       if(el) el.value = n; 
@@ -1057,10 +1091,6 @@
           stickerCart = []; updateStickerBadge(); mdlSticker.hide();
           Swal.fire({ icon:'success', html:`<a href="${res.pdf}" target="_blank" class="btn btn-primary w-100">ดาวน์โหลดฉลาก</a>` });
       } else Swal.fire('Error', res.message, 'error');
-  }
-
-  function loadHist(init = false) { 
-      // Pre-loaded in getInitialData
   }
 
   function filterHist(status, el) {
@@ -1193,7 +1223,6 @@
       const res = await callApi('confirmOrderCheck', { orderId: tempCheckOrderId, user: currentUser.name, signature: sign });
       clrCvsCheck();
       if(res.status && res.pdf) window.open(res.pdf, '_blank');
-      // loadHist(); // Not needed if just updated status locally, but for safety
       Swal.fire({toast:true, icon:'success', title:'บันทึกเรียบร้อย'});
   }
 
@@ -1296,7 +1325,7 @@
                else if(l.isNearExp) { badge = `<span class="badge-near-exp ms-1">${l.daysLeft} วัน</span>`; }
                return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}${badge}</td></tr>`;
             }).join('');
-           
+            
             return `<div class="mb-3 border rounded shadow-sm p-3 bg-white fade-in">
                       <div class="d-flex gap-2">
                         <div class="drug-img-wrap" style="width:80px;height:80px;flex-shrink:0;">
@@ -1331,7 +1360,6 @@
       mdlMasterEdit.show();
   }
 
-  // --- LABEL EDIT ---
   async function openLabelEdit(itemId) {
       const res = await callApi('getLabelInfo', { itemId });
       let data = { itemId };
@@ -1418,7 +1446,7 @@
 
   function startScan() {
       document.getElementById('qr-overlay').style.display = 'flex';
-      scanMode = 'ITEM'; // Reset to default
+      scanMode = 'ITEM'; 
       document.getElementById('scanItem').checked = true;
       document.getElementById('scan-hint').innerText = 'ส่อง QR Code ที่รายการยา';
       
@@ -1451,7 +1479,6 @@
       stopScan();
       
       if(scanMode === 'BOX') {
-          // Box Scan Mode
           const boxId = decodedText.trim();
           const box = allBoxes.find(b => b.id === boxId);
           if(box) {
@@ -1461,14 +1488,13 @@
               Swal.fire('Not Found', 'ไม่พบกล่องยานี้ในระบบ', 'error').then(startScan);
           }
       } else {
-          // Item Scan Mode (Default)
           Swal.fire({title:'Searching...', didOpen:()=>Swal.showLoading()});
           const res = await callApi('getInventoryByQr', { qrCode: decodedText.trim() });
           Swal.close();
           if(res.status) {
               const d = res.data;
               document.getElementById('qr-id').value = d.invId;
-              document.getElementById('qr-item-id').value = d.itemId; // Added hidden input set
+              document.getElementById('qr-item-id').value = d.itemId;
               document.getElementById('qr-name').innerText = d.name;
               document.getElementById('qr-box').innerText = d.box;
               document.getElementById('qr-loc').value = d.location;
@@ -1514,14 +1540,6 @@
   function clrCvsCheck(){ ctxCheck.clearRect(0,0,cvsCheck.width,cvsCheck.height); }
   function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
 
-  async function checkHosUser() {
-      // Disabled as we use login name now
-  }
-
-  async function registerHosUser() {
-      // Disabled
-  }
-
   function openCart() {
       const el = document.getElementById('cart-list');
       if(cart.length===0) {
@@ -1563,20 +1581,15 @@
   }
 
   async function submitOrder() {
-      // -- DUPLICATE FIX: Guard Clause --
       if(isSubmitting) return;
-
       if(cart.length === 0) return Swal.fire('ไม่มีสินค้าในตะกร้า');
-      // Removed check for hosAuthValid
       if(isCanvasBlank(cvs)) return Swal.fire('กรุณาเซ็นชื่อผู้เบิก');
 
-      // Lock
       isSubmitting = true;
-
       const sign = cvs.toDataURL();
       const orderData = {
           box: curBoxOrder,
-          user: currentUser.name || currentUser.username, // Use logged in user
+          user: currentUser.name || currentUser.username,
           signature: sign,
           items: cart
       };
@@ -1585,45 +1598,27 @@
       
       try {
           const res = await callApi('submitOrder', { orderData });
-          
           if(res.status) {
               cart = [];
               badge();
               renderOrder();
               offC.hide();
               clrCvs();
-              // No need to clear hosxp-user fields
-              
               Swal.fire({ 
                   icon: 'success', 
                   title: 'ส่งข้อมูลเรียบร้อยแล้ว',
                   html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
               });
-              // loadHist(); // already updated in getInitialData if reloaded, but here we might want to refresh history partially or just rely on next open
           } else {
               Swal.fire('Error', res.message, 'error');
           }
       } catch(e) {
           Swal.fire('Error', 'การเชื่อมต่อผิดพลาด', 'error');
       } finally {
-          // Unlock
           isSubmitting = false;
       }
   }
 
-  function addQrToPool() {
-      const id = document.getElementById('qr-item-id').value;
-      const name = document.getElementById('qr-name').innerText;
-      const exp = document.getElementById('qr-exp').value; 
-      const qty = document.getElementById('qr-print-qty').value;
-      
-      if(!id) return Swal.fire('ไม่พบข้อมูลยา (Item ID)');
-      if(!qty || qty <= 0) return Swal.fire('ระบุจำนวน');
-      
-      stickerCart.push({ itemId: id, name: name, qty: qty, expire: exp });
-      updateStickerBadge();
-      Swal.fire({toast:true, icon:'success', title:'เพิ่มในรายการพิมพ์แล้ว', timer:1000, position: 'top-end', showConfirmButton:false});
-  }
 </script>
 </body>
 </html>
