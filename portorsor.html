@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบขอรับเงินค่าตอบแทนเบี้ยเลี้ยงเหมาจ่าย</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --a4-width: 210mm;
+            --a4-height: 297mm;
+        }
+
+        body {
+            background-color: #525659;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        /* ปุ่มกดสร้าง PDF */
+        .btn-container {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-family: 'Sarabun', sans-serif;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* ส่วนของหน้ากระดาษ A4 */
+        #pdf-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* ระยะห่างระหว่างหน้าบนหน้าเว็บ */
+        }
+
+        .page {
+            width: var(--a4-width);
+            height: var(--a4-height);
+            background: white;
+            box-sizing: border-box;
+            padding: 25mm 20mm; /* ระยะขอบกระดาษ */
+            font-weight: 300; /* Sarabun แบบบาง */
+            font-size: 14px;
+            color: black;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* สำหรับการบีบให้พอดีตอนเป็น PDF */
+        .page-break {
+            page-break-after: always;
+        }
+
+        /* Utility Classes สำหรับจัดเลย์เอาต์ */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: 500; }
+        .mt-1 { margin-top: 10px; }
+        .mt-2 { margin-top: 20px; }
+        .mt-3 { margin-top: 30px; }
+        .mt-4 { margin-top: 40px; }
+        .mb-1 { margin-bottom: 10px; }
+        .ml-1 { margin-left: 20px; }
+        .ml-2 { margin-left: 40px; }
+        
+        .flex-row { display: flex; align-items: flex-end; }
+        .flex-between { display: flex; justify-content: space-between; align-items: flex-start; }
+        
+        /* เส้นประสำหรับเติมคำ */
+        .dot {
+            border-bottom: 1px dotted #000;
+            display: inline-block;
+            min-height: 1em;
+            line-height: 1.2;
+        }
+
+        /* สไตล์ตารางหน้า 2 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            font-weight: 300;
+        }
+        th {
+            font-weight: 400;
+        }
+        td {
+            height: 35px; /* ความสูงของช่องตาราง */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="btn-container">
+        <button onclick="generatePDF()">📄 สร้าง PDF (เปิดแท็บใหม่)</button>
+    </div>
+
+    <div id="pdf-container">
+        
+        <div class="page page-break">
+            <div class="text-center font-bold" style="font-size: 16px;">
+                ใบขอรับเงินค่าตอบแทนเบี้ยเลี้ยงเหมาจ่ายสำหรับเจ้าหน้าที่<br>
+                ที่ปฏิบัติงานในหน่วยบริการสังกัดกระทรวงสาธารณสุข
+            </div>
+
+            <div class="mt-2 text-right flex-row" style="justify-content: flex-end;">
+                <div style="width: 250px; text-align: left;">
+                    หน่วยบริการ <span class="dot text-center" style="width: 150px;">โรงพยาบาลสวี</span><br>
+                    ประจำเดือน <span class="dot" style="width: 150px;"></span>
+                </div>
+            </div>
+
+            <div class="mt-2 flex-row">
+                ข้าพเจ้าชื่อ <span class="dot" style="width: 150px;"></span> 
+                นามสกุล <span class="dot" style="width: 150px;"></span> 
+                ตำแหน่ง <span class="dot" style="width: 180px;"></span>
+            </div>
+            <div class="mt-1 flex-row">
+                ปัจจุบันปฏิบัติงานที่ <span class="dot text-center" style="width: 150px;">โรงพยาบาลสวี</span>
+                จังหวัด <span class="dot text-center" style="width: 120px;">ชุมพร</span>
+                ระดับ/กลุ่ม <span class="dot text-center" style="width: 120px;">พื้นที่ปกติ 2</span>
+            </div>
+            <div class="mt-1 flex-row">
+                ปฏิบัติงานในหน่วยบริการ <span class="dot" style="width: 250px;"></span>
+                ปี <span class="dot" style="width: 50px;"></span> 
+                เดือน (นับถึงสิ้นเดือนที่เบิกจ่าย)
+            </div>
+            <div class="mt-1">
+                โดยมีรายละเอียดการปฏิบัติงาน ดังนี้ (เฉพาะสายแพทย์ตอบข้อ 1 ด้วย)
+            </div>
+
+            <div class="mt-1">
+                1. ฝึกเพิ่มพูนทักษะ (ปีที่ 1) รวมระยะเวลาการปฏิบัติงาน <span class="dot" style="width: 50px;"></span> ปี <span class="dot" style="width: 50px;"></span> เดือน ดังนี้
+            </div>
+            <div class="ml-1 mt-1 flex-row">
+                <input type="radio" style="margin-right: 5px;"> รพศ./ท. <span class="dot" style="width: 150px;"></span>
+                จังหวัด <span class="dot" style="width: 100px;"></span>
+                ตั้งแต่ <span class="dot" style="width: 100px;"></span>
+                ถึง <span class="dot" style="width: 100px;"></span>
+            </div>
+            <div class="ml-1 mt-1 flex-row">
+                <input type="radio" style="margin-right: 5px;"> รพช./ <span class="dot" style="width: 160px;"></span>
+                จังหวัด <span class="dot" style="width: 100px;"></span>
+                ตั้งแต่ <span class="dot" style="width: 100px;"></span>
+                ถึง <span class="dot" style="width: 100px;"></span>
+            </div>
+
+            <script>
+                // สร้างรายการข้อ 2 ถึง 6 เพื่อลดความซ้ำซ้อนในโค้ด
+                for(let i=2; i<=6; i++){
+                    document.write(`
+                    <div class="mt-1 flex-row">
+                        ${i}. ปฏิบัติงานที่โรงพยาบาล <span class="dot" style="width: 180px;"></span>
+                        จังหวัด <span class="dot" style="width: 100px;"></span>
+                        จัดระดับ <span class="dot" style="width: 100px;"></span>
+                    </div>
+                    <div class="ml-2 mt-1 flex-row">
+                        ตั้งแต่วันที่ <span class="dot" style="width: 150px;"></span>
+                        ถึงวันที่ <span class="dot" style="width: 150px;"></span>
+                        รวม <span class="dot" style="width: 50px;"></span> ปี 
+                        <span class="dot" style="width: 50px;"></span> เดือน 
+                        <span class="dot" style="width: 50px;"></span> วัน
+                    </div>
+                    `);
+                }
+            </script>
+
+            <div class="mt-2 ml-2 flex-row" style="padding-left: 20px;">
+                <span class="font-bold">รวมทั้งสิ้น</span> <span class="dot" style="width: 120px;"></span> ปี 
+                <span class="dot" style="width: 120px;"></span> เดือน 
+                <span class="dot" style="width: 120px;"></span> วัน
+            </div>
+            <div class="mt-2 ml-2 flex-row" style="padding-left: 20px;">
+                ได้รับเงินจำนวน <span class="dot" style="width: 150px;"></span> บาท 
+                ( <span class="dot" style="width: 320px;"></span> )
+            </div>
+
+            <div class="mt-3" style="text-indent: 50px;">
+                ข้าพเจ้าขอรับรองว่า ข้อมูลดังกล่าวเป็นความจริงทุกประการ และหากมีการเรียกเงินคืน ข้าพเจ้าขอรับผิดชอบคืนเงินแต่เพียงผู้เดียว
+            </div>
+
+            <div class="mt-3 text-center" style="margin-left: 300px;">
+                <span class="dot" style="width: 200px;"></span><br>
+                (<span class="dot" style="width: 180px;"></span>)<br>
+                ตำแหน่ง <span class="dot" style="width: 150px;"></span>
+            </div>
+
+            <div class="flex-between mt-4">
+                <div style="width: 45%;">
+                    <div class="font-bold mb-1">ตรวจสอบแล้วถูกต้อง</div>
+                    ลงชื่อ <span class="dot" style="width: 150px;"></span><br>
+                    <div class="mt-1">(<span class="dot" style="width: 180px;"></span>)</div>
+                    <div class="mt-1">ตำแหน่ง <span class="dot" style="width: 150px;"></span></div>
+                    <div class="mt-1 text-center font-bold">หัวหน้าฝ่าย / หัวหน้างาน</div>
+                </div>
+
+                <div style="width: 50%;">
+                    <div class="mb-1">เรียน ผู้อำนวยการโรงพยาบาลสวี</div>
+                    <div class="ml-2 mb-1">ได้ตรวจสอบ / วันปฏิบัติงานแล้ว</div>
+                    <div class="flex-row" style="gap: 10px;">
+                        ( &nbsp;&nbsp;&nbsp; ) ครบ 15 วันทำการ 
+                        ( &nbsp;&nbsp;&nbsp; ) ไม่ครบ 15 วันทำการ
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        (ลงชื่อ) <span class="dot" style="width: 150px;"></span><br>
+                        <div class="mt-1">( <span class="dot text-center" style="width: 160px;">นางอทิตา มณีรัตน์</span> )</div>
+                        <div class="mt-1">ตำแหน่ง <span class="dot text-center font-bold" style="width: 180px; border-bottom:none;">เจ้าพนักงานธุรการชำนาญงาน</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page">
+            <div class="text-center font-bold" style="font-size: 18px;">
+                สรุปวันลา
+            </div>
+            
+            <div class="mt-3">
+                <span class="font-bold">ชื่อ - สกุล</span> <span class="dot" style="width: 400px;"></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">ประจำเดือน</th>
+                        <th style="width: 20%;">วัน/เดือน/ปี<br>ลาป่วย</th>
+                        <th style="width: 20%;">วัน/เดือน/ปี<br>ลากิจ</th>
+                        <th style="width: 20%;">วัน/เดือน/ปี<br>ลาพักผ่อน</th>
+                        <th style="width: 20%;">รวม</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+            </table>
+
+            <div class="text-center mt-4" style="margin-top: 80px;">
+                <div class="font-bold mb-3">ตรวจสอบแล้วถูกต้อง</div>
+                
+                (ลงชื่อ) <span class="dot" style="width: 250px;"></span><br>
+                <div class="mt-2">( <span class="dot text-center" style="width: 150px; border-bottom: none;">นางอทิตา มณีรัตน์</span> )</div>
+                <div class="mt-2">ตำแหน่ง <span class="font-bold">เจ้าพนักงานธุรการชำนาญงาน</span></div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        function generatePDF() {
+            // รอให้ฟอนต์โหลดเสร็จสมบูรณ์ก่อนเรนเดอร์ PDF
+            document.fonts.ready.then(function() {
+                const element = document.getElementById('pdf-container');
+                
+                // ตั้งค่าออปชันสำหรับ html2pdf
+                const opt = {
+                    margin:       0,
+                    filename:     'ใบขอรับเงินค่าตอบแทน_รพ.สวี.pdf',
+                    image:        { type: 'jpeg', quality: 1.0 },
+                    html2canvas:  { 
+                        scale: 2, // เพิ่มความคมชัด
+                        useCORS: true, 
+                        scrollY: 0,
+                        windowWidth: element.scrollWidth
+                    },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // สร้าง PDF และแปลงเป็น Blob URL เพื่อเปิดในแท็บใหม่
+                html2pdf().set(opt).from(element).output('bloburl').then(function(pdfUrl) {
+                    window.open(pdfUrl, '_blank');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
