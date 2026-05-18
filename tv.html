@@ -9,21 +9,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- นำเข้า Tone.js สำหรับสร้างเสียงดนตรีสังเคราะห์ -->
+    <!-- นำเข้า Tone.js สำหรับสร้างเสียงดนตรีสังเคราะห์เตือนสัญญานกะ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
         body {
             font-family: 'Noto Sans Thai', sans-serif !important;
             margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;
-            background-color: #0f172a; /* Fallback */
+            background-color: #0f172a; /* Fallback Slate 900 */
             color: #1e293b;
             background-size: 200% 200%;
             animation: gradientMove 15s ease infinite;
             transition: background-image 1s ease;
         }
 
-        /* Gradient สีพื้นหลังประจำวัน */
+        /* Gradient สีพื้นหลังประจำวัน หมุนเวียนสดใส */
         @keyframes gradientMove {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -37,7 +37,7 @@
         .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
         .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
 
-        /* Ambient Clouds (z-0 เพื่อให้อยู่ใต้ Glass Panel) */
+        /* Ambient Clouds (ลอยอยู่เหนือพื้นหลัง แต่ซ้อนใต้กระจก) */
         .cloud-container {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -130,7 +130,7 @@
             text-shadow: 0 0 8px rgba(255,255,255,0.3);
         }
         
-        /* สีเวลาแบบ Rainbow สว่างๆ คมๆ */
+        /* สีเวลาแบบ Rainbow สว่างคมจัดจ้าน */
         .text-rainbow {
             background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30);
             background-size: 200% auto;
@@ -163,7 +163,6 @@
     </style>
 </head>
 
-<!-- กำหนดพื้นหลังหลักและใส่ z-0 ให้ Cloud อยู่ข้างใต้สุด -->
 <body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
     
     <!-- Ambient Clouds (ลอยอยู่เหนือ bg สีพื้น แต่ใต้ panel กระจก) -->
@@ -356,7 +355,7 @@
         let isDemoMode = false;
         let previousActiveCount = -1; // ตัวแปรเก็บจำนวนพนักงานกะก่อนหน้า
 
-        // --- ระบบคิวเสียง (Samsung TV Support) & Tone.js ---
+        // --- ระบบคิวเสียง (Samsung TV Support via Google TTS) ---
         let spokenAlerts = new Set();
         let spokenIPDs = new Set();
         let voiceQueue = [];
@@ -366,7 +365,7 @@
 
         // ฟังก์ชันเล่นดนตรีเปลี่ยนกะ (สดใส สั้นๆ 3 วินาที)
         async function playShiftChangeMelody() {
-            if (!ttsEnabled) return; // ต้องคลิกจอก่อนถึงจะเล่นได้
+            if (!ttsEnabled) return; 
             
             await Tone.start();
             
@@ -381,9 +380,8 @@
             synth.triggerAttackRelease("C5", "8n", now);
             synth.triggerAttackRelease("E5", "8n", now + 0.15);
             synth.triggerAttackRelease("G5", "8n", now + 0.3);
-            synth.triggerAttackRelease("C6", "4n", now + 0.45); // โน้ตสุดท้ายลากยาวนิดนึง
+            synth.triggerAttackRelease("C6", "4n", now + 0.45); 
             
-            // รอให้เสียงจบก่อนที่จะให้ระบบอื่นทำงานต่อ (ถ้าจำเป็น)
             return new Promise(resolve => setTimeout(resolve, 2000));
         }
 
@@ -393,11 +391,9 @@
                 ttsEnabled = true;
                 console.log("TTS System Enabled by User Click");
                 
-                // กระตุ้น Audio Object ปล่าวๆ 1 ครั้งใน User Interaction Event
                 const unlockAudio = new Audio();
                 unlockAudio.play().catch(()=>{}); 
                 
-                // เล่นดนตรีเปลี่ยนกะทันที 1 ครั้ง (Demo)
                 await playShiftChangeMelody();
                 
                 processVoiceQueue(); 
@@ -417,7 +413,7 @@
             
             currentAudio.onended = () => {
                 isSpeaking = false;
-                processVoiceQueue(); // ทำงานคิวถัดไปเมื่อเสียงเล่นจบ
+                processVoiceQueue(); 
             };
             
             currentAudio.onerror = () => {
@@ -433,6 +429,7 @@
             });
         }
 
+        // --- STREAMING_CHUNK: Instantiating mock IPD data with times and active rendering logic ---
         // --- ข้อมูลผู้ป่วยใน (IPD) จำลองเป็น Dynamic (เพิ่มฟิลด์เวลา และซ่อนวันที่) ---
         let ipdData = [
             { id: 'ipd-1', bed: 'M21', hn: '123456789', status: 'Admit', time: '14:50', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: true },
@@ -445,7 +442,7 @@
             { id: 'ipd-8', bed: 'P5', hn: '667788990', status: 'อื่นๆ', time: '07:45', bg: 'bg-amber-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false }
         ];
 
-        let isFirstLoadIPD = true; // แฟล็กป้องกันไม่อ่านเสียงผู้ป่วยเก่าตอนโหลดหน้าเว็บ
+        let isFirstLoadIPD = true; 
 
         function renderIPDList() {
             const container = document.getElementById('ipd-container');
@@ -453,7 +450,6 @@
             container.innerHTML = '';
             
             ipdData.forEach(ipd => {
-                // สร้าง HTML สำหรับแต่ละแถว - เพิ่มแสดงผลเวลาสีเทานอกกรอบสถานะ
                 const row = document.createElement('div');
                 row.className = `card-3d-ipd relative flex items-center justify-between ${ipd.isNew ? 'alert-new' : ''} h-[32px] overflow-hidden pl-[48px]`;
                 row.innerHTML = `
@@ -473,7 +469,6 @@
                 if (!spokenIPDs.has(ipd.id)) {
                     spokenIPDs.add(ipd.id);
                     
-                    // ไม่อ่านเสียงทั้งหมดในรอบแรกที่โหลดเว็บ (อ่านเฉพาะเคสที่เพิ่มมาใหม่หลังจากนั้น)
                     if (!isFirstLoadIPD) {
                         let statusText = "ออร์เดอร์ใหม่";
                         if(ipd.status === 'Admit' || ipd.status.toLowerCase() === 'admit') statusText = 'แอดมิด';
@@ -504,18 +499,16 @@
             renderIPDList();
         }, 10000);
 
-
+        // --- STREAMING_CHUNK: Fetching schedule and active status alerts from external GS API ---
         // --- Fetch GAS Schedule & Alerts ---
         async function fetchSchedule() {
             try {
                 const res = await fetch(GAS_API_URL);
                 const data = await res.json();
                 
-                // อัปเดตตารางเวร
                 staffSchedule = data;
                 if(!isDemoMode) updateStaffUI(staffSchedule.today);
                 
-                // เรนเดอร์แจ้งเตือน
                 if(data.alerts) renderAlerts(data.alerts);
 
             } catch(error) {
@@ -523,6 +516,7 @@
             }
         }
 
+        // --- STREAMING_CHUNK: Parsing alert messages and mapping HTML formats dynamically ---
         // --- Render Alerts UI ---
         function renderAlerts(alerts) {
             const container = document.getElementById('alerts-container');
@@ -563,15 +557,13 @@
                     timeClass = 'text-teal-800 bg-white border-teal-200';
                 }
 
-                // ปรับแต่งการแสดงผลตามความต้องการของลูกค้า
                 let titleText = alert.title;
                 let descText = alert.desc;
 
+                // ตกแต่งป้ายแจ้งเช็คกล่องยาพร้อมใช้จากชีต Boxes (ขจัดคำฟุ่มเฟือยแล้วรวมชื่อผู้ตรวจและเวลา)
                 if (alert.type === 'checked') {
-                    // เอาคำว่า "พร้อมใช้" ย้ายไปไว้ด้านหลังชื่อกล่อง
-                    let cleanBoxName = alert.title.replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
-                    titleText = cleanBoxName + " พร้อมใช้";
-                    // แสดงชื่อผู้ตรวจสอบและเวลาไว้ด้านล่าง (desc)
+                    let cleanBoxName = alert.title.replace('เช็คพร้อมใช้แล้ว', '').replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
+                    titleText = cleanBoxName + " เช็คพร้อมใช้แล้ว";
                     descText = alert.desc + " | " + alert.timeStr;
                 }
 
@@ -588,11 +580,11 @@
                 </div>`;
                 container.innerHTML += cardHtml;
 
+                // --- STREAMING_CHUNK: Processing TTS output strings for line, checked, and order warnings ---
                 // --- ตรวจจับและจัดคิวเสียงอ่าน (เฉพาะ Alert เบิกยา, ไลน์, และกล่องยาพร้อมใช้) ---
                 if (!spokenAlerts.has(alert.id)) {
                     spokenAlerts.add(alert.id);
                     
-                    // ยกเว้นยาหมดอายุ ไม่ต้องอ่าน
                     if (alert.type !== 'expiry') {
                         let textToSpeak = "";
                         if (alert.type === 'requisition') {
@@ -600,7 +592,7 @@
                         } else if (alert.type === 'line') {
                             textToSpeak = `มีการถามยาในไลน์ ${alert.title.replace('ถามยา:', '').trim()} ค่ะ`;
                         } else if (alert.type === 'checked') {
-                            let cleanBoxName = alert.title.replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
+                            let cleanBoxName = alert.title.replace('เช็คพร้อมใช้แล้ว', '').replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
                             textToSpeak = `${cleanBoxName} เช็คพร้อมใช้แล้วค่ะ`;
                         }
                         
@@ -613,6 +605,7 @@
             });
         }
 
+        // --- STREAMING_CHUNK: Updating pharmacist avatars and personnel schedule UI cards ---
         // --- Update UI logic ---
         function updateStaffUI(data) {
             if(!data) return;
@@ -623,13 +616,11 @@
                 
                 const staff = data[prop];
                 
-                // หากตำแหน่งนี้ไม่มีคน (ข้อมูลว่าง) ให้ซ่อนการ์ดทิ้ง
                 if(!staff || !staff.name || staff.name.trim() === "") {
                     el.style.display = 'none';
                 } else {
                     el.style.display = 'flex';
                     
-                    // จัดการชื่อ (เอาวงเล็บออก)
                     let displayName = staff.name;
                     if(prop !== 'clinic') {
                         displayName = displayName.split('(')[0].trim();
@@ -676,6 +667,7 @@
             document.getElementById('div-oncall').style.display = cOnc ? 'block' : 'none';
         }
 
+        // --- STREAMING_CHUNK: Synchronizing timezone, clock, and active session countdown clocks ---
         // --- Clock & Countdown Logic ---
         function updateClock() {
             const now = new Date();
@@ -748,13 +740,12 @@
 
             document.getElementById('active-staff-count').textContent = activeCount + ' คน';
 
-            // --- ตรวจจับการเปลี่ยนกะเพื่อเล่นเสียง ---
+            // --- STREAMING_CHUNK: Detecting shifts changes and outputting shift music alerts ---
             if (previousActiveCount !== -1 && previousActiveCount !== activeCount) {
                 console.log("Shift Changed detected!");
                 if(!isSpeaking) {
                     playShiftChangeMelody();
                 } else {
-                    // ถ้ากำลังพูดอยู่ ให้รอให้พูดจบก่อน ค่อยเล่นดนตรี
                      setTimeout(() => {
                          if(!isSpeaking) playShiftChangeMelody();
                      }, 3000);
@@ -763,13 +754,13 @@
             previousActiveCount = activeCount;
         }
 
+        // --- STREAMING_CHUNK: Polling actual RSS feeds for global news, oil rates, and gold prices ---
         // --- Real RSS Mix (News/Gold/Oil) ---
         let mixData = [];
         let currentMixIndex = 0;
 
         async function fetchRealFeeds() {
             try {
-                // อัปเดต URL เพื่อให้ดึงข่าวสารที่ใหม่เสมอ
                 const feeds = [
                     { type: 'news', url: 'https://news.google.com/rss?hl=th&gl=TH&ceid=TH:th', bg: 'bg-white' },
                     { type: 'gold', url: 'https://news.google.com/rss/search?q=ราคาทองคำ&hl=th&gl=TH&ceid=TH:th', bg: 'bg-yellow-50' },
@@ -784,7 +775,6 @@
                     const data = await res.json();
                     
                     if (data.status === 'ok' && data.items.length > 0) {
-                        // ดึงมาแค่ 2-3 ข่าวต่อหัวข้อ
                         const items = data.items.slice(0, 3);
                         items.forEach(item => {
                             let cleanTitle = item.title.split(' - ')[0]; 
@@ -794,7 +784,7 @@
                 }
                 
                 if(newMix.length > 0) {
-                    mixData = newMix.sort(() => Math.random() - 0.5); // สลับข่าวแบบสุ่ม
+                    mixData = newMix.sort(() => Math.random() - 0.5); 
                 }
             } catch(e) {
                 console.error("RSS Fetch Error", e);
@@ -818,6 +808,7 @@
             }, 500);
         }
 
+        // --- STREAMING_CHUNK: Fetching real-time weather and air pollution indexes (PM2.5) ---
         // --- Weather & PM 2.5 ---
         async function fetchWeather() {
             try {
@@ -850,17 +841,18 @@
             }
         }
 
+        // --- STREAMING_CHUNK: Assigning background class variables depending on current day of the week ---
         // --- Day of week BG ---
         function updateBackground() {
             const dayOfWeek = new Date().getDay();
             const body = document.getElementById('main-body');
             
-            // ลบคลาสพื้นหลังเก่าออกให้หมดก่อน
             body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
             const bgClasses = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat'];
             body.classList.add(bgClasses[dayOfWeek]);
         }
 
+        // --- STREAMING_CHUNK: Setting up the Tomorrow/Next-day preview loop logic every minute ---
         // --- Tomorrow Demo Routine (ทุก 1 นาที) ---
         setInterval(() => {
             isDemoMode = true;
@@ -881,6 +873,7 @@
 
         }, 60000);
 
+        // --- STREAMING_CHUNK: Running system onload routines and scheduling real-time intervals ---
         // --- Init ---
         window.onload = async function() {
             updateClock();
@@ -888,14 +881,13 @@
             renderIPDList();
             fetchWeather();
             
-            // ดึงข้อมูล RSS รอบแรกให้เสร็จก่อน แล้วค่อยสลับโชว์
             await fetchRealFeeds();
             showMixedInfo();
             
             fetchSchedule();
             
             setInterval(updateClock, 1000); 
-            setInterval(showMixedInfo, 10000); // สลับข่าวทุก 10 วิ
+            setInterval(showMixedInfo, 10000); 
             
             // Refresh ข้อมูลจากฝั่ง GS ทุกๆ 30 วินาที
             setInterval(() => { fetchSchedule(); }, 30000);
