@@ -689,7 +689,7 @@
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${lv.type_of_leave}</td><td>${lv.date_range}</td><td>${lv.count}</td>
-                    <td><button class="btn-danger" onclick="deleteLeave('${lv.type_of_leave}', '${lv.date_range}', '${lv.count}')">ลบ</button></td>
+                    <td><button class="btn-danger" onclick="deleteLeave('${lv.id}', '${lv.type_of_leave}', '${lv.date_range}')">ลบ</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -821,7 +821,8 @@
             const count = document.getElementById('lv-count').value;
             if(!date || !count) return alert("กรุณากรอกช่วงวันที่และจำนวนวัน");
 
-            const payload = { username: globalData.user.username, month_year: currentMonthYear, type_of_leave: type, date_range: date, count: count };
+            const newId = Date.now().toString(); // สร้าง id อัตโนมัติ
+            const payload = { id: newId, username: globalData.user.username, month_year: currentMonthYear, type_of_leave: type, date_range: date, count: count };
             try {
                 const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'saveLeave', payload: payload }) });
                 const res = await response.json();
@@ -833,16 +834,23 @@
             } catch(e) { alert(e); }
         }
 
-        async function deleteLeave(type, dateRange, count) {
+        async function deleteLeave(id, type, dateRange) {
             if(!confirm(`ต้องการลบวันลาประเภท "${type}" ช่วง "${dateRange}" ใช่หรือไม่?`)) return;
-            const payload = { username: globalData.user.username, month_year: currentMonthYear, type_of_leave: type, date_range: dateRange, count: count };
+            
+            // อัปเกรด: ส่งไปทั้ง ID และ ข้อมูลแบบเก่า เผื่อใช้เป็นแผนสำรองในการลบ
+            const payload = { 
+                id: id,
+                username: globalData.user.username,
+                month_year: currentMonthYear,
+                type_of_leave: type,
+                date_range: dateRange
+            };
+            
             try {
                 const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'deleteLeave', payload: payload }) });
                 const res = await response.json();
                 if(res.success) {
-                    // ใช้ findIndex และ splice เพื่อลบข้อมูลออกจากหน้าจอแค่ "1 รายการ" ต่อการกดลบ 1 ครั้ง
-                    // ป้องกันปัญหาหน้าจอลบรายการที่หน้าตาเหมือนกันหายไปทั้งหมดรวดเดียว
-                    const indexToRemove = globalData.leaves.findIndex(l => l.month_year === currentMonthYear && l.type_of_leave === type && l.date_range === dateRange && l.count == count);
+                    const indexToRemove = globalData.leaves.findIndex(l => (l.id === id) || (l.date_range === dateRange && l.type_of_leave === type));
                     if (indexToRemove !== -1) globalData.leaves.splice(indexToRemove, 1);
                     
                     renderLeaveTable(); updatePDF();
