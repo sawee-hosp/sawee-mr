@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- นำเข้า Tone.js สำหรับสร้างเสียงดนตรีสังเคราะห์ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
         body {
@@ -352,8 +354,9 @@
         
         let staffSchedule = { today: null, tomorrow: null };
         let isDemoMode = false;
+        let previousActiveCount = -1; // ตัวแปรเก็บจำนวนพนักงานกะก่อนหน้า
 
-        // --- ระบบคิวเสียง (Samsung TV Support) ---
+        // --- ระบบคิวเสียง (Samsung TV Support) & Tone.js ---
         let spokenAlerts = new Set();
         let spokenIPDs = new Set();
         let voiceQueue = [];
@@ -361,15 +364,41 @@
         let ttsEnabled = false;
         let currentAudio = null;
 
+        // ฟังก์ชันเล่นดนตรีเปลี่ยนกะ (สดใส สั้นๆ 3 วินาที)
+        async function playShiftChangeMelody() {
+            if (!ttsEnabled) return; // ต้องคลิกจอก่อนถึงจะเล่นได้
+            
+            await Tone.start();
+            
+            const synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 1 }
+            }).toDestination();
+
+            const now = Tone.now();
+            
+            // เมโลดี้สดใส (Arpeggio ขึ้น)
+            synth.triggerAttackRelease("C5", "8n", now);
+            synth.triggerAttackRelease("E5", "8n", now + 0.15);
+            synth.triggerAttackRelease("G5", "8n", now + 0.3);
+            synth.triggerAttackRelease("C6", "4n", now + 0.45); // โน้ตสุดท้ายลากยาวนิดนึง
+            
+            // รอให้เสียงจบก่อนที่จะให้ระบบอื่นทำงานต่อ (ถ้าจำเป็น)
+            return new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
         // คลิกหน้าจอเพื่อเปิดระบบเสียง (แก้ปัญหา Autoplay Policy ของเบราว์เซอร์)
-        window.addEventListener('click', () => {
+        window.addEventListener('click', async () => {
             if(!ttsEnabled) {
                 ttsEnabled = true;
                 console.log("TTS System Enabled by User Click");
                 
-                // กระตุ้น Audio Object ปล่าวๆ 1 ครั้งใน User Interaction Event เพื่อปลดล็อกใน TV บางรุ่น
+                // กระตุ้น Audio Object ปล่าวๆ 1 ครั้งใน User Interaction Event
                 const unlockAudio = new Audio();
                 unlockAudio.play().catch(()=>{}); 
+                
+                // เล่นดนตรีเปลี่ยนกะทันที 1 ครั้ง (Demo)
+                await playShiftChangeMelody();
                 
                 processVoiceQueue(); 
             }
@@ -404,33 +433,37 @@
             });
         }
 
-        // --- ข้อมูลผู้ป่วยใน (IPD) จำลองเป็น Dynamic ---
+        // --- ข้อมูลผู้ป่วยใน (IPD) จำลองเป็น Dynamic (เพิ่มฟิลด์เวลา และซ่อนวันที่) ---
         let ipdData = [
-            { id: 'ipd-1', bed: 'M21', hn: '123456789', status: 'Admit', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: true },
-            { id: 'ipd-2', bed: 'F25', hn: '987654321', status: 'D/C', bg: 'bg-rose-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: true },
-            { id: 'ipd-3', bed: 'M10', hn: '112233445', status: 'Admit', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-4', bed: 'F12', hn: '223344556', status: 'Admit', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-5', bed: 'ICU', hn: '334455667', status: 'Admit', bg: 'bg-emerald-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false },
-            { id: 'ipd-6', bed: 'M05', hn: '445566778', status: 'D/C', bg: 'bg-rose-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-7', bed: 'F30', hn: '556677889', status: 'D/C', bg: 'bg-rose-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-8', bed: 'P5', hn: '667788990', status: 'อื่นๆ', bg: 'bg-amber-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false }
+            { id: 'ipd-1', bed: 'M21', hn: '123456789', status: 'Admit', time: '14:50', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: true },
+            { id: 'ipd-2', bed: 'F25', hn: '987654321', status: 'D/C', time: '13:25', bg: 'bg-rose-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: true },
+            { id: 'ipd-3', bed: 'M10', hn: '112233445', status: 'Admit', time: '11:40', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
+            { id: 'ipd-4', bed: 'F12', hn: '223344556', status: 'Admit', time: '10:15', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
+            { id: 'ipd-5', bed: 'ICU', hn: '334455667', status: 'Admit', time: '09:05', bg: 'bg-emerald-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false },
+            { id: 'ipd-6', bed: 'M05', hn: '445566778', status: 'D/C', time: '08:30', bg: 'bg-rose-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
+            { id: 'ipd-7', bed: 'F30', hn: '556677889', status: 'D/C', time: '08:15', bg: 'bg-rose-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
+            { id: 'ipd-8', bed: 'P5', hn: '667788990', status: 'อื่นๆ', time: '07:45', bg: 'bg-amber-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false }
         ];
 
         let isFirstLoadIPD = true; // แฟล็กป้องกันไม่อ่านเสียงผู้ป่วยเก่าตอนโหลดหน้าเว็บ
 
         function renderIPDList() {
             const container = document.getElementById('ipd-container');
+            if(!container) return;
             container.innerHTML = '';
             
             ipdData.forEach(ipd => {
-                // สร้าง HTML สำหรับแต่ละแถว
+                // สร้าง HTML สำหรับแต่ละแถว - เพิ่มแสดงผลเวลาสีเทานอกกรอบสถานะ
                 const row = document.createElement('div');
                 row.className = `card-3d-ipd relative flex items-center justify-between ${ipd.isNew ? 'alert-new' : ''} h-[32px] overflow-hidden pl-[48px]`;
                 row.innerHTML = `
                     <div class="ipd-badge ${ipd.bg}">${ipd.bed}</div>
                     <div class="flex-1 flex items-center justify-between px-3">
                         <span class="text-slate-800 font-black text-lg font-mono leading-none ${ipd.isNew ? 'tracking-widest' : ''}">${ipd.hn}</span>
-                        <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none shadow-sm">${ipd.status}</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none shadow-sm">${ipd.status}</span>
+                            <span class="text-[11px] font-bold text-slate-500 leading-none">${ipd.time}</span>
+                        </div>
                     </div>
                     <div class="w-8 flex justify-center shrink-0"><i class="${ipd.icon} text-lg ${ipd.isNew ? 'drop-shadow-sm' : ''}"></i></div>
                 `;
@@ -456,11 +489,14 @@
 
         // จำลองเพิ่มผู้ป่วยใน 1 คน เพื่อแสดงการแจ้งเตือนด้วยเสียง (วินาทีที่ 10)
         setTimeout(() => {
+            const now = new Date();
+            const timeStr = ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2);
             ipdData.unshift({
                 id: 'ipd-demo-new-' + Date.now(),
                 bed: 'M02',
                 hn: '102030405',
                 status: 'Admit',
+                time: timeStr,
                 bg: 'bg-emerald-500',
                 icon: 'fas fa-check-circle text-emerald-500',
                 isNew: true
@@ -490,6 +526,7 @@
         // --- Render Alerts UI ---
         function renderAlerts(alerts) {
             const container = document.getElementById('alerts-container');
+            if(!container) return;
             container.innerHTML = '';
 
             if(alerts.length === 0) {
@@ -518,6 +555,24 @@
                     descColor = 'text-rose-800';
                     iconHtml = '<i class="fas fa-exclamation-triangle text-rose-600 text-3xl drop-shadow-sm"></i>';
                     timeClass = 'text-rose-800 bg-white border-rose-200';
+                } else if (alert.type === 'checked') { 
+                    bgClass = 'bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200';
+                    titleColor = 'text-teal-900';
+                    descColor = 'text-teal-800';
+                    iconHtml = '<i class="fas fa-box text-teal-600 text-3xl drop-shadow-sm"></i>';
+                    timeClass = 'text-teal-800 bg-white border-teal-200';
+                }
+
+                // ปรับแต่งการแสดงผลตามความต้องการของลูกค้า
+                let titleText = alert.title;
+                let descText = alert.desc;
+
+                if (alert.type === 'checked') {
+                    // เอาคำว่า "พร้อมใช้" ย้ายไปไว้ด้านหลังชื่อกล่อง
+                    let cleanBoxName = alert.title.replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
+                    titleText = cleanBoxName + " พร้อมใช้";
+                    // แสดงชื่อผู้ตรวจสอบและเวลาไว้ด้านล่าง (desc)
+                    descText = alert.desc + " | " + alert.timeStr;
                 }
 
                 const cardHtml = `
@@ -525,15 +580,15 @@
                     <div class="w-11 flex justify-center shrink-0">${iconHtml}</div>
                     <div class="flex-1 flex flex-col justify-center overflow-hidden">
                         <div class="flex justify-between items-start mb-0.5">
-                            <span class="text-base font-black ${titleColor} truncate">${alert.title}</span>
+                            <span class="text-base font-black ${titleColor} truncate">${titleText}</span>
                             <span class="text-[11px] ${timeClass} font-black px-1.5 py-0.5 rounded shadow-sm border shrink-0">${alert.timeStr}</span>
                         </div>
-                        <span class="text-sm font-bold ${descColor} line-clamp-2 leading-snug">${alert.desc}</span>
+                        <span class="text-sm font-bold ${descColor} line-clamp-2 leading-snug">${descText}</span>
                     </div>
                 </div>`;
                 container.innerHTML += cardHtml;
 
-                // --- ตรวจจับและจัดคิวเสียงอ่าน (เฉพาะ Alert เบิกยาและไลน์) ---
+                // --- ตรวจจับและจัดคิวเสียงอ่าน (เฉพาะ Alert เบิกยา, ไลน์, และกล่องยาพร้อมใช้) ---
                 if (!spokenAlerts.has(alert.id)) {
                     spokenAlerts.add(alert.id);
                     
@@ -544,6 +599,9 @@
                             textToSpeak = `มีการเบิกยาใหม่ จาก ${alert.title.replace('เบิกยา:', '').trim()} ค่ะ`;
                         } else if (alert.type === 'line') {
                             textToSpeak = `มีการถามยาในไลน์ ${alert.title.replace('ถามยา:', '').trim()} ค่ะ`;
+                        } else if (alert.type === 'checked') {
+                            let cleanBoxName = alert.title.replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
+                            textToSpeak = `${cleanBoxName} เช็คพร้อมใช้แล้วค่ะ`;
                         }
                         
                         if (textToSpeak) {
@@ -689,6 +747,20 @@
             });
 
             document.getElementById('active-staff-count').textContent = activeCount + ' คน';
+
+            // --- ตรวจจับการเปลี่ยนกะเพื่อเล่นเสียง ---
+            if (previousActiveCount !== -1 && previousActiveCount !== activeCount) {
+                console.log("Shift Changed detected!");
+                if(!isSpeaking) {
+                    playShiftChangeMelody();
+                } else {
+                    // ถ้ากำลังพูดอยู่ ให้รอให้พูดจบก่อน ค่อยเล่นดนตรี
+                     setTimeout(() => {
+                         if(!isSpeaking) playShiftChangeMelody();
+                     }, 3000);
+                }
+            }
+            previousActiveCount = activeCount;
         }
 
         // --- Real RSS Mix (News/Gold/Oil) ---
