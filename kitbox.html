@@ -1306,7 +1306,6 @@ async function submitLabel() {
           const data = res.data;
           const nowStr = new Date().toLocaleString('th-TH');
           
-          // บังคับตัดคำด้วย max-height เพื่อไม่ให้ล้นไปหน้า 2
           const docDef = {
               pageSize: { width: 170.08, height: 226.77 }, 
               pageMargins: [10, 10, 10, 10],
@@ -1329,13 +1328,21 @@ async function submitLabel() {
                     layout: 'noBorders',
                     margin: [0, 0, 0, 5]
                   },
-                  // บังคับบรรทัดเดียว ป้องกันข้อความยาวจนดันหน้า
-                  { text: `ชื่อกล่อง: ${curBoxStock}`, fontSize: 12, bold: true, margin: [0, 2, 0, 2], maxLines: 1 },
-                  { text: `ยาอายุสั้นสุด: ${data.earliestDrug}`, fontSize: 10, margin: [0, 0, 0, 5], maxLines: 1 },
-                  { image: signDataUrl, width: 60, alignment: 'center' },
-                  { text: `(${currentUser.name})`, alignment: 'center', fontSize: 10 },
-                  { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 1, color: '#ccc' }], margin: [0, 5, 0, 2] },
-                  { text: `เติมยาล่าสุด: ${nowStr}\nจำนวนครั้ง: ${data.changeCount}`, fontSize: 9 }
+                  // ยอมให้ข้อความยาและกล่องขึ้นบรรทัดใหม่ได้แบบอิสระ
+                  { text: `ชื่อกล่อง: ${curBoxStock}`, fontSize: 12, bold: true, margin: [0, 2, 0, 2] },
+                  { text: `ยาอายุสั้นสุด: ${data.earliestDrug}`, fontSize: 10, margin: [0, 0, 0, 5] },
+                  
+                  // ตรึง (Absolute) ลายเซ็นต์และ Footer ไว้ด้านล่างสุดเสมอ 
+                  // หากข้อความด้านบนยาวเกินไป มันจะถูกทับ หรือซ่อนไว้โดยไม่มีการดันขึ้นหน้า 2 เด็ดขาด
+                  {
+                    absolutePosition: { x: 10, y: 155 }, // บังคับตำแหน่งให้อยู่ด้านล่างกระดาษ
+                    stack: [
+                        { image: signDataUrl, width: 60, alignment: 'center' },
+                        { text: `(${currentUser.name})`, alignment: 'center', fontSize: 10 },
+                        { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 1, color: '#ccc' }], margin: [0, 5, 0, 2] },
+                        { text: `เติมยาล่าสุด: ${nowStr}\nจำนวนครั้ง: ${data.changeCount}`, fontSize: 9 }
+                    ]
+                  }
               ]
           };
 
@@ -1343,7 +1350,8 @@ async function submitLabel() {
           pdfMake.createPdf(docDef).getBase64((base64) => {
               const dataUrl = 'data:application/pdf;base64,' + base64;
               pdfWindow.document.open();
-              pdfWindow.document.write(`<html><head><title>Box Label</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+              // ป้องกันไม่ให้บราวเซอร์ scroll หรือแสดงส่วนเกิน
+              pdfWindow.document.write(`<html><head><title>Box Label</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;overflow:hidden;"></iframe></body></html>`);
               pdfWindow.document.close();
           });
       } else {
@@ -1351,7 +1359,6 @@ async function submitLabel() {
           Swal.fire('Error', res.message, 'error');
       }
   }
-
   async function generateStockCheckPdf() {
       if (!curBoxStock) return;
       if (!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
