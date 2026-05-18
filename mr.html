@@ -173,14 +173,12 @@
 
     <!-- Header (บังคับ 1 บรรทัด z-20) -->
     <header class="w-full px-6 py-2 flex justify-between items-center shrink-0 bg-slate-900/80 backdrop-blur-md relative border-b border-white/10 z-20 whitespace-nowrap flex-nowrap overflow-hidden">
-        <div class="flex items-center gap-4 shrink-0">
+        <div class="flex items-center shrink-0">
             <h1 class="text-3xl font-black tracking-wide text-crystal leading-none">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
-            <div class="bg-rose-500/90 text-white text-lg font-black px-3 py-1 rounded-md shadow-[0_0_10px_rgba(244,63,94,0.4)] border border-rose-400">คลินิก ARV</div>
-            <div class="bg-emerald-500/90 text-white text-lg font-black px-3 py-1 rounded-md shadow-[0_0_10px_rgba(16,185,129,0.4)] border border-emerald-400">นัด: 124</div>
         </div>
-        <div class="flex items-center gap-4 shrink-0">
+        <div class="flex items-center gap-6 shrink-0 ml-auto">
             <div class="text-3xl font-black text-crystal drop-shadow-md leading-none" id="date-display">กำลังโหลด...</div>
-            <div class="w-[3px] h-8 bg-slate-500/50 rounded mx-2"></div>
+            <div class="w-[3px] h-8 bg-slate-500/50 rounded"></div>
             <div class="text-[46px] font-black text-rainbow tracking-wider" id="clock-display">--:--:--</div>
         </div>
     </header>
@@ -355,18 +353,24 @@
         let staffSchedule = { today: null, tomorrow: null };
         let isDemoMode = false;
 
-        // --- ระบบคิวเสียง (TTS Voice Queue) ---
+        // --- ระบบคิวเสียง (Samsung TV Support) ---
         let spokenAlerts = new Set();
         let spokenIPDs = new Set();
         let voiceQueue = [];
         let isSpeaking = false;
         let ttsEnabled = false;
+        let currentAudio = null;
 
         // คลิกหน้าจอเพื่อเปิดระบบเสียง (แก้ปัญหา Autoplay Policy ของเบราว์เซอร์)
         window.addEventListener('click', () => {
             if(!ttsEnabled) {
                 ttsEnabled = true;
                 console.log("TTS System Enabled by User Click");
+                
+                // กระตุ้น Audio Object ปล่าวๆ 1 ครั้งใน User Interaction Event เพื่อปลดล็อกใน TV บางรุ่น
+                const unlockAudio = new Audio();
+                unlockAudio.play().catch(()=>{}); 
+                
                 processVoiceQueue(); 
             }
         }, {once: true});
@@ -376,20 +380,28 @@
             
             isSpeaking = true;
             const text = voiceQueue.shift();
-            console.log("Speaking:", text);
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'th-TH';
+            console.log("Speaking via Google TTS:", text);
             
-            u.onend = () => {
+            // ใช้ Google Translate TTS
+            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=${encodeURIComponent(text)}`;
+            currentAudio = new Audio(ttsUrl);
+            
+            currentAudio.onended = () => {
                 isSpeaking = false;
-                processVoiceQueue(); // ทำงานคิวถัดไป
+                processVoiceQueue(); // ทำงานคิวถัดไปเมื่อเสียงเล่นจบ
             };
-            u.onerror = () => {
-                console.warn("TTS Error");
+            
+            currentAudio.onerror = () => {
+                console.warn("Audio TTS Error, skipping to next queue");
                 isSpeaking = false;
                 processVoiceQueue();
             }
-            window.speechSynthesis.speak(u);
+            
+            currentAudio.play().catch(error => {
+                console.error("ไม่สามารถเล่นเสียงได้ (อาจโดนบล็อกการเล่นอัตโนมัติ):", error);
+                isSpeaking = false;
+                processVoiceQueue();
+            });
         }
 
         // --- ข้อมูลผู้ป่วยใน (IPD) จำลองเป็น Dynamic ---
