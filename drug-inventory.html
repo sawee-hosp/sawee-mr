@@ -1236,17 +1236,66 @@
       document.getElementById('lbl-signer').innerText = currentUser.name;
       mdlSignLabel.show(); setTimeout(fixCvsLabel, 500); 
   }
-  async function submitLabel() {
-      if(isCanvasBlank(cvsLabel)) return Swal.fire('เซ็นชื่อก่อน');
+async function submitLabel() { 
+      const signDataUrl = cvsLabel.toDataURL(); 
       mdlSignLabel.hide(); 
+      if(!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
+
+      const pdfWindow = window.open('', '_blank');
+      pdfWindow.document.write('<html style="background:#f8f9fa;color:#333;display:flex;align-items:center;justify-content:center;height:100%;font-family:sans-serif;"><body><h2>⏳ กำลังบันทึกลายเซ็นต์และสร้าง PDF...</h2></body></html>');
+
+      Swal.showLoading(); 
+      const res = await callApi('verifyBoxAndGetStats', { boxName: curBoxStock, user: currentUser.name, signBase64: signDataUrl });
+      Swal.close();
       
-      Swal.fire({title:'กำลังสร้าง PDF...', didOpen:()=>Swal.showLoading()});
-      const sign = cvsLabel.toDataURL();
-      const res = await callApi('generateBoxLabel', { boxName: curBoxStock, signBase64: sign, user: currentUser.name });
-      if(res.status) {
-        clrCvsLabel();
-        Swal.fire({ icon:'success', title:'เรียบร้อย', html:`<a href="${res.pdf}" target="_blank" class="btn btn-primary">ดูใบแปะกล่อง</a>` });
-      } else Swal.fire('Error', res.message, 'error');
+      if(res.status) { 
+          const data = res.data;
+          const nowStr = new Date().toLocaleString('th-TH');
+          
+          // บังคับตัดคำด้วย max-height เพื่อไม่ให้ล้นไปหน้า 2
+          const docDef = {
+              pageSize: { width: 170.08, height: 226.77 }, 
+              pageMargins: [10, 10, 10, 10],
+              defaultStyle: { font: 'Sarabun' },
+              content: [
+                  { text: 'ดูวันหมดอายุก่อนฉีกกล่องใช้', fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 5] },
+                  { 
+                    table: { 
+                      widths: ['*'], 
+                      body: [[ { 
+                        text: [
+                          { text: 'กล่องหมดอายุ\n', fontSize: 16, bold: true, color: 'white' }, 
+                          { text: data.expStr, fontSize: 22, bold: true, color: 'white' }
+                        ], 
+                        alignment: 'center', 
+                        fillColor: 'black',
+                        margin: [2, 5, 2, 5] 
+                      } ]] 
+                    },
+                    layout: 'noBorders',
+                    margin: [0, 0, 0, 5]
+                  },
+                  // บังคับบรรทัดเดียว ป้องกันข้อความยาวจนดันหน้า
+                  { text: `ชื่อกล่อง: ${curBoxStock}`, fontSize: 12, bold: true, margin: [0, 2, 0, 2], maxLines: 1 },
+                  { text: `ยาอายุสั้นสุด: ${data.earliestDrug}`, fontSize: 10, margin: [0, 0, 0, 5], maxLines: 1 },
+                  { image: signDataUrl, width: 60, alignment: 'center' },
+                  { text: `(${currentUser.name})`, alignment: 'center', fontSize: 10 },
+                  { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 1, color: '#ccc' }], margin: [0, 5, 0, 2] },
+                  { text: `เติมยาล่าสุด: ${nowStr}\nจำนวนครั้ง: ${data.changeCount}`, fontSize: 9 }
+              ]
+          };
+
+          clrCvsLabel(); 
+          pdfMake.createPdf(docDef).getBase64((base64) => {
+              const dataUrl = 'data:application/pdf;base64,' + base64;
+              pdfWindow.document.open();
+              pdfWindow.document.write(`<html><head><title>Box Label</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+              pdfWindow.document.close();
+          });
+      } else {
+          pdfWindow.close();
+          Swal.fire('Error', res.message, 'error');
+      }
   }
 
   async function showExpiredDrugs() {
