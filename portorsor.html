@@ -128,10 +128,31 @@
         }
         
         .pdf-table th { font-weight: 400; } .pdf-table td { height: 35px; }
+
+        /* Custom Modal Styles เพื่อหลีกเลี่ยง Sandbox Error */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; font-family: 'Sarabun', sans-serif; }
         
     </style>
 </head>
 <body>
+
+    <!-- Custom Modals สำหรับการทำงานร่วมกับ Sandbox -->
+    <div id="custom-alert" class="modal-overlay">
+        <div class="modal-box">
+            <p id="alert-message" style="font-size: 15px; margin-bottom: 20px; color: #333; line-height: 1.5;"></p>
+            <button class="btn-primary" onclick="closeCustomAlert()" style="padding: 8px 24px;">ตกลง</button>
+        </div>
+    </div>
+    <div id="custom-confirm" class="modal-overlay">
+        <div class="modal-box">
+            <p id="confirm-message" style="font-size: 15px; margin-bottom: 20px; color: #333; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-success" id="confirm-yes-btn" style="padding: 8px 20px;">ยืนยัน</button>
+                <button class="btn-danger" id="confirm-no-btn" onclick="closeCustomConfirm()" style="padding: 8px 20px; background: #6c757d;">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
 
     <div class="header-panel">
         <h1>🏥 แบบพิมพ์ใบขอรับเงินค่าตอบแทนฯ รพ.สวี</h1>
@@ -432,6 +453,26 @@
             flatpickr(".date-picker", { dateFormat: "d/m/Y", locale: "th", allowInput: true });
         };
 
+        /* Custom Popup Helpers to avoid Sandbox issues */
+        function showCustomAlert(msg) {
+            document.getElementById('alert-message').innerText = msg;
+            document.getElementById('custom-alert').style.display = 'flex';
+        }
+        function closeCustomAlert() {
+            document.getElementById('custom-alert').style.display = 'none';
+        }
+        function showCustomConfirm(msg, callback) {
+            document.getElementById('confirm-message').innerText = msg;
+            document.getElementById('custom-confirm').style.display = 'flex';
+            document.getElementById('confirm-yes-btn').onclick = () => {
+                closeCustomConfirm();
+                callback();
+            };
+        }
+        function closeCustomConfirm() {
+            document.getElementById('custom-confirm').style.display = 'none';
+        }
+
         function clearForm() {
             const inputs = document.querySelectorAll('#user-form input[type="text"], #user-form input[type="number"], #user-form input[type="email"]');
             inputs.forEach(input => input.value = '');
@@ -442,7 +483,7 @@
         async function fetchData() {
             const query = document.getElementById('inp-search').value.trim();
             const status = document.getElementById('status-text');
-            if(!query) return alert("กรุณาพิมพ์ Username หรือ Email ก่อนครับ");
+            if(!query) return showCustomAlert("กรุณาพิมพ์ Username หรือ Email ก่อนครับ");
 
             status.innerText = "⏳ กำลังโหลด..."; status.style.color = "#0d6efd";
             try {
@@ -450,13 +491,13 @@
                 const data = await response.json();
                 
                 if(data.status === 'email_sent') {
-                    alert(data.message);
+                    showCustomAlert(data.message);
                     status.innerText = "📧 " + data.message; status.style.color = "#198754";
                     return;
                 }
                 
                 if(data.status === 'not_found') {
-                    alert(data.message);
+                    showCustomAlert(data.message);
                     status.innerText = "📝 ลงทะเบียนข้อมูลใหม่"; status.style.color = "#ffc107";
                     isRegisterMode = true;
                     
@@ -573,13 +614,12 @@
             const getV = id => document.getElementById(id).value.trim();
             const setT = (id, text) => { if(document.getElementById(id)) document.getElementById(id).innerText = text; }
             
-            // เพิ่มการดึงค่าจากการติ๊ก Checkbox เศษวัน
+            // ดึงค่าจากการติ๊ก Checkbox เศษวัน
             const showFraction = document.getElementById('fm-show-fraction').checked;
 
             // เช็คประเภทเพื่อซ่อน/แสดง กรอบตรวจสอบมุมซ้ายล่าง
             const empType = document.getElementById('fm-type').value;
             if(empType === 'ข้าราชการ') {
-                // ใช้ visibility: hidden เพื่อให้กล่องหายไป แต่ยังคงรักษาพื้นที่ว่างไว้ไม่ให้ Layout ฝั่งขวาพัง
                 document.getElementById('pdf-approval-section').style.visibility = 'hidden';
             } else {
                 document.getElementById('pdf-approval-section').style.visibility = 'visible';
@@ -698,7 +738,7 @@
         async function saveBaseData() {
             const emailField = document.getElementById('fm-email');
             if(!emailField.value) {
-                alert("กรุณาระบุ Email ด้วยครับ (จำเป็นต่อการกู้คืนข้อมูล)");
+                showCustomAlert("กรุณาระบุ Email ด้วยครับ (จำเป็นต่อการกู้คืนข้อมูล)");
                 emailField.focus(); return;
             }
 
@@ -714,7 +754,7 @@
                     if(!usernameToSave) return;
                     document.getElementById('fm-username').value = usernameToSave;
                 } else {
-                    alert("กรุณาระบุ Username"); return;
+                    showCustomAlert("กรุณาระบุ Username"); return;
                 }
             }
 
@@ -740,19 +780,19 @@
                 const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'updateUser', payload: payload }) });
                 const res = await response.json();
                 if(res.success) {
-                    alert(res.isNew ? "ลงทะเบียนข้อมูลใหม่สำเร็จ! ✅\nระบบได้ส่งรายละเอียดไปยัง Email ของคุณแล้ว" : "อัปเดตข้อมูลส่วนตัวและประวัติ รพ. เรียบร้อยแล้ว ✅");
+                    showCustomAlert(res.isNew ? "ลงทะเบียนข้อมูลใหม่สำเร็จ! ✅\nระบบได้ส่งรายละเอียดไปยัง Email ของคุณแล้ว" : "อัปเดตข้อมูลส่วนตัวและประวัติ รพ. เรียบร้อยแล้ว ✅");
                     document.getElementById('inp-search').value = payload.username;
                     fetchData(); 
                 } else {
-                    alert(res.error); status.innerText = "❌ บันทึกล้มเหลว"; status.style.color = "#dc3545";
+                    showCustomAlert(res.error); status.innerText = "❌ บันทึกล้มเหลว"; status.style.color = "#dc3545";
                 }
             } catch(e) { 
-                alert(e); status.innerText = "❌ เชื่อมต่อล้มเหลว"; status.style.color = "#dc3545";
+                showCustomAlert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล"); status.innerText = "❌ เชื่อมต่อล้มเหลว"; status.style.color = "#dc3545";
             } finally { btn.disabled = false; }
         }
 
         async function confirmPrint() {
-            if(isRegisterMode) return alert("กรุณาบันทึกข้อมูลส่วนตัวก่อนใช้งานฟังก์ชันนี้");
+            if(isRegisterMode) return showCustomAlert("กรุณาบันทึกข้อมูลส่วนตัวก่อนใช้งานฟังก์ชันนี้");
             
             const btn = document.querySelector('.btn-info');
             btn.innerText = "⏳ กำลังดำเนินการ...";
@@ -801,13 +841,13 @@
                     renderMonthGrid(); 
                     
                     if (sendEmail) {
-                        alert(res.email_error ? "บันทึกสำเร็จ แต่การส่งอีเมลผิดพลาด: " + res.email_error : `บันทึกและส่งอีเมลแจ้งเตือนพร้อมไฟล์ PDF เดือน ${currentMonthYear} เรียบร้อยแล้ว ✅`);
+                        showCustomAlert(res.email_error ? "บันทึกสำเร็จ แต่การส่งอีเมลผิดพลาด: " + res.email_error : `บันทึกและส่งอีเมลแจ้งเตือนพร้อมไฟล์ PDF เดือน ${currentMonthYear} เรียบร้อยแล้ว ✅`);
                     } else {
-                        alert(`บันทึกสถานะการพิมพ์เดือน ${currentMonthYear} เรียบร้อยแล้ว ✅`);
+                        showCustomAlert(`บันทึกสถานะการพิมพ์เดือน ${currentMonthYear} เรียบร้อยแล้ว ✅`);
                     }
-                } else alert(res.error);
+                } else showCustomAlert(res.error);
             } catch(e) { 
-                alert(e); 
+                showCustomAlert("ไม่สามารถสื่อสารกับระบบได้"); 
             } finally {
                 btn.innerText = "🖨️ บันทึกสถานะว่าพิมพ์แล้ว";
                 btn.disabled = false;
@@ -815,11 +855,11 @@
         }
 
         async function addLeave() {
-            if(isRegisterMode) return alert("กรุณาบันทึกข้อมูลส่วนตัวก่อน");
+            if(isRegisterMode) return showCustomAlert("กรุณาบันทึกข้อมูลส่วนตัวก่อน");
             const type = document.getElementById('lv-type').value;
             const date = document.getElementById('lv-date').value.trim();
             const count = document.getElementById('lv-count').value;
-            if(!date || !count) return alert("กรุณากรอกช่วงวันที่และจำนวนวัน");
+            if(!date || !count) return showCustomAlert("กรุณากรอกช่วงวันที่และจำนวนวัน");
 
             const newId = Date.now().toString(); // สร้าง id อัตโนมัติ
             const payload = { id: newId, username: globalData.user.username, month_year: currentMonthYear, type_of_leave: type, date_range: date, count: count };
@@ -830,32 +870,31 @@
                     globalData.leaves.push(payload);
                     document.getElementById('lv-date').value = ''; document.getElementById('lv-count').value = '';
                     renderLeaveTable(); updatePDF();
-                } else alert(res.error);
-            } catch(e) { alert(e); }
+                } else showCustomAlert(res.error);
+            } catch(e) { showCustomAlert("ไม่สามารถเพิ่มวันลาได้"); }
         }
 
         async function deleteLeave(id, type, dateRange) {
-            if(!confirm(`ต้องการลบวันลาประเภท "${type}" ช่วง "${dateRange}" ใช่หรือไม่?`)) return;
-            
-            // อัปเกรด: ส่งไปทั้ง ID และ ข้อมูลแบบเก่า เผื่อใช้เป็นแผนสำรองในการลบ
-            const payload = { 
-                id: id,
-                username: globalData.user.username,
-                month_year: currentMonthYear,
-                type_of_leave: type,
-                date_range: dateRange
-            };
-            
-            try {
-                const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'deleteLeave', payload: payload }) });
-                const res = await response.json();
-                if(res.success) {
-                    const indexToRemove = globalData.leaves.findIndex(l => (l.id === id) || (l.date_range === dateRange && l.type_of_leave === type));
-                    if (indexToRemove !== -1) globalData.leaves.splice(indexToRemove, 1);
-                    
-                    renderLeaveTable(); updatePDF();
-                } else alert(res.error);
-            } catch(e) { alert(e); }
+            showCustomConfirm(`ต้องการลบวันลาประเภท "${type}" ช่วง "${dateRange}" ใช่หรือไม่?`, async () => {
+                const payload = { 
+                    id: id,
+                    username: globalData.user.username,
+                    month_year: currentMonthYear,
+                    type_of_leave: type,
+                    date_range: dateRange
+                };
+                
+                try {
+                    const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'deleteLeave', payload: payload }) });
+                    const res = await response.json();
+                    if(res.success) {
+                        const indexToRemove = globalData.leaves.findIndex(l => (l.id === id) || (l.date_range === dateRange && l.type_of_leave === type));
+                        if (indexToRemove !== -1) globalData.leaves.splice(indexToRemove, 1);
+                        
+                        renderLeaveTable(); updatePDF();
+                    } else showCustomAlert(res.error);
+                } catch(e) { showCustomAlert("เกิดข้อผิดพลาดในการลบวันลา"); }
+            });
         }
 
         function parseThaiMonth(thaiStr) { 
