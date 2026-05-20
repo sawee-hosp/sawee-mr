@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="referrer" content="no-referrer">
   <title>Sawee Rxfill 2.0</title>
+  <!-- เพิ่ม Favicon รูปกล่องยา -->
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📦</text></svg>'>
+  
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -104,17 +107,17 @@
     .shelf-item img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; margin-bottom: 5px; background: #eee; border: 1px solid #eee; }
     
     .exp-badge-stock { 
-        position: absolute; top: 5px; right: 5px; font-size: 10px; padding: 2px 6px; 
+        position: absolute; top: -8px; right: -8px; font-size: 10px; padding: 2px 6px; 
         border-radius: 10px; color: white; font-weight: bold; z-index: 20; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid white; min-width: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white; min-width: 25px;
     }
     .badge-expired { background-color: #d32f2f !important; color: white !important; }
     .badge-near-exp { background-color: #fbc02d !important; color: black !important; }
 
     .badge-ha {
-        position: absolute; top: 5px; left: 5px; background-color: #ff0000; color: white;
+        position: absolute; top: -5px; left: -5px; background-color: #ff0000; color: white;
         font-size: 10px; padding: 4px 8px; border-radius: 50%; font-weight: 900; z-index: 20;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white;
     }
 
     .bg-ha { border: 2px solid var(--accent); }
@@ -123,6 +126,8 @@
     .table-custom th { background: #e9ecef; font-size: 0.85rem; white-space: nowrap; color: #555; }
     .table-custom td { vertical-align: middle; font-size: 0.9rem; }
     .row-expired { background-color: #fff5f5; color: var(--accent); font-weight: bold; border-left: 4px solid var(--accent); }
+    .cursor-pointer { cursor: pointer; transition: 0.2s; }
+    .cursor-pointer:hover { background-color: #f1f8ff; }
     
     .btn-711-primary { background: var(--secondary); color: white; border: none; font-weight: bold; }
     .btn-711-primary:hover { background: #d9631d; color: white; }
@@ -131,9 +136,9 @@
     .btn-711-green { background: var(--primary); color: white; border: none; font-weight: bold; }
     .btn-711-purple { background: #673ab7; color: white; border: none; font-weight: bold; }
 
-    .fab-print { position: fixed; bottom: 85px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    .fab-print-stock { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: #2196f3; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; white-space: nowrap; }
-    .fab-edit-lg { position: fixed; bottom: 85px; right: 15px; background: var(--secondary); color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
+    .fab-print { position: fixed; bottom: 80px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .fab-print-stock { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #2196f3; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; white-space: nowrap; }
+    .fab-edit-lg { position: fixed; bottom: 80px; right: 15px; background: var(--secondary); color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
     
     .nav-tabs .nav-link { color: #666; font-size: 0.95rem; }
     .nav-tabs .nav-link.active { color: var(--primary); font-weight: 800; border-bottom: 3px solid var(--primary); }
@@ -438,10 +443,11 @@
       <div class="modal-content">
         <div class="modal-header bg-warning text-dark"><h6 class="fw-bold m-0">ข้อมูลยา (Master)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-          <input type="hidden" id="mst-isnew"><div class="mb-2"><label class="small">Item ID</label><input id="mst-id" class="form-control fw-bold"></div>
+          <input type="hidden" id="mst-isnew">
+          <div class="mb-2"><label class="small">Item ID <span class="text-muted">(กรุณาพิมพ์รหัสตัวเลขให้เหมือนใน hosxp)</span></label><input id="mst-id" class="form-control fw-bold"></div>
           <div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:transparent"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div>
           <div class="mb-2"><label class="small">ชื่อยา</label><input id="mst-name" class="form-control"></div>
-          <div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit</label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div>
+          <div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit <span class="text-muted">(จำนวนต่อหน่วย)</span></label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div>
           <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-ha"><label class="form-check-label text-danger fw-bold">High Alert</label></div>
           <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-pl"><label class="form-check-label text-warning fw-bold">Protect Light</label></div>
           <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-kc"><label class="form-check-label text-info fw-bold">Keep Cool (2-8°C)</label></div>
@@ -650,7 +656,7 @@
               const item = itemsRes.data.find(i => String(i.invId) === String(res.invId));
               if(item) {
                   nav('tab-stock', document.querySelectorAll('.btm-nav .nav-item')[1]);
-                  openBoxForce(boxName, ''); 
+                  await openBoxForce(boxName, ''); 
                   editStk(item.invId, item.name, item.itemId, item.amount, item.actual, item.expire, item.location);
               } else {
                   Swal.fire('ไม่พบยา', 'ไม่พบรายการยานี้ในกล่อง ' + boxName, 'error');
@@ -728,7 +734,7 @@
 
   function nav(pid, el){
       document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
-      document.querySelectorAll('.btm-nav .nav-item').forEach(x=>x.classList.remove('active')); 
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); 
       if(el) el.classList.add('active');
       
       if(pid === 'tab-hist') loadHist();
@@ -754,9 +760,14 @@
           if(count > 0) { badge.innerText = count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
           if(!background) {
               const tbody = document.getElementById('expire-list');
-              tbody.innerHTML = count === 0 ? '<tr><td colspan="3" class="text-center py-4 text-muted">ไม่พบยาหมดอายุ</td></tr>' : list.map(i => `<tr class="row-expired"><td class="fw-bold">${i.name}</td><td>${i.box}</td><td class="text-danger fw-bold">${i.expireStr}</td></tr>`).join('');
+              tbody.innerHTML = count === 0 ? '<tr><td colspan="3" class="text-center py-4 text-muted">ไม่พบยาหมดอายุ</td></tr>' : list.map(i => `<tr class="row-expired cursor-pointer" onclick="openEditFromExpire('${i.invId}','${i.name.replace(/'/g,"\\'")}','${i.itemId}','${i.max}','${i.current}','${i.expireRaw}','${i.loc}','${i.box}')"><td class="fw-bold">${i.name}</td><td>${i.box}</td><td class="text-danger fw-bold">${i.expireStr}</td></tr>`).join('');
           }
       }
+  }
+
+  function openEditFromExpire(id, n, itm, max, cur, e, loc, box) {
+      curBoxStock = box; // ตั้งค่ากล่องเพื่อให้ saveEdit โหลดข้อมูลหลังบันทึกได้ถูกกล่อง
+      editStk(id, n, itm, max, cur, e, loc);
   }
 
   function loadHist(init = false) { 
@@ -1001,36 +1012,15 @@
       }
   }
 
-  async function findBoxByScan() {
-      const id = document.getElementById('scan-box-input').value.trim();
-      if(!id) return Swal.fire('ระบุข้อมูลค้นหา');
-      Swal.showLoading();
-      const res = await callApi('findBoxByInvId', { invId: id });
-      Swal.close();
-      
-      if(res.status) {
-         if (res.action === 'OPEN') {
-             document.getElementById('scan-box-input').value = '';
-             const boxData = allBoxes.find(b => b.name === res.boxName);
-             selBox(res.boxName, boxData ? boxData.imageRaw : '');
-         } else if (res.action === 'SUGGEST') {
-             const html = `<div class="list-group text-start">` + 
-                res.list.map(b => `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="Swal.close(); document.getElementById('scan-box-input').value=''; selBox('${b.name}', '')"><span>${b.name}</span><small class="text-muted ms-2">${b.id}</small></button>`).join('') +
-                `</div>`;
-             
-             Swal.fire({ title: 'เลือกกล่องที่ต้องการ', html: html, showConfirmButton: false, showCloseButton: true });
-         }
-      } else {
-         Swal.fire('ไม่พบข้อมูล', res.message, 'error');
-      }
-  }
-
-  async function loadStockItems(box) {
+  async function loadStockItems(box, silent = false) {
       const el = document.getElementById('stock-content'); 
-      el.innerHTML = '<div class="text-center mt-5 text-muted"><div class="spinner-border text-secondary mb-2"></div><br>กำลังโหลด...</div>';
+      if(!silent) el.innerHTML = '<div class="text-center mt-5 text-muted"><div class="spinner-border text-secondary mb-2"></div><br>กำลังโหลด...</div>';
       
       const res = await callApi('getItems', { boxName: box });
-      if(!res.status) return el.innerHTML = '<div class="alert alert-danger text-center">เกิดข้อผิดพลาดในการโหลด</div>';
+      if(!res.status) {
+          if(!silent) el.innerHTML = '<div class="alert alert-danger text-center">เกิดข้อผิดพลาดในการโหลด</div>';
+          return;
+      }
       
       let h = `<button class="btn btn-light border mb-3 w-100 fw-bold text-secondary text-start" onclick="selBox('${box}','')"><i class="fas fa-chevron-left me-2"></i> กลับหน้ากล่อง</button>
                <div class="real-box-container">
@@ -1052,7 +1042,7 @@
               else if(diff < 180) { expTag = `<span class="exp-badge-stock badge-near-exp">${Math.ceil(diff)} วัน</span>`; }
            }
            
-           return `<div class="shelf-item ${cls} ${border}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name}','${i.itemId}','${i.amount || 0}','${i.actual || i.amount}','${i.expire}','${i.location}')">${i.highAlert?'<div class="badge-ha">HAD</div>':''}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold text-dark" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${i.amount}</span><span style="font-size:9px;color:red;">${i.expire||''}</span></div></div>`
+           return `<div id="card-${i.invId}" class="shelf-item ${cls} ${border}" style="width:31%;max-width:130px;" onclick="editStk('${i.invId}','${i.name.replace(/'/g,"\\'")}','${i.itemId}','${i.amount || 0}','${i.actual || i.amount}','${i.expire}','${i.location}')">${i.highAlert?'<div class="badge-ha">HAD</div>':''}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold text-dark" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${i.amount}</span><span style="font-size:9px;color:red;">${i.expire||''}</span></div></div>`
           }).join(''); 
           h+='</div></div>'; 
       });
@@ -1109,22 +1099,25 @@
         location: newLocation
     };
     
-    document.getElementById('btn-save-edit').innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
-    document.getElementById('btn-save-edit').disabled = true;
+    // ปิด Modal ทันที และโชว์ Spinner เฉพาะการ์ด
+    mdlEdit.hide(); 
+    const invId = pl.invId;
+    const card = document.getElementById(`card-${invId}`);
+    if(card) {
+        card.style.position = 'relative';
+        card.insertAdjacentHTML('beforeend', '<div class="spinner-overlay" style="border-radius:12px;z-index:30"><div class="spinner-border spinner-border-sm text-primary"></div></div>');
+    }
 
     const res = await callApi('saveEditItem',pl);
-    
-    document.getElementById('btn-save-edit').innerHTML = 'บันทึก';
-    document.getElementById('btn-save-edit').disabled = false;
 
     if(res.status) { 
-        mdlEdit.hide(); 
-        const overlay = document.getElementById('stock-spinner-overlay');
-        overlay.classList.remove('hidden');
+        // สั่งอัปเดตใหม่แบบ Silent Reload (ไม่โชว์จอขาวโหลด)
+        await loadStockItems(curBoxStock, true); 
         
-        await openBoxForce(curBoxStock, '');
-        
-        overlay.classList.add('hidden');
+        // ถ้าหน้าต่างยาหมดอายุเปิดอยู่ ก็รีโหลดด้วยเพื่อให้ข้อมูลตรงกัน
+        if(!document.getElementById('tab-expire').classList.contains('hidden')) {
+            loadExpiredItems(true);
+        }
     } else {
         Swal.fire('Error', res.message, 'error');
     }
@@ -1160,8 +1153,34 @@
   function nextPage() { if(curPage < totalPages) doFullSearch('SHOW_ALL', curPage+1); }
   function prevPage() { if(curPage > 1) doFullSearch('SHOW_ALL', curPage-1); }
 
-  function openMasterEdit(item) { document.getElementById('mst-isnew').value = item.isNew?'true':'false'; document.getElementById('mst-id').value=item.itemId||''; document.getElementById('mst-name').value=item.name||''; mdlMasterEdit.show(); }
-  async function saveMasterItem() { const pl={isNew:document.getElementById('mst-isnew').value==='true', itemId:document.getElementById('mst-id').value, name:document.getElementById('mst-name').value}; await callApi('updateMasterItem', pl); mdlMasterEdit.hide(); }
+  function openMasterEdit(item) { 
+      document.getElementById('mst-isnew').value = item.isNew?'true':'false'; 
+      document.getElementById('mst-id').value = item.itemId||''; 
+      document.getElementById('mst-name').value = item.name||''; 
+      document.getElementById('mst-unit').value = item.unit||''; 
+      document.getElementById('mst-price').value = item.price||''; 
+      document.getElementById('mst-ha').checked = item.highAlert||false; 
+      document.getElementById('mst-pl').checked = item.protectLight||false; 
+      document.getElementById('mst-kc').checked = item.keepCool||false; 
+      mdlMasterEdit.show(); 
+  }
+  
+  async function saveMasterItem() { 
+      const pl = {
+          isNew: document.getElementById('mst-isnew').value==='true', 
+          itemId: document.getElementById('mst-id').value, 
+          name: document.getElementById('mst-name').value,
+          image: document.getElementById('mst-img-path').value,
+          unit: document.getElementById('mst-unit').value,
+          price: document.getElementById('mst-price').value,
+          highAlert: document.getElementById('mst-ha').checked,
+          protectLight: document.getElementById('mst-pl').checked,
+          keepCool: document.getElementById('mst-kc').checked
+      }; 
+      await callApi('updateMasterItem', pl); 
+      mdlMasterEdit.hide(); 
+  }
+  
   async function openLabelEdit(id) { const r = await callApi('getLabelInfo', {itemId:id}); if(r.status) { const d=r.data; document.getElementById('lbl-name').value=d.name; window.currentLabelItemId=id; mdlLabelEdit.show(); } }
   async function saveLabelInfo() { await callApi('updateLabelInfo', {itemId:window.currentLabelItemId, name:document.getElementById('lbl-name').value}); mdlLabelEdit.hide(); }
   
@@ -1290,7 +1309,7 @@
 
   function openPrintLabel() { document.getElementById('lbl-signer').innerText = currentUser.name; mdlSignLabel.show(); setTimeout(fixCvsLabel,500); }
   
-async function submitLabel() { 
+  async function submitLabel() { 
       const signDataUrl = cvsLabel.toDataURL(); 
       mdlSignLabel.hide(); 
       if(!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
@@ -1328,14 +1347,11 @@ async function submitLabel() {
                     layout: 'noBorders',
                     margin: [0, 0, 0, 5]
                   },
-                  // ยอมให้ข้อความยาและกล่องขึ้นบรรทัดใหม่ได้แบบอิสระ
-                  { text: `ชื่อกล่อง: ${curBoxStock}`, fontSize: 12, bold: true, margin: [0, 2, 0, 2] },
-                  { text: `ยาอายุสั้นสุด: ${data.earliestDrug}`, fontSize: 10, margin: [0, 0, 0, 5] },
+                  { text: `ชื่อกล่อง: ${curBoxStock}`, fontSize: 12, bold: true, margin: [0, 2, 0, 2], maxLines: 1 },
+                  { text: `ยาอายุสั้นสุด: ${data.earliestDrug}`, fontSize: 10, margin: [0, 0, 0, 5], maxLines: 1 },
                   
-                  // ตรึง (Absolute) ลายเซ็นต์และ Footer ไว้ด้านล่างสุดเสมอ 
-                  // หากข้อความด้านบนยาวเกินไป มันจะถูกทับ หรือซ่อนไว้โดยไม่มีการดันขึ้นหน้า 2 เด็ดขาด
                   {
-                    absolutePosition: { x: 10, y: 155 }, // บังคับตำแหน่งให้อยู่ด้านล่างกระดาษ
+                    absolutePosition: { x: 10, y: 155 },
                     stack: [
                         { image: signDataUrl, width: 60, alignment: 'center' },
                         { text: `(${currentUser.name})`, alignment: 'center', fontSize: 10 },
@@ -1350,7 +1366,6 @@ async function submitLabel() {
           pdfMake.createPdf(docDef).getBase64((base64) => {
               const dataUrl = 'data:application/pdf;base64,' + base64;
               pdfWindow.document.open();
-              // ป้องกันไม่ให้บราวเซอร์ scroll หรือแสดงส่วนเกิน
               pdfWindow.document.write(`<html><head><title>Box Label</title></head><body style="margin:0;overflow:hidden;"><iframe src="${dataUrl}" style="width:100vw;height:100vh;border:none;overflow:hidden;"></iframe></body></html>`);
               pdfWindow.document.close();
           });
@@ -1359,6 +1374,7 @@ async function submitLabel() {
           Swal.fire('Error', res.message, 'error');
       }
   }
+
   async function generateStockCheckPdf() {
       if (!curBoxStock) return;
       if (!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
@@ -1429,16 +1445,16 @@ async function submitLabel() {
           const docDef = {
               pageSize: 'A4',
               pageMargins: [20, 30, 20, 30],
-              defaultStyle: { font: 'Sarabun', fontSize: 12 }, 
+              defaultStyle: { font: 'Sarabun', fontSize: 10 }, 
               content: [
-                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', font: 'SarabunLight', fontSize: 18, alignment: 'center', margin: [0, 0, 0, 10] },
+                  { text: 'แบบสำรวจคลังยาย่อยหน่วยงาน รพ.สวี', font: 'SarabunLight', fontSize: 16, alignment: 'center', margin: [0, 0, 0, 10] },
                   {
                       columns: [
                           { text: `หน่วยงาน : ${groupName}`, width: '*' },
                           { text: `ชื่อหน่วยสำรองยา : ${curBoxStock}`, width: '*' },
                           { text: `วันที่ : ${dateStr}`, width: '*' }
                       ],
-                      fontSize: 14,
+                      fontSize: 12,
                       margin: [0, 0, 0, 10]
                   },
                   {
@@ -1454,11 +1470,11 @@ async function submitLabel() {
                           vLineColor: function (i, node) { return '#aaa'; }
                       }
                   },
-                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 14, margin: [0, 10, 0, 30] },
+                  { text: `รวมมูลค่าทั้งสิ้น: ฿${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`, alignment: 'right', bold: true, fontSize: 12, margin: [0, 10, 0, 30] },
                   {
                       columns: [
                           { text: '', width: '*' },
-                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 12 }
+                          { text: `ผู้ตรวจ .......................................................\n(${currentUser.name})\nตำแหน่ง เภสัชกร`, alignment: 'center', width: 250, fontSize: 10 }
                       ]
                   }
               ]
@@ -1503,8 +1519,14 @@ async function submitLabel() {
   function uploadBoxImg(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ document.getElementById('preview-box-img').src=e.target.result; callApi('uploadImage',{base64:e.target.result,folderType:'BOX',name:f.name}).then(x=>{if(x.status)document.getElementById('edit-box-img').value=x.path})}; r.readAsDataURL(f); }
   async function saveBoxInfo() { 
       if(confirm('บันทึกข้อมูลกล่อง?')) {
-          const res = await callApi('updateBoxInfo',{oldName:curBoxStock,newName:document.getElementById('edit-box-name').value,newImage:document.getElementById('edit-box-img').value});
-          if(res.status) location.reload(); 
+          const newName = document.getElementById('edit-box-name').value;
+          const res = await callApi('updateBoxInfo',{oldName:curBoxStock,newName:newName,newImage:document.getElementById('edit-box-img').value});
+          if(res.status) {
+             mdlBoxEdit.hide();
+             curBoxStock = newName;
+             await startApp(); 
+             openBoxForce(curBoxStock, document.getElementById('edit-box-img').value);
+          }
       }
   }
   async function addItemToBox(id) { 
