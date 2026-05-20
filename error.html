@@ -212,8 +212,8 @@
 
             const [expandedPivot, setExpandedPivot] = useState([]); 
 
-            const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null, dow: null, hour: null, shift: null });
-            const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null), dow: useRef(null), hour: useRef(null), shift: useRef(null) };
+            const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null, dow: null, hour: null, shift: null, basketQty: null, pharmaCount: null });
+            const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null), dow: useRef(null), hour: useRef(null), shift: useRef(null), basketQty: useRef(null), pharmaCount: useRef(null) };
             const lastAutoText = useRef('');
 
             const theme = useMemo(() => {
@@ -501,11 +501,7 @@
                 const daily = {};
                 let totalRxCount = 0;
                 const seenShifts = new Set();
-                const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, sev: {}, pivot: {}, dow: {}, hour: {}, shift: {} };
-
-                // Variables for Insight Dashboard
-                let maxBasketError = 0;
-                let maxBasketPharmaCount = '-';
+                const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, sev: {}, pivot: {}, dow: {}, hour: {}, shift: {}, basketQty: {}, pharmaCount: {} };
 
                 baseFiltered.forEach(h => {
                     const itemDate = h.date || h['Date'] || h['Timestamp'] || h['วันที่'];
@@ -550,13 +546,13 @@
                         const shiftVal = h.shift || h['เวรที่เกิดเหตุ'] || h['เวร'];
                         if(shiftVal) counts.shift[shiftVal] = (counts.shift[shiftVal] || 0) + 1;
 
-                        // Insight Logic
+                        // Insight Logic (Charts)
                         const bQty = parseInt(h.basketQty || h['จำนวนยาในตะกร้าที่ผิด'] || h['จำนวนยาในตะกร้า']);
                         const pCount = parseInt(h.pharmacistCount || h['จำนวนผู้จัดยาวันนี้'] || h['จำนวนผู้จัดยา']);
 
-                        if (!isNaN(bQty) && bQty > maxBasketError) {
-                            maxBasketError = bQty;
-                            maxBasketPharmaCount = (!isNaN(pCount) && pCount > 0) ? pCount : '-';
+                        if (isErr) {
+                            if (!isNaN(bQty)) counts.basketQty[bQty] = (counts.basketQty[bQty] || 0) + 1;
+                            if (!isNaN(pCount)) counts.pharmaCount[pCount] = (counts.pharmaCount[pCount] || 0) + 1;
                         }
                     }
                 });
@@ -621,11 +617,7 @@
                     err: errors.length, 
                     pct: totalRxCount > 0 ? ((errors.length/totalRxCount)*100).toFixed(2) : '0.00', 
                     counts, 
-                    daily,
-                    insight: {
-                        maxBasket: maxBasketError,
-                        maxBasketPharmaCount: maxBasketPharmaCount
-                    }
+                    daily
                 };
             }, [baseFiltered, systemMode]);
 
@@ -730,6 +722,26 @@
                             const shVals = shifts.map(s => stats.counts.shift[s] || 0);
                             chartsRef.current.shift = new Chart(canvasRefs.shift.current, {
                                 type: 'pie', data: { labels: shifts, datasets: [{ data: shVals, backgroundColor: ['#fcd34d', '#f97316', '#312e81'], borderWidth: 0 }] },
+                                options: opt
+                            });
+                        }
+                        
+                        // New MR Insight Charts (Basket Qty & Pharma Count)
+                        if (canvasRefs.basketQty.current) {
+                            if (chartsRef.current.basketQty) chartsRef.current.basketQty.destroy();
+                            const bKeys = Object.keys(stats.counts.basketQty).sort((a,b)=>Number(a)-Number(b));
+                            const bVals = bKeys.map(k => stats.counts.basketQty[k]);
+                            chartsRef.current.basketQty = new Chart(canvasRefs.basketQty.current, {
+                                type: 'bar', data: { labels: bKeys.map(k=>`${k} รายการ`), datasets: [{ label:'ความถี่', data: bVals, backgroundColor: '#f43f5e', borderRadius: 4 }] },
+                                options: opt
+                            });
+                        }
+                        if (canvasRefs.pharmaCount.current) {
+                            if (chartsRef.current.pharmaCount) chartsRef.current.pharmaCount.destroy();
+                            const pKeys = Object.keys(stats.counts.pharmaCount).sort((a,b)=>Number(a)-Number(b));
+                            const pVals = pKeys.map(k => stats.counts.pharmaCount[k]);
+                            chartsRef.current.pharmaCount = new Chart(canvasRefs.pharmaCount.current, {
+                                type: 'bar', data: { labels: pKeys.map(k=>`${k} คน`), datasets: [{ label:'ความถี่', data: pVals, backgroundColor: '#8b5cf6', borderRadius: 4 }] },
                                 options: opt
                             });
                         }
@@ -908,7 +920,7 @@
                             <button onClick={()=>handleModeChange('LASA')} 
                                 className={`flex-[0.8] py-3 px-2 text-sm md:text-base border border-b-0 flex items-center justify-center gap-1
                                 ${systemMode === 'LASA' ? 'bg-yellow-400 text-yellow-900 font-black shadow-lg rounded-t-2xl' : 'bg-black/20 text-yellow-500/80 hover:bg-black/40 hover:text-yellow-400 rounded-t-2xl font-bold backdrop-blur-sm transition-all'}`}>
-                                <span>LASA</span> <span className="text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded-full">New</span>
+                                <span>LASA</span>
                             </button>
                         </div>
 
@@ -971,7 +983,7 @@
                                                                 </td>
                                                                 <td className="p-3">
                                                                     {editingLasa === item.rowIndex ? 
-                                                                        <textarea value={lasaForm.reason} onChange={e=>setLasaForm({...lasaForm, reason: e.target.value})} className="w-full text-xs p-2 border rounded-lg h-16 bg-white" placeholder="อธิบายสาเหตุ..."/> 
+                                                                        <textarea value={lasaForm.reason} onChange={e=>setLasaForm({...lasaForm, reason: e.target.value})} className="w-full text-xs p-2 border rounded-lg h-16 bg-white" placeholder="ระบุว่า ตำแหน่งยาอยู่ห่างกันกี่ช่องยา หรือ ชื่อยาเขียนเหมือนกันอย่างไร"/> 
                                                                         : <span className={item.reason ? 'text-slate-700' : 'text-slate-300 italic'}>{item.reason || '- ยังไม่ระบุ -'}</span>}
                                                                 </td>
                                                                 <td className="p-3">
@@ -1447,31 +1459,21 @@
                                         </button>
                                     </div>
 
-                                    {/* --- INSIGHT CARD (MR ONLY) --- */}
+                                    {/* --- INSIGHT CHARTS (MR ONLY) --- */}
                                     {systemMode === 'MR' && (
-                                        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-3xl border border-amber-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 mt-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-white text-xl shadow-md">💡</div>
-                                                <div>
-                                                    <h4 className="text-sm font-black text-amber-800 uppercase tracking-widest">Pharmacy Insight</h4>
-                                                    <p className="text-[10px] font-bold text-amber-600/80">สถิติจากยาในตะกร้าและผู้จัดยา</p>
-                                                </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[300px] flex flex-col">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest text-center">จำนวนยาในตะกร้าที่มีการจัดผิด</h4>
+                                                <div className="flex-1 w-full relative"><canvas ref={canvasRefs.basketQty}></canvas></div>
                                             </div>
-                                            <div className="flex gap-6 md:gap-12 bg-white px-6 py-3 rounded-2xl shadow-sm border border-amber-100/50">
-                                                <div className="text-center">
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">ยาในตะกร้าที่ผิดมากที่สุด</div>
-                                                    <div className="text-3xl font-black text-rose-600">{stats.insight?.maxBasket || 0} <span className="text-xs text-slate-400">รายการ</span></div>
-                                                </div>
-                                                <div className="w-px bg-slate-100"></div>
-                                                <div className="text-center">
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">จำนวนผู้จัดยาที่เกี่ยวข้อง</div>
-                                                    <div className="text-3xl font-black text-amber-600">{stats.insight?.maxBasketPharmaCount || '-'} <span className="text-xs text-slate-400">คน</span></div>
-                                                </div>
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[300px] flex flex-col">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest text-center">จำนวนคนจัดในวันที่จัดยาผิด</h4>
+                                                <div className="flex-1 w-full relative"><canvas ref={canvasRefs.pharmaCount}></canvas></div>
                                             </div>
                                         </div>
                                     )}
 
-                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mt-5">
                                         <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
                                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">คลังข้อมูลอุบัติการณ์ ({displayList.length})</h3>
                                             <div className="flex items-center gap-4">
