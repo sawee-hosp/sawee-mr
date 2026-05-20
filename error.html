@@ -199,6 +199,8 @@
             const [filterPolicyArray, setFilterPolicyArray] = useState([]);
             const [filterErrorTypeArray, setFilterErrorTypeArray] = useState([]);
 
+            const [expandedPivot, setExpandedPivot] = useState([]); // State สำหรับ Accordion Pivot Table
+
             const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null });
             const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null) };
             const lastAutoText = useRef('');
@@ -495,9 +497,14 @@
                             
                             // Pivot Table Logic for MR (Type vs Dept)
                             const tLabel = h.type || h['ความคลาดเคลื่อน'] || 'ไม่ระบุ';
+                            const eLabel = h.error || h['Error'] || h['รายการ Error'] || 'ไม่ระบุ';
                             const dLabel = h.department || h['หน่วยงานที่เกิด'] || 'ไม่ระบุ';
-                            if(!counts.pivot[tLabel]) counts.pivot[tLabel] = {};
-                            counts.pivot[tLabel][dLabel] = (counts.pivot[tLabel][dLabel] || 0) + 1;
+                            
+                            if(!counts.pivot[tLabel]) counts.pivot[tLabel] = { total: {}, errors: {} };
+                            counts.pivot[tLabel].total[dLabel] = (counts.pivot[tLabel].total[dLabel] || 0) + 1;
+                            
+                            if(!counts.pivot[tLabel].errors[eLabel]) counts.pivot[tLabel].errors[eLabel] = {};
+                            counts.pivot[tLabel].errors[eLabel][dLabel] = (counts.pivot[tLabel].errors[eLabel][dLabel] || 0) + 1;
                         }
                         
                         const drugStr = h.drugs || h['ยาที่เกี่ยวข้อง'] || h['รายการยา'] || h.drug1 || h['ยา/ความแรงที่เกี่ยวข้อง(1)'];
@@ -1530,18 +1537,40 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="divide-y divide-slate-100 bg-white">
-                                                                {Object.entries(stats.counts.pivot).map(([type, depts]) => {
+                                                                {Object.entries(stats.counts.pivot).map(([type, typeData]) => {
                                                                     let rowTotal = 0;
+                                                                    const isExpanded = expandedPivot.includes(type);
                                                                     return (
-                                                                        <tr key={type} className="hover:bg-slate-50/80 transition-colors">
-                                                                            <td className="p-3 border-r font-bold text-slate-700">{type}</td>
-                                                                            {mrDepartments.map(d => {
-                                                                                const val = depts[d] || 0;
-                                                                                rowTotal += val;
-                                                                                return <td key={d} className="p-3 text-center text-slate-600">{val > 0 ? val : '-'}</td>
+                                                                        <React.Fragment key={type}>
+                                                                            <tr onClick={() => setExpandedPivot(p => p.includes(type) ? p.filter(t=>t!==type) : [...p, type])} className="hover:bg-emerald-50/50 transition-colors cursor-pointer group">
+                                                                                <td className="p-3 border-r font-bold text-slate-700 flex items-center gap-2 select-none">
+                                                                                    <svg className={`w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                                                                    {type}
+                                                                                </td>
+                                                                                {mrDepartments.map(d => {
+                                                                                    const val = typeData.total[d] || 0;
+                                                                                    rowTotal += val;
+                                                                                    return <td key={d} className="p-3 text-center text-slate-700 font-bold">{val > 0 ? val : '-'}</td>
+                                                                                })}
+                                                                                <td className="p-3 text-center font-black border-l text-emerald-600">{rowTotal}</td>
+                                                                            </tr>
+                                                                            {isExpanded && Object.entries(typeData.errors).map(([errName, errDepts]) => {
+                                                                                let errTotal = 0;
+                                                                                return (
+                                                                                    <tr key={`${type}-${errName}`} className="bg-slate-50/70 hover:bg-slate-100 transition-colors border-t border-slate-100/50">
+                                                                                        <td className="p-3 border-r text-slate-600 pl-8 text-xs flex items-center before:content-[''] before:w-1 before:h-1 before:bg-slate-400 before:rounded-full before:mr-2.5">
+                                                                                            <span className="truncate max-w-[200px]" title={errName}>{errName}</span>
+                                                                                        </td>
+                                                                                        {mrDepartments.map(d => {
+                                                                                            const val = errDepts[d] || 0;
+                                                                                            errTotal += val;
+                                                                                            return <td key={d} className="p-3 text-center text-slate-500 text-xs">{val > 0 ? val : '-'}</td>
+                                                                                        })}
+                                                                                        <td className="p-3 text-center font-bold border-l text-emerald-500/80 text-xs bg-white/30">{errTotal}</td>
+                                                                                    </tr>
+                                                                                )
                                                                             })}
-                                                                            <td className="p-3 text-center font-black border-l text-emerald-600">{rowTotal}</td>
-                                                                        </tr>
+                                                                        </React.Fragment>
                                                                     )
                                                                 })}
                                                             </tbody>
