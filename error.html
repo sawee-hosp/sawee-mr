@@ -94,6 +94,7 @@
         const mrPolicies = ['HAD', 'LASA', 'ADR', 'Med reconcile', 'DI'];
 
         const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        const DAY_NAMES = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 
         const PasteIcon = () => (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,6 +147,16 @@
             return '00:00';
         };
 
+        // ฟังก์ชันคำนวณเวร
+        const calculateShift = (timeStr) => {
+            if (!timeStr) return "เวรเช้า";
+            const [h, m] = timeStr.split(':').map(Number);
+            const totalMins = h * 60 + m;
+            if (totalMins >= 481 && totalMins <= 960) return "เวรเช้า"; // 08:01 - 16:00
+            if ((totalMins >= 961 && totalMins <= 1439) || totalMins === 0) return "เวรบ่าย"; // 16:01 - 00:00
+            return "เวรดึก"; // 00:01 - 08:00
+        };
+
         Chart.register(ChartDataLabels);
 
         const App = () => {
@@ -160,10 +171,12 @@
             const initialFormState = {
                 date: new Date().toISOString().split('T')[0],
                 time: `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
+                mrTime: `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`,
                 shiftDate: '', totalRx: '', sequence: '-', totalErrors: '-',
                 errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '',
                 inspector: '', doctor: '', recorder: '',
-                mrType: '', mrError: '', drug1: '', drug2: '', qty: '', department: '', policy: []
+                mrType: '', mrError: '', drug1: '', drug2: '', qty: '', department: '', policy: [],
+                shift: 'เวรเช้า', basketQty: '', pharmacistCount: '', reportStatus: 'รายงานตัวเอง'
             };
 
             const [form, setForm] = useState(initialFormState);
@@ -201,8 +214,8 @@
 
             const [expandedPivot, setExpandedPivot] = useState([]); // State สำหรับ Accordion Pivot Table
 
-            const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null });
-            const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null) };
+            const chartsRef = useRef({ type: null, pharma: null, bar: null, dept: null, sev: null, dow: null, tod: null, shift: null, basket: null, pCount: null });
+            const canvasRefs = { type: useRef(null), pharma: useRef(null), bar: useRef(null), dept: useRef(null), sev: useRef(null), dow: useRef(null), tod: useRef(null), shift: useRef(null), basket: useRef(null), pCount: useRef(null) };
             const lastAutoText = useRef('');
 
             const theme = useMemo(() => {
@@ -293,19 +306,29 @@
                     setForm(prev => ({
                         ...initialFormState,
                         date: prev.date,
-                        time: prev.time
+                        time: prev.time,
+                        mrTime: prev.mrTime,
+                        shift: calculateShift(prev.mrTime)
                     }));
                 }
             };
 
             const handleDateChange = (e) => {
                 const newDate = e.target.value;
-                setForm(prev => ({ ...initialFormState, date: newDate, time: prev.time, errorType: erErrorOptions[0] }));
+                setForm(prev => ({ ...initialFormState, date: newDate, time: prev.time, mrTime: prev.mrTime, shift: calculateShift(prev.mrTime), errorType: erErrorOptions[0] }));
             };
 
             useEffect(() => { if (!isDrugDropdownOpen) setErDrugSearch(''); }, [isDrugDropdownOpen]);
             useEffect(() => { if (!isDrug1Open) setMrDrug1Search(''); }, [isDrug1Open]);
             useEffect(() => { if (!isDrug2Open) setMrDrug2Search(''); }, [isDrug2Open]);
+
+            // อัปเดตเวร (Shift) เมื่อเวลาเปลี่ยน
+            useEffect(() => {
+                if (systemMode === 'MR') {
+                    const s = calculateShift(form.mrTime);
+                    if (s !== form.shift) setForm(p => ({ ...p, shift: s }));
+                }
+            }, [form.mrTime, systemMode]);
 
             useEffect(() => {
                 if (systemMode === 'ER') {
@@ -443,7 +466,7 @@
                 const daily = {};
                 let totalRxCount = 0;
                 const seenShifts = new Set();
-                const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, policy: {}, sev: {}, pivot: {} };
+                const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, policy: {}, sev: {}, pivot: {}, dow: { 'อาทิตย์':0, 'จันทร์':0, 'อังคาร':0, 'พุธ':0, 'พฤหัสบดี':0, 'ศุกร์':0, 'เสาร์':0 }, tod: Array(24).fill(0), shift: { 'เวรเช้า':0, 'เวรบ่าย':0, 'เวรดึก':0 }, basket: {}, pCount: {} };
 
                 baseFiltered.forEach(h => {
                     const itemDate = h.date || h['Date'] || h['Timestamp'] || h['วันที่'];
@@ -485,6 +508,7 @@
                             const inspectorLabel = h.inspector || h['ผู้ตรวจ'] || h['ผู้ตรวจเช็ค'] || h['แพทย์'];
                             if(inspectorLabel) counts.doc[inspectorLabel] = (counts.doc[inspectorLabel] || 0) + 1;
                         } else {
+                            // สถิติเฉพาะ MR
                             const deptLabel = h.department || h['หน่วยงานที่เกิด'];
                             if(deptLabel) counts.dept[deptLabel] = (counts.dept[deptLabel] || 0) + 1;
                             
@@ -505,6 +529,44 @@
                             
                             if(!counts.pivot[tLabel].errors[eLabel]) counts.pivot[tLabel].errors[eLabel] = {};
                             counts.pivot[tLabel].errors[eLabel][dLabel] = (counts.pivot[tLabel].errors[eLabel][dLabel] || 0) + 1;
+
+                            // สถิติความถี่วัน สัปดาห์ และเวลา
+                            let hour = -1;
+                            let dayOfWeek = -1;
+                            if (itemDate) {
+                                if (typeof itemDate === 'string' && itemDate.includes('/')) {
+                                    const parts = itemDate.split(' ');
+                                    const dp = parts[0].split('/');
+                                    if (dp.length === 3) {
+                                        let y = parseInt(dp[2]);
+                                        if (y < 2000) y+=543;
+                                        if (y > 2500) y-=543;
+                                        let dt = new Date(y, parseInt(dp[1])-1, parseInt(dp[0]));
+                                        dayOfWeek = dt.getDay();
+                                    }
+                                    if (parts[1]) {
+                                        hour = parseInt(parts[1].split(':')[0]);
+                                    }
+                                } else {
+                                    let dt = new Date(itemDate);
+                                    if (!isNaN(dt.getTime())) {
+                                        dayOfWeek = dt.getDay();
+                                        hour = dt.getHours();
+                                    }
+                                }
+                            }
+                            if (dayOfWeek !== -1) counts.dow[DAY_NAMES[dayOfWeek]] += 1;
+                            if (hour !== -1) counts.tod[hour] += 1;
+
+                            // เวรที่เกิดเหตุ
+                            const shiftL = h.shift || h['เวรที่เกิดเหตุ'];
+                            if (shiftL) counts.shift[shiftL] = (counts.shift[shiftL] || 0) + 1;
+
+                            // ยาในตะกร้า & คนจัด
+                            const bQty = h.basketQty || h['จำนวนยาในตะกร้าที่ผิด'] || h['จำนวนยาในตะกร้า'];
+                            if (bQty) counts.basket[bQty] = (counts.basket[bQty] || 0) + 1;
+                            const pCount = h.pharmacistCount || h['จำนวนผู้จัดยา'] || h['จำนวนผู้จัดยาในวันนั้น'];
+                            if (pCount) counts.pCount[pCount] = (counts.pCount[pCount] || 0) + 1;
                         }
                         
                         const drugStr = h.drugs || h['ยาที่เกี่ยวข้อง'] || h['รายการยา'] || h.drug1 || h['ยา/ความแรงที่เกี่ยวข้อง(1)'];
@@ -616,6 +678,50 @@
                                     options: opt
                                 });
                             }
+                        }
+                        if (canvasRefs.dow.current) {
+                            if (chartsRef.current.dow) chartsRef.current.dow.destroy();
+                            const dowLabels = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+                            const dowVals = dowLabels.map(d => stats.counts.dow[d] || 0);
+                            chartsRef.current.dow = new Chart(canvasRefs.dow.current, {
+                                type: 'bar', data: { labels: dowLabels, datasets: [{ label: 'ความถี่ (วันในสัปดาห์)', data: dowVals, backgroundColor: '#f59e0b', borderRadius: 4 }] },
+                                options: opt
+                            });
+                        }
+                        if (canvasRefs.tod.current) {
+                            if (chartsRef.current.tod) chartsRef.current.tod.destroy();
+                            const todLabels = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+                            chartsRef.current.tod = new Chart(canvasRefs.tod.current, {
+                                type: 'bar', data: { labels: todLabels, datasets: [{ label: 'ความชุก (ช่วงเวลา)', data: stats.counts.tod, backgroundColor: '#0ea5e9', borderRadius: 4 }] },
+                                options: opt
+                            });
+                        }
+                        if (canvasRefs.shift.current) {
+                            if (chartsRef.current.shift) chartsRef.current.shift.destroy();
+                            const shiftLabels = ['เวรเช้า', 'เวรบ่าย', 'เวรดึก'];
+                            const shiftVals = shiftLabels.map(s => stats.counts.shift[s] || 0);
+                            chartsRef.current.shift = new Chart(canvasRefs.shift.current, {
+                                type: 'pie', data: { labels: shiftLabels, datasets: [{ data: shiftVals, backgroundColor: ['#f59e0b', '#0ea5e9', '#6366f1'], borderWidth: 0 }] },
+                                options: opt
+                            });
+                        }
+                        if (canvasRefs.basket.current) {
+                            if (chartsRef.current.basket) chartsRef.current.basket.destroy();
+                            const bLabels = Object.keys(stats.counts.basket).sort((a,b)=>Number(a)-Number(b));
+                            const bVals = bLabels.map(k=>stats.counts.basket[k]);
+                            chartsRef.current.basket = new Chart(canvasRefs.basket.current, {
+                                type: 'bar', data: { labels: bLabels.map(v=>`${v} เม็ด`), datasets: [{ label: 'จำนวนยาในตะกร้า (ครั้ง)', data: bVals, backgroundColor: '#eab308', borderRadius: 4 }] },
+                                options: opt
+                            });
+                        }
+                        if (canvasRefs.pCount.current) {
+                            if (chartsRef.current.pCount) chartsRef.current.pCount.destroy();
+                            const pLabels = Object.keys(stats.counts.pCount).sort((a,b)=>Number(a)-Number(b));
+                            const pVals = pLabels.map(k=>stats.counts.pCount[k]);
+                            chartsRef.current.pCount = new Chart(canvasRefs.pCount.current, {
+                                type: 'bar', data: { labels: pLabels.map(v=>`${v} คน`), datasets: [{ label: 'จำนวนคนจัด (ครั้ง)', data: pVals, backgroundColor: '#f97316', borderRadius: 4 }] },
+                                options: opt
+                            });
                         }
                     }
                 }
@@ -770,7 +876,7 @@
                 
                 const payload = systemMode === 'ER' 
                     ? { ...form, systemMode, drugs: form.selectedDrugs.join(', ') }
-                    : { ...form, systemMode, type: form.mrType, error: form.mrError, policy: form.policy.join(', ') };
+                    : { ...form, systemMode, type: form.mrType, error: form.mrError, policy: form.policy.join(', '), shift: getShift(form.mrTime) };
                 
                 setShowModal(true);
                 setIsSubmitting(false);
@@ -778,7 +884,7 @@
                 setForm(p => ({ 
                     ...p, 
                     errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '', 
-                    mrType: '', mrError: '', drug1: '', drug2: '', qty: '', policy: [], department: '' 
+                    mrType: '', mrError: '', drug1: '', drug2: '', qty: '', policy: [], department: '', basketQty: '', pharmacistCount: '', reportStatus: 'รายงานตัวเอง' 
                 }));
                 lastAutoText.current = ''; 
                 
@@ -900,6 +1006,7 @@
 
                                     <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                                         <h3 className="text-sm font-black text-slate-600 uppercase tracking-widest mb-4">รายการเฝ้าระวัง LASA ({lasaFiltered.length})</h3>
+                                        <p className="text-xs font-bold text-yellow-600 mb-4 bg-yellow-50 inline-block px-3 py-1 rounded-lg">💡 สาเหตุ/เหตุผล: ระบุเช่น ตำแหน่งยาอยู่ห่างกันกี่ช่องยา, ชื่อยาเขียนเหมือนกันอย่างไร เป็นต้น</p>
                                         <div className="overflow-x-auto border border-slate-100 rounded-2xl max-h-[500px] custom-scrollbar shadow-inner bg-slate-50/30">
                                             <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
                                                 <thead className="bg-white sticky top-0 z-20 shadow-sm">
@@ -1091,11 +1198,15 @@
                                     {systemMode === 'MR' && (
                                         <div className="space-y-4 md:space-y-5 animate-fadeIn">
                                             
-                                            {/* บรรทัด 1: วันที่ / HN / Error ID */}
-                                            <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end border border-emerald-100/50 shadow-inner`}>
+                                            {/* บรรทัด 1: วันที่ / เวลา / HN / Error ID */}
+                                            <div className={`${theme.lightBg} p-4 md:p-5 rounded-3xl grid grid-cols-1 md:grid-cols-5 gap-4 items-end border border-emerald-100/50 shadow-inner`}>
                                                 <div className="md:col-span-1">
                                                     <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">วันที่พบ</label>
                                                     <input type="date" value={form.date} onChange={handleDateChange} className="w-full compact-input font-bold text-sm md:text-base border-emerald-200 focus:ring-2 focus:ring-emerald-100 !py-2.5" required />
+                                                </div>
+                                                <div className="md:col-span-1">
+                                                    <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">เวลา</label>
+                                                    <input type="time" value={form.mrTime} onChange={e=>setForm({...form, mrTime: e.target.value})} className="w-full compact-input font-bold text-sm md:text-base border-emerald-200 focus:ring-2 focus:ring-emerald-100 !py-2.5" required />
                                                 </div>
                                                 <div className="md:col-span-2">
                                                     <label className="text-xs md:text-sm font-black text-emerald-700 uppercase mb-1.5 block">HN ผู้ป่วย</label>
@@ -1111,6 +1222,28 @@
                                                     ) : (
                                                         <span className="text-xl md:text-2xl font-black text-emerald-600 leading-none">{data.lastId + 1}</span>
                                                     )}
+                                                </div>
+                                            </div>
+
+                                            {/* ข้อมูลคงที่ (Static Program info) */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-sm">
+                                                <div>
+                                                    <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">โปรแกรมความเสี่ยงหลัก</label>
+                                                    <select className="w-full compact-input text-xs md:text-sm bg-slate-100 text-slate-600 cursor-not-allowed border-slate-200 !py-1.5" disabled>
+                                                        <option>Patient Safety Goals : SIMPLE</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">โปรแกรมความเสี่ยงย่อย</label>
+                                                    <select className="w-full compact-input text-xs md:text-sm bg-slate-100 text-slate-600 cursor-not-allowed border-slate-200 !py-1.5" disabled>
+                                                        <option>M : Medication & Blood Safety</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">กระบวนการ</label>
+                                                    <select className="w-full compact-input text-xs md:text-sm bg-slate-100 text-slate-600 cursor-not-allowed border-slate-200 !py-1.5" disabled>
+                                                        <option>M 2 : Safe from Medication Error</option>
+                                                    </select>
                                                 </div>
                                             </div>
 
@@ -1246,6 +1379,32 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {/* บรรทัด 8: Optional Insights (เวร, ยาในตะกร้า, ผู้จัดยา, สถานะ) */}
+                                            <div className="bg-amber-50/50 p-4 md:p-5 rounded-2xl border border-amber-200 shadow-sm mt-4">
+                                                <span className="text-[10px] md:text-xs text-amber-600 font-bold mb-3 block">💡 กรอกส่วนนี้เพื่อวิเคราะห์ insight การจัดยาผิด (Optional)</span>
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                    <div>
+                                                        <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1.5 block">เวรที่เกิดเหตุ (Auto)</label>
+                                                        <input type="text" value={form.shift} disabled className="w-full compact-input text-sm bg-slate-100 text-slate-500 cursor-not-allowed !py-2" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1.5 block">Report Status Id</label>
+                                                        <select value={form.reportStatus} onChange={e=>setForm({...form, reportStatus: e.target.value})} className="w-full compact-input text-sm font-bold border-amber-200 bg-white !py-2 cursor-pointer">
+                                                            <option value="รายงานตัวเอง">รายงานตัวเอง</option>
+                                                            <option value="รายงานผู้อื่น">รายงานผู้อื่น</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1.5 block">จำนวนยาในตะกร้าที่ผิด</label>
+                                                        <input type="number" value={form.basketQty} onChange={e=>setForm({...form, basketQty: e.target.value})} className="w-full compact-input text-sm font-bold border-amber-200 focus:ring-2 focus:ring-amber-100 !py-2" placeholder="ระบุจำนวนยา..." />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1.5 block">จำนวนผู้จัดยาในวันนั้น</label>
+                                                        <input type="number" value={form.pharmacistCount} onChange={e=>setForm({...form, pharmacistCount: e.target.value})} className="w-full compact-input text-sm font-bold border-amber-200 focus:ring-2 focus:ring-amber-100 !py-2" placeholder="ระบุจำนวนคน..." />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 
@@ -1349,13 +1508,13 @@
                                             <div className="grid grid-cols-2 gap-8 md:gap-12 px-2 pb-2 relative z-10">
                                                 {systemMode === 'ER' && (
                                                     <div>
-                                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">ใบสั่งยารวม (Rx)</div>
+                                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">ใบสั่งยารวม (Rx) {systemMode === 'MR' && <span className="text-[10px] italic text-slate-300">(ER Only)</span>}</div>
                                                         <div className="text-5xl md:text-6xl font-black tracking-tight">{stats.rx.toLocaleString()}</div>
                                                     </div>
                                                 )}
                                                 <div className={systemMode === 'ER' ? "border-l border-slate-100 pl-8 md:pl-12" : "col-span-2"}>
                                                     <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Error ที่ตรวจพบ</div>
-                                                    <div className="text-5xl md:text-6xl font-black tracking-tight" style={{color: theme.primaryStr}}>{stats.err.toLocaleString()} {systemMode === 'ER' && stats.rx > 0 && <span className="text-xl font-bold text-slate-300 ml-2">({stats.pct}%)</span>}</div>
+                                                    <div className="text-5xl md:text-6xl font-black tracking-tight" style={{color: theme.primaryStr}}>{stats.err.toLocaleString()} {stats.rx > 0 && systemMode === 'ER' && <span className="text-xl font-bold text-slate-300 ml-2">({stats.pct}%)</span>}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1457,7 +1616,10 @@
                                                                 return (
                                                                     <tr key={i} className="hover:bg-slate-50/80 transition-colors">
                                                                         <td className="p-4 align-top text-center font-bold text-slate-500">{h.id || h['ลำดับที่'] || i+1}</td>
-                                                                        <td className="p-4 align-top font-black text-slate-700">{formatDisplayDate(h.date || h['Date'] || h['Timestamp'] || h['วันที่'])}</td>
+                                                                        <td className="p-4 align-top font-black text-slate-700">
+                                                                            {formatDisplayDate(h.date || h['Date'] || h['Timestamp'] || h['วันที่'])}
+                                                                            {h['เวรที่เกิดเหตุ'] && <div className="text-[10px] text-emerald-600 mt-1">{h['เวรที่เกิดเหตุ']}</div>}
+                                                                        </td>
                                                                         <td className="p-4 align-top text-slate-600 text-[11px] font-bold">{h.type || h['ความคลาดเคลื่อน'] || '-'}</td>
                                                                         <td className="p-4 align-top">
                                                                             <div className="font-black leading-tight" style={{color: theme.primaryStr}}>{h.error || h['Error'] || h['รายการ Error'] || '-'}</div>
@@ -1505,6 +1667,19 @@
                                     ) : (
                                         <div className="space-y-6">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="md:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm h-[350px] flex flex-col">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">ความถี่การเกิดเหตุ (แบ่งตามวันในสัปดาห์)</h4>
+                                                    <div className="flex-1 w-full relative"><canvas ref={canvasRefs.dow}></canvas></div>
+                                                </div>
+                                                <div className="md:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm h-[350px] flex flex-col">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">ความชุกการเกิดเหตุ (แบ่งตามช่วงเวลา)</h4>
+                                                    <div className="flex-1 w-full relative"><canvas ref={canvasRefs.tod}></canvas></div>
+                                                </div>
+                                                
+                                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[350px] flex flex-col items-center">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">แบ่งตามเวรที่เกิดเหตุ</h4>
+                                                    <div className="flex-1 w-full relative"><canvas ref={canvasRefs.shift}></canvas></div>
+                                                </div>
                                                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[350px] flex flex-col items-center">
                                                     <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">แบ่งตามชนิดความคลาดเคลื่อน (Type)</h4>
                                                     <div className="flex-1 w-full relative"><canvas ref={canvasRefs.type}></canvas></div>
@@ -1520,6 +1695,17 @@
                                                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[350px] flex flex-col items-center">
                                                     <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">แบ่งตามเภสัชกร (ผู้บันทึก)</h4>
                                                     <div className="flex-1 w-full relative"><canvas ref={canvasRefs.pharma}></canvas></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[300px] flex flex-col items-center">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">จำนวนยาในตะกร้าที่มีการจัดผิด</h4>
+                                                    <div className="flex-1 w-full relative"><canvas ref={canvasRefs.basket}></canvas></div>
+                                                </div>
+                                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm h-[300px] flex flex-col items-center">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">จำนวนคนจัดในวันที่จัดยาผิด</h4>
+                                                    <div className="flex-1 w-full relative"><canvas ref={canvasRefs.pCount}></canvas></div>
                                                 </div>
                                             </div>
                                             
