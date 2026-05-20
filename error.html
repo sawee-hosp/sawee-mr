@@ -167,6 +167,7 @@
             };
 
             const [form, setForm] = useState(initialFormState);
+            const [customPolicy, setCustomPolicy] = useState(''); // State สำหรับพิมพ์เพิ่มนโยบาย
 
             const [isTotalRxLocked, setIsTotalRxLocked] = useState(false);
             const [isDrugDropdownOpen, setIsDrugDropdownOpen] = useState(false);
@@ -262,7 +263,6 @@
                             for(let i=0; i<by.length; i++) b += String.fromCharCode(by[i]);
                             return window.btoa(b);
                         };
-                        // เปลี่ยนจาก Sarabun-Regular เป็น Sarabun-Light เพื่อให้เนื้อหาในตารางเป็น "ตัวบาง"
                         const [reg, bld] = await Promise.all([
                             getB64('https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Light.ttf'),
                             getB64('https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf')
@@ -286,6 +286,8 @@
                     }
                     setFilterPolicyArray([]); 
                     setFilterErrorTypeArray([]);
+                    setCustomPolicy('');
+                    lastAutoText.current = ''; // Force clear tracking on mode change
                     setForm(prev => ({
                         ...initialFormState,
                         date: prev.date,
@@ -307,28 +309,27 @@
                 if (systemMode === 'ER') {
                     const [h, m] = form.time.split(':').map(Number);
                     const d = new Date(form.date);
-                    let sD, sM, sY, eD, eM, eY;
+                    let sD, sM, sY, eD;
                     
                     if (h < 8) {
                         const p = new Date(d); p.setDate(p.getDate() - 1);
                         sD = p.getDate(); eD = d.getDate();
                         sM = String(p.getMonth() + 1).padStart(2, '0');
-                        eM = String(d.getMonth() + 1).padStart(2, '0');
-                        sY = p.getFullYear(); eY = d.getFullYear();
+                        sY = p.getFullYear();
                     } else {
                         const n = new Date(d); n.setDate(n.getDate() + 1);
                         sD = d.getDate(); eD = n.getDate();
                         sM = String(d.getMonth() + 1).padStart(2, '0');
-                        eM = String(n.getMonth() + 1).padStart(2, '0');
-                        sY = d.getFullYear(); eY = n.getFullYear();
+                        sY = d.getFullYear();
                     }
                     
                     const calcShiftDate = `${sD}-${eD}/${sM}/${sY}`;
-                    const targetShift = String(calcShiftDate).replace(/\s+/g, '');
+                    const cleanStr = (s) => String(s || '').replace(/\s+/g, '');
+                    const targetShift = cleanStr(calcShiftDate);
                     
                     const shiftItems = data.history.filter(h => {
                         const isER = (h.systemMode === 'ER' || !h.systemMode);
-                        const hShift = String(h.shiftDate || h['วันที่'] || h['กะ'] || '').replace(/\s+/g, ''); 
+                        const hShift = cleanStr(h.shiftDate || h['วันที่'] || h['กะ']); 
                         return isER && hShift === targetShift;
                     });
                     
@@ -353,6 +354,7 @@
                 }
             }, [form.date, form.time, data.history, form.errorType, systemMode]);
 
+            // ระบบช่วยเขียนรายละเอียดอัตโนมัติ (ฉลาดขึ้นและไม่หลุดตอนเริ่มต้น)
             useEffect(() => {
                 let currentHNStr = `HN ${form.hn || '.....'}`;
                 let baseText = '';
@@ -370,18 +372,35 @@
                 const newAutoText = (currentHNStr + baseText).trim();
 
                 setForm(p => {
-                    if (p.details === newAutoText) return p;
                     let updatedDetails = p.details || '';
-                    if (!updatedDetails || updatedDetails === lastAutoText.current) {
+                    
+                    // 1. ถ้ารายละเอียดว่างเปล่าเลย หรือเหมือนสิ่งที่เราเพิ่ง gen ให้เป๊ะๆ หรือมีแค่คำว่า HN
+                    if (!updatedDetails || !lastAutoText.current || updatedDetails === lastAutoText.current || updatedDetails === currentHNStr) {
                         updatedDetails = newAutoText;
-                    } else if (lastAutoText.current && updatedDetails.includes(lastAutoText.current)) {
+                    } 
+                    // 2. ถ้าสิ่งที่ผู้ใช้พิมพ์ ยังมีท่อนประโยคที่เรา gen ให้ล่าสุดอยู่
+                    else if (lastAutoText.current && updatedDetails.includes(lastAutoText.current)) {
                         updatedDetails = updatedDetails.replace(lastAutoText.current, newAutoText);
-                    } else {
+                    } 
+                    // 3. กรณี "หลุด" ไปแล้ว ให้พยายามสลับข้อความ
+                    else {
+                        let prevBaseText = lastAutoText.current.replace(/^HN\s\S+/, '').trim();
+                        let newBaseTextTrimmed = baseText.trim();
+                        
+                        // อัปเดตท่อน HN
                         updatedDetails = updatedDetails.replace(/^HN\s\S+/, currentHNStr);
                         if (!/^HN\s/.test(updatedDetails)) {
                             updatedDetails = currentHNStr + ' ' + updatedDetails;
                         }
+
+                        if (prevBaseText && updatedDetails.includes(prevBaseText)) {
+                            updatedDetails = updatedDetails.replace(prevBaseText, newBaseTextTrimmed);
+                        } 
+                        else if (newBaseTextTrimmed && !updatedDetails.includes(newBaseTextTrimmed)) {
+                            updatedDetails = updatedDetails.replace(currentHNStr, currentHNStr + ' ' + newBaseTextTrimmed);
+                        }
                     }
+                    
                     lastAutoText.current = newAutoText;
                     if (updatedDetails !== p.details) return { ...p, details: updatedDetails };
                     return p;
@@ -422,7 +441,7 @@
                 const daily = {};
                 let totalRxCount = 0;
                 const seenShifts = new Set();
-                const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, policy: {}, sev: {} };
+                const counts = { type: {}, pharma: {}, doc: {}, nurse: {}, drug: {}, dept: {}, policy: {}, sev: {}, pivot: {} };
 
                 baseFiltered.forEach(h => {
                     const itemDate = h.date || h['Date'] || h['Timestamp'] || h['วันที่'];
@@ -445,7 +464,11 @@
                     if (isErr) daily[iso].err += 1;
 
                     if (isErr) {
-                        const typeLabel = h.errorType || h['ความเสี่ยงที่พบ'] || h['ความเสี่ยง'] || h['Error'] || h.error || h['รายการ Error'] || h.type || h['ความคลาดเคลื่อน'];
+                        // แยก logic typeLabel ระหว่าง ER และ MR เพื่อ Pie Chart ที่ถูกต้อง
+                        const typeLabel = systemMode === 'MR' 
+                            ? (h.type || h['ความคลาดเคลื่อน'] || h.errorType || h['Error'] || '')
+                            : (h.errorType || h['ความเสี่ยงที่พบ'] || h['ความเสี่ยง'] || h['Error'] || h.error || h['รายการ Error'] || '');
+                            
                         if(typeLabel) counts.type[typeLabel] = (counts.type[typeLabel] || 0) + 1;
                         
                         const recorderLabel = h.recorder || h['ผู้บันทึก'] || h['เภสัชกร'];
@@ -469,6 +492,12 @@
                                     const pl = p.trim(); if(pl) counts.policy[pl] = (counts.policy[pl] || 0) + 1;
                                 });
                             }
+                            
+                            // Pivot Table Logic for MR (Type vs Dept)
+                            const tLabel = h.type || h['ความคลาดเคลื่อน'] || 'ไม่ระบุ';
+                            const dLabel = h.department || h['หน่วยงานที่เกิด'] || 'ไม่ระบุ';
+                            if(!counts.pivot[tLabel]) counts.pivot[tLabel] = {};
+                            counts.pivot[tLabel][dLabel] = (counts.pivot[tLabel][dLabel] || 0) + 1;
                         }
                         
                         const drugStr = h.drugs || h['ยาที่เกี่ยวข้อง'] || h['รายการยา'] || h.drug1 || h['ยา/ความแรงที่เกี่ยวข้อง(1)'];
@@ -1070,7 +1099,11 @@
                                                 </div>
                                                 <div className="md:col-span-1 h-[46px] bg-white px-4 rounded-xl border border-emerald-200 shadow-sm flex items-center justify-between">
                                                     <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Error ID:</span>
-                                                    <span className="text-xl md:text-2xl font-black text-emerald-600 leading-none">{data.lastId + 1}</span>
+                                                    {isLoading ? (
+                                                        <div className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                                                    ) : (
+                                                        <span className="text-xl md:text-2xl font-black text-emerald-600 leading-none">{data.lastId + 1}</span>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -1190,8 +1223,8 @@
                                             {/* บรรทัด 7: Policy */}
                                             <div>
                                                 <label className="text-xs md:text-sm font-black text-slate-400 uppercase mb-1.5 block">นโยบายความปลอดภัยด้านยา</label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {mrPolicies.map(pol => {
+                                                <div className="flex flex-wrap gap-2 items-center">
+                                                    {[...new Set([...mrPolicies, ...form.policy])].map(pol => {
                                                         const isSel = form.policy.includes(pol);
                                                         return (
                                                             <button key={pol} type="button" onClick={()=>setForm(p => ({ ...p, policy: isSel ? p.policy.filter(x=>x!==pol) : [...p.policy, pol] }))} 
@@ -1200,6 +1233,10 @@
                                                             </button>
                                                         )
                                                     })}
+                                                    <div className="flex items-center gap-1 ml-2">
+                                                        <input type="text" value={customPolicy} onChange={e=>setCustomPolicy(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault(); if(customPolicy.trim()){ setForm(p=>({...p, policy: [...new Set([...p.policy, customPolicy.trim()])]})); setCustomPolicy(''); }}}} className="compact-input !py-1 !px-3 text-xs md:text-sm border-slate-300 w-32" placeholder="+ เพิ่มนโยบาย" />
+                                                        <button type="button" onClick={()=>{if(customPolicy.trim()){ setForm(p=>({...p, policy: [...new Set([...p.policy, customPolicy.trim()])]})); setCustomPolicy(''); }}} className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-xl font-black transition-colors">+</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1478,6 +1515,40 @@
                                                     <div className="flex-1 w-full relative"><canvas ref={canvasRefs.pharma}></canvas></div>
                                                 </div>
                                             </div>
+                                            
+                                            {/* Pivot Table (MR Only) */}
+                                            {Object.keys(stats.counts.pivot).length > 0 && (
+                                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mt-6">
+                                                    <h4 className="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">ตารางวิเคราะห์ข้อมูล (Pivot Table): ความคลาดเคลื่อน vs หน่วยงาน</h4>
+                                                    <div className="overflow-x-auto border border-slate-100 rounded-2xl custom-scrollbar shadow-inner bg-slate-50/30">
+                                                        <table className="w-full text-left text-xs border-collapse min-w-[600px]">
+                                                            <thead className="bg-slate-100 text-slate-500">
+                                                                <tr>
+                                                                    <th className="p-3 font-black border-b border-r">ความคลาดเคลื่อน / หน่วยงาน</th>
+                                                                    {mrDepartments.map(d => <th key={d} className="p-3 font-black text-center border-b">{d}</th>)}
+                                                                    <th className="p-3 font-black text-center border-b border-l text-emerald-600">รวม</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-slate-100 bg-white">
+                                                                {Object.entries(stats.counts.pivot).map(([type, depts]) => {
+                                                                    let rowTotal = 0;
+                                                                    return (
+                                                                        <tr key={type} className="hover:bg-slate-50/80 transition-colors">
+                                                                            <td className="p-3 border-r font-bold text-slate-700">{type}</td>
+                                                                            {mrDepartments.map(d => {
+                                                                                const val = depts[d] || 0;
+                                                                                rowTotal += val;
+                                                                                return <td key={d} className="p-3 text-center text-slate-600">{val > 0 ? val : '-'}</td>
+                                                                            })}
+                                                                            <td className="p-3 text-center font-black border-l text-emerald-600">{rowTotal}</td>
+                                                                        </tr>
+                                                                    )
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
