@@ -37,7 +37,7 @@
         .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
         .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
 
-        /* Ambient Clouds (ลอยอยู่เหนือพื้นหลัง แต่ซ้อนใต้กระจก) */
+        /* Ambient Clouds */
         .cloud-container {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -155,6 +155,14 @@
         .staff-ending { animation: soft-pulse 1.5s infinite; }
         .countdown-text { color: #ef4444; font-weight: 900; } 
 
+        /* Animation กระพริบสีแดงสำหรับ Card อุณหภูมิเกิน */
+        @keyframes pulse-bg-red {
+            0%, 100% { background-color: rgba(254, 226, 226, 0.95); box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.2); }
+            50% { background-color: rgba(252, 165, 165, 0.95); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.6); }
+        }
+        .temp-alert-card { animation: pulse-bg-red 1s infinite ease-in-out; border: 2px solid #ef4444 !important; }
+        .temp-alert-text { color: #991b1b !important; }
+
         .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -164,8 +172,7 @@
 </head>
 
 <body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
-    
-    <!-- Ambient Clouds (ลอยอยู่เหนือ bg สีพื้น แต่ใต้ panel กระจก) -->
+    <!-- Ambient Clouds -->
     <div class="cloud-container">
         <div class="cloud cloud-1"></div>
         <div class="cloud cloud-2"></div>
@@ -188,7 +195,7 @@
     <main class="flex-1 w-full flex justify-between gap-[2%] p-4 overflow-hidden z-10 relative">
         
         <!-- Column 1: เภสัชกรประจำวัน (28%) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-3" id="col-staff" style="width: 28%;">
+        <section class="h-full flex flex-col min-h-0 glass-panel p-3 transition-opacity duration-300" id="col-staff" style="width: 28%; display: flex;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i><span id="col-staff-title">เภสัชกรประจำวัน</span></h2>
                 <span class="text-xs font-bold text-white bg-indigo-500 px-2 py-0.5 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
@@ -207,6 +214,7 @@
                         <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.ใน</span>
                         <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
+                    <!-- จพ.เช้า มาแสดงถัดจาก ภ.ใน ใน Set 1 -->
                     <div class="staff-item flex flex-col items-center" data-role="tech" id="card-tech" style="display:none;">
                         <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                         <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">จพ.เช้า</span>
@@ -226,6 +234,12 @@
                     <div class="staff-item flex flex-col items-center" data-role="check" id="card-check2" style="display:none;">
                         <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                         <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค2</span>
+                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                    </div>
+                    <!-- ภ.เช็ค3 ถัดจาก ภ.เช็ค2 -->
+                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check3" style="display:none;">
+                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค3</span>
                         <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
                     </div>
                 </div>
@@ -270,6 +284,32 @@
                         <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span>
                         <span class="text-xs font-black text-slate-800 staff-name">--</span>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 1.5A: อุณหภูมิตู้เย็นปัจจุบัน (สลับกับเภสัชกร) -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-3 transition-opacity duration-300" id="col-fridge-temp" style="width: 28%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1">
+                <!-- 4 คอลัมน์ต่อแถว สำหรับ Card เล็ก -->
+                <div class="grid grid-cols-4 gap-1.5" id="temp-fridge-grid">
+                    <div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Column 1.5B: อุณหภูมิห้องปัจจุบัน (สลับกับเภสัชกร) -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-3 transition-opacity duration-300" id="col-room-temp" style="width: 28%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-wind text-teal-500 mr-2"></i>อุณหภูมิห้องปัจจุบัน</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1">
+                <!-- 4 คอลัมน์ต่อแถว สำหรับ Card เล็ก -->
+                <div class="grid grid-cols-4 gap-1.5" id="temp-room-grid">
+                    <div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div>
                 </div>
             </div>
         </section>
@@ -353,9 +393,9 @@
         
         let staffSchedule = { today: null, tomorrow: null };
         let isDemoMode = false;
-        let previousActiveCount = -1; // ตัวแปรเก็บจำนวนพนักงานกะก่อนหน้า
+        let previousActiveCount = -1; 
 
-        // --- ระบบคิวเสียง (Samsung TV Support via Google TTS) ---
+        // --- ระบบคิวเสียง ---
         let spokenAlerts = new Set();
         let spokenIPDs = new Set();
         let voiceQueue = [];
@@ -363,7 +403,6 @@
         let ttsEnabled = false;
         let currentAudio = null;
 
-        // ฟังก์ชันเล่นดนตรีเปลี่ยนกะ (สดใส สั้นๆ 3 วินาที)
         async function playShiftChangeMelody() {
             if (!ttsEnabled) return; 
             
@@ -376,7 +415,6 @@
 
             const now = Tone.now();
             
-            // เมโลดี้สดใส (Arpeggio ขึ้น)
             synth.triggerAttackRelease("C5", "8n", now);
             synth.triggerAttackRelease("E5", "8n", now + 0.15);
             synth.triggerAttackRelease("G5", "8n", now + 0.3);
@@ -385,7 +423,6 @@
             return new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-        // คลิกหน้าจอเพื่อเปิดระบบเสียง (แก้ปัญหา Autoplay Policy ของเบราว์เซอร์)
         window.addEventListener('click', async () => {
             if(!ttsEnabled) {
                 ttsEnabled = true;
@@ -407,7 +444,6 @@
             const text = voiceQueue.shift();
             console.log("Speaking via Google TTS:", text);
             
-            // ใช้ Google Translate TTS
             const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=${encodeURIComponent(text)}`;
             currentAudio = new Audio(ttsUrl);
             
@@ -429,8 +465,7 @@
             });
         }
 
-        // --- STREAMING_CHUNK: Instantiating mock IPD data with times and active rendering logic ---
-        // --- ข้อมูลผู้ป่วยใน (IPD) จำลองเป็น Dynamic (เพิ่มฟิลด์เวลา และซ่อนวันที่) ---
+        // --- STREAMING_CHUNK: Declaring mock data structure for patient statuses ---
         let ipdData = [
             { id: 'ipd-1', bed: 'M21', hn: '123456789', status: 'Admit', time: '14:50', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: true },
             { id: 'ipd-2', bed: 'F25', hn: '987654321', status: 'D/C', time: '13:25', bg: 'bg-rose-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: true },
@@ -465,7 +500,6 @@
                 `;
                 container.appendChild(row);
 
-                // ระบบตรวจจับเสียงอ่านเมื่อมีผู้ป่วยในใหม่ (New IPD Event)
                 if (!spokenIPDs.has(ipd.id)) {
                     spokenIPDs.add(ipd.id);
                     
@@ -482,7 +516,6 @@
             isFirstLoadIPD = false;
         }
 
-        // จำลองเพิ่มผู้ป่วยใน 1 คน เพื่อแสดงการแจ้งเตือนด้วยเสียง (วินาทีที่ 10)
         setTimeout(() => {
             const now = new Date();
             const timeStr = ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2);
@@ -499,7 +532,6 @@
             renderIPDList();
         }, 10000);
 
-        // --- STREAMING_CHUNK: Fetching schedule and active status alerts from external GS API ---
         // --- Fetch GAS Schedule & Alerts ---
         async function fetchSchedule() {
             try {
@@ -510,13 +542,100 @@
                 if(!isDemoMode) updateStaffUI(staffSchedule.today);
                 
                 if(data.alerts) renderAlerts(data.alerts);
+                if(data.tempStatus) renderTempStatus(data.tempStatus);
 
             } catch(error) {
                 console.error("Error fetching GS:", error);
             }
         }
 
-        // --- STREAMING_CHUNK: Parsing alert messages and mapping HTML formats dynamically ---
+        // --- STREAMING_CHUNK: Processing 4-col card layout with 2-line header, small texts, category dividers, and alert badge ---
+        // --- Render Temp Status UI ---
+        function renderTempStatus(tempStatus) {
+            const createCard = (item, isFridge) => {
+                const isAlert = item.alert;
+                const cardClass = isAlert ? "temp-alert-card" : "bg-white/95 border-slate-200";
+                
+                let headerClass = "";
+                if (isAlert) {
+                    headerClass = "bg-gradient-to-r from-red-600 to-rose-500 text-white";
+                } else {
+                    headerClass = isFridge 
+                        ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white" 
+                        : "bg-gradient-to-r from-teal-600 to-emerald-500 text-white";
+                }
+                
+                const tempColor = isAlert ? "text-red-700" : "text-slate-800";
+                const humColor = isAlert ? "text-red-500" : "text-slate-500";
+                
+                // Badge วาดไว้มุมขวาบน กระพริบสีแดง
+                const alertBadge = isAlert ? `<div class="absolute top-0 right-0 bg-red-600 text-white text-[6.5px] font-black px-1.5 py-0.5 rounded-bl shadow-sm z-10 leading-none tracking-widest animate-pulse border-b border-l border-red-700">ALERT</div>` : '';
+                
+                // บังคับ Header 2 บรรทัด ตัวอักษรขนาดเล็กลง และจัดกลางกล่องตัวเลขอุณหภูมิให้เล็กลง
+                return `
+                <div class="card-3d relative overflow-hidden flex flex-col ${cardClass}">
+                    ${alertBadge}
+                    <!-- Bar Header (บังคับ 2 บรรทัด ตัวเล็ก) -->
+                    <div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-bold uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center shadow-sm shrink-0">
+                        ${item.name}
+                    </div>
+                    <!-- Temperature Centered (ตัวเล็กลง) -->
+                    <div class="flex-1 flex flex-col items-center justify-center py-1 bg-white/45 min-h-0">
+                        <span class="text-sm font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
+                        <span class="text-[7.5px] font-bold ${humColor} leading-none mt-0.5 opacity-95">RH: ${item.hum}%</span>
+                    </div>
+                </div>`;
+            };
+
+            const renderGroup = (data, isFridge) => {
+                if (!data || data.length === 0) return '';
+                
+                // แบ่ง 3 หมวด
+                const groupHongYa = data.filter(item => item.room === 'ห้องยา');
+                const groupKlangYa = data.filter(item => item.room === 'คลังยา');
+                const groupOther = data.filter(item => item.room !== 'ห้องยา' && item.room !== 'คลังยา');
+                
+                let html = '';
+                
+                // ฟังก์ชันวาดเส้นคั่นและป้ายกำกับหมวด
+                const renderSection = (title, items) => {
+                    if (items.length === 0) return '';
+                    let sectionHtml = `
+                        <div class="col-span-4 flex justify-center mt-1.5 mb-1 relative">
+                            <div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div>
+                            <span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span>
+                        </div>`;
+                    sectionHtml += items.map(item => createCard(item, isFridge)).join('');
+                    return sectionHtml;
+                };
+
+                html += renderSection('ห้องยา', groupHongYa);
+                html += renderSection('คลังยา', groupKlangYa);
+                html += renderSection('หน่วยงานอื่นๆ', groupOther);
+                
+                return html;
+            };
+
+            const fridgeGrid = document.getElementById('temp-fridge-grid');
+            if(fridgeGrid && tempStatus.fridge) {
+                if (tempStatus.fridge.length === 0) {
+                    fridgeGrid.innerHTML = `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
+                } else {
+                    fridgeGrid.innerHTML = renderGroup(tempStatus.fridge, true);
+                }
+            }
+
+            const roomGrid = document.getElementById('temp-room-grid');
+            if(roomGrid && tempStatus.room) {
+                if (tempStatus.room.length === 0) {
+                    roomGrid.innerHTML = `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
+                } else {
+                    roomGrid.innerHTML = renderGroup(tempStatus.room, false);
+                }
+            }
+        }
+
+        // --- STREAMING_CHUNK: Filtering older alerts and styling non_formulary dynamic notifications ---
         // --- Render Alerts UI ---
         function renderAlerts(alerts) {
             const container = document.getElementById('alerts-container');
@@ -531,12 +650,25 @@
             alerts.forEach(alert => {
                 let bgClass, iconHtml, titleColor, descColor, timeClass;
 
-                if (alert.type === 'requisition') { 
+                // Priority 0: ยานอกบัญชี (สีม่วง Icon เอกสาร)
+                if (alert.type === 'non_formulary') {
+                    bgClass = 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200';
+                    titleColor = 'text-purple-900';
+                    descColor = 'text-purple-800';
+                    iconHtml = '<i class="fas fa-file-medical text-purple-600 text-3xl drop-shadow-sm"></i>';
+                    timeClass = 'text-purple-800 bg-white border-purple-200';
+                } else if (alert.type === 'requisition') { 
                     bgClass = 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200';
                     titleColor = 'text-blue-900';
                     descColor = 'text-blue-800';
                     iconHtml = '<i class="fas fa-box-open text-blue-700 text-3xl drop-shadow-sm"></i>';
                     timeClass = 'text-blue-800 bg-white border-blue-200';
+                } else if (alert.type === 'temperature') { 
+                    bgClass = 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 temp-alert-card';
+                    titleColor = 'text-orange-900 font-black';
+                    descColor = 'text-red-800 font-extrabold text-base';
+                    iconHtml = '<i class="fas fa-temperature-high text-orange-600 text-3xl drop-shadow-sm animate-pulse"></i>';
+                    timeClass = 'text-orange-800 bg-white border-orange-200';
                 } else if (alert.type === 'line') { 
                     bgClass = 'bg-gradient-to-br from-[#f2fcf2] to-[#e6f9e6] border-[#00B900]/30'; 
                     titleColor = 'text-[#009900]';
@@ -560,7 +692,6 @@
                 let titleText = alert.title;
                 let descText = alert.desc;
 
-                // ตกแต่งป้ายแจ้งเช็คกล่องยาพร้อมใช้จากชีต Boxes (ขจัดคำฟุ่มเฟือยแล้วรวมชื่อผู้ตรวจและเวลา)
                 if (alert.type === 'checked') {
                     let cleanBoxName = alert.title.replace('เช็คพร้อมใช้แล้ว', '').replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
                     titleText = cleanBoxName + " เช็คพร้อมใช้แล้ว";
@@ -568,7 +699,7 @@
                 }
 
                 const cardHtml = `
-                <div class="card-3d ${bgClass} p-2.5 flex items-center gap-3">
+                <div class="card-3d ${bgClass} p-2.5 flex items-center gap-3 transition-all duration-300">
                     <div class="w-11 flex justify-center shrink-0">${iconHtml}</div>
                     <div class="flex-1 flex flex-col justify-center overflow-hidden">
                         <div class="flex justify-between items-start mb-0.5">
@@ -580,15 +711,20 @@
                 </div>`;
                 container.innerHTML += cardHtml;
 
-                // --- STREAMING_CHUNK: Processing TTS output strings for line, checked, and order warnings ---
-                // --- ตรวจจับและจัดคิวเสียงอ่าน (เฉพาะ Alert เบิกยา, ไลน์, และกล่องยาพร้อมใช้) ---
+                // --- ตรวจจับและจัดคิวเสียงอ่าน ---
                 if (!spokenAlerts.has(alert.id)) {
                     spokenAlerts.add(alert.id);
                     
                     if (alert.type !== 'expiry') {
                         let textToSpeak = "";
-                        if (alert.type === 'requisition') {
+                        if (alert.type === 'non_formulary') {
+                            textToSpeak = `มีรายการขอใช้ยานอกบัญชีใหม่ จาก ${alert.title.replace(' ขอใช้ยานอก', '').trim()} ค่ะ`;
+                        } else if (alert.type === 'requisition') {
                             textToSpeak = `มีการเบิกยาใหม่ จาก ${alert.title.replace('เบิกยา:', '').trim()} ค่ะ`;
+                        } else if (alert.type === 'temperature') {
+                            const cleanDeviceName = (alert.deviceName || "").replace(/_/g, " ").trim();
+                            const formattedTemp = parseFloat(alert.tempValue || "0").toFixed(1);
+                            textToSpeak = `เตือนอุณหภูมิเกินช่วง ${cleanDeviceName} ${formattedTemp} องศาเซลเซียสค่ะ`;
                         } else if (alert.type === 'line') {
                             textToSpeak = `มีการถามยาในไลน์ ${alert.title.replace('ถามยา:', '').trim()} ค่ะ`;
                         } else if (alert.type === 'checked') {
@@ -605,8 +741,7 @@
             });
         }
 
-        // --- STREAMING_CHUNK: Updating pharmacist avatars and personnel schedule UI cards ---
-        // --- Update UI logic ---
+        // --- STREAMING_CHUNK: Processing avatar details for staff schedules ---
         function updateStaffUI(data) {
             if(!data) return;
 
@@ -650,9 +785,10 @@
 
             mapData('card-key', 'key', 'ภ.คีย์');
             mapData('card-ipd', 'ipd', 'ภ.ใน');
-            mapData('card-tech', 'tech', 'จพ.เช้า');
+            mapData('card-tech', 'tech_morning', 'จพ.เช้า'); 
             mapData('card-check1', 'check1', 'ภ.เช็ค1');
             mapData('card-check2', 'check2', 'ภ.เช็ค2');
+            mapData('card-check3', 'check3', 'ภ.เช็ค3');     
             mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1');
             mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2');
             mapData('card-clinic', 'clinic', 'ภ.คลินิก');
@@ -667,8 +803,7 @@
             document.getElementById('div-oncall').style.display = cOnc ? 'block' : 'none';
         }
 
-        // --- STREAMING_CHUNK: Synchronizing timezone, clock, and active session countdown clocks ---
-        // --- Clock & Countdown Logic ---
+        // --- STREAMING_CHUNK: Managing dates and timezone clocks ---
         function updateClock() {
             const now = new Date();
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
@@ -680,8 +815,39 @@
             document.getElementById('date-display').textContent = `วัน${thaiDays[now.getDay()]} ${now.getDate()} ${thaiMonthsShort[now.getMonth()]} ${now.getFullYear() + 543}`;
             
             checkStaffShifts(now);
+            checkSwapCards(now);
         }
 
+        // --- STREAMING_CHUNK: Configuring 2-minute cycle swapping for Fridge, Room, and Staff screens ---
+        function checkSwapCards(now) {
+            const min = now.getMinutes();
+            const sec = now.getSeconds();
+            
+            const isEvenMinute = (min % 2 === 0);
+            
+            const showFridge = isEvenMinute && (sec >= 0 && sec < 15);
+            const showRoom = isEvenMinute && (sec >= 15 && sec < 30);
+
+            const staffCol = document.getElementById('col-staff');
+            const fridgeCol = document.getElementById('col-fridge-temp');
+            const roomCol = document.getElementById('col-room-temp');
+
+            if (showFridge) {
+                if (staffCol) staffCol.style.display = 'none';
+                if (roomCol) roomCol.style.display = 'none';
+                if (fridgeCol) fridgeCol.style.display = 'flex';
+            } else if (showRoom) {
+                if (staffCol) staffCol.style.display = 'none';
+                if (fridgeCol) fridgeCol.style.display = 'none';
+                if (roomCol) roomCol.style.display = 'flex';
+            } else {
+                if (fridgeCol) fridgeCol.style.display = 'none';
+                if (roomCol) roomCol.style.display = 'none';
+                if (staffCol) staffCol.style.display = 'flex';
+            }
+        }
+
+        // --- STREAMING_CHUNK: Aligning current personnel unique names calculation ---
         function checkStaffShifts(now) {
             const currentMins = now.getHours() * 60 + now.getMinutes();
             const currentSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
@@ -695,7 +861,7 @@
                 'tech': [{ start: 8 * 60, end: 11 * 60 }, { start: 12 * 60, end: 16 * 60 }]
             };
 
-            let activeCount = 0;
+            let activeStaffNames = new Set(); // ใช้ Set เก็บชื่อเพื่อกรองคนที่ควบ 2 ตำแหน่ง
 
             document.querySelectorAll('.staff-item').forEach(el => {
                 if (el.style.display === 'none') return; 
@@ -712,7 +878,7 @@
                     if (currentMins >= shift.start && currentMins < shift.end) {
                         isActive = true;
                         remainingSec = (shift.end * 60) - currentSecs;
-                        if (remainingSec <= 300) isEndingSoon = true; // <= 5 mins
+                        if (remainingSec <= 300) isEndingSoon = true; 
                         break;
                     }
                 }
@@ -721,7 +887,14 @@
                 const roleTextEl = el.querySelector('.staff-role-text');
 
                 if (isActive) {
-                    activeCount++;
+                    const staffNameEl = el.querySelector('.staff-name');
+                    if (staffNameEl) {
+                        const name = staffNameEl.textContent.trim();
+                        if (name && name !== '--') {
+                            activeStaffNames.add(name); // เพิ่มชื่อลงใน Set (ถ้าชื่อซ้ำจะถูกรวบอัตโนมัติ)
+                        }
+                    }
+
                     if (isEndingSoon) {
                         el.classList.add('staff-ending');
                         const m = Math.floor(remainingSec / 60).toString().padStart(2, '0');
@@ -738,9 +911,10 @@
                 }
             });
 
+            // นับจำนวนคน(ชื่อ) จริงๆ ที่กำลังเข้ากะ
+            const activeCount = activeStaffNames.size;
             document.getElementById('active-staff-count').textContent = activeCount + ' คน';
 
-            // --- STREAMING_CHUNK: Detecting shifts changes and outputting shift music alerts ---
             if (previousActiveCount !== -1 && previousActiveCount !== activeCount) {
                 console.log("Shift Changed detected!");
                 if(!isSpeaking) {
@@ -754,8 +928,7 @@
             previousActiveCount = activeCount;
         }
 
-        // --- STREAMING_CHUNK: Polling actual RSS feeds for global news, oil rates, and gold prices ---
-        // --- Real RSS Mix (News/Gold/Oil) ---
+        // --- STREAMING_CHUNK: Processing gold, oil, and global news feeds ---
         let mixData = [];
         let currentMixIndex = 0;
 
@@ -808,8 +981,7 @@
             }, 500);
         }
 
-        // --- STREAMING_CHUNK: Fetching real-time weather and air pollution indexes (PM2.5) ---
-        // --- Weather & PM 2.5 ---
+        // --- STREAMING_CHUNK: Fetching current localized weather statistics ---
         async function fetchWeather() {
             try {
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&air_quality=pm2_5');
@@ -841,7 +1013,6 @@
             }
         }
 
-        // --- STREAMING_CHUNK: Assigning background class variables depending on current day of the week ---
         // --- Day of week BG ---
         function updateBackground() {
             const dayOfWeek = new Date().getDay();
@@ -852,8 +1023,7 @@
             body.classList.add(bgClasses[dayOfWeek]);
         }
 
-        // --- STREAMING_CHUNK: Setting up the Tomorrow/Next-day preview loop logic every minute ---
-        // --- Tomorrow Demo Routine (ทุก 1 นาที) ---
+        // --- Tomorrow Demo Routine ---
         setInterval(() => {
             isDemoMode = true;
             document.getElementById('col-staff').classList.add('bg-white/95'); 
@@ -873,8 +1043,7 @@
 
         }, 60000);
 
-        // --- STREAMING_CHUNK: Running system onload routines and scheduling real-time intervals ---
-        // --- Init ---
+        // --- STREAMING_CHUNK: Launching master system initialization and recurring loop intervals ---
         window.onload = async function() {
             updateClock();
             updateBackground();
@@ -892,7 +1061,6 @@
             // Refresh ข้อมูลจากฝั่ง GS ทุกๆ 30 วินาที
             setInterval(() => { fetchSchedule(); }, 30000);
             
-            // Refresh ข่าว RSS และสภาพอากาศ ทุก 1 ชม
             setInterval(() => { fetchRealFeeds(); fetchWeather(); updateBackground(); }, 3600 * 1000); 
         };
     </script>
