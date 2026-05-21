@@ -602,7 +602,7 @@
       }
   }
 
-  async function callApi(action, payload = {}) {
+  async function callApi(action, payload = {}, silent = false) {
       try {
           const response = await fetch(API_URL, {
               method: 'POST',
@@ -614,7 +614,14 @@
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           return await response.json();
       } catch (err) {
-          Swal.fire('Server Error', err.message, 'error');
+          if (!silent) {
+              if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                  Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'ขาดการเชื่อมต่ออินเทอร์เน็ต', showConfirmButton: false, timer: 3000 });
+              } else {
+                  Swal.fire('Server Error', err.message, 'error');
+              }
+          }
+          console.warn("API Error (" + action + "):", err.message);
           return { status: false, message: err.message };
       }
   }
@@ -688,7 +695,7 @@
 
       setInterval(() => {
           if(currentUser.username) {
-              if(!document.getElementById('tab-hist').classList.contains('hidden')) loadHist();
+              if(!document.getElementById('tab-hist').classList.contains('hidden')) loadHist(true, true);
               loadExpiredItems(true); 
           }
       }, REFRESH_RATE);
@@ -751,7 +758,7 @@
 
   async function loadExpiredItems(background = false) {
       if(!background) document.getElementById('expire-loader').classList.remove('hidden');
-      const res = await callApi('getExpiredItems');
+      const res = await callApi('getExpiredItems', {}, background);
       if(!background) document.getElementById('expire-loader').classList.add('hidden');
       if(res.status) {
           const list = res.data;
@@ -770,9 +777,9 @@
       editStk(id, n, itm, max, cur, e, loc);
   }
 
-  function loadHist(init = false) { 
+  function loadHist(init = false, silent = false) { 
       if(!init) document.getElementById('hist-loader').classList.remove('hidden');
-      callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}).then(res=>{ 
+      callApi('getHistory', {user:currentUser.name, substock:currentUser.substock}, silent).then(res=>{ 
           document.getElementById('hist-loader').classList.add('hidden');
           if(res.status) { 
               allHistory = res.data; 
