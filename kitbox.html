@@ -139,6 +139,7 @@
     .fab-print { position: fixed; bottom: 85px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .fab-print-stock { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: #2196f3; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; white-space: nowrap; }
     .fab-edit-lg { position: fixed; bottom: 85px; right: 15px; background: var(--secondary); color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
+    .fab-global-stats { position: fixed; bottom: 80px; right: 15px; background: #673ab7; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
     
     .fab-stats { position: fixed; bottom: 140px; right: 15px; background: #673ab7; color: white; border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; gap: 8px; font-weight: bold; z-index: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; }
 
@@ -242,12 +243,12 @@
          <div id="hist-loader" class="text-center my-4 hidden"><div class="spinner-border text-primary"></div> กำลังโหลด...</div>
          <div id="hist-res"></div>
       </div>
-
-      <div id="tab-stock" class="page-sec hidden">
+<div id="tab-stock" class="page-sec hidden">
         <div class="container pt-3">
              <div class="input-group mb-3 shadow-sm rounded-pill" style="border: 2px solid var(--secondary); overflow: hidden;">
                 <span class="input-group-text bg-white border-0"><i class="fas fa-qrcode text-secondary"></i></span>
-                <input type="text" id="scan-box-input" class="form-control form-control-lg border-0" placeholder="สแกน หรือ ค้นหาชื่อกล่อง..." onkeyup="if(event.key==='Enter') findBoxByScan()">
+                <!-- เพิ่ม oninput สำหรับคัดกรอง Realtime -->
+                <input type="text" id="scan-box-input" class="form-control form-control-lg border-0" placeholder="พิมพ์ชื่อกล่อง หรือ สแกน..." oninput="renderStockGroupsGrid(this.value)" onkeyup="if(event.key==='Enter') findBoxByScan()">
                 <button class="btn btn-711-primary px-4" onclick="findBoxByScan()">ค้นหา</button>
              </div>
              <button class="btn btn-outline-success w-100 fw-bold mb-3 rounded-pill" onclick="mdlAddBox.show()"><i class="fas fa-plus-circle"></i> เพิ่มกล่องยาใหม่ (Add New Box)</button>
@@ -265,10 +266,12 @@
             </div>
         </div>
         
-        <div id="fab-print" class="fab-print hidden" onclick="openPrintLabel()">🖨️ พิมพ์ใบแปะ</div>
+<div id="fab-print" class="fab-print hidden" onclick="openPrintLabel()">🖨️ พิมพ์ใบแปะ</div>
         <div id="fab-print-stock" class="fab-print-stock hidden" onclick="generateStockCheckPdf()">📋 ใบเช็คสต็อก</div>
         <div id="fab-edit" class="fab-edit-lg hidden" onclick="openBoxEditor()"><i class="fas fa-edit"></i> แก้ไข</div>
-        <div id="fab-stats" class="fab-stats hidden" onclick="openBoxStats()"><i class="fas fa-chart-pie"></i> ดูการใช้งาน</div>
+        
+        <!-- ปุ่มดูการใช้งาน (แสดงเฉพาะตอนอยู่หน้าหลักเลือกกล่อง) -->
+        <div id="fab-global-stats" class="fab-global-stats" onclick="openGlobalStats()"><i class="fas fa-chart-pie"></i> ดูการใช้งาน</div>
       </div>
 
       <div id="tab-search" class="page-sec hidden container pt-3">
@@ -527,7 +530,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="mdlSignLabel" style="z-index: 2200;">
+<div class="modal fade" id="mdlSignLabel" style="z-index: 2200;">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header"><h6 class="fw-bold">บันทึกการตรวจสอบ</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
@@ -536,6 +539,30 @@
           <canvas id="cvs-label" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas>
           <div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvsLabel()">ล้าง</small></div>
           <button onclick="submitLabel()" class="btn btn-711-primary w-100 mt-2">ยืนยัน & พิมพ์ใบแปะกล่อง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับดูการใช้งานแบบรวม -->
+  <div class="modal fade" id="mdlGlobalStats" tabindex="-1" style="z-index: 2200;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header text-white" style="background:#673ab7">
+            <h6 class="fw-bold m-0"><i class="fas fa-chart-bar"></i> สถิติการใช้งานคลังยา</h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body bg-light">
+            <ul class="nav nav-pills nav-fill mb-3">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#gstats-box" onclick="renderGlobalStats('box')">แยกตามกล่อง</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#gstats-drug" onclick="renderGlobalStats('drug')">แยกตามยา</a></li>
+            </ul>
+            <div class="d-flex justify-content-end mb-2 gap-2">
+               <button class="btn btn-sm btn-outline-secondary" onclick="sortGlobalStats('desc')"><i class="fas fa-sort-amount-down"></i> มากไปน้อย</button>
+               <button class="btn btn-sm btn-outline-secondary" onclick="sortGlobalStats('asc')"><i class="fas fa-sort-amount-up"></i> น้อยไปมาก</button>
+               <button class="btn btn-sm btn-outline-secondary" onclick="sortGlobalStats('alpha')"><i class="fas fa-sort-alpha-down"></i> ก-ฮ</button>
+            </div>
+            <div class="list-group shadow-sm" id="global-stats-list"></div>
         </div>
       </div>
     </div>
@@ -763,21 +790,28 @@
       loadExpiredItems(true); 
   }
 
-  function nav(pid, el){
+function nav(pid, el){
       document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
-      document.querySelectorAll('.btm-nav .nav-item').forEach(x=>x.classList.remove('active')); 
-      if(el) el.classList.add('active');
-      
+      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
       if(pid === 'tab-hist') loadHist();
       if(pid === 'tab-expire') loadExpiredItems();
       
-      if(pid === 'tab-stock' && curBoxStock === '') {
-          document.getElementById('stock-content-wrapper').classList.add('hidden');
-          document.getElementById('stock-landing').classList.remove('hidden');
-          document.getElementById('fab-edit').classList.add('hidden');
-          document.getElementById('fab-print').classList.add('hidden');
-          document.getElementById('fab-print-stock').classList.add('hidden');
-          document.getElementById('fab-stats').classList.add('hidden');
+      if(pid === 'tab-stock') {
+          if(curBoxStock === '') {
+              document.getElementById('stock-content-wrapper').classList.add('hidden');
+              document.getElementById('stock-landing').classList.remove('hidden');
+              document.getElementById('fab-edit').classList.add('hidden');
+              document.getElementById('fab-print').classList.add('hidden');
+              document.getElementById('fab-print-stock').classList.add('hidden');
+              document.getElementById('fab-global-stats').classList.remove('hidden');
+          }
+          // Focus ช่องค้นหาอัตโนมัติ
+          setTimeout(() => {
+              const inp = document.getElementById('scan-box-input');
+              if (inp && curBoxStock === '') inp.focus();
+          }, 150);
+      } else {
+          document.getElementById('fab-global-stats').classList.add('hidden');
       }
   }
 
@@ -933,7 +967,7 @@
       setTimeout(() => {
           if(order && order.pdf) window.open(order.pdf, '_blank');
           else Swal.fire({toast:true, position:'top-end', icon:'info', title:'กำลังเปิด PDF...', timer:2000});
-          callApi('confirmOrderCheck', { orderId: tempCheckOrderId, user: currentUser.name, signature: sign });
+callApi('confirmOrderCheck', { orderId: tempCheckOrderId, user: currentUser.name, signature: sign });
           setTimeout(() => loadHist(), 1000); 
       }, 500); 
   }
@@ -972,8 +1006,45 @@
       });
       document.getElementById('stock-grouped-list').innerHTML = html;
   }
+async function renderStockGroupsGrid(filterKw = '') {
+      const groups = [...new Set(allBoxes.map(b => b.group || 'อื่น ๆ'))].sort();
+      document.getElementById('group-datalist').innerHTML = groups.map(g => `<option value="${g}">`).join('');
 
-  async function openBoxForce(name, imgRaw) {
+      const kw = filterKw.toLowerCase().trim();
+      let html = '';
+      const iconHelper = type => { const t=(type||"").toLowerCase(); return t.includes('cart')?'🛒':(t.includes('fridge')?'🧊':(t.includes('cabinet')?'🗄️':'📦')); };
+
+      groups.forEach(g => {
+          let boxesInGroup = allBoxes.filter(b => (b.group || 'อื่น ๆ') === g);
+          if (kw) {
+              boxesInGroup = boxesInGroup.filter(b => b.name.toLowerCase().includes(kw));
+          }
+          if (boxesInGroup.length === 0) return;
+          
+          html += `<div class="mt-4 mb-2 d-flex align-items-center">
+                      <h6 class="fw-bold m-0" style="color: var(--primary);"><i class="fas fa-layer-group me-1"></i> ${g}</h6>
+                      <span class="badge bg-light text-dark border ms-2">${boxesInGroup.length}</span>
+                   </div>
+                   <div class="row g-2">`;
+                   
+          boxesInGroup.forEach(b => {
+              html += `<div class="col-12 col-md-6">
+                          <div class="box-grid-item" onclick="selBox('${b.name}', '${b.imageRaw}')">
+                              <div class="box-grid-icon">${iconHelper(b.type)}</div>
+                              <div class="flex-grow-1">
+                                  <div class="box-grid-title">${b.name}</div>
+                                  <div class="box-grid-subtitle">รายการ: ${b.count || 0} ชนิด</div>
+                              </div>
+                              ${b.hasExpired ? '<span class="box-grid-badge blink">หมดอายุ</span>' : ''}
+                              <i class="fas fa-chevron-right text-muted opacity-50"></i>
+                          </div>
+                       </div>`;
+          });
+          html += `</div>`;
+      });
+      document.getElementById('stock-grouped-list').innerHTML = html || '<div class="text-center text-muted mt-5"><i class="fas fa-search mb-2" style="font-size:2rem;opacity:0.3"></i><br>ไม่พบกล่องที่ค้นหา</div>';
+  }
+async function openBoxForce(name, imgRaw) {
       curBoxStock = name;
       document.getElementById('stock-landing').classList.add('hidden'); 
       document.getElementById('stock-content-wrapper').classList.remove('hidden');
@@ -981,7 +1052,7 @@
       document.getElementById('fab-edit').classList.remove('hidden'); 
       document.getElementById('fab-print').classList.remove('hidden');
       document.getElementById('fab-print-stock').classList.remove('hidden');
-      document.getElementById('fab-stats').classList.remove('hidden');
+      document.getElementById('fab-global-stats').classList.add('hidden');
       
       document.getElementById('edit-box-name').value = name; 
       document.getElementById('edit-box-img').value = imgRaw || '';
@@ -999,7 +1070,7 @@
           document.getElementById('fab-edit').classList.add('hidden');
           document.getElementById('fab-print').classList.add('hidden');
           document.getElementById('fab-print-stock').classList.add('hidden');
-          document.getElementById('fab-stats').classList.add('hidden');
+          document.getElementById('fab-global-stats').classList.remove('hidden');
       } else {
           openBoxForce(name, imgRaw);
       }
@@ -1046,9 +1117,9 @@
       }
   }
 
-  async function findBoxByScan() {
+async function findBoxByScan() {
       const id = document.getElementById('scan-box-input').value.trim();
-      if(!id) return Swal.fire('ระบุข้อมูลค้นหา');
+      if(!id) return; // ไม่ Alert ถ้ากด Enter เปล่าๆ ป้องกันความน่ารำคาญ
       Swal.showLoading();
       const res = await callApi('findBoxByInvId', { invId: id });
       Swal.close();
@@ -1056,11 +1127,12 @@
       if(res.status) {
          if (res.action === 'OPEN') {
              document.getElementById('scan-box-input').value = '';
+             renderStockGroupsGrid(''); // Reset grid
              const boxData = allBoxes.find(b => b.name === res.boxName);
              selBox(res.boxName, boxData ? boxData.imageRaw : '');
          } else if (res.action === 'SUGGEST') {
              const html = `<div class="list-group text-start">` + 
-                res.list.map(b => `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="Swal.close(); document.getElementById('scan-box-input').value=''; selBox('${b.name}', '')"><span>${b.name}</span><small class="text-muted ms-2">${b.id}</small></button>`).join('') +
+                res.list.map(b => `<button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="Swal.close(); document.getElementById('scan-box-input').value=''; renderStockGroupsGrid(''); selBox('${b.name}', '')"><span>${b.name}</span><small class="text-muted ms-2">${b.id}</small></button>`).join('') +
                 `</div>`;
              
              Swal.fire({ title: 'เลือกกล่องที่ต้องการ', html: html, showConfirmButton: false, showCloseButton: true });
@@ -1069,7 +1141,6 @@
          Swal.fire('ไม่พบข้อมูล', res.message, 'error');
       }
   }
-
   async function loadStockItems(box, silent = false) {
       const el = document.getElementById('stock-content'); 
       if(!silent) el.innerHTML = '<div class="text-center mt-5 text-muted"><div class="spinner-border text-secondary mb-2"></div><br>กำลังโหลด...</div>';
@@ -1596,7 +1667,7 @@
   }
   
   let searchMasterTimeout;
-  function searchMasterDebounce() {
+function searchMasterDebounce() {
       const kw = document.getElementById('search-master').value.trim();
       clearTimeout(searchMasterTimeout);
       if(!kw) { document.getElementById('master-res').innerHTML = ''; return; }
@@ -1612,6 +1683,46 @@
       }, 600);
   }
 
+  // --- Logic สำหรับดึงและแสดงสถิติการใช้งาน ---
+  let globalStatsData = { byBox: [], byDrug: [] };
+  let curStatsType = 'box';
+async function openGlobalStats() {
+      Swal.showLoading();
+      const res = await callApi('getGlobalStats');
+      Swal.close();
+      if(res.status) {
+          globalStatsData = res.data;
+          renderGlobalStats('box');
+          new bootstrap.Modal(document.getElementById('mdlGlobalStats')).show();
+      } else {
+          Swal.fire('Error', res.message, 'error');
+      }
+  }
+
+  function sortGlobalStats(sortMode) {
+      renderGlobalStats(curStatsType, sortMode);
+  }
+
+  function renderGlobalStats(type, sortMode = 'desc') {
+      curStatsType = type;
+      const listEl = document.getElementById('global-stats-list');
+      const dataList = [...globalStatsData[type === 'box' ? 'byBox' : 'byDrug']];
+      
+      // การจัดเรียง
+      if(sortMode === 'desc') dataList.sort((a,b) => b.count - a.count);
+      else if(sortMode === 'asc') dataList.sort((a,b) => a.count - b.count);
+      else if(sortMode === 'alpha') dataList.sort((a,b) => a.name.localeCompare(b.name, 'th'));
+
+      const icon = type === 'box' ? '📦' : '💊';
+      listEl.innerHTML = dataList.map(item => `
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div class="fw-bold small text-truncate" style="max-width:200px">${icon} ${item.name}</div>
+              <span class="badge bg-secondary rounded-pill">${item.count} ครั้ง</span>
+          </div>
+      `).join('') || '<div class="text-center p-3 text-muted">ยังไม่มีข้อมูลการใช้งาน</div>';
+  }
+
+  
   function openBoxEditor() { mdlBoxEdit.show(); }
   function adjStk(n) {
       let el = document.getElementById('stk-qty');
