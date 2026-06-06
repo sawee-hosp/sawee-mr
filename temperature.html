@@ -330,10 +330,10 @@
                         </div>
                     </div>
 
-                    <!-- Split Area: Canvas and Side Drug Panel -->
-                    <div class="flex flex-col lg:flex-row gap-4 w-full min-h-[320px] items-stretch mt-2">
+                    <!-- Split Area: Canvas and Side Drug Panel (Fixed Height Layout) -->
+                    <div class="flex flex-col lg:flex-row gap-4 w-full h-auto lg:h-[320px] items-stretch mt-2">
                         <!-- Canvas Container (Resizes Dynamically) -->
-                        <div id="canvas-container" class="flex-1 min-w-0 h-[320px] relative bg-white rounded-xl">
+                        <div id="canvas-container" class="flex-1 min-w-0 h-[320px] lg:h-full relative bg-white rounded-xl">
                             <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10 hidden rounded-xl">
                                 <div class="w-10 h-10 relative"><div class="loader"></div></div>
                             </div>
@@ -341,10 +341,10 @@
                         </div>
 
                         <!-- Drug List Side Panel (Takes 20%) -->
-                        <div id="drug-panel" class="hidden w-full lg:w-1/5 h-[320px] lg:h-auto bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
+                        <div id="drug-panel" class="hidden w-full lg:w-1/5 h-[320px] lg:h-full bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col overflow-hidden">
                             <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-1.5 mb-2 flex items-center"><i class="fa-solid fa-pills text-indigo-500 mr-1.5"></i>รายการยาในจุดเก็บ</p>
-                            <div id="drug-list-container" class="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
-                                <!-- Cards will be injected here -->
+                            <div id="drug-list-container" class="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                                <!-- Minimal items will be injected here dynamically -->
                             </div>
                         </div>
                     </div>
@@ -413,9 +413,20 @@
 
     <p class="text-xs text-slate-500 mb-2 font-bold" id="print-threshold-note"></p>
 
-    <!-- Chart Image Container -->
-    <div class="w-full text-center border border-slate-200 p-2 rounded-lg">
-        <img id="print-chart-img" class="max-w-full h-auto mx-auto" style="max-height: 400px;" />
+    <!-- Side-by-Side row containing Chart Image and Drug List (Prints as 1 unified block) -->
+    <div class="flex flex-row gap-4 items-stretch border border-slate-200 p-2 rounded-lg">
+        <!-- Chart image container (Takes majority space) -->
+        <div class="flex-1 text-center min-w-0">
+            <img id="print-chart-img" class="max-w-full h-auto mx-auto" style="max-height: 320px;" />
+        </div>
+        
+        <!-- Drug list block (Printed only if drug panel was visible, with restricted height to prevent multi-page leaking) -->
+        <div id="print-drug-container" class="w-1/4 border-l border-slate-300 pl-4 flex flex-col overflow-hidden max-h-[320px]" style="display: none;">
+            <p class="text-[11px] font-bold text-slate-700 uppercase border-b border-slate-200 pb-1 mb-2">รายการยาในจุดเก็บ</p>
+            <div id="print-drug-list" class="flex-1 text-[9px] space-y-1 overflow-hidden" style="max-height: 290px;">
+                <!-- Minimalistic drug list rows copied on demand -->
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1151,9 +1162,11 @@
                 container.innerHTML = '';
                 result.data.forEach(drug => {
                     container.innerHTML += `
-                        <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm hover:border-brand-300 transition-colors">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">${drug.drugName}</p>
-                            <span class="text-[9px] text-indigo-500 font-extrabold block mt-1.5 flex items-center gap-1"><i class="fa-solid fa-box text-[8px]"></i> ${drug.boxName}</span>
+                        <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-100 hover:bg-slate-100/50 transition-colors min-w-0" title="${drug.drugName} (${drug.boxName})">
+                            <span class="font-medium text-slate-700 truncate pr-2 flex-1">${drug.drugName}</span>
+                            <span class="text-[9px] text-indigo-500 font-extrabold shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                <i class="fa-solid fa-box text-[8px]"></i> ${drug.boxName}
+                            </span>
                         </div>`;
                 });
             } else {
@@ -1206,6 +1219,31 @@
         document.getElementById('print-threshold-note').innerText = isFridge 
             ? "*เกณฑ์มาตรฐานตู้เย็น: อุณหภูมิต้องอยู่ระหว่าง 2°C ถึง 8°C" 
             : "*เกณฑ์มาตรฐานอุณหภูมิห้อง: 20°C ถึง 30°C / ความชื้น: 35% ถึง 65%";
+
+        // การจัดการพิมพ์รายการยาลงในหน้า PDF เคียงข้างชาร์ตกราฟอุณหภูมิ
+        const printDrugContainer = document.getElementById('print-drug-container');
+        const printDrugList = document.getElementById('print-drug-list');
+        if (isDrugPanelOpen) {
+            printDrugContainer.style.display = 'flex';
+            const uiDrugs = document.getElementById('drug-list-container').children;
+            let printHtml = '';
+            for (let i = 0; i < uiDrugs.length; i++) {
+                const item = uiDrugs[i];
+                if (item.classList.contains('flex-col') || item.innerHTML.includes('fa-circle-exclamation')) continue;
+                
+                const drugName = item.querySelector('.truncate')?.innerText || '';
+                const boxName = item.querySelector('.shrink-0')?.innerText || '';
+                
+                printHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 2px; font-size: 9px; line-height: 1.2;">
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; padding-right: 4px;" title="${drugName}">${drugName}</span>
+                        <span style="font-weight: bold; color: #4f46e5; flex-shrink: 0; background-color: #e0e7ff; padding: 1px 4px; border-radius: 4px;">${boxName}</span>
+                    </div>`;
+            }
+            printDrugList.innerHTML = printHtml || '<p style="color: #94a3b8; font-style: italic;">ไม่มีรายการยาในจุดเก็บ</p>';
+        } else {
+            printDrugContainer.style.display = 'none';
+        }
 
         const chartCanvas = document.getElementById('historyChart');
         if (chartCanvas) {
@@ -1270,6 +1308,7 @@
                 };
             });
 
+            document.getElementById('master-chart-loading').classList.add('hidden');
             drawMasterChart(labels, datasets);
 
         } catch (e) {
