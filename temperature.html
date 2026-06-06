@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sawee Cold Chain</title>
+    <!-- Thermometer Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='10' width='20' height='60' rx='10' fill='%234f46e5'/><circle cx='50' cy='75' r='20' fill='%234f46e5'/><rect x='45' y='20' width='10' height='50' rx='5' fill='%23ef4448'/><circle cx='50' cy='75' r='12' fill='%23ef4448'/></svg>">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
@@ -112,6 +114,7 @@
             body { background: white; }
             .print-hidden { display: none !important; }
             .print-block { display: block !important; }
+            .print-box-hide { display: none !important; }
             @page { margin: 15mm; }
         }
     </style>
@@ -125,7 +128,7 @@
         <div class="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="bg-gradient-to-tr from-cyan-600 via-indigo-500 to-purple-400 p-2.5 rounded-xl shadow-md text-white flex items-center justify-center relative overflow-hidden shine-sweep">
-                    <i class="fa-solid fa-truck-fast text-lg"></i>
+                    <i class="fa-solid fa-thermometer-half text-lg"></i>
                 </div>
                 <div>
                     <div class="relative inline-block shine-sweep">
@@ -343,7 +346,7 @@
                         <!-- Drug List Side Panel (Takes 20%) -->
                         <div id="drug-panel" class="hidden w-full lg:w-1/5 h-[320px] lg:h-full bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col overflow-hidden">
                             <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-1.5 mb-2 flex items-center"><i class="fa-solid fa-pills text-indigo-500 mr-1.5"></i>รายการยาในจุดเก็บ</p>
-                            <div id="drug-list-container" class="flex-1 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                            <div id="drug-list-container" class="flex-1 overflow-y-auto overflow-x-auto space-y-1 pr-1 scrollbar-thin">
                                 <!-- Minimal items will be injected here dynamically -->
                             </div>
                         </div>
@@ -362,7 +365,7 @@
 <!-- Health Analysis Modal -->
 <div id="health-modal" class="fixed inset-0 z-[60] hidden print-hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="document.getElementById('health-modal').classList.add('hidden')"></div>
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
         <div class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:max-w-3xl w-full border border-slate-200">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-teal-50">
                 <h3 class="text-lg font-bold text-teal-800 flex items-center gap-2"><i class="fa-solid fa-stethoscope text-teal-600"></i>ผลวิเคราะห์สมรรถนะอุปกรณ์</h3>
@@ -1160,10 +1163,11 @@
             
             if (result.success && result.data && result.data.length > 0) {
                 container.innerHTML = '';
+                // ปรับให้แถวยาแสดงผลยาวแถวเดียวด้วย min-w-max เพื่อให้ scroll ได้ทั้งแนวยาวและแนวขวาง
                 result.data.forEach(drug => {
                     container.innerHTML += `
-                        <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-100 hover:bg-slate-100/50 transition-colors min-w-0" title="${drug.drugName} (${drug.boxName})">
-                            <span class="font-medium text-slate-700 truncate pr-2 flex-1">${drug.drugName}</span>
+                        <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-100 hover:bg-slate-100/50 transition-colors min-w-max" title="${drug.drugName} (${drug.boxName})">
+                            <span class="font-medium text-slate-700 pr-4">${drug.drugName}</span>
                             <span class="text-[9px] text-indigo-500 font-extrabold shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                 <i class="fa-solid fa-box text-[8px]"></i> ${drug.boxName}
                             </span>
@@ -1231,13 +1235,14 @@
                 const item = uiDrugs[i];
                 if (item.classList.contains('flex-col') || item.innerHTML.includes('fa-circle-exclamation')) continue;
                 
-                const drugName = item.querySelector('.truncate')?.innerText || '';
+                const drugName = item.querySelector('span:first-child')?.innerText || '';
                 const boxName = item.querySelector('.shrink-0')?.innerText || '';
                 
+                // ใช้คลาส print-box-hide เพื่อซ่อนชื่อกล่องยาขณะพิมพ์ในกรณีหน้ากระดาษแคบ
                 printHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 2px; font-size: 9px; line-height: 1.2;">
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; padding-right: 4px;" title="${drugName}">${drugName}</span>
-                        <span style="font-weight: bold; color: #4f46e5; flex-shrink: 0; background-color: #e0e7ff; padding: 1px 4px; border-radius: 4px;">${boxName}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 2px; font-size: 9px; line-height: 1.2; overflow: hidden;">
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; padding-right: 4px;" title="${drugName}">${drugName}</span>
+                        <span class="print-box-hide" style="font-weight: bold; color: #4f46e5; flex-shrink: 0; background-color: #e0e7ff; padding: 1px 4px; border-radius: 4px;">${boxName}</span>
                     </div>`;
             }
             printDrugList.innerHTML = printHtml || '<p style="color: #94a3b8; font-style: italic;">ไม่มีรายการยาในจุดเก็บ</p>';
@@ -1308,7 +1313,6 @@
                 };
             });
 
-            document.getElementById('master-chart-loading').classList.add('hidden');
             drawMasterChart(labels, datasets);
 
         } catch (e) {
