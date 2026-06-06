@@ -10,27 +10,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Google Sans -->
+    <!-- Google Fonts: Prompt & Faster One -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Faster+One&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['"Google Sans"', 'sans-serif'],
+                    fontFamily: { 
+                        sans: ['"Prompt"', 'sans-serif'], 
+                        logo: ['"Faster One"', 'system-ui', 'sans-serif']
                     },
                     colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            400: '#818cf8',
-                            500: '#4f46e5', // Deep Indigo
-                            600: '#4338ca',
-                            900: '#312e81',
-                        }
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#4f46e5', 600: '#4338ca', 900: '#312e81', }
                     }
                 }
             }
@@ -38,56 +32,23 @@
     </script>
 
     <style>
-        /* Pastel Background for the whole app */
-        body { 
-            background: linear-gradient(135deg, #ffe4e6 0%, #e0e7ff 50%, #f3e8ff 100%);
-            background-attachment: fixed;
-        }
+        body { background: linear-gradient(135deg, #ffe4e6 0%, #e0e7ff 50%, #f3e8ff 100%); background-attachment: fixed; }
+        .glass-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.3); }
+        .glass-panel { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .device-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); background: rgba(255, 255, 255, 0.9); }
+        .device-card:hover:not(.alert-card-fx) { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.15); border-color: #a5b4fc; }
+        .mini-card:hover { transform: scale(1.02); }
         
-        .glass-header {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .device-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
-            background: rgba(255, 255, 255, 0.9);
-        }
-        .device-card:hover:not(.alert-card-fx) { 
-            transform: translateY(-4px); 
-            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.15); 
-            border-color: #a5b4fc; 
-        }
-        
-        /* Severe Alert Pulsing Effect (RED BACKGROUND) */
         @keyframes severeBlink {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             50% { transform: scale(1.02); box-shadow: 0 0 25px 8px rgba(239, 68, 68, 0.6); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .alert-card-fx {
-            animation: severeBlink 1s ease-in-out infinite;
-            z-index: 10;
-        }
+        .alert-card-fx { animation: severeBlink 1s ease-in-out infinite; z-index: 10; }
         
         .modal-active { overflow: hidden; }
         
-        .loader { 
-            border: 4px solid rgba(79, 70, 229, 0.2); 
-            border-top-color: #4f46e5; 
-            border-radius: 50%; 
-            width: 100%; 
-            height: 100%; 
-            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite; 
-        }
+        .loader { border: 4px solid rgba(79, 70, 229, 0.2); border-top-color: #4f46e5; border-radius: 50%; width: 100%; height: 100%; animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -95,28 +56,82 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Custom Toast Styles */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { 
-            background: #1e293b; color: white; padding: 14px 24px; border-radius: 12px; 
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); transition: all 0.3s; 
-            font-size: 14px; display: flex; align-items: center; gap: 12px; font-weight: 500;
+        .toast { background: #1e293b; color: white; padding: 14px 24px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); transition: all 0.3s; font-size: 14px; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+        
+        /* Hologram Logo & Animation Style */
+        @keyframes holoShine {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes sweep {
+            0% { left: -150%; }
+            50% { left: 150%; }
+            100% { left: 150%; }
+        }
+        .holo-text {
+            font-family: 'Faster One', system-ui, sans-serif;
+            background: linear-gradient(
+                120deg, 
+                #06b6d4 0%, 
+                #3b82f6 25%, 
+                #8b5cf6 50%, 
+                #10b981 75%, 
+                #06b6d4 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: holoShine 6s linear infinite;
+            font-weight: 400;
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+        .shine-sweep {
+            position: relative;
+            overflow: hidden;
+        }
+        .shine-sweep::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 80%;
+            height: 100%;
+            background: linear-gradient(
+                90deg, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(255, 255, 255, 0.45) 50%, 
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: skewX(-20deg);
+            animation: sweep 4s ease-in-out infinite;
+        }
+
+        @media print {
+            body { background: white; }
+            .print-hidden { display: none !important; }
+            .print-block { display: block !important; }
+            @page { margin: 15mm; }
         }
     </style>
 </head>
 <body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
 
-<div class="min-h-screen flex flex-col h-screen">
+<!-- แอปพลิเคชันหลัก (ซ่อนตอนพิมพ์ PDF) -->
+<div class="min-h-screen flex flex-col h-screen print-hidden">
     <!-- Header -->
     <header class="glass-header z-20 sticky top-0 shadow-sm">
         <div class="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div class="bg-gradient-to-tr from-brand-600 via-brand-500 to-sky-400 p-2.5 rounded-xl shadow-md shadow-brand-500/30 text-white flex items-center justify-center">
+                <div class="bg-gradient-to-tr from-cyan-600 via-indigo-500 to-purple-400 p-2.5 rounded-xl shadow-md text-white flex items-center justify-center relative overflow-hidden shine-sweep">
                     <i class="fa-solid fa-truck-fast text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 leading-none">Sawee <span class="text-brand-600">Cold Chain</span></h1>
-                    <p class="text-[11px] sm:text-xs text-slate-500 font-semibold tracking-wider mt-1">ห่วงโซ่ความเย็น รพ.สวี</p>
+                    <div class="relative inline-block shine-sweep">
+                        <h1 class="text-xl sm:text-2xl tracking-tight holo-text leading-none">Sawee Cold Chain</h1>
+                    </div>
+                    <p class="text-[11px] sm:text-xs text-slate-500 font-semibold tracking-wider mt-1">ระบบห่วงโซ่ความเย็น รพ.สวี</p>
                 </div>
             </div>
             <button onclick="fetchDashboardData()" class="group bg-white/80 border border-brand-100 text-brand-600 px-4 py-2 rounded-xl hover:bg-brand-600 hover:text-white transition-all duration-300 text-sm font-semibold flex items-center gap-2 shadow-sm backdrop-blur-sm">
@@ -130,7 +145,6 @@
         
         <!-- Dark Theme Sidebar -->
         <aside class="w-full md:w-64 bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-y-auto p-5 shrink-0 z-10 flex flex-col gap-6 text-slate-300">
-            
             <!-- Quick Stats Summary -->
             <div class="bg-gradient-to-br from-brand-500 to-indigo-400 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 w-20 h-20 bg-white/20 rounded-full blur-2xl"></div>
@@ -146,18 +160,20 @@
                 <h2 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-3">มุมมองข้อมูล (Views)</h2>
                 <div class="space-y-2">
                     <button onclick="switchView('grid')" id="nav-grid" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brand-500 text-white shadow-md shadow-brand-500/20">
-                        <i class="fa-solid fa-border-all w-5"></i> แผงควบคุม (Grid)
+                        <i class="fa-solid fa-border-all w-5"></i> อุปกรณ์ทั้งหมด
+                    </button>
+                    <button onclick="switchView('room')" id="nav-room" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-transparent">
+                        <i class="fa-solid fa-layer-group w-5"></i> แยกตามห้อง (Room)
                     </button>
                     <button onclick="switchView('chart')" id="nav-chart" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-transparent">
-                        <i class="fa-solid fa-chart-line w-5"></i> กราฟรวม (Master Chart)
+                        <i class="fa-solid fa-chart-line w-5"></i> กราฟรวม 
                     </button>
                 </div>
             </div>
 
-            <!-- Separator -->
             <hr class="border-slate-800">
 
-            <!-- Route/Location Filter -->
+            <!-- Filters -->
             <div id="filter-section">
                 <div class="flex items-center gap-2 mb-3 text-white">
                     <i class="fa-solid fa-map-location-dot text-brand-400"></i>
@@ -167,29 +183,27 @@
 
                 <div class="flex items-center gap-2 mt-6 mb-3 text-white">
                     <i class="fa-solid fa-microchip text-sky-400"></i>
-                    <h2 class="text-xs font-bold tracking-wider uppercase">ประเภท (Sensor Type)</h2>
+                    <h2 class="text-xs font-bold tracking-wider uppercase">ประเภท (Sensor)</h2>
                 </div>
                 <ul id="type-filter-list" class="space-y-1"></ul>
             </div>
         </aside>
 
-        <!-- View 1: Grid Dashboard -->
+        <!-- View 1: Grid Dashboard (All devices) -->
         <main id="view-grid" class="flex-1 overflow-y-auto p-4 sm:p-6 relative bg-transparent">
-            <!-- Loading Indicator -->
             <div id="loading-state" class="flex flex-col items-center justify-center h-full min-h-[300px]">
-                <div class="relative w-16 h-16 mb-4">
-                    <div class="loader"></div>
-                </div>
+                <div class="relative w-16 h-16 mb-4"><div class="loader"></div></div>
                 <h3 class="text-lg font-bold text-slate-800">กำลังซิงค์ข้อมูล...</h3>
             </div>
-
-            <!-- Device Grid (Smaller Cards, More Columns) -->
-            <div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 hidden pb-10">
-                <!-- Cards will be injected here -->
-            </div>
+            <div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 hidden pb-10"></div>
         </main>
 
-        <!-- View 2: Master Chart -->
+        <!-- View 2: Room Dashboard (Grouped by room) -->
+        <main id="view-room" class="flex-1 overflow-y-auto p-4 sm:p-6 relative bg-transparent hidden">
+            <div id="room-grid" class="space-y-6 pb-10"></div>
+        </main>
+
+        <!-- View 3: Master Chart -->
         <main id="view-chart" class="flex-1 overflow-y-auto p-4 sm:p-6 relative bg-transparent hidden">
             <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-sm">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-white/40">
@@ -206,7 +220,6 @@
                         </button>
                     </div>
                 </div>
-                
                 <div class="relative w-full h-[500px] bg-white/80 rounded-2xl border border-white p-4 shadow-inner">
                     <div id="master-chart-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm z-10 hidden rounded-2xl">
                         <div class="relative w-12 h-12 mb-3"><div class="loader"></div></div>
@@ -220,13 +233,13 @@
 </div>
 
 <!-- Modal (Detail & Chart) -->
-<div id="detail-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="detail-modal" class="fixed inset-0 z-50 hidden print-hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
         <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
 
-        <div class="relative bg-white/95 backdrop-blur-md rounded-[28px] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-4xl w-full flex flex-col border border-white" style="max-height: 90vh;">
+        <div class="relative bg-white/95 backdrop-blur-md rounded-[28px] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-6xl w-full flex flex-col border border-white" style="max-height: 95vh;">
             <!-- Header -->
-            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center shrink-0">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <div>
                     <h3 class="text-xl font-bold text-slate-900 line-clamp-1" id="modal-title">Node Identifier</h3>
                     <div class="flex items-center gap-2 mt-1">
@@ -235,53 +248,89 @@
                         <span class="text-xs text-brand-600 font-semibold" id="modal-type">Type</span>
                     </div>
                 </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white bg-slate-100 hover:bg-red-500 w-9 h-9 rounded-full transition-colors flex items-center justify-center">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="openPdfReport()" class="hidden sm:flex bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
+                    </button>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white bg-slate-100 hover:bg-red-500 w-9 h-9 rounded-full transition-colors flex items-center justify-center ml-2">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Body -->
-            <div class="px-6 py-6 overflow-y-auto flex-1 bg-slate-50/50">
-                <!-- Status Badges -->
-                <div class="flex flex-wrap gap-3 mb-6">
-                    <div class="bg-white px-4 py-3 rounded-2xl flex items-center gap-3 border border-slate-200 shadow-sm flex-1">
+            <div class="px-6 py-4 overflow-y-auto flex-1 bg-slate-50/50">
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <div class="bg-white px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-slate-200 shadow-sm flex-1">
                         <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center"><i class="fa-solid fa-battery-three-quarters"></i></div>
                         <div>
                             <p class="text-[10px] text-slate-400 font-bold uppercase">แบตเตอรี่</p>
                             <p class="font-bold text-slate-800" id="modal-battery">--%</p>
                         </div>
                     </div>
-                    <div class="bg-white px-4 py-3 rounded-2xl flex items-center gap-3 border border-slate-200 shadow-sm flex-1">
+                    <div class="bg-white px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-slate-200 shadow-sm flex-1">
                         <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fa-regular fa-clock"></i></div>
                         <div>
                             <p class="text-[10px] text-slate-400 font-bold uppercase">อัปเดตล่าสุด</p>
-                            <p class="font-bold text-slate-800" id="modal-lastupdate">--</p>
+                            <p class="font-bold text-slate-800 text-sm" id="modal-lastupdate">--</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Chart Controls -->
                 <div id="chart-section" class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-                        <h4 class="font-bold text-slate-900"><i class="fa-solid fa-chart-area text-brand-500 mr-2"></i>กราฟอุณหภูมิย้อนหลัง</h4>
+                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
+                        <h4 class="font-bold text-slate-900 whitespace-nowrap flex items-center">
+                            <i class="fa-solid fa-chart-area text-brand-500 mr-2"></i>วิเคราะห์ประวัติ 
+                            <span class="text-xs font-normal text-slate-400 ml-2">(ส่วนสีแดงในกราฟ = หลุดเกณฑ์)</span>
+                        </h4>
                         
-                        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-                            <input type="date" id="date-start" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none">
+                        <div class="flex items-center flex-wrap gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 w-full xl:w-auto">
+                            <input type="date" id="date-start" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none flex-1">
                             <span class="text-slate-400 text-xs">ถึง</span>
-                            <input type="date" id="date-end" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none">
-                            <button onclick="fetchHistory()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">วิเคราะห์</button>
+                            <input type="date" id="date-end" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none flex-1">
+                            <button onclick="fetchHistory()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">ดึงข้อมูล</button>
+                            <button onclick="analyzeHealth()" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"><i class="fa-solid fa-stethoscope"></i> วิเคราะห์สุขภาพตู้เย็น</button>
                         </div>
                     </div>
 
-                    <!-- Stats -->
-                    <div class="grid grid-cols-3 gap-3 mb-5" id="stats-container">
-                        <div class="bg-red-50 rounded-xl p-3 text-center border border-red-100"><p class="text-[10px] text-red-500 font-bold uppercase">สูงสุด</p><p class="text-xl font-black text-red-600" id="stat-max">--</p></div>
-                        <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100"><p class="text-[10px] text-blue-500 font-bold uppercase">ต่ำสุด</p><p class="text-xl font-black text-blue-600" id="stat-min">--</p></div>
-                        <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100"><p class="text-[10px] text-emerald-500 font-bold uppercase">เฉลี่ย</p><p class="text-xl font-black text-emerald-600" id="stat-avg">--</p></div>
+                    <!-- Statistics with Separated Humidity Cards (Strictly Single Row) -->
+                    <div class="flex flex-row gap-1 sm:gap-2 mb-4 w-full items-stretch" id="stats-container">
+                        <div class="flex-1 min-w-0 bg-red-50 rounded-xl p-1.5 sm:p-2 text-center border border-red-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-red-500 font-bold uppercase truncate" title="สูงสุด">สูงสุด</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-red-600 mt-1 truncate" id="stat-max">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-blue-50 rounded-xl p-1.5 sm:p-2 text-center border border-blue-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-blue-500 font-bold uppercase truncate" title="ต่ำสุด">ต่ำสุด</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-blue-600 mt-1 truncate" id="stat-min">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-emerald-50 rounded-xl p-1.5 sm:p-2 text-center border border-emerald-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-emerald-500 font-bold uppercase truncate" title="เฉลี่ย">เฉลี่ย</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-emerald-600 mt-1 truncate" id="stat-avg">--</p>
+                        </div>
+                        
+                        <!-- Temperature Limits Out of bounds -->
+                        <div class="flex-1 min-w-0 bg-amber-50 rounded-xl p-1.5 sm:p-2 text-center border border-amber-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-amber-600 font-bold uppercase truncate" title="อุณหภูมิต่ำเกณฑ์">ต่ำเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-amber-700 leading-none mt-1 truncate" id="stat-out-low">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-purple-50 rounded-xl p-1.5 sm:p-2 text-center border border-purple-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-purple-600 font-bold uppercase truncate" title="อุณหภูมิสูงเกณฑ์">สูงเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-purple-700 leading-none mt-1 truncate" id="stat-out-high">--</p>
+                        </div>
+
+                        <!-- Humidity Limits Out of bounds (Only shown for rooms) -->
+                        <div class="flex-1 min-w-0 bg-sky-50 rounded-xl p-1.5 sm:p-2 text-center border border-sky-100 flex flex-col justify-center" id="card-hum-low">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-sky-600 font-bold uppercase truncate" title="ความชื้นต่ำเกณฑ์">ชื้นต่ำเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-sky-700 leading-none mt-1 truncate" id="stat-hum-low">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-fuchsia-50 rounded-xl p-1.5 sm:p-2 text-center border border-fuchsia-100 flex flex-col justify-center" id="card-hum-high">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-fuchsia-600 font-bold uppercase truncate" title="ความชื้นสูงเกณฑ์">ชื้นสูงเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-fuchsia-700 leading-none mt-1 truncate" id="stat-hum-high">--</p>
+                        </div>
                     </div>
 
                     <!-- Canvas -->
-                    <div class="w-full h-[300px] relative">
+                    <div class="w-full h-[320px] relative">
                         <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10 hidden rounded-xl">
                             <div class="w-10 h-10 relative"><div class="loader"></div></div>
                         </div>
@@ -298,12 +347,69 @@
     </div>
 </div>
 
-<div id="toast-container"></div>
+<!-- Health Analysis Modal -->
+<div id="health-modal" class="fixed inset-0 z-[60] hidden print-hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="document.getElementById('health-modal').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:max-w-3xl w-full border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-teal-50">
+                <h3 class="text-lg font-bold text-teal-800 flex items-center gap-2"><i class="fa-solid fa-stethoscope text-teal-600"></i>ผลวิเคราะห์สมรรถนะอุปกรณ์</h3>
+                <button onclick="document.getElementById('health-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 focus:outline-none"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="px-6 py-5 max-h-[75vh] overflow-y-auto space-y-5" id="health-findings-container">
+                <!-- Data will be injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Layout สำหรับพิมพ์รายงาน A4 (แสดงเฉพาะตอนพิมพ์) -->
+<div id="print-area" class="hidden print-block w-full bg-white font-sans text-black">
+    <div class="text-center mb-6 pb-4 border-b-2 border-slate-800">
+        <h1 class="text-2xl font-black">รายงานสรุปข้อมูลห่วงโซ่ความเย็น (Cold Chain)</h1>
+        <h2 class="text-lg mt-1 font-semibold text-slate-600">โรงพยาบาลสวี จังหวัดชุมพร</h2>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4 mb-4 text-sm font-semibold">
+        <div><span class="text-slate-500">ชื่ออุปกรณ์:</span> <span id="print-name" class="text-black"></span></div>
+        <div class="text-right"><span class="text-slate-500">สถานที่:</span> <span id="print-room" class="text-black"></span></div>
+        <div><span class="text-slate-500">ช่วงเวลาดึงข้อมูล:</span> <span id="print-dates" class="text-black"></span></div>
+        <div class="text-right"><span class="text-slate-500">พิมพ์เมื่อ:</span> <span id="print-timestamp" class="text-black"></span></div>
+    </div>
+
+    <!-- Stats Table for PDF -->
+    <table class="w-full mb-6 border-collapse border border-slate-300 text-sm">
+        <tr class="bg-slate-100">
+            <th class="border border-slate-300 py-2 px-2 text-center">สูงสุด</th>
+            <th class="border border-slate-300 py-2 px-2 text-center">ต่ำสุด</th>
+            <th class="border border-slate-300 py-2 px-2 text-center">เฉลี่ย</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-amber-700">อุณหภูมิต่ำเกณฑ์</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-purple-700">อุณหภูมิสูงเกณฑ์</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-sky-700" id="print-th-hum-low">ความชื้นต่ำเกณฑ์</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-fuchsia-700" id="print-th-hum-high">ความชื้นสูงเกณฑ์</th>
+        </tr>
+        <tr>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold" id="print-max">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold" id="print-min">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold" id="print-avg">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-amber-600" id="print-low">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-purple-600" id="print-high">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-sky-600" id="print-hum-low">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-fuchsia-600" id="print-hum-high">--</td>
+        </tr>
+    </table>
+
+    <p class="text-xs text-slate-500 mb-2 font-bold" id="print-threshold-note"></p>
+
+    <!-- Chart Image Container -->
+    <div class="w-full text-center border border-slate-200 p-2 rounded-lg">
+        <img id="print-chart-img" class="max-w-full h-auto mx-auto" style="max-height: 400px;" />
+    </div>
+</div>
+
+<div id="toast-container" class="print-hidden"></div>
 
 <script>
-    // =========================================================================
-    // Core Configuration
-    // =========================================================================
     const API_URL = "https://script.google.com/macros/s/AKfycbw8cH12hxQ78miJ-zrHOp28mnP5E7C2bWnDeqnUqxOODOdVUAqmhTGB2Q-3IYfKIepNLQ/exec";
 
     let allDevices = [];
@@ -311,9 +417,9 @@
     let chartInstance = null;
     let masterChartInstance = null;
     let selectedDeviceId = null;
-    let currentView = 'grid'; // 'grid' or 'chart'
+    let currentView = 'grid'; 
+    window.currentChartLogs = []; 
 
-    // UI Helpers
     function showCustomAlert(message) {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
@@ -341,57 +447,55 @@
         return ((Date.now() - ms) / (1000 * 60 * 60)) > 24;
     }
 
-    // Init
     document.addEventListener("DOMContentLoaded", () => {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const formatForInput = (d) => { const z = n => ('0'+n).slice(-2); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
         
-        // Default Modal Dates (Month to date)
         document.getElementById('date-start').value = formatForInput(firstDay);
         document.getElementById('date-end').value = formatForInput(now);
-        
-        // Default Master Chart Dates (Today only for performance)
         document.getElementById('master-date-start').value = formatForInput(now);
         document.getElementById('master-date-end').value = formatForInput(now);
         
-        // Apply Google Sans to all Charts globally
-        Chart.defaults.font.family = '"Google Sans", sans-serif';
+        Chart.defaults.font.family = '"Prompt", sans-serif';
         Chart.defaults.color = '#64748b';
         
         fetchDashboardData();
     });
 
-    // View Switcher
     function switchView(view) {
         currentView = view;
-        const gridNav = document.getElementById('nav-grid');
-        const chartNav = document.getElementById('nav-chart');
+        const navGrid = document.getElementById('nav-grid');
+        const navRoom = document.getElementById('nav-room');
+        const navChart = document.getElementById('nav-chart');
         const filterSec = document.getElementById('filter-section');
         
+        const activeClass = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brand-500 text-white shadow-md shadow-brand-500/20";
+        const inactiveClass = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-transparent";
+        
+        [navGrid, navRoom, navChart].forEach(nav => nav.className = inactiveClass);
+        document.getElementById('view-grid').classList.add('hidden');
+        document.getElementById('view-room').classList.add('hidden');
+        document.getElementById('view-chart').classList.add('hidden');
+
         if (view === 'grid') {
             document.getElementById('view-grid').classList.remove('hidden');
-            document.getElementById('view-chart').classList.add('hidden');
-            
-            gridNav.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brand-500 text-white shadow-md shadow-brand-500/20";
-            chartNav.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-transparent";
+            navGrid.className = activeClass;
             filterSec.style.opacity = '1'; filterSec.style.pointerEvents = 'auto';
             renderCards();
+        } else if (view === 'room') {
+            document.getElementById('view-room').classList.remove('hidden');
+            navRoom.className = activeClass;
+            filterSec.style.opacity = '1'; filterSec.style.pointerEvents = 'auto';
+            renderRoomView();
         } else {
-            document.getElementById('view-grid').classList.add('hidden');
             document.getElementById('view-chart').classList.remove('hidden');
-            
-            chartNav.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brand-500 text-white shadow-md shadow-brand-500/20";
-            gridNav.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-transparent";
-            filterSec.style.opacity = '0.3'; filterSec.style.pointerEvents = 'none'; // Disable filters in chart view
-            
-            if(!masterChartInstance) fetchMasterChart(); // Auto fetch if empty
+            navChart.className = activeClass;
+            filterSec.style.opacity = '0.3'; filterSec.style.pointerEvents = 'none';
+            if(!masterChartInstance) fetchMasterChart();
         }
     }
 
-    // =========================================================================
-    // Fetch Data
-    // =========================================================================
     async function fetchDashboardData() {
         document.getElementById('loading-state').style.display = 'flex';
         document.getElementById('device-grid').style.display = 'none';
@@ -406,6 +510,7 @@
                 document.getElementById('total-devices-count').innerText = allDevices.length;
                 buildSidebarFilters();
                 if(currentView === 'grid') renderCards();
+                if(currentView === 'room') renderRoomView();
             } else {
                 showCustomAlert("เกิดข้อผิดพลาด: " + result.message);
             }
@@ -443,6 +548,28 @@
         currentFilter = { type: filterType, value: value };
         buildSidebarFilters(); 
         if(currentView === 'grid') renderCards();
+        if(currentView === 'room') renderRoomView();
+    }
+
+    function getDevicePresentation(device) {
+        const current = device.current || {};
+        const isAlert = current.alert === true || String(current.alert).trim().toUpperCase() === "TRUE";
+        const isSmoke = device.name.includes("ตรวจควัน") || device.type?.includes("Smoke") || (current.smokeStatus !== undefined && current.smokeStatus !== "");
+        const isSmokeAlert = isSmoke && String(current.smokeStatus).trim().toLowerCase() === "alarm";
+        const isFridge = device.name.includes("ตู้") || (device.room && device.room.includes("ตู้"));
+        
+        const deviceIcon = isSmoke ? 'fa-smog' : (isFridge ? 'fa-thermometer-half' : 'fa-snowflake');
+        const triggerAlert = isAlert || isSmokeAlert;
+        const isOff = isOffline(current.lastUpdate);
+
+        let tempStr = current.temp !== undefined && current.temp !== "" ? current.temp + "°C" : "--";
+        let humStr = current.humid !== undefined && current.humid !== "" ? current.humid + "%" : "--";
+        
+        if (isSmoke) {
+            tempStr = isSmokeAlert ? "พบกลุ่มควัน" : "ปกติ";
+        }
+
+        return { current, triggerAlert, isOff, deviceIcon, isSmoke, tempStr, humStr };
     }
 
     function renderCards() {
@@ -451,123 +578,114 @@
         const filteredDevices = allDevices.filter(d => currentFilter.value === 'all' ? true : d[currentFilter.type] === currentFilter.value);
 
         if (filteredDevices.length === 0) {
-            grid.innerHTML = `<div class="col-span-full py-16 text-center bg-white/60 backdrop-blur-md rounded-2xl border border-white">
-                <i class="fa-solid fa-box-open text-3xl text-slate-400 mb-3"></i><h3 class="text-lg font-bold text-slate-800">ไม่พบอุปกรณ์</h3>
-            </div>`;
+            grid.innerHTML = `<div class="col-span-full py-16 text-center bg-white/60 backdrop-blur-md rounded-2xl border border-white"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-3"></i><h3 class="text-lg font-bold text-slate-800">ไม่พบอุปกรณ์</h3></div>`;
             return;
         }
 
         filteredDevices.forEach(device => {
-            const current = device.current || {};
-            const rawAlert = current.alert;
-            const isAlert = rawAlert === true || String(rawAlert).trim().toUpperCase() === "TRUE";
-            const isSmoke = device.name.includes("ตรวจควัน") || device.type?.includes("Smoke") || (current.smokeStatus !== undefined && current.smokeStatus !== "");
-            const isSmokeAlert = isSmoke && String(current.smokeStatus).trim().toLowerCase() === "alarm";
+            const p = getDevicePresentation(device);
+            const cardClass = p.triggerAlert ? "bg-red-500 alert-card-fx text-white border-red-600" : "bg-white/95 backdrop-blur-md device-card border-white text-slate-900";
+            const textColor = p.triggerAlert ? "text-white" : "text-slate-800";
+            const subTextColor = p.triggerAlert ? "text-red-100" : "text-slate-500";
+            const boxBg = p.triggerAlert ? "bg-black/10 border-transparent" : "bg-slate-50/50 border-slate-100";
             
-            const isFridge = device.name.includes("ตู้") || (device.room && device.room.includes("ตู้"));
-            
-            const triggerAlert = isAlert || isSmokeAlert;
-            const deviceOffline = isOffline(current.lastUpdate);
+            let statusBadge = p.isOff ? `<span class="absolute -top-2 -right-2 bg-slate-400 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-sm border border-white">OFFLINE</span>` : `<span class="absolute top-4 right-4 flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>`;
+            if (p.triggerAlert) statusBadge = `<span class="absolute -top-3 -right-3 bg-red-700 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border border-red-400 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i> ALERT</span>`;
 
-            // Icon Background Color Logic (Based on device type)
-            let iconBoxBg = 'bg-slate-100 text-slate-400'; 
-            let deviceIcon = 'fa-snowflake';
+            let metricsHTML = p.isSmoke ? `
+                <div class="mt-4 flex items-center gap-3 p-3 rounded-xl ${boxBg} border">
+                    <div class="w-8 h-8 rounded-lg ${p.triggerAlert ? 'bg-white/20' : 'bg-white'} flex items-center justify-center shadow-sm"><i class="fa-solid ${p.triggerAlert ? 'fa-biohazard text-white' : 'fa-wind text-slate-400'}"></i></div>
+                    <div><p class="text-[9px] ${subTextColor} font-bold uppercase">อากาศ</p><p class="text-sm font-bold ${textColor} mt-0.5">${p.tempStr}</p></div>
+                </div>` : `
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <div class="${boxBg} rounded-xl p-2.5 border"><p class="text-[9px] ${subTextColor} font-bold uppercase mb-1"><i class="fa-solid fa-temperature-half ${p.triggerAlert ? 'text-white' : 'text-brand-500'} mr-1"></i>อุณหภูมิ</p><p class="text-xl sm:text-2xl font-black ${textColor}">${p.current.temp !== undefined && p.current.temp !== "" ? p.current.temp : "--"}<span class="text-[10px] sm:text-xs font-bold ${subTextColor} ml-0.5">°C</span></p></div>
+                    <div class="${boxBg} rounded-xl p-2.5 border"><p class="text-[9px] ${subTextColor} font-bold uppercase mb-1"><i class="fa-solid fa-droplet ${p.triggerAlert ? 'text-white' : 'text-sky-500'} mr-1"></i>ความชื้น</p><p class="text-xl sm:text-2xl font-black ${textColor}">${p.current.humid !== undefined && p.current.humid !== "" ? p.current.humid : "--"}<span class="text-[10px] sm:text-xs font-bold ${subTextColor} ml-0.5">%</span></p></div>
+                </div>`;
 
-            if (triggerAlert) {
-                iconBoxBg = 'bg-white/20 text-white';
-                deviceIcon = isSmoke ? 'fa-smog' : (isFridge ? 'fa-snowflake' : 'fa-temperature-half');
-            } else {
-                if (isSmoke) {
-                    iconBoxBg = 'bg-[#FDF2E9] text-orange-500'; // สีส้มอ่อน (ควัน)
-                    deviceIcon = 'fa-smog';
-                } else if (isFridge) {
-                    iconBoxBg = 'bg-[#EBF5FB] text-blue-500'; // สีฟ้า (ตู้เย็น)
-                    deviceIcon = 'fa-snowflake';
-                } else {
-                    iconBoxBg = 'bg-[#FDF6E2] text-amber-600'; // สีครีม (อุณหภูมิห้อง)
-                    deviceIcon = 'fa-temperature-half';
-                }
-            }
+            const formattedUpdate = p.current.lastUpdate ? p.current.lastUpdate.split(' ')[1] || p.current.lastUpdate : '--';
+            const lastUpdateClass = p.isOff ? "bg-red-50 text-red-600 font-bold border-red-200" : (p.triggerAlert ? "text-white" : "text-slate-500 bg-slate-50 border-slate-100");
 
-            // Red Card styling for alerts
-            const cardClass = triggerAlert 
-                ? "bg-red-500 alert-card-fx text-white border-red-600" 
-                : "bg-white/95 backdrop-blur-md device-card border-white text-slate-900";
-            
-            const textColor = triggerAlert ? "text-white" : "text-slate-800";
-            const subTextColor = triggerAlert ? "text-red-100" : "text-slate-500";
-            const boxBg = triggerAlert ? "bg-black/10 border-transparent" : "bg-slate-50/50 border-slate-100";
-            
-            let statusBadge = deviceOffline 
-                ? `<span class="absolute -top-2 -right-2 bg-slate-400 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-sm border border-white">OFFLINE</span>` 
-                : `<span class="absolute top-4 right-4 flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>`;
-            
-            if (triggerAlert) {
-                statusBadge = `<span class="absolute -top-3 -right-3 bg-red-700 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border border-red-400 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i> ALERT</span>`;
-            }
-
-            let metricsHTML = "";
-            if (isSmoke) {
-                metricsHTML = `
-                    <div class="mt-4 flex items-center gap-3 p-3 rounded-xl ${boxBg} border">
-                        <div class="w-8 h-8 rounded-lg ${triggerAlert ? 'bg-white/20' : 'bg-white'} flex items-center justify-center shadow-sm">
-                            <i class="fa-solid ${isSmokeAlert ? 'fa-biohazard text-white' : 'fa-wind text-slate-400'}"></i>
-                        </div>
-                        <div>
-                            <p class="text-[9px] ${subTextColor} font-bold uppercase">อากาศ</p>
-                            <p class="text-sm font-bold ${textColor} mt-0.5">${isSmokeAlert ? "พบสิ่งปนเปื้อน!" : (current.smokeStatus || "ปกติ")}</p>
-                        </div>
-                    </div>`;
-            } else {
-                metricsHTML = `
-                    <div class="mt-4 grid grid-cols-2 gap-2">
-                        <div class="${boxBg} rounded-xl p-2.5 border">
-                            <p class="text-[9px] ${subTextColor} font-bold uppercase mb-1"><i class="fa-solid fa-temperature-half ${triggerAlert ? 'text-white' : 'text-brand-500'} mr-1"></i>อุณหภูมิ</p>
-                            <p class="text-xl sm:text-2xl font-black ${textColor}">${current.temp !== undefined && current.temp !== "" ? current.temp : "--"}<span class="text-[10px] sm:text-xs font-bold ${subTextColor} ml-0.5">°C</span></p>
-                        </div>
-                        <div class="${boxBg} rounded-xl p-2.5 border">
-                            <p class="text-[9px] ${subTextColor} font-bold uppercase mb-1"><i class="fa-solid fa-droplet ${triggerAlert ? 'text-white' : 'text-sky-500'} mr-1"></i>ความชื้น</p>
-                            <p class="text-xl sm:text-2xl font-black ${textColor}">${current.humid !== undefined && current.humid !== "" ? current.humid : "--"}<span class="text-[10px] sm:text-xs font-bold ${subTextColor} ml-0.5">%</span></p>
-                        </div>
-                    </div>`;
-            }
-
-            const formattedUpdate = current.lastUpdate ? current.lastUpdate.split(' ')[1] || current.lastUpdate : '--';
-            const lastUpdateClass = deviceOffline 
-                ? "bg-red-50 text-red-600 font-bold border-red-200" 
-                : (triggerAlert ? "text-white" : "text-slate-500 bg-slate-50 border-slate-100");
-
-            const cardHTML = `
+            grid.innerHTML += `
                 <div class="${cardClass} border p-4 sm:p-5 relative cursor-pointer flex flex-col justify-between h-full rounded-2xl" onclick="openModal('${device.id}')">
                     ${statusBadge}
                     <div class="flex-1">
                         <div class="flex gap-3 mb-2">
-                            <div class="w-10 h-10 rounded-xl ${iconBoxBg} flex items-center justify-center shrink-0">
-                                <i class="fa-solid ${deviceIcon} text-lg"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <!-- Changed to allow 2 lines max (line-clamp-2) -->
-                                <h3 class="font-bold ${textColor} text-sm leading-tight line-clamp-2 min-h-[2.5rem]" title="${device.name}">${device.name}</h3>
-                                <p class="text-[10px] ${subTextColor} mt-1 truncate"><i class="fa-solid fa-location-arrow opacity-70 mr-1"></i>${device.room || 'ไม่ระบุ'}</p>
-                            </div>
+                            <div class="w-10 h-10 rounded-xl ${p.triggerAlert ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'} flex items-center justify-center shrink-0"><i class="fa-solid ${p.deviceIcon} text-lg"></i></div>
+                            <div class="min-w-0 flex-1"><h3 class="font-bold ${textColor} text-sm leading-tight line-clamp-2 min-h-[2.5rem]" title="${device.name}">${device.name}</h3><p class="text-[10px] ${subTextColor} mt-1 truncate"><i class="fa-solid fa-location-arrow opacity-70 mr-1"></i>${device.room || 'ไม่ระบุ'}</p></div>
                         </div>
                         ${metricsHTML}
                     </div>
-                    <div class="mt-4 pt-3 border-t ${triggerAlert ? 'border-white/20' : 'border-slate-100'} flex justify-between items-center text-[10px]">
-                        <span class="flex items-center gap-1 ${triggerAlert ? 'text-white' : 'text-slate-500 font-semibold'}"><i class="fa-solid fa-bolt text-amber-400"></i> ${current.battery || '--'}%</span>
-                        <span class="flex items-center gap-1 px-2 py-1 rounded border ${lastUpdateClass}" title="${current.lastUpdate || 'No Data'}">
-                            <i class="${deviceOffline ? 'fa-solid fa-triangle-exclamation text-red-500' : 'fa-regular fa-clock'}"></i> 
-                            ${deviceOffline ? 'OFFLINE' : formattedUpdate}
-                        </span>
+                    <div class="mt-4 pt-3 border-t ${p.triggerAlert ? 'border-white/20' : 'border-slate-100'} flex justify-between items-center text-[10px]">
+                        <span class="flex items-center gap-1 ${p.triggerAlert ? 'text-white' : 'text-slate-500 font-semibold'}"><i class="fa-solid fa-bolt text-amber-400"></i> ${p.current.battery || '--'}%</span>
+                        <span class="flex items-center gap-1 px-2 py-1 rounded border ${lastUpdateClass}" title="${p.current.lastUpdate || 'No Data'}"><i class="${p.isOff ? 'fa-solid fa-triangle-exclamation text-red-500' : 'fa-regular fa-clock'}"></i> ${p.isOff ? 'OFFLINE' : formattedUpdate}</span>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function renderRoomView() {
+        const grid = document.getElementById('room-grid');
+        grid.innerHTML = '';
+        
+        const filteredDevices = allDevices.filter(d => currentFilter.value === 'all' ? true : d[currentFilter.type] === currentFilter.value);
+        if (filteredDevices.length === 0) {
+            grid.innerHTML = `<div class="py-16 text-center bg-white/60 backdrop-blur-md rounded-2xl"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-3"></i><h3 class="text-lg font-bold text-slate-800">ไม่พบอุปกรณ์</h3></div>`;
+            return;
+        }
+
+        const grouped = {};
+        filteredDevices.forEach(d => {
+            const rName = d.room || "ระบุไม่ได้ (No Room)";
+            if(!grouped[rName]) grouped[rName] = [];
+            grouped[rName].push(d);
+        });
+
+        Object.keys(grouped).sort().forEach(roomName => {
+            const devicesInRoom = grouped[roomName];
+            
+            let cardsHtml = '';
+            devicesInRoom.forEach(device => {
+                const p = getDevicePresentation(device);
+                
+                const bgClass = p.triggerAlert ? 'bg-red-500 border-red-600 alert-card-fx text-white' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-white hover:border-brand-300';
+                const textMuted = p.triggerAlert ? 'text-red-100' : 'text-slate-500';
+                
+                cardsHtml += `
+                    <div onclick="openModal('${device.id}')" class="${bgClass} border rounded-xl p-3 cursor-pointer mini-card transition-all flex items-center justify-between shadow-sm relative overflow-hidden">
+                        ${p.isOff ? '<div class="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-l-[20px] border-t-slate-400 border-l-transparent"></div>' : ''}
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            <div class="w-8 h-8 rounded-full ${p.triggerAlert ? 'bg-white/20' : 'bg-white shadow-sm'} flex items-center justify-center shrink-0">
+                                <i class="fa-solid ${p.deviceIcon} ${p.triggerAlert ? 'text-white' : 'text-brand-500'} text-xs"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-[11px] truncate leading-tight" title="${device.name}">${device.name}</h4>
+                                <div class="flex gap-2 text-[10px] mt-0.5 font-semibold ${textMuted}">
+                                    ${p.isSmoke ? '<span>' + p.tempStr + '</span>' : '<span><i class="fa-solid fa-temperature-half"></i> ' + p.tempStr + '</span> <span class="opacity-70">| ' + p.humStr + '</span>'}
+                                </div>
+                            </div>
+                        </div>
+                        ${p.triggerAlert ? '<i class="fa-solid fa-circle-exclamation text-white animate-pulse absolute right-3"></i>' : ''}
+                    </div>
+                `;
+            });
+
+            grid.innerHTML += `
+                <div class="bg-white/80 backdrop-blur-md rounded-[20px] p-5 border border-slate-200 shadow-sm">
+                    <h2 class="text-base font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center">
+                        <i class="fa-solid fa-door-open mr-2 text-brand-500 bg-brand-50 w-7 h-7 flex items-center justify-center rounded-lg"></i>
+                        ${roomName} <span class="ml-2 text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">${devicesInRoom.length} เครื่อง</span>
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                        ${cardsHtml}
                     </div>
                 </div>
             `;
-            grid.innerHTML += cardHTML;
         });
     }
 
     function openModal(deviceId) {
         selectedDeviceId = deviceId;
+        window.currentChartLogs = [];
         const device = allDevices.find(d => d.id === deviceId);
         if (!device) return;
 
@@ -581,7 +699,7 @@
         const updateEl = document.getElementById('modal-lastupdate');
         updateEl.innerText = current.lastUpdate || "ไม่มีข้อมูล";
         if (isOffline(current.lastUpdate)) {
-            updateEl.className = 'font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded';
+            updateEl.className = 'font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded animate-pulse';
         } else {
             updateEl.className = 'font-bold text-slate-800';
         }
@@ -594,9 +712,9 @@
         } else {
             document.getElementById('chart-section').classList.remove('hidden');
             document.getElementById('smoke-message').classList.add('hidden');
-            ['stat-max', 'stat-min', 'stat-avg'].forEach(id => document.getElementById(id).innerText = '--');
+            ['stat-max', 'stat-min', 'stat-avg', 'stat-out-low', 'stat-out-high', 'stat-hum-low', 'stat-hum-high'].forEach(id => document.getElementById(id).innerText = '--');
             if (chartInstance) chartInstance.destroy();
-            fetchHistory();
+            fetchHistory(); 
         }
 
         const modal = document.getElementById('detail-modal');
@@ -622,10 +740,47 @@
             const result = await response.json();
             if (result.success) {
                 const data = result.data;
+                const device = allDevices.find(d => d.id === selectedDeviceId);
+                
+                window.currentChartLogs = data.logs.slice().sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+                const isFridge = device.name.includes("ตู้") || (device.room && device.room.includes("ตู้"));
+                let lowCount = 0, highCount = 0;
+                let humLowCount = 0, humHighCount = 0;
+
+                data.logs.forEach(log => {
+                    const t = parseFloat(log.temp);
+                    const h = parseFloat(log.humid);
+                    
+                    if(!isNaN(t)) {
+                        if (isFridge) { if (t < 2) lowCount++; if (t > 8) highCount++; }
+                        else { if (t < 20) lowCount++; if (t > 30) highCount++; }
+                    }
+                    if(!isNaN(h) && !isFridge) { 
+                        if (h < 35) humLowCount++;
+                        if (h > 65) humHighCount++;
+                    }
+                });
+
                 document.getElementById('stat-max').innerText = data.stats.max !== "N/A" ? data.stats.max + "°" : "N/A";
                 document.getElementById('stat-min').innerText = data.stats.min !== "N/A" ? data.stats.min + "°" : "N/A";
                 document.getElementById('stat-avg').innerText = data.stats.avg !== "N/A" ? data.stats.avg + "°" : "N/A";
-                drawSingleChart(data.logs, start, end);
+                
+                document.getElementById('stat-out-low').innerText = lowCount > 0 ? lowCount + " ครั้ง" : "-";
+                document.getElementById('stat-out-high').innerText = highCount > 0 ? highCount + " ครั้ง" : "-";
+
+                // จัดการการ์ดความชื้น
+                if (isFridge) {
+                    document.getElementById('card-hum-low').classList.add('hidden');
+                    document.getElementById('card-hum-high').classList.add('hidden');
+                } else {
+                    document.getElementById('card-hum-low').classList.remove('hidden');
+                    document.getElementById('card-hum-high').classList.remove('hidden');
+                    document.getElementById('stat-hum-low').innerText = humLowCount > 0 ? humLowCount + " ครั้ง" : "-";
+                    document.getElementById('stat-hum-high').innerText = humHighCount > 0 ? humHighCount + " ครั้ง" : "-";
+                }
+
+                drawSingleChart(data.logs, start, end, isFridge);
             } else {
                 showCustomAlert("ดึงข้อมูลย้อนหลังล้มเหลว: " + result.message);
             }
@@ -636,51 +791,376 @@
         }
     }
 
-    function drawSingleChart(logs, start, end) {
+    // ================================= Canvas Gradient Helpers ================================
+    function getTempGradient(ctx, chartArea, scales, maxT, minT, isFill = false) {
+        if (!chartArea || !scales || !scales.y) return isFill ? 'rgba(139, 92, 246, 0.1)' : '#4338ca';
+        const y = scales.y;
+        const topY = chartArea.top;
+        const bottomY = chartArea.bottom;
+        const height = bottomY - topY;
+        if (height <= 0) return isFill ? 'rgba(139, 92, 246, 0.1)' : '#4338ca';
+        
+        const maxPixel = y.getPixelForValue(maxT);
+        const minPixel = y.getPixelForValue(minT);
+        
+        let stopMax = (maxPixel - topY) / height;
+        let stopMin = (minPixel - topY) / height;
+        
+        // จำกัดขอบเขต Stops ให้อยู่ในช่วง 0.01 - 0.99 ป้องกันค่า Error หลุดขอบ Canvas
+        stopMax = Math.max(0.01, Math.min(0.99, stopMax));
+        stopMin = Math.max(0.01, Math.min(0.99, stopMin));
+        
+        const gradient = ctx.createLinearGradient(0, topY, 0, bottomY);
+        
+        if (isFill) {
+            // ช่วงสูงเกินเกณฑ์: แดง ไล่ไป ขาว (Red to White/Transparent)
+            gradient.addColorStop(0, 'rgba(239, 68, 68, 0.45)'); 
+            gradient.addColorStop(Math.max(0, stopMax - 0.01), 'rgba(255, 255, 255, 0)');
+            
+            // ช่วงอุณหภูมิปกติ (อยู่ในเกณฑ์): ม่วง ไล่ไป ขาว (Purple to White/Transparent)
+            gradient.addColorStop(stopMax, 'rgba(139, 92, 246, 0.45)');
+            gradient.addColorStop(Math.max(0, stopMin - 0.01), 'rgba(255, 255, 255, 0)');
+            
+            // ช่วงต่ำเกินเกณฑ์: แดง ไล่ไป ขาว (Red to White/Transparent)
+            gradient.addColorStop(stopMin, 'rgba(239, 68, 68, 0.45)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        } else {
+            // เส้นนอกช่วงอุณหภูมิสูงสุด: สีแดงเข้ม
+            gradient.addColorStop(0, '#b91c1c'); 
+            gradient.addColorStop(Math.max(0, stopMax - 0.01), '#b91c1c');
+            
+            // เส้นในช่วงปกติ: สีม่วงเข้ม
+            gradient.addColorStop(stopMax, '#4c1d95'); 
+            gradient.addColorStop(Math.max(0, stopMin - 0.01), '#4c1d95');
+            
+            // เส้นนอกช่วงอุณหภูมิต่ำสุด: สีแดงเข้ม
+            gradient.addColorStop(stopMin, '#b91c1c');
+            gradient.addColorStop(1, '#b91c1c');
+        }
+        return gradient;
+    }
+
+    function getHumGradient(ctx, chartArea, scales) {
+        if (!chartArea || !scales || !scales.y1) return '#94a3b8';
+        const y1 = scales.y1;
+        const topY = chartArea.top;
+        const bottomY = chartArea.bottom;
+        const height = bottomY - topY;
+        if (height <= 0) return '#94a3b8';
+        
+        const maxPixel = y1.getPixelForValue(65);
+        const minPixel = y1.getPixelForValue(35);
+        
+        let stopMax = (maxPixel - topY) / height;
+        let stopMin = (minPixel - topY) / height;
+        
+        stopMax = Math.max(0.01, Math.min(0.99, stopMax));
+        stopMin = Math.max(0.01, Math.min(0.99, stopMin));
+        
+        const gradient = ctx.createLinearGradient(0, topY, 0, bottomY);
+        // ชื้นเกิน 65% = เส้นแดง
+        gradient.addColorStop(0, '#ef4444'); 
+        gradient.addColorStop(Math.max(0, stopMax - 0.01), '#ef4444');
+        
+        // ชื้นอยู่ในช่วงปกติ 35-65% = เส้นสีเทา
+        gradient.addColorStop(stopMax, '#94a3b8'); 
+        gradient.addColorStop(Math.max(0, stopMin - 0.01), '#94a3b8');
+        
+        // ชื้นต่ำกว่า 35% = เส้นแดง
+        gradient.addColorStop(stopMin, '#ef4444');
+        gradient.addColorStop(1, '#ef4444');
+        return gradient;
+    }
+
+    function drawSingleChart(logs, start, end, isFridge) {
         const ctx = document.getElementById('historyChart').getContext('2d');
         if (chartInstance) chartInstance.destroy();
         
-        // Sort using lastUpdate if available, fallback to dateTime
-        logs.sort((a, b) => {
-            const timeA = new Date(a.lastUpdate ? a.lastUpdate : a.dateTime);
-            const timeB = new Date(b.lastUpdate ? b.lastUpdate : b.dateTime);
-            return timeA - timeB;
-        });
+        logs.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
 
         const labels = logs.map(l => {
-            let timeString = l.lastUpdate;
-            if (!timeString || timeString === "") timeString = l.dateTime;
-            const d = new Date(timeString);
-            
-            if (isNaN(d.getTime())) return timeString || '--';
-
+            const d = new Date(l.dateTime);
+            if (isNaN(d.getTime())) return l.dateTime || '--';
             return start === end ? d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) : d.toLocaleDateString('th-TH', {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
         });
-        
-        const grad = ctx.createLinearGradient(0, 0, 0, 300);
-        grad.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); grad.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+
+        const maxT = isFridge ? 8 : 30;
+        const minT = isFridge ? 2 : 20;
 
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'อุณหภูมิ (°C)', data: logs.map(l => l.temp), borderColor: '#4f46e5', backgroundColor: grad, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, fill: true, tension: 0.3, yAxisID: 'y' },
-                    { label: 'ความชื้น (%)', data: logs.map(l => l.humid), borderColor: '#94a3b8', borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0.3, yAxisID: 'y1' }
+                    { 
+                        label: 'อุณหภูมิ (°C)', 
+                        data: logs.map(l => l.temp), 
+                        borderColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea, scales} = chart;
+                            return getTempGradient(ctx, chartArea, scales, maxT, minT, false);
+                        },
+                        borderWidth: 2.5, 
+                        pointRadius: 0, 
+                        pointHoverRadius: 5, 
+                        fill: 'start',
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea, scales} = chart;
+                            return getTempGradient(ctx, chartArea, scales, maxT, minT, true);
+                        }, 
+                        tension: 0.3, 
+                        yAxisID: 'y' 
+                    },
+                    { 
+                        label: 'ความชื้น (%)', 
+                        data: logs.map(l => l.humid), 
+                        borderColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea, scales} = chart;
+                            return getHumGradient(ctx, chartArea, scales);
+                        },
+                        borderWidth: 1.5, 
+                        borderDash: [5, 5], 
+                        pointRadius: 0, 
+                        fill: false, // บังคับไม่เติมสีทับ (ไม่ระบายพื้นที่ความชื้น)
+                        tension: 0.3, 
+                        yAxisID: 'y1' 
+                    }
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                plugins: { tooltip: { titleFont: { family: '"Google Sans", sans-serif' }, bodyFont: { family: '"Google Sans", sans-serif' } } },
+                animation: false, 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                interaction: { mode: 'index', intersect: false },
+                plugins: { 
+                    tooltip: { titleFont: { family: '"Prompt", sans-serif' }, bodyFont: { family: '"Prompt", sans-serif' } }
+                },
                 scales: {
-                    x: { grid: { display: false }, ticks: { font: { family: '"Google Sans", sans-serif' } } },
-                    y: { type: 'linear', position: 'left', title: { display: true, text: 'อุณหภูมิ (°C)', font: { family: '"Google Sans", sans-serif' } }, ticks: { font: { family: '"Google Sans", sans-serif' } } },
-                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'ความชื้น (%)', font: { family: '"Google Sans", sans-serif' } }, ticks: { font: { family: '"Google Sans", sans-serif' } } }
+                    x: { grid: { display: false }, ticks: { font: { family: '"Prompt", sans-serif' } } },
+                    y: { type: 'linear', position: 'left', title: { display: true, text: 'อุณหภูมิ (°C)', font: { family: '"Prompt", sans-serif' } }, ticks: { font: { family: '"Prompt", sans-serif' } } },
+                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'ความชื้น (%)', font: { family: '"Prompt", sans-serif' } }, ticks: { font: { family: '"Prompt", sans-serif' } } }
                 }
             }
         });
     }
 
+    // ================================= Health Analyzer Logic ================================
+    function analyzeHealth() {
+        const logs = window.currentChartLogs;
+        if (!logs || logs.length === 0) {
+            showCustomAlert("กรุณาดึงข้อมูลประวัติเพื่อวิเคราะห์ก่อนครับ");
+            return;
+        }
+
+        const device = allDevices.find(d => d.id === selectedDeviceId);
+        const isFridge = device.name.includes("ตู้") || (device.room && device.room.includes("ตู้"));
+        const maxT = isFridge ? 8 : 30;
+        const minT = isFridge ? 2 : 20;
+        
+        let maxWarmUpRate = 0;
+        let minPullDownRate = 0;
+
+        // คำนวณความชัน dT/dt (องศาต่อนาที)
+        for(let i = 1; i < logs.length; i++) {
+            const dt = (new Date(logs[i].dateTime) - new Date(logs[i-1].dateTime)) / 60000; 
+            if (dt > 0 && dt < 120 && !isNaN(logs[i].temp) && !isNaN(logs[i-1].temp)) { 
+                const dTemp = parseFloat(logs[i].temp) - parseFloat(logs[i-1].temp);
+                const rate = dTemp / dt;
+                if (rate > maxWarmUpRate) maxWarmUpRate = rate;
+                if (rate < minPullDownRate) minPullDownRate = rate; 
+            }
+        }
+
+        const temps = logs.map(l => parseFloat(l.temp)).filter(t => !isNaN(t));
+        const maxVal = Math.max(...temps);
+        const minVal = Math.min(...temps);
+        const avgVal = temps.reduce((a, b) => a + b, 0) / temps.length;
+        
+        const flatGraph = (maxVal - minVal) < 1.0 && avgVal > maxT;
+        const defrostSpikes = temps.filter(t => t > (maxT + 2)).length; 
+
+        // 1. คำนวณรอบการละลายน้ำแข็ง (Auto-Defrost Cycles)
+        let defrostCount = 0;
+        let inDefrost = false;
+        for(let i = 2; i < logs.length; i++) {
+            const t1 = parseFloat(logs[i-2].temp);
+            const t2 = parseFloat(logs[i].temp);
+            if (!isNaN(t1) && !isNaN(t2)) {
+                if (t2 - t1 > 2.5 && t2 > (minT + 4) && !inDefrost) {
+                    defrostCount++;
+                    inDefrost = true; 
+                }
+                if (t2 < (minT + 2)) {
+                    inDefrost = false; 
+                }
+            }
+        }
+
+        // 2. คำนวณอัตราการทำงานของ Compressor (Heuristic Duty Cycle)
+        let coolingIntervals = 0;
+        let totalIntervals = 0;
+        for(let i = 1; i < logs.length; i++) {
+            const dTemp = parseFloat(logs[i].temp) - parseFloat(logs[i-1].temp);
+            if(!isNaN(dTemp)) {
+                totalIntervals++;
+                if (dTemp < 0) {
+                    coolingIntervals++;
+                }
+            }
+        }
+        const dutyCycle = totalIntervals > 0 ? Math.round((coolingIntervals / totalIntervals) * 100) : 0;
+
+        // 3. คำนวณระยะเวลาดึงความเย็นกลับ (Temperature Recovery Time)
+        let recoveryDurations = [];
+        let spikeStartIdx = -1;
+        for (let i = 0; i < logs.length; i++) {
+            const t = parseFloat(logs[i].temp);
+            if (!isNaN(t)) {
+                if (t > maxT && spikeStartIdx === -1) {
+                    spikeStartIdx = i;
+                } else if (t <= maxT && spikeStartIdx !== -1) {
+                    const durationMin = (new Date(logs[i].dateTime) - new Date(logs[spikeStartIdx].dateTime)) / 60000;
+                    if (durationMin > 0 && durationMin < 240) { 
+                        recoveryDurations.push(durationMin);
+                    }
+                    spikeStartIdx = -1;
+                }
+            }
+        }
+        const avgRecoveryTime = recoveryDurations.length > 0 
+            ? Math.round(recoveryDurations.reduce((a, b) => a + b, 0) / recoveryDurations.length) 
+            : 0;
+
+        let isHealthy = true;
+        let findingsHtml = '';
+
+        // บล็อกหัวข้อสมรรถนะการทำงาน
+        let performanceBlock = `
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-lg mb-4">
+            <h4 class="font-bold text-sm tracking-wider uppercase text-slate-400 mb-3"><i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>ข้อมูลสมรรถนะการทำงานหลัก (Performance Summary)</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">การรัน Compressor (Duty Cycle)</p>
+                    <p class="text-2xl font-black text-teal-400">${dutyCycle}% <span class="text-xs font-normal text-slate-300">ของวัน</span></p>
+                    <p class="text-[10px] text-slate-500 mt-1">ประเมินจากความถี่ในการผลิตและไหลของอุณหภูมิ</p>
+                </div>
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">รอบละลายน้ำแข็ง (Auto-Defrost)</p>
+                    <p class="text-2xl font-black text-emerald-400">${isFridge ? defrostCount + ' รอบ' : 'ไม่รองรับ'}</p>
+                    <p class="text-[10px] text-slate-500 mt-1">ตรวจพบการสไปก์ของวงจรทำความร้อนละลายน้ำแข็ง</p>
+                </div>
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">เวลากู้คืนความเย็นกลับ (Recovery Time)</p>
+                    <p class="text-2xl font-black text-amber-400">${avgRecoveryTime > 0 ? avgRecoveryTime + ' นาที' : 'ปกติ'}</p>
+                    <p class="text-[10px] text-slate-500 mt-1">เวลาเฉลี่ยที่ใช้ดึงความเย็นกลับเมื่อประตูถูกเปิด</p>
+                </div>
+            </div>
+        </div>
+        `;
+
+        // 1. Warm-up Rate สูงมาก
+        if (maxWarmUpRate > 0.15) { 
+            isHealthy = false;
+            findingsHtml += buildIssueHtml('Warm-up Rate สูงมาก', 'อุณหภูมิพุ่งขึ้นไวมากเวลาคอมเพรสเซอร์ตัด', ['ขอบยางเสื่อม/ปิดไม่สนิท', 'ผนังฉนวนกันความร้อนเสื่อมสภาพ'], ['ตรวจสอบขอบยางประตูด้วยการหนีบกระดาษ', 'เปลี่ยนตู้เย็นหากใช้มานานกว่า 10 ปี']);
+        }
+        
+        // 2. Pull-down Rate ต่ำมาก
+        if (minPullDownRate > -0.02 && avgVal > (isFridge ? 5 : 25)) { 
+            isHealthy = false;
+            findingsHtml += buildIssueHtml('Pull-down Rate ต่ำมาก', 'ใช้เวลานานมากในการทำความเย็นให้ลดลง', ['น้ำยาทําความเย็นน้อย (Leak)', 'ลิ้นวาล์วคอมเพรสเซอร์เริ่มหลวม'], ['ให้ช่างเทคนิคตรวจเช็ครอยรั่วและเติมน้ำยา', 'ตรวจสอบแรงดันคอมเพรสเซอร์']);
+        }
+
+        // 3. กราฟเรียบเป็นเส้นตรง
+        if (flatGraph) {
+            isHealthy = false;
+            findingsHtml += buildIssueHtml('กราฟเรียบเป็นเส้นตรง', 'ไม่เป็นฟันปลา และอุณหภูมิสูงเรื่อยๆ', ['คอมเพรสเซอร์ไม่ทำงานเลย', 'ฟิวส์ขาด หรือไฟไม่เข้าคอมเพรสเซอร์'], ['ตรวจสอบระบบไฟฟ้าเบื้องต้น', 'เช็คตัว Relay และ Overload Protector ของตู้เย็น']);
+        }
+
+        // 4. รอบ Defrost ถี่ขึ้น หรืออุณหภูมิสูงค้าง
+        if (defrostSpikes > (logs.length * 0.1) && isFridge) { 
+            isHealthy = false;
+            findingsHtml += buildIssueHtml('รอบ Defrost ถี่ขึ้น หรืออุณหภูมิค้างสูง', 'สไปก์ทะลุเกณฑ์อย่างรุนแรงแบบเป็นรอบๆ หรือพบการแช่อุณหภูมิสูง', ['เซ็นเซอร์ละลายน้ำแข็งเสีย', 'ท่อระบายน้ำทิ้งตัน ทำให้น้ำแข็งเกาะหนา'], ['ล้างช่องแช่แข็งและเคลียร์น้ำแข็งเกาะหนา', 'ตรวจสอบและเปลี่ยน Defrost Timer/Sensor']);
+        }
+
+        if(isHealthy) {
+            findingsHtml += `<div class="text-center py-10 bg-emerald-50 rounded-2xl border border-emerald-100"><i class="fa-solid fa-shield-check text-6xl text-emerald-500 mb-4 drop-shadow-md"></i><h3 class="text-xl font-bold text-emerald-800">ระบบทำความเย็นสุขภาพดีเยี่ยม</h3><p class="text-emerald-600 font-medium mt-1">กราฟอยู่ในเกณฑ์มาตรฐาน ไม่พบพฤติกรรมผิดปกติเชิงกล</p></div>`;
+        }
+
+        document.getElementById('health-findings-container').innerHTML = performanceBlock + findingsHtml;
+        document.getElementById('health-modal').classList.remove('hidden');
+    }
+
+    function buildIssueHtml(title, desc, causes, solutions) {
+        return `
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mb-4">
+            <h4 class="font-bold text-red-700 text-lg leading-tight mb-1"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${title}</h4>
+            <p class="text-sm text-red-600 font-medium mb-4">${desc}</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-white/70 p-4 rounded-xl border border-red-100">
+                    <p class="text-[11px] font-bold text-slate-800 mb-2 uppercase tracking-wide border-b border-red-200 pb-1.5"><i class="fa-solid fa-magnifying-glass text-red-500 mr-1"></i> สาเหตุทางวิศวกรรมที่เป็นไปได้:</p>
+                    <ul class="list-disc pl-4 text-xs font-semibold text-slate-600 space-y-1.5">
+                        ${causes.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="bg-white/70 p-4 rounded-xl border border-red-100">
+                    <p class="text-[11px] font-bold text-slate-800 mb-2 uppercase tracking-wide border-b border-red-200 pb-1.5"><i class="fa-solid fa-screwdriver-wrench text-brand-500 mr-1"></i> แนวทางแก้ไข/บำรุงรักษา:</p>
+                    <ul class="list-decimal pl-4 text-xs font-semibold text-slate-600 space-y-1.5">
+                        ${solutions.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ================================= Print PDF Logic ================================
+    function openPdfReport() {
+        if(!chartInstance) return showCustomAlert("กรุณารอดึงข้อมูลกราฟให้เสร็จสิ้นก่อนออกรายงาน");
+        const device = allDevices.find(d => d.id === selectedDeviceId);
+        const isFridge = device.name.includes("ตู้") || (device.room && device.room.includes("ตู้"));
+
+        document.getElementById('print-name').innerText = device.name;
+        document.getElementById('print-room').innerText = device.room || 'ไม่ระบุ';
+        document.getElementById('print-dates').innerText = document.getElementById('date-start').value + " ถึง " + document.getElementById('date-end').value;
+        document.getElementById('print-timestamp').innerText = new Date().toLocaleString('th-TH');
+
+        document.getElementById('print-max').innerText = document.getElementById('stat-max').innerText;
+        document.getElementById('print-min').innerText = document.getElementById('stat-min').innerText;
+        document.getElementById('print-avg').innerText = document.getElementById('stat-avg').innerText;
+        document.getElementById('print-low').innerText = document.getElementById('stat-out-low').innerText.replace(/<[^>]*>?/gm, ''); 
+        document.getElementById('print-high').innerText = document.getElementById('stat-out-high').innerText.replace(/<[^>]*>?/gm, ''); 
+
+        // ควบคุมตารางพิมพ์ความชื้น PDF
+        if (isFridge) {
+            document.getElementById('print-th-hum-low').style.display = 'none';
+            document.getElementById('print-th-hum-high').style.display = 'none';
+            document.getElementById('print-hum-low').style.display = 'none';
+            document.getElementById('print-hum-high').style.display = 'none';
+        } else {
+            document.getElementById('print-th-hum-low').style.display = 'table-cell';
+            document.getElementById('print-th-hum-high').style.display = 'table-cell';
+            document.getElementById('print-hum-low').style.display = 'table-cell';
+            document.getElementById('print-hum-high').style.display = 'table-cell';
+            document.getElementById('print-hum-low').innerText = document.getElementById('stat-hum-low').innerText;
+            document.getElementById('print-hum-high').innerText = document.getElementById('stat-hum-high').innerText;
+        }
+
+        document.getElementById('print-threshold-note').innerText = isFridge 
+            ? "*เกณฑ์มาตรฐานตู้เย็น: อุณหภูมิต้องอยู่ระหว่าง 2°C ถึง 8°C" 
+            : "*เกณฑ์มาตรฐานอุณหภูมิห้อง: 20°C ถึง 30°C / ความชื้น: 35% ถึง 65%";
+
+        // แนะนำการดึงรูปภาพของ Canvas โดยตรงเพื่อเสถียรภาพสูงสุด ไม่เรียกใช้ toBase64Image จาก Chart.js ตัวเดิม
+        const chartCanvas = document.getElementById('historyChart');
+        if (chartCanvas) {
+            const chartImgData = chartCanvas.toDataURL('image/png');
+            document.getElementById('print-chart-img').src = chartImgData;
+        }
+        
+        window.print();
+    }
+
+    // ================================= Master Chart Logic ================================
     async function fetchMasterChart() {
         const start = document.getElementById('master-date-start').value;
         const end = document.getElementById('master-date-end').value;
@@ -690,12 +1170,7 @@
         loading.classList.remove('hidden');
         
         try {
-            // Filter out smoke sensors
-            const tempSensors = allDevices.filter(d => {
-                const isSmoke = d.name.includes("ตรวจควัน") || d.type?.includes("Smoke");
-                return !isSmoke;
-            });
-
+            const tempSensors = allDevices.filter(d => !(d.name.includes("ตรวจควัน") || d.type?.includes("Smoke")));
             const fetchPromises = tempSensors.map(device => 
                 fetch(`${API_URL}?action=getHistory&deviceId=${device.id}&startDate=${start}&endDate=${end}`, { redirect: 'follow' })
                 .then(res => res.json())
@@ -704,72 +1179,45 @@
 
             const results = await Promise.all(fetchPromises);
             
-            // Process and merge data
             let allLogs = [];
             results.forEach((res, index) => {
                 if (res.success && res.data && res.data.logs) {
                     res.data.logs.forEach(log => {
-                        let timeVal = log.lastUpdate;
-                        if (!timeVal || timeVal === "") timeVal = log.dateTime;
-                        
+                        let timeVal = log.dateTime;
                         let normalizedTime = timeVal;
-                        try {
-                           normalizedTime = new Date(timeVal).toISOString();
-                        } catch(e) {}
-
-                        allLogs.push({
-                            originalTimeValue: timeVal,
-                            timeValue: normalizedTime, 
-                            temp: log.temp,
-                            deviceIndex: index
-                        });
+                        try { normalizedTime = new Date(timeVal).toISOString(); } catch(e) {}
+                        allLogs.push({ timeValue: normalizedTime, temp: log.temp, deviceIndex: index });
                     });
                 }
             });
 
-            // Get unique timestamps and sort them
             let uniqueTimes = [...new Set(allLogs.map(l => l.timeValue))];
             uniqueTimes.sort((a, b) => new Date(a) - new Date(b));
 
-            // Generate Chart Labels
             const labels = uniqueTimes.map(isoString => {
                 const d = new Date(isoString);
-                if (isNaN(d.getTime())) return isoString; // fallback if parsing failed
+                if (isNaN(d.getTime())) return isoString;
                 return start === end ? d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) : d.toLocaleDateString('th-TH', {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             });
 
-            // Chart Colors Palette
             const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1', '#4f46e5', '#e11d48'];
 
-            // Build Datasets
             const datasets = tempSensors.map((sensor, index) => {
                 const logsForThisSensor = allLogs.filter(l => l.deviceIndex === index);
-                
-                // Map data against unique timeline (fill missing with null)
                 const data = uniqueTimes.map(time => {
                     const match = logsForThisSensor.find(l => l.timeValue === time);
                     return match ? match.temp : null;
                 });
-
                 return {
-                    label: sensor.name,
-                    data: data,
-                    borderColor: colors[index % colors.length],
-                    backgroundColor: colors[index % colors.length],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    pointHoverRadius: 6,
-                    fill: false,
-                    spanGaps: true, // Connect lines even if null data
-                    tension: 0.3
+                    label: sensor.name, data: data, borderColor: colors[index % colors.length], backgroundColor: colors[index % colors.length],
+                    borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: false, spanGaps: true, tension: 0.3
                 };
             });
 
             drawMasterChart(labels, datasets);
 
         } catch (e) {
-            console.error(e);
-            showCustomAlert("เกิดข้อผิดพลาดในการโหลดกราฟรวม");
+            console.error(e); showCustomAlert("เกิดข้อผิดพลาดในการโหลดกราฟรวม");
         } finally {
             loading.classList.add('hidden');
         }
@@ -778,40 +1226,12 @@
     function drawMasterChart(labels, datasets) {
         const ctx = document.getElementById('masterChartCanvas').getContext('2d');
         if (masterChartInstance) masterChartInstance.destroy();
-
         masterChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: { labels: labels, datasets: datasets },
+            type: 'line', data: { labels: labels, datasets: datasets },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                },
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { boxWidth: 12, usePointStyle: true, font: { family: '"Google Sans", sans-serif', size: 11 } }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        titleFont: { family: '"Google Sans", sans-serif' },
-                        bodyFont: { family: '"Google Sans", sans-serif' },
-                        padding: 10,
-                        cornerRadius: 8
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { family: '"Google Sans", sans-serif' } } },
-                    y: {
-                        display: true,
-                        title: { display: true, text: 'อุณหภูมิ (°C)', font: { family: '"Google Sans", sans-serif' } },
-                        grid: { color: '#f1f5f9' },
-                        ticks: { font: { family: '"Google Sans", sans-serif' } }
-                    }
-                }
+                responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true, font: { family: '"Prompt", sans-serif', size: 11 } } }, tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleFont: { family: '"Prompt", sans-serif' }, bodyFont: { family: '"Prompt", sans-serif' }, padding: 10, cornerRadius: 8 } },
+                scales: { x: { grid: { display: false }, ticks: { font: { family: '"Prompt", sans-serif' } } }, y: { display: true, title: { display: true, text: 'อุณหภูมิ (°C)', font: { family: '"Prompt", sans-serif' } }, grid: { color: '#f1f5f9' }, ticks: { font: { family: '"Prompt", sans-serif' } } } }
             }
         });
     }
