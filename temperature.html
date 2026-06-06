@@ -290,6 +290,7 @@
                             <input type="date" id="date-end" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none flex-1">
                             <button onclick="fetchHistory()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">ดึงข้อมูล</button>
                             <button onclick="analyzeHealth()" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"><i class="fa-solid fa-stethoscope"></i> วิเคราะห์สุขภาพตู้เย็น</button>
+                            <button id="btn-view-drugs" onclick="toggleDrugList()" class="bg-indigo-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"><i class="fa-solid fa-pills"></i> ดูรายการยา</button>
                         </div>
                     </div>
 
@@ -329,12 +330,23 @@
                         </div>
                     </div>
 
-                    <!-- Canvas -->
-                    <div class="w-full h-[320px] relative">
-                        <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10 hidden rounded-xl">
-                            <div class="w-10 h-10 relative"><div class="loader"></div></div>
+                    <!-- Split Area: Canvas and Side Drug Panel -->
+                    <div class="flex flex-col lg:flex-row gap-4 w-full min-h-[320px] items-stretch mt-2">
+                        <!-- Canvas Container (Resizes Dynamically) -->
+                        <div id="canvas-container" class="flex-1 min-w-0 h-[320px] relative bg-white rounded-xl">
+                            <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10 hidden rounded-xl">
+                                <div class="w-10 h-10 relative"><div class="loader"></div></div>
+                            </div>
+                            <canvas id="historyChart"></canvas>
                         </div>
-                        <canvas id="historyChart"></canvas>
+
+                        <!-- Drug List Side Panel (Takes 20%) -->
+                        <div id="drug-panel" class="hidden w-full lg:w-1/5 h-[320px] lg:h-auto bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between overflow-hidden">
+                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-1.5 mb-2 flex items-center"><i class="fa-solid fa-pills text-indigo-500 mr-1.5"></i>รายการยาในจุดเก็บ</p>
+                            <div id="drug-list-container" class="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
+                                <!-- Cards will be injected here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -419,6 +431,7 @@
     let selectedDeviceId = null;
     let currentView = 'grid'; 
     window.currentChartLogs = []; 
+    let isDrugPanelOpen = false;
 
     function showCustomAlert(message) {
         const container = document.getElementById('toast-container');
@@ -689,6 +702,15 @@
         const device = allDevices.find(d => d.id === deviceId);
         if (!device) return;
 
+        // คืนค่าสถานะปิดแผงรายการยาทุกครั้งที่เปิด Modal
+        isDrugPanelOpen = false;
+        document.getElementById('drug-panel').classList.add('hidden');
+        const btnViewDrugs = document.getElementById('btn-view-drugs');
+        if (btnViewDrugs) {
+            btnViewDrugs.innerHTML = `<i class="fa-solid fa-pills"></i> ดูรายการยา`;
+            btnViewDrugs.className = "bg-indigo-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5";
+        }
+
         document.getElementById('modal-title').innerText = device.name;
         document.getElementById('modal-room').innerText = device.room || 'ไม่ระบุ';
         document.getElementById('modal-type').innerText = device.type || 'ทั่วไป';
@@ -806,34 +828,23 @@
         let stopMax = (maxPixel - topY) / height;
         let stopMin = (minPixel - topY) / height;
         
-        // จำกัดขอบเขต Stops ให้อยู่ในช่วง 0.01 - 0.99 ป้องกันค่า Error หลุดขอบ Canvas
         stopMax = Math.max(0.01, Math.min(0.99, stopMax));
         stopMin = Math.max(0.01, Math.min(0.99, stopMin));
         
         const gradient = ctx.createLinearGradient(0, topY, 0, bottomY);
         
         if (isFill) {
-            // ช่วงสูงเกินเกณฑ์: แดง ไล่ไป ขาว (Red to White/Transparent)
             gradient.addColorStop(0, 'rgba(239, 68, 68, 0.45)'); 
             gradient.addColorStop(Math.max(0, stopMax - 0.01), 'rgba(255, 255, 255, 0)');
-            
-            // ช่วงอุณหภูมิปกติ (อยู่ในเกณฑ์): ม่วง ไล่ไป ขาว (Purple to White/Transparent)
             gradient.addColorStop(stopMax, 'rgba(139, 92, 246, 0.45)');
             gradient.addColorStop(Math.max(0, stopMin - 0.01), 'rgba(255, 255, 255, 0)');
-            
-            // ช่วงต่ำเกินเกณฑ์: แดง ไล่ไป ขาว (Red to White/Transparent)
             gradient.addColorStop(stopMin, 'rgba(239, 68, 68, 0.45)');
             gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         } else {
-            // เส้นนอกช่วงอุณหภูมิสูงสุด: สีแดงเข้ม
             gradient.addColorStop(0, '#b91c1c'); 
             gradient.addColorStop(Math.max(0, stopMax - 0.01), '#b91c1c');
-            
-            // เส้นในช่วงปกติ: สีม่วงเข้ม
             gradient.addColorStop(stopMax, '#4c1d95'); 
             gradient.addColorStop(Math.max(0, stopMin - 0.01), '#4c1d95');
-            
-            // เส้นนอกช่วงอุณหภูมิต่ำสุด: สีแดงเข้ม
             gradient.addColorStop(stopMin, '#b91c1c');
             gradient.addColorStop(1, '#b91c1c');
         }
@@ -858,15 +869,10 @@
         stopMin = Math.max(0.01, Math.min(0.99, stopMin));
         
         const gradient = ctx.createLinearGradient(0, topY, 0, bottomY);
-        // ชื้นเกิน 65% = เส้นแดง
         gradient.addColorStop(0, '#ef4444'); 
         gradient.addColorStop(Math.max(0, stopMax - 0.01), '#ef4444');
-        
-        // ชื้นอยู่ในช่วงปกติ 35-65% = เส้นสีเทา
         gradient.addColorStop(stopMax, '#94a3b8'); 
         gradient.addColorStop(Math.max(0, stopMin - 0.01), '#94a3b8');
-        
-        // ชื้นต่ำกว่า 35% = เส้นแดง
         gradient.addColorStop(stopMin, '#ef4444');
         gradient.addColorStop(1, '#ef4444');
         return gradient;
@@ -923,7 +929,7 @@
                         borderWidth: 1.5, 
                         borderDash: [5, 5], 
                         pointRadius: 0, 
-                        fill: false, // บังคับไม่เติมสีทับ (ไม่ระบายพื้นที่ความชื้น)
+                        fill: false, 
                         tension: 0.3, 
                         yAxisID: 'y1' 
                     }
@@ -962,7 +968,6 @@
         let maxWarmUpRate = 0;
         let minPullDownRate = 0;
 
-        // คำนวณความชัน dT/dt (องศาต่อนาที)
         for(let i = 1; i < logs.length; i++) {
             const dt = (new Date(logs[i].dateTime) - new Date(logs[i-1].dateTime)) / 60000; 
             if (dt > 0 && dt < 120 && !isNaN(logs[i].temp) && !isNaN(logs[i-1].temp)) { 
@@ -1036,7 +1041,6 @@
         let isHealthy = true;
         let findingsHtml = '';
 
-        // บล็อกหัวข้อสมรรถนะการทำงาน
         let performanceBlock = `
         <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-lg mb-4">
             <h4 class="font-bold text-sm tracking-wider uppercase text-slate-400 mb-3"><i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>ข้อมูลสมรรถนะการทำงานหลัก (Performance Summary)</h4>
@@ -1060,25 +1064,21 @@
         </div>
         `;
 
-        // 1. Warm-up Rate สูงมาก
         if (maxWarmUpRate > 0.15) { 
             isHealthy = false;
             findingsHtml += buildIssueHtml('Warm-up Rate สูงมาก', 'อุณหภูมิพุ่งขึ้นไวมากเวลาคอมเพรสเซอร์ตัด', ['ขอบยางเสื่อม/ปิดไม่สนิท', 'ผนังฉนวนกันความร้อนเสื่อมสภาพ'], ['ตรวจสอบขอบยางประตูด้วยการหนีบกระดาษ', 'เปลี่ยนตู้เย็นหากใช้มานานกว่า 10 ปี']);
         }
         
-        // 2. Pull-down Rate ต่ำมาก
         if (minPullDownRate > -0.02 && avgVal > (isFridge ? 5 : 25)) { 
             isHealthy = false;
             findingsHtml += buildIssueHtml('Pull-down Rate ต่ำมาก', 'ใช้เวลานานมากในการทำความเย็นให้ลดลง', ['น้ำยาทําความเย็นน้อย (Leak)', 'ลิ้นวาล์วคอมเพรสเซอร์เริ่มหลวม'], ['ให้ช่างเทคนิคตรวจเช็ครอยรั่วและเติมน้ำยา', 'ตรวจสอบแรงดันคอมเพรสเซอร์']);
         }
 
-        // 3. กราฟเรียบเป็นเส้นตรง
         if (flatGraph) {
             isHealthy = false;
             findingsHtml += buildIssueHtml('กราฟเรียบเป็นเส้นตรง', 'ไม่เป็นฟันปลา และอุณหภูมิสูงเรื่อยๆ', ['คอมเพรสเซอร์ไม่ทำงานเลย', 'ฟิวส์ขาด หรือไฟไม่เข้าคอมเพรสเซอร์'], ['ตรวจสอบระบบไฟฟ้าเบื้องต้น', 'เช็คตัว Relay และ Overload Protector ของตู้เย็น']);
         }
 
-        // 4. รอบ Defrost ถี่ขึ้น หรืออุณหภูมิสูงค้าง
         if (defrostSpikes > (logs.length * 0.1) && isFridge) { 
             isHealthy = false;
             findingsHtml += buildIssueHtml('รอบ Defrost ถี่ขึ้น หรืออุณหภูมิค้างสูง', 'สไปก์ทะลุเกณฑ์อย่างรุนแรงแบบเป็นรอบๆ หรือพบการแช่อุณหภูมิสูง', ['เซ็นเซอร์ละลายน้ำแข็งเสีย', 'ท่อระบายน้ำทิ้งตัน ทำให้น้ำแข็งเกาะหนา'], ['ล้างช่องแช่แข็งและเคลียร์น้ำแข็งเกาะหนา', 'ตรวจสอบและเปลี่ยน Defrost Timer/Sensor']);
@@ -1114,6 +1114,64 @@
         </div>`;
     }
 
+    // ================================= Toggle & Fetch Drugs UI ================================
+    async function toggleDrugList() {
+        const panel = document.getElementById('drug-panel');
+        const btn = document.getElementById('btn-view-drugs');
+        
+        if (isDrugPanelOpen) {
+            panel.classList.add('hidden');
+            btn.innerHTML = `<i class="fa-solid fa-pills"></i> ดูรายการยา`;
+            btn.className = "bg-indigo-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5";
+            isDrugPanelOpen = false;
+            if (chartInstance) chartInstance.resize();
+        } else {
+            panel.classList.remove('hidden');
+            btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> ซ่อนรายการยา`;
+            btn.className = "bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5";
+            isDrugPanelOpen = true;
+            await loadDrugs();
+            if (chartInstance) chartInstance.resize();
+        }
+    }
+    
+    async function loadDrugs() {
+        const container = document.getElementById('drug-list-container');
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full py-12">
+                <div class="w-7 h-7 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mb-2"></div>
+                <p class="text-[10px] text-slate-400 font-bold">กำลังสแกนตู้จัดเก็บ...</p>
+            </div>`;
+        
+        try {
+            const response = await fetch(`${API_URL}?action=getDrugs&deviceId=${selectedDeviceId}`, { redirect: 'follow' });
+            const result = await response.json();
+            
+            if (result.success && result.data && result.data.length > 0) {
+                container.innerHTML = '';
+                result.data.forEach(drug => {
+                    container.innerHTML += `
+                        <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm hover:border-brand-300 transition-colors">
+                            <p class="text-xs font-bold text-slate-800 leading-tight">${drug.drugName}</p>
+                            <span class="text-[9px] text-indigo-500 font-extrabold block mt-1.5 flex items-center gap-1"><i class="fa-solid fa-box text-[8px]"></i> ${drug.boxName}</span>
+                        </div>`;
+                });
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-16 text-slate-400">
+                        <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-300"></i>
+                        <p class="text-[10px] font-bold">ไม่พบสต็อกยาในตู้/ห้องนี้</p>
+                    </div>`;
+            }
+        } catch (e) {
+            container.innerHTML = `
+                <div class="text-center py-16 text-red-400">
+                    <i class="fa-solid fa-circle-exclamation text-2xl mb-2 text-red-200"></i>
+                    <p class="text-[10px] font-bold">ดึงข้อมูลสต็อกล้มเหลว</p>
+                </div>`;
+        }
+    }
+
     // ================================= Print PDF Logic ================================
     function openPdfReport() {
         if(!chartInstance) return showCustomAlert("กรุณารอดึงข้อมูลกราฟให้เสร็จสิ้นก่อนออกรายงาน");
@@ -1131,7 +1189,6 @@
         document.getElementById('print-low').innerText = document.getElementById('stat-out-low').innerText.replace(/<[^>]*>?/gm, ''); 
         document.getElementById('print-high').innerText = document.getElementById('stat-out-high').innerText.replace(/<[^>]*>?/gm, ''); 
 
-        // ควบคุมตารางพิมพ์ความชื้น PDF
         if (isFridge) {
             document.getElementById('print-th-hum-low').style.display = 'none';
             document.getElementById('print-th-hum-high').style.display = 'none';
@@ -1150,7 +1207,6 @@
             ? "*เกณฑ์มาตรฐานตู้เย็น: อุณหภูมิต้องอยู่ระหว่าง 2°C ถึง 8°C" 
             : "*เกณฑ์มาตรฐานอุณหภูมิห้อง: 20°C ถึง 30°C / ความชื้น: 35% ถึง 65%";
 
-        // แนะนำการดึงรูปภาพของ Canvas โดยตรงเพื่อเสถียรภาพสูงสุด ไม่เรียกใช้ toBase64Image จาก Chart.js ตัวเดิม
         const chartCanvas = document.getElementById('historyChart');
         if (chartCanvas) {
             const chartImgData = chartCanvas.toDataURL('image/png');
