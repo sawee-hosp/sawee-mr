@@ -20,10 +20,10 @@
         }
     </script>
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
         .input-field { width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background-color: #ffffff; transition: all 0.2s; font-size: 0.95rem; }
         .input-field:focus { outline: none; border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2); }
-        .label-text { display: block; font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.4rem; }
+        .label-text { display: block; font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.5rem; }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
         /* Custom Scrollbar */
@@ -39,6 +39,11 @@
         .mode-other .show-other { display: block; }
         .mode-atb .show-common-atb-tami { display: block; }
         .mode-tamiflu .show-common-atb-tami { display: block; }
+
+        /* Dynamic Border colors for Form Card */
+        .mode-atb .dynamic-card { border-color: #0ea5e9; } /* Sky */
+        .mode-tamiflu .dynamic-card { border-color: #a855f7; } /* Purple */
+        .mode-other .dynamic-card { border-color: #14b8a6; } /* Teal */
     </style>
 </head>
 <body class="text-slate-800 h-screen flex overflow-hidden">
@@ -46,7 +51,7 @@
     <!-- Sidebar Navigation -->
     <aside class="w-64 bg-dark text-white flex-shrink-0 flex flex-col hidden md:flex">
         <div class="h-16 flex items-center px-6 border-b border-slate-700 font-bold text-xl text-sky-400">
-            <i class="fa-solid fa-hospital-user mr-3"></i> DUE System
+            <i class="fa-solid fa-hospital-user mr-3 text-2xl"></i> DUE System
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2">
             
@@ -74,240 +79,309 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-100">
         <!-- Header -->
         <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10 flex-shrink-0">
             <div class="flex items-center">
                 <button class="md:hidden text-slate-500 hover:text-dark mr-4"><i class="fa-solid fa-bars text-xl"></i></button>
                 <h1 id="page-title" class="text-xl font-bold text-slate-800">สร้างฟอร์มใหม่</h1>
             </div>
-            <button onclick="fetchData()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-sm font-medium transition-colors">
+            <button onclick="fetchData()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-sm font-medium transition-colors shadow-sm">
                 <i class="fa-solid fa-sync-alt mr-2"></i> รีเฟรชข้อมูล
             </button>
         </header>
 
         <div class="flex-1 overflow-y-auto p-4 md:p-6 relative">
             <!-- Alert -->
-            <div id="alert-box" class="hidden mb-4 p-4 rounded-xl shadow-sm flex items-center justify-between z-50 transition-all">
-                <div class="flex items-center"><i id="alert-icon" class="mr-3 text-xl"></i><span id="alert-text" class="font-medium"></span></div>
+            <div id="alert-box" class="hidden mb-4 p-4 rounded-xl shadow-md flex items-center justify-between z-50 transition-all border-l-4">
+                <div class="flex items-center"><i id="alert-icon" class="mr-3 text-2xl"></i><span id="alert-text" class="font-medium text-lg"></span></div>
                 <button onclick="document.getElementById('alert-box').classList.add('hidden')"><i class="fa-solid fa-times text-slate-400 hover:text-slate-600"></i></button>
             </div>
 
             <!-- ================= VIEW: FORM (Default) ================= -->
             <section id="view-form">
-                <div class="max-w-4xl mx-auto space-y-4 pb-16" id="form-container">
+                <div class="max-w-4xl mx-auto pb-16" id="form-container">
                     
-                    <!-- Form Header Mode -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-primary flex justify-between items-center">
-                        <div>
-                            <h2 id="form-mode-title" class="text-xl font-bold text-slate-800">สร้างแบบฟอร์ม DUE ใหม่</h2>
-                            <p class="text-sm text-slate-500" id="form-mode-subtitle">เลือกกลุ่มยาเพื่อเริ่มกรอกข้อมูล</p>
-                        </div>
-                        <div id="form-status-badge" class="px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-700">
-                            สถานะ: รับ DUE
-                        </div>
-                    </div>
-
-                    <form id="dueForm" onsubmit="submitForm(event)" class="space-y-6">
-                        <!-- Hidden fields for Edit Mode -->
+                    <form id="dueForm" onsubmit="submitForm(event)">
+                        <!-- Hidden fields -->
                         <input type="hidden" id="recordId" name="recordId">
                         <input type="hidden" id="recordGroup" name="recordGroup">
                         <input type="hidden" id="finalStatus" name="status" value="รับDUE">
 
-                        <!-- TABS: Drug Groups -->
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-2 flex gap-2 overflow-x-auto">
-                            <label class="flex-1 cursor-pointer min-w-[120px]">
+                        <!-- Mode Headers -->
+                        <div class="flex justify-between items-end mb-4 px-2">
+                            <div>
+                                <h2 id="form-mode-title" class="text-2xl font-black text-slate-800 tracking-wide">ฟอร์มบันทึก DUE</h2>
+                                <p class="text-slate-500 font-medium" id="form-mode-subtitle">เลือกแท็บด้านล่างเพื่อประเมินกลุ่มยา</p>
+                            </div>
+                            <div id="form-status-badge" class="px-4 py-1.5 rounded-full text-sm font-bold bg-amber-100 text-amber-700 shadow-sm border border-amber-200 flex items-center">
+                                <i class="fa-solid fa-clock mr-2"></i> รับ DUE
+                            </div>
+                        </div>
+
+                        <!-- PAPER TABS UI -->
+                        <div class="flex items-end px-2 pt-2 gap-1.5">
+                            <!-- Tab 1 -->
+                            <label class="cursor-pointer relative z-10 flex-1 max-w-[200px]">
                                 <input type="radio" name="drugCategory" value="Tracker" class="peer sr-only" checked onchange="changeFormMode()">
-                                <div class="py-3 px-2 text-center rounded-lg font-medium text-slate-600 bg-slate-50 border border-slate-200 peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">
+                                <div class="px-4 py-3.5 rounded-t-xl font-bold text-slate-500 bg-slate-200 border-t-2 border-l-2 border-r-2 border-slate-300 peer-checked:bg-white peer-checked:text-sky-600 peer-checked:border-sky-400 transition-all text-center pb-5 -mb-2">
                                     <i class="fa-solid fa-syringe mr-1"></i> Antibiotics
                                 </div>
                             </label>
-                            <label class="flex-1 cursor-pointer min-w-[120px]">
+                            <!-- Tab 2 -->
+                            <label class="cursor-pointer relative z-10 flex-1 max-w-[200px]">
                                 <input type="radio" name="drugCategory" value="Tamiflu" class="peer sr-only" onchange="changeFormMode()">
-                                <div class="py-3 px-2 text-center rounded-lg font-medium text-slate-600 bg-slate-50 border border-slate-200 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:border-purple-600 transition-all">
+                                <div class="px-4 py-3.5 rounded-t-xl font-bold text-slate-500 bg-slate-200 border-t-2 border-l-2 border-r-2 border-slate-300 peer-checked:bg-white peer-checked:text-purple-600 peer-checked:border-purple-400 transition-all text-center pb-5 -mb-2">
                                     <i class="fa-solid fa-capsules mr-1"></i> Tamiflu
                                 </div>
                             </label>
-                            <label class="flex-1 cursor-pointer min-w-[120px]">
+                            <!-- Tab 3 -->
+                            <label class="cursor-pointer relative z-10 flex-1 max-w-[200px]">
                                 <input type="radio" name="drugCategory" value="Other" class="peer sr-only" onchange="changeFormMode()">
-                                <div class="py-3 px-2 text-center rounded-lg font-medium text-slate-600 bg-slate-50 border border-slate-200 peer-checked:bg-teal-600 peer-checked:text-white peer-checked:border-teal-600 transition-all">
-                                    <i class="fa-solid fa-tablets mr-1"></i> ยาอื่นๆ
+                                <div class="px-4 py-3.5 rounded-t-xl font-bold text-slate-500 bg-slate-200 border-t-2 border-l-2 border-r-2 border-slate-300 peer-checked:bg-white peer-checked:text-teal-600 peer-checked:border-teal-400 transition-all text-center pb-5 -mb-2">
+                                    <i class="fa-solid fa-tablets mr-1"></i> Atorvastatin
                                 </div>
                             </label>
                         </div>
 
-                        <!-- ================= PART 1: รับ DUE ================= -->
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="bg-slate-50 p-4 border-b border-slate-200 font-bold text-lg text-slate-700 flex items-center">
-                                <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center mr-3">1</div> 
-                                ข้อมูลแรกรับ DUE (Part 1)
+                        <!-- MAIN FORM CARD -->
+                        <div class="dynamic-card bg-white rounded-b-2xl rounded-tr-2xl shadow-lg border-t-4 border-x border-b border-slate-200 overflow-hidden relative z-20">
+                            
+                            <!-- PART 1 -->
+                            <div class="bg-slate-50/80 p-5 border-b border-slate-200 flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center mr-3 font-bold">1</div> 
+                                <h3 class="font-bold text-xl text-slate-700">ข้อมูลแรกรับ DUE</h3>
                             </div>
                             
-                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 
-                                <!-- DRUG SELECTION: ATB (Radio) -->
-                                <div class="col-span-full show-atb border-b pb-4 mb-2">
-                                    <label class="label-text text-base mb-3">เลือกยา Antibiotics <span class="text-red-500">*</span></label>
+                                <!-- DRUG SELECTION: ATB (Radio Group) -->
+                                <div class="col-span-full show-atb border-b border-dashed border-slate-300 pb-5 mb-2">
+                                    <label class="label-text text-lg font-bold text-sky-700 mb-3"><i class="fa-solid fa-pills mr-2"></i>เลือกรายการยา Antibiotics <span class="text-red-500">*</span></label>
                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Cefotaxime" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium">Cefotaxime</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Amoxicillin/Clavulanic acid" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm flex items-center justify-center">Amoxicillin/Clavulanic</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Piperacillin/Tazobactam" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm flex items-center justify-center">Piperacillin/Tazobactam</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Meropenem" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium">Meropenem</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Ceftazidime" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium">Ceftazidime</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Ciprofloxacin" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium">Ciprofloxacin</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Cefotaxime" class="peer sr-only"><div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold hover:bg-slate-50 transition-colors">Cefotaxime</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Amoxicillin/Clavulanic acid" class="peer sr-only"><div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold hover:bg-slate-50 transition-colors text-sm flex items-center justify-center">Amoxicillin/Clavulanic</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Piperacillin/Tazobactam" class="peer sr-only"><div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold hover:bg-slate-50 transition-colors text-sm flex items-center justify-center">Piperacillin/Tazobactam</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Meropenem" class="peer sr-only"><div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold hover:bg-slate-50 transition-colors">Meropenem</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Ceftazidime" class="peer sr-only"><div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold hover:bg-slate-50 transition-colors">Ceftazidime</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugATB" value="Ciprofloxacin" class="peer sr-only"><div class="p-3 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold hover:bg-slate-50 transition-colors">Ciprofloxacin</div></label>
                                     </div>
                                 </div>
 
-                                <!-- DRUG SELECTION: Tamiflu (Radio) -->
-                                <div class="col-span-full show-tami border-b pb-4 mb-2">
-                                    <label class="label-text text-base mb-3">เลือกความแรง Tamiflu <span class="text-red-500">*</span></label>
+                                <!-- DRUG SELECTION: Tamiflu (Radio Group) -->
+                                <div class="col-span-full show-tami border-b border-dashed border-slate-300 pb-5 mb-2">
+                                    <label class="label-text text-lg font-bold text-purple-700 mb-3"><i class="fa-solid fa-capsules mr-2"></i>เลือกความแรง Tamiflu <span class="text-red-500">*</span></label>
                                     <div class="grid grid-cols-3 gap-3">
-                                        <label class="cursor-pointer"><input type="radio" name="drugTami" value="Tamiflu 30mg" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">30 mg</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugTami" value="Tamiflu 45mg" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">45 mg</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="drugTami" value="Tamiflu 75mg" class="peer sr-only"><div class="p-3 border rounded-lg text-center peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">75 mg</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugTami" value="Tamiflu 30mg" class="peer sr-only"><div class="p-4 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-bold text-lg hover:bg-slate-50 transition-colors">30 mg</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugTami" value="Tamiflu 45mg" class="peer sr-only"><div class="p-4 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-bold text-lg hover:bg-slate-50 transition-colors">45 mg</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="drugTami" value="Tamiflu 75mg" class="peer sr-only"><div class="p-4 border-2 border-slate-200 rounded-xl text-center peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-bold text-lg hover:bg-slate-50 transition-colors">75 mg</div></label>
                                     </div>
                                 </div>
 
                                 <!-- DRUG SELECTION: Other -->
-                                <div class="col-span-full show-other border-b pb-4 mb-2">
-                                    <label class="label-text text-base">รายการยา <span class="text-red-500">*</span></label>
-                                    <input type="text" name="drugOther" value="Atorvastatin" class="input-field bg-slate-100 font-bold text-teal-700" readonly>
+                                <div class="col-span-full show-other border-b border-dashed border-slate-300 pb-5 mb-2">
+                                    <label class="label-text text-lg font-bold text-teal-700 mb-3"><i class="fa-solid fa-tablets mr-2"></i>รายการยา <span class="text-red-500">*</span></label>
+                                    <input type="text" name="drugOther" value="Atorvastatin" class="input-field bg-slate-100 font-bold text-teal-700 text-xl" readonly>
                                 </div>
 
                                 <!-- ATB Specific: อนุมัติโดยแพทย์เฉพาะทาง -->
                                 <div class="show-atb">
                                     <label class="label-text">แพทย์เฉพาะทางอนุมัติ</label>
                                     <div class="flex gap-2">
-                                        <label class="flex-1 cursor-pointer"><input type="radio" name="specialistApproved" value="Y" class="peer sr-only"><div class="py-2 text-center border rounded peer-checked:bg-green-100 peer-checked:border-green-500 peer-checked:text-green-700">Yes</div></label>
-                                        <label class="flex-1 cursor-pointer"><input type="radio" name="specialistApproved" value="N" class="peer sr-only"><div class="py-2 text-center border rounded peer-checked:bg-red-100 peer-checked:border-red-500 peer-checked:text-red-700">No</div></label>
+                                        <label class="flex-1 cursor-pointer"><input type="radio" name="specialistApproved" value="Y" class="peer sr-only"><div class="py-2.5 text-center border-2 border-slate-200 rounded-lg peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-700 font-bold hover:bg-slate-50">Yes (อนุมัติ)</div></label>
+                                        <label class="flex-1 cursor-pointer"><input type="radio" name="specialistApproved" value="N" class="peer sr-only"><div class="py-2.5 text-center border-2 border-slate-200 rounded-lg peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 font-bold hover:bg-slate-50">No (ไม่อนุมัติ)</div></label>
                                     </div>
                                 </div>
 
                                 <!-- Common Info -->
-                                <div><label class="label-text">HN <span class="text-red-500">*</span></label><input type="text" name="hn" required class="input-field border-primary/50 bg-sky-50 focus:bg-white"></div>
-                                <div class="lg:col-span-2"><label class="label-text">ชื่อ-สกุล ผู้ป่วย</label><input type="text" name="patientName" class="input-field"></div>
+                                <div><label class="label-text">HN <span class="text-red-500">*</span></label><input type="text" name="hn" required class="input-field border-slate-300 bg-amber-50 focus:bg-white text-lg font-bold text-slate-700" placeholder="ระบุ HN"></div>
+                                <div class="lg:col-span-2"><label class="label-text">ชื่อ-สกุล ผู้ป่วย</label><input type="text" name="patientName" class="input-field" placeholder="ระบุชื่อผู้ป่วย"></div>
                                 
                                 <!-- Date & Doctor -->
                                 <div><label class="label-text">วันที่เริ่มยา <span class="text-red-500">*</span></label><input type="date" id="startDate" name="startDate" required class="input-field" onchange="calcDuration()"></div>
-                                <div>
+                                <div class="lg:col-span-2">
                                     <label class="label-text">แพทย์ผู้สั่ง</label>
-                                    <input type="text" name="doctor" list="docList" class="input-field" placeholder="พิมพ์ชื่อแพทย์">
-                                    <datalist id="docList"><option value="นพ.อรรถชัย"><option value="พญ.จันทร์วดี"><option value="นพ.นนทพัทธ์"><option value="พญ.เพชรรัตน์"></datalist>
+                                    <input type="text" name="doctor" list="docList" class="input-field" placeholder="พิมพ์เพื่อค้นหาชื่อแพทย์...">
+                                    <!-- ดึงข้อมูลเดิมจาก Sheet ได้ผ่าน Datalist -->
+                                    <datalist id="docList"><option value="นพ.อรรถชัย บุรีงาม"><option value="พญ.จันทร์วดี วงศ์สุวัฒน์"><option value="นพ.นนทพัทธ์ ตัณฑสุกิจวณิช"><option value="พญ.เพชรรัตน์ สุวรรณชัย"><option value="พญ.ศิลป์ศุภา สมหาญวงค์"></datalist>
                                 </div>
-                                <div class="show-other"><label class="label-text">สิทธิ์การรักษา</label><input type="text" name="right" class="input-field"></div>
+                                <div class="show-other"><label class="label-text">สิทธิ์การรักษา</label><input type="text" name="right" class="input-field" placeholder="เช่น บัตรทอง, จ่ายตรง"></div>
 
-                                <!-- Vitals (ATB & Tami & Other mostly use age/sex) -->
+                                <!-- Vitals -->
                                 <div>
                                     <label class="label-text">เพศ</label>
-                                    <select id="sex" name="sex" class="input-field" onchange="calcCrCl()"><option value="">- เลือก -</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option></select>
+                                    <div class="flex gap-2">
+                                        <label class="flex-1 cursor-pointer"><input type="radio" name="sex" value="ชาย" class="peer sr-only" onchange="calcCrCl()"><div class="py-2 text-center border-2 border-slate-200 rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium hover:bg-slate-50">ชาย</div></label>
+                                        <label class="flex-1 cursor-pointer"><input type="radio" name="sex" value="หญิง" class="peer sr-only" onchange="calcCrCl()"><div class="py-2 text-center border-2 border-slate-200 rounded-lg peer-checked:bg-pink-50 peer-checked:border-pink-500 peer-checked:text-pink-700 font-medium hover:bg-slate-50">หญิง</div></label>
+                                    </div>
                                 </div>
                                 <div><label class="label-text">อายุ (ปี)</label><input type="number" id="age" name="age" class="input-field" oninput="calcCrCl()"></div>
                                 <div class="show-common-atb-tami"><label class="label-text">น้ำหนัก (kg)</label><input type="number" id="weight" name="weight" step="0.1" class="input-field" oninput="calcCrCl()"></div>
-                                <div class="show-common-atb-tami"><label class="label-text">SCr (mg/dL)</label><input type="number" id="scr" name="scr" step="0.01" class="input-field" oninput="calcCrCl()"></div>
-                                <div class="show-common-atb-tami"><label class="label-text text-indigo-600">CrCl (ml/min)</label><input type="text" id="crcl" name="crcl" class="input-field bg-slate-100" readonly></div>
+                                <div class="show-common-atb-tami"><label class="label-text">SCr (mg/dL)</label><input type="number" id="scr" name="scr" step="0.01" class="input-field border-orange-200 focus:border-orange-500" oninput="calcCrCl()"></div>
+                                <div class="show-common-atb-tami"><label class="label-text text-indigo-600 font-bold"><i class="fa-solid fa-calculator mr-1"></i> CrCl (ml/min)</label><input type="text" id="crcl" name="crcl" class="input-field bg-indigo-50 text-indigo-700 font-black border-indigo-200" readonly placeholder="คำนวณอัตโนมัติ"></div>
                                 
                                 <!-- ATB Specific Fields -->
-                                <div class="show-atb">
+                                <div class="show-atb col-span-full">
                                     <label class="label-text">Ward</label>
-                                    <select name="ward" class="input-field"><option value="">- เลือก -</option><option value="Wardหญิง">Wardหญิง</option><option value="Wardชาย">Wardชาย</option><option value="OPD">OPD</option></select>
+                                    <div class="grid grid-cols-3 gap-2 max-w-lg">
+                                        <label class="cursor-pointer"><input type="radio" name="ward" value="Wardหญิง" class="peer sr-only"><div class="py-2 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium hover:bg-slate-50">Wardหญิง</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="ward" value="Wardชาย" class="peer sr-only"><div class="py-2 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium hover:bg-slate-50">Wardชาย</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="ward" value="OPD" class="peer sr-only"><div class="py-2 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium hover:bg-slate-50">OPD</div></label>
+                                    </div>
                                 </div>
-                                <div class="show-atb"><label class="label-text">Dose</label><input type="text" name="dose" class="input-field" placeholder="เช่น 1 gm"></div>
-                                <div class="show-atb">
+
+                                <div class="show-atb"><label class="label-text">Dose (ระบุหน่วย)</label><input type="text" name="dose" class="input-field" placeholder="เช่น 1 gm"></div>
+                                <div class="show-atb lg:col-span-2">
                                     <label class="label-text">ความถี่ (Interval)</label>
-                                    <select id="interval" name="interval" class="input-field" onchange="calcPerDay()">
-                                        <option value="" data-f="0">- เลือก -</option><option value="q 4hr" data-f="6">q 4hr</option><option value="q 6hr" data-f="4">q 6hr</option><option value="q 8hr" data-f="3">q 8hr</option><option value="q 12hr" data-f="2">q 12hr</option><option value="q 24hr" data-f="1">q 24hr</option><option value="q 48hr" data-f="0.5">q 48hr</option><option value="q 72hr" data-f="0.33">q 72hr</option>
-                                    </select>
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 4hr" data-f="6" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 4hr</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 6hr" data-f="4" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 6hr</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 8hr" data-f="3" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 8hr</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 12hr" data-f="2" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 12hr</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 24hr" data-f="1" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 24hr</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 48hr" data-f="0.5" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 48hr</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="interval" value="q 72hr" data-f="0.33" class="peer sr-only" onchange="calcPerDay()"><div class="py-1.5 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">q 72hr</div></label>
+                                    </div>
                                 </div>
-                                <div class="show-atb"><label class="label-text text-indigo-600">จำนวน/วัน (คำนวณ)</label><input type="number" id="perDay" name="perDay" class="input-field bg-slate-100" readonly></div>
+                                <div class="show-atb"><label class="label-text text-indigo-600 font-bold">จำนวน/วัน [คำนวณ]</label><input type="number" step="0.01" id="perDay" name="perDay" class="input-field bg-indigo-50 border-indigo-200 text-indigo-700 font-bold" readonly></div>
                                 <div class="show-atb lg:col-span-2"><label class="label-text">การรักษาก่อนหน้า</label><input type="text" name="prevTx" class="input-field"></div>
-                                <div class="show-atb"><label class="label-text">แหล่งที่มาของเชื้อ</label><select name="source" class="input-field"><option value="">- เลือก -</option><option value="Hospital Acquired">Hospital Acquired</option><option value="Community Acquired">Community Acquired</option></select></div>
-                                <div class="show-atb"><label class="label-text">Site of infection</label><select name="siteATB" class="input-field"><option value="">- เลือก -</option><option value="Respiratory tract">Respiratory tract</option><option value="Urinary tract">Urinary tract</option><option value="Bloodstream">Bloodstream</option><option value="Skin/Soft tissue">Skin/Soft tissue</option><option value="Intra-abdominal">Intra-abdominal</option><option value="อื่นๆ">อื่นๆ</option></select></div>
+                                
+                                <div class="show-atb col-span-full border-t border-slate-100 pt-4 mt-2"></div>
+
+                                <div class="show-atb">
+                                    <label class="label-text">แหล่งที่มาของเชื้อ</label>
+                                    <div class="flex gap-2">
+                                        <label class="flex-1 cursor-pointer"><input type="radio" name="source" value="Hospital Acquired" class="peer sr-only"><div class="py-2 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700 font-bold hover:bg-slate-50">HA (Hospital)</div></label>
+                                        <label class="flex-1 cursor-pointer"><input type="radio" name="source" value="Community Acquired" class="peer sr-only"><div class="py-2 text-center border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700 font-bold hover:bg-slate-50">CA (Community)</div></label>
+                                    </div>
+                                </div>
+                                <div class="show-atb lg:col-span-2">
+                                    <label class="label-text">Site of infection</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label class="cursor-pointer"><input type="radio" name="siteATB" value="Respiratory tract" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">Respiratory</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="siteATB" value="Urinary tract" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">Urinary</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="siteATB" value="Bloodstream" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">Bloodstream</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="siteATB" value="Skin/Soft tissue" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">Skin/Soft tissue</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="siteATB" value="Intra-abdominal" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">Intra-abdominal</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="siteATB" value="อื่นๆ" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-medium">อื่นๆ</div></label>
+                                    </div>
+                                </div>
 
                                 <!-- Tamiflu Specific -->
-                                <div class="show-tami"><label class="label-text text-purple-700">จำนวนวัน (เริ่มมีอาการจนถึงรับยา)</label><input type="number" name="onsetDays" class="input-field border-purple-300 bg-purple-50"></div>
+                                <div class="show-tami"><label class="label-text text-purple-700 font-bold">เวลาที่เริ่มมีอาการจนถึงรับยา (วัน)</label><input type="number" name="onsetDays" class="input-field border-purple-300 bg-purple-50 focus:bg-white text-lg"></div>
                                 
                                 <!-- Other (Atorvastatin) Specific -->
                                 <div class="show-other lg:col-span-2"><label class="label-text">Dx (Diagnosis)</label><input type="text" name="dx" class="input-field"></div>
-                                <div class="show-other"><label class="label-text text-teal-700">LDL</label><input type="number" name="ldl" class="input-field"></div>
-                                <div class="show-other"><label class="label-text text-teal-700">Cholesterol</label><input type="number" name="chol" class="input-field"></div>
+                                <div class="show-other"><label class="label-text text-teal-700 font-bold">LDL</label><input type="number" name="ldl" class="input-field border-teal-300 bg-teal-50"></div>
+                                <div class="show-other"><label class="label-text text-teal-700 font-bold">Cholesterol</label><input type="number" name="chol" class="input-field border-teal-300 bg-teal-50"></div>
                                 <div class="show-other"><label class="label-text">ขนาด Statins เดิม (mg)</label><input type="number" name="formerStatinMg" class="input-field"></div>
                                 <div class="show-other"><label class="label-text">ระยะเวลาที่กิน Statins เดิม (เดือน)</label><input type="number" name="formerStatinMonths" class="input-field"></div>
                                 
                                 <!-- Atorvastatin Indication (Radio list) -->
-                                <div class="show-other col-span-full border border-slate-200 rounded-lg p-4 bg-slate-50">
-                                    <label class="label-text font-bold mb-2">Indication (ข้อบ่งใช้)</label>
-                                    <div class="space-y-2">
-                                        <label class="flex items-start cursor-pointer"><input type="radio" name="indOther" value="เกิดอาการไม่พึงประสงค์จาก Simvastatin" class="mt-1 mr-2"><span class="text-sm">เกิดอาการไม่พึงประสงค์จาก Simvastatin</span></label>
-                                        <label class="flex items-start cursor-pointer"><input type="radio" name="indOther" value="ได้รับยาที่อาจเกิด Drug Interaction กับ Simvastatin" class="mt-1 mr-2"><span class="text-sm">ได้รับยาที่อาจเกิด Drug Interaction กับ Simvastatin</span></label>
-                                        <label class="flex items-start cursor-pointer"><input type="radio" name="indOther" value="ได้รับ Simvastatin มาแล้ว 3-6 เดือน แต่ระดับ LDL ยังไม่บรรลุเป้าหมาย" class="mt-1 mr-2"><span class="text-sm">ได้รับ Simvastatin มาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา</span></label>
-                                        <label class="flex items-start cursor-pointer"><input type="radio" name="indOther" value="อื่นๆ" class="mt-1 mr-2" id="radioIndOtherText" onchange="document.getElementById('indOtherText').focus()"><span class="text-sm whitespace-nowrap mr-2">อื่นๆ ระบุ:</span><input type="text" id="indOtherText" name="indOtherText" class="flex-1 input-field py-1 px-2 text-sm" onclick="document.getElementById('radioIndOtherText').checked = true"></label>
+                                <div class="show-other col-span-full border-2 border-teal-100 rounded-xl p-5 bg-teal-50/30">
+                                    <label class="label-text text-teal-800 font-bold mb-3 text-lg">Indication (ข้อบ่งใช้)</label>
+                                    <div class="space-y-3">
+                                        <label class="flex items-start cursor-pointer p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-teal-200"><input type="radio" name="indOther" value="เกิดอาการไม่พึงประสงค์จาก Simvastatin" class="mt-1 mr-3 w-4 h-4 text-teal-600"><span class="text-slate-700 font-medium">เกิดอาการไม่พึงประสงค์จาก Simvastatin</span></label>
+                                        <label class="flex items-start cursor-pointer p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-teal-200"><input type="radio" name="indOther" value="ได้รับยาที่อาจเกิด Drug Interaction กับ Simvastatin" class="mt-1 mr-3 w-4 h-4 text-teal-600"><span class="text-slate-700 font-medium">ได้รับยาที่อาจเกิด Drug Interaction กับ Simvastatin</span></label>
+                                        <label class="flex items-start cursor-pointer p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-teal-200"><input type="radio" name="indOther" value="ได้รับ Simvastatin มาแล้ว 3-6 เดือน แต่ระดับ LDL ยังไม่บรรลุเป้าหมาย" class="mt-1 mr-3 w-4 h-4 text-teal-600"><span class="text-slate-700 font-medium">ได้รับ Simvastatin มาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา</span></label>
+                                        <label class="flex items-center cursor-pointer p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-teal-200"><input type="radio" name="indOther" value="อื่นๆ" class="mr-3 w-4 h-4 text-teal-600" id="radioIndOtherText" onchange="document.getElementById('indOtherText').focus()"><span class="text-slate-700 font-medium whitespace-nowrap mr-3">อื่นๆ ระบุ:</span><input type="text" id="indOtherText" name="indOtherText" class="flex-1 input-field py-1.5 px-3 border-slate-300" onclick="document.getElementById('radioIndOtherText').checked = true"></label>
                                     </div>
                                 </div>
 
                                 <!-- Common Indication / Dx for ATB -->
-                                <div class="show-atb lg:col-span-2"><label class="label-text">Diagnosis / Indication</label><input type="text" name="indicationATB" class="input-field"></div>
+                                <div class="show-atb lg:col-span-2"><label class="label-text">Diagnosis / Indication</label><input type="text" name="indicationATB" list="dxList" class="input-field"><datalist id="dxList"><option value="Septic shock / Severe Sepsis"><option value="Pneumonia (HAP/VAP)"><option value="Influenza-like Illness"></datalist></div>
                             </div>
                         </div>
 
                         <!-- TOGGLE BUTTON FOR PART 2 -->
-                        <div class="flex justify-center">
-                            <button type="button" onclick="togglePart2()" id="btn-toggle-part2" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full font-medium transition-all shadow-sm border border-slate-300">
-                                <i class="fa-solid fa-chevron-down mr-2"></i> เปิดกรอกข้อมูลส่วนที่ 2 (ผลการรักษา/ประเมิน)
+                        <div class="flex justify-center -mt-2 relative z-30">
+                            <button type="button" onclick="togglePart2()" id="btn-toggle-part2" class="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-full font-bold transition-all shadow-md border-2 border-white transform hover:scale-105 flex items-center">
+                                <i class="fa-solid fa-chevron-down mr-2 text-lg"></i> เปิดส่วนประเมินผล (Part 2)
                             </button>
                         </div>
 
                         <!-- ================= PART 2: ผลการรักษา (Hidden by default) ================= -->
-                        <div id="part2-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="bg-amber-50 p-4 border-b border-amber-200 font-bold text-lg text-amber-800 flex items-center justify-between">
-                                <div class="flex items-center"><div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center mr-3">2</div> ข้อมูลเพิ่มเติม / การประเมินผล</div>
-                                <span class="text-xs font-normal bg-white px-2 py-1 rounded border border-amber-200">ทำเมื่อสิ้นสุดการใช้ยา</span>
+                        <div id="part2-container" class="hidden bg-white rounded-2xl shadow-lg border-2 border-amber-300 overflow-hidden relative z-20">
+                            <div class="bg-amber-100 p-5 border-b border-amber-200 font-bold text-xl text-amber-800 flex items-center justify-between">
+                                <div class="flex items-center"><div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center mr-3">2</div> ส่วนที่ 2: ผลการรักษา และ การประเมิน</div>
+                                <span class="text-xs font-normal bg-white px-3 py-1.5 rounded-full border border-amber-300 text-amber-700"><i class="fa-solid fa-calendar-check mr-1"></i>ทำเมื่อสิ้นสุดการใช้ยา</span>
                             </div>
                             
-                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <!-- Dates & Calc -->
-                                <div><label class="label-text">วันสิ้นสุดการใช้ยา (Ended)</label><input type="date" id="endDate" name="endDate" class="input-field" onchange="calcDuration()"></div>
-                                <div><label class="label-text text-indigo-600">จำนวนวัน (Duration)</label><input type="number" id="duration" name="duration" class="input-field bg-slate-100" readonly></div>
+                                <div><label class="label-text">วันสิ้นสุดการใช้ยา (Ended)</label><input type="date" id="endDate" name="endDate" class="input-field border-amber-200" onchange="calcDuration()"></div>
+                                <div><label class="label-text text-indigo-600 font-bold">จำนวนวัน (Duration)</label><input type="number" id="duration" name="duration" class="input-field bg-indigo-50 font-bold text-indigo-700" readonly></div>
                                 
                                 <div class="show-atb"><label class="label-text">จำนวนยาคืน (Deduct)</label><input type="number" id="deduct" name="deduct" value="0" class="input-field" oninput="calcTotal()"></div>
-                                <div class="show-atb"><label class="label-text text-indigo-600">Dose รวมที่ใช้</label><input type="number" id="totalDose" name="totalDose" class="input-field bg-slate-100" readonly></div>
+                                <div class="show-atb"><label class="label-text text-indigo-600 font-bold">Dose รวมที่ใช้ [หักคืนแล้ว]</label><input type="number" id="totalDose" name="totalDose" class="input-field bg-indigo-50 font-bold text-indigo-700" readonly></div>
                                 <div class="show-atb"><label class="label-text">ราคา/หน่วย</label><input type="number" step="0.01" id="price" name="price" class="input-field" oninput="calcTotal()"></div>
-                                <div class="show-atb"><label class="label-text text-green-600">มูลค่ารวม (บาท)</label><input type="text" id="totalValue" name="totalValue" class="input-field bg-green-50 font-bold text-green-700" readonly></div>
+                                <div class="show-atb"><label class="label-text text-emerald-600 font-bold">มูลค่ารวม (บาท)</label><input type="text" id="totalValue" name="totalValue" class="input-field bg-emerald-50 font-black text-emerald-700 text-lg border-emerald-200" readonly></div>
 
                                 <!-- Culture (ATB Only) -->
-                                <div class="show-atb col-span-full border-t pt-4 mt-2"><h3 class="font-bold text-slate-700 mb-2"><i class="fa-solid fa-microscope mr-2"></i> ผล Culture</h3></div>
-                                <div class="show-atb"><label class="label-text">Type of culture</label><select name="cultureType" class="input-field"><option value="">- เลือก -</option><option value="Hemoculture">Hemoculture</option><option value="Sputum c/s">Sputum c/s</option><option value="Urine c/s">Urine c/s</option><option value="Pus c/s">Pus c/s</option><option value="Ascites c/s">Ascites c/s</option><option value="Synovial c/s">Synovial c/s</option><option value="Gram Stain">Gram Stain</option><option value="Meliodosis titer">Meliodosis titer</option></select></div>
+                                <div class="show-atb col-span-full border-t-2 border-dashed border-slate-200 pt-5 mt-2"><h3 class="font-bold text-slate-700 text-lg"><i class="fa-solid fa-microscope text-purple-500 mr-2"></i> ผลตรวจทางห้องปฏิบัติการ (Culture)</h3></div>
+                                <div class="show-atb col-span-full">
+                                    <label class="label-text">Type of culture</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Hemoculture" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Hemoculture</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Sputum c/s" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Sputum c/s</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Urine c/s" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Urine c/s</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Pus c/s" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Pus c/s</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Ascites c/s" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Ascites c/s</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Synovial c/s" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Synovial c/s</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Gram Stain" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Gram Stain</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="cultureType" value="Meliodosis titer" class="peer sr-only"><div class="px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-purple-50 peer-checked:border-purple-500 peer-checked:text-purple-700 font-medium">Meliodosis titer</div></label>
+                                    </div>
+                                </div>
                                 <div class="show-atb"><label class="label-text">วันที่เจอเชื้อ</label><input type="date" name="cultureDate" class="input-field"></div>
-                                <div class="show-atb lg:col-span-2"><label class="label-text">เชื้อที่พบ</label><input type="text" name="pathogen" class="input-field"></div>
-                                <div class="show-atb lg:col-span-2"><label class="label-text">ความไวต่อเชื้อ</label><input type="text" name="susceptibility" class="input-field"></div>
+                                <div class="show-atb lg:col-span-2">
+                                    <label class="label-text">เชื้อที่พบ (Pathogen)</label>
+                                    <input type="text" name="pathogen" list="pathogenList" class="input-field" placeholder="ค้นหาหรือพิมพ์ชื่อเชื้อ">
+                                    <datalist id="pathogenList"><option value="E.coli"><option value="Acinetobacter baumannii"><option value="Pseudomonas aeruginosa"><option value="Klebsiella pneumoniae"></datalist>
+                                </div>
+                                <div class="show-atb lg:col-span-2"><label class="label-text">ความไวต่อเชื้อ (Susceptibility)</label><input type="text" name="susceptibility" class="input-field" placeholder="ระบุการดื้อยาหรือไวต่อยา"></div>
 
                                 <!-- Eval Block -->
-                                <div class="col-span-full border-t pt-4 mt-2 bg-slate-50 -mx-6 px-6 pb-2">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
+                                <div class="col-span-full border-t-2 border-slate-200 pt-5 mt-2 bg-slate-50 -mx-6 px-6 pb-2">
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                         <div class="show-atb"><label class="label-text">Pharmacist Action</label><input type="text" name="pharAction" class="input-field"></div>
-                                        <div class="show-atb"><label class="label-text">ผลการรักษา (Result)</label><select name="result" class="input-field"><option value="">- เลือก -</option><option value="ดีขึ้น">ดีขึ้น</option><option value="แย่ลง">แย่ลง</option><option value="ส่งต่อ">ส่งต่อ</option><option value="เปลี่ยน ATB">เปลี่ยน ATB</option><option value="Dead">Dead</option></select></div>
-                                        <div><label class="label-text font-bold text-primary">เภสัชกรผู้ประเมิน</label><input type="text" name="pharmacist" class="input-field border-primary/50" placeholder="ชื่อเภสัชกร"></div>
+                                        <div class="show-atb">
+                                            <label class="label-text">ผลการรักษา (Result)</label>
+                                            <div class="flex flex-wrap gap-2">
+                                                <label class="cursor-pointer"><input type="radio" name="result" value="ดีขึ้น" class="peer sr-only"><div class="px-3 py-2 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-700 font-bold">ดีขึ้น</div></label>
+                                                <label class="cursor-pointer"><input type="radio" name="result" value="แย่ลง" class="peer sr-only"><div class="px-3 py-2 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-700 font-bold">แย่ลง</div></label>
+                                                <label class="cursor-pointer"><input type="radio" name="result" value="ส่งต่อ" class="peer sr-only"><div class="px-3 py-2 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-sky-50 peer-checked:border-sky-500 peer-checked:text-sky-700 font-bold">ส่งต่อ</div></label>
+                                                <label class="cursor-pointer"><input type="radio" name="result" value="เปลี่ยน ATB" class="peer sr-only"><div class="px-3 py-2 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-700 font-bold">เปลี่ยน ATB</div></label>
+                                                <label class="cursor-pointer"><input type="radio" name="result" value="Dead" class="peer sr-only"><div class="px-3 py-2 border-2 border-slate-200 rounded-lg text-sm peer-checked:bg-slate-700 peer-checked:border-slate-800 peer-checked:text-white font-bold">Dead</div></label>
+                                            </div>
+                                        </div>
                                     </div>
                                     
-                                    <label class="label-text font-bold text-lg mb-2">สรุปการประเมิน <span class="text-xs font-normal text-slate-500 ml-2">(เลือกเพื่อเปลี่ยนสถานะเป็น Completed)</span></label>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        <label class="cursor-pointer"><input type="radio" name="evaluation" value="✅Appropriate" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-green-100 peer-checked:border-green-500 peer-checked:text-green-800 font-medium"><i class="fa-solid fa-check text-green-600 mr-2"></i> ✅ Appropriate</div></label>
-                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Duration)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-red-100 peer-checked:border-red-500 peer-checked:text-red-800 font-medium"><i class="fa-solid fa-xmark text-red-600 mr-2"></i> ❌ Inapp. (Duration)</div></label>
-                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Dose/Interval)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-red-100 peer-checked:border-red-500 peer-checked:text-red-800 font-medium"><i class="fa-solid fa-xmark text-red-600 mr-2"></i> ❌ Inapp. (Dose/Int)</div></label>
-                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Indication)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-red-100 peer-checked:border-red-500 peer-checked:text-red-800 font-medium"><i class="fa-solid fa-xmark text-red-600 mr-2"></i> ❌ Inapp. (Indication)</div></label>
-                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Culture)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-red-100 peer-checked:border-red-500 peer-checked:text-red-800 font-medium"><i class="fa-solid fa-xmark text-red-600 mr-2"></i> ❌ Inapp. (Culture)</div></label>
-                                        <label class="cursor-pointer show-tami show-other"><input type="radio" name="evaluation" value="❌Inappropriate" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-red-100 peer-checked:border-red-500 peer-checked:text-red-800 font-medium"><i class="fa-solid fa-xmark text-red-600 mr-2"></i> ❌ Inappropriate</div></label>
-                                        <label class="cursor-pointer"><input type="radio" name="evaluation" value="ไม่สามารถประเมินได้" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-3 border rounded-lg peer-checked:bg-slate-200 peer-checked:border-slate-500 peer-checked:text-slate-800 font-medium"><i class="fa-solid fa-ban text-slate-500 mr-2"></i> ไม่สามารถประเมินได้</div></label>
+                                    <label class="label-text font-black text-xl mb-3 text-slate-800"><i class="fa-solid fa-clipboard-check text-primary mr-2"></i> สรุปผลการประเมิน <span class="text-sm font-normal text-slate-500 ml-2 bg-white px-2 py-1 rounded border">(หากเลือก ระบบจะปรับสถานะเคสเป็น Completed อัตโนมัติ)</span></label>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                                        <label class="cursor-pointer"><input type="radio" name="evaluation" value="✅Appropriate" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-check-circle text-emerald-500 text-xl mr-2 align-middle"></i> ✅ Appropriate</div></label>
+                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Duration)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-times-circle text-rose-500 text-xl mr-2 align-middle"></i> ❌ Inapp. (Duration)</div></label>
+                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Dose/Interval)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-times-circle text-rose-500 text-xl mr-2 align-middle"></i> ❌ Inapp. (Dose/Int)</div></label>
+                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Indication)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-times-circle text-rose-500 text-xl mr-2 align-middle"></i> ❌ Inapp. (Indication)</div></label>
+                                        <label class="cursor-pointer show-atb"><input type="radio" name="evaluation" value="❌Inappropriate (Culture bacteria)" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-times-circle text-rose-500 text-xl mr-2 align-middle"></i> ❌ Inapp. (Culture)</div></label>
+                                        <label class="cursor-pointer show-tami show-other"><input type="radio" name="evaluation" value="❌Inappropriate" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-times-circle text-rose-500 text-xl mr-2 align-middle"></i> ❌ Inappropriate</div></label>
+                                        <label class="cursor-pointer"><input type="radio" name="evaluation" value="ไม่สามารถประเมินได้" class="peer sr-only" onchange="updateStatusBadge()"><div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:bg-slate-200 peer-checked:border-slate-500 peer-checked:text-slate-800 font-bold shadow-sm hover:bg-white"><i class="fa-solid fa-ban text-slate-500 text-xl mr-2 align-middle"></i> ไม่สามารถประเมินได้</div></label>
+                                    </div>
+                                    
+                                    <div class="max-w-md">
+                                        <label class="label-text font-bold text-sky-700">เภสัชกรผู้ประเมิน</label>
+                                        <input type="text" name="pharmacist" list="pharList" class="input-field border-sky-300 bg-white" placeholder="พิมพ์ชื่อเภสัชกร">
+                                        <datalist id="pharList"><option value="ภญ.ณัฐชยา แบนเพชร"><option value="เทิดพงษ์ ซงากรณ์"><option value="ศศิธร ชนะ"></datalist>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="pt-4 flex justify-between items-center sticky bottom-0 bg-slate-50 py-4 border-t z-40">
-                            <button type="button" onclick="cancelEdit()" id="btn-cancel" class="hidden px-6 py-3 border border-slate-300 text-slate-600 rounded-xl hover:bg-slate-100 font-medium">ยกเลิกการแก้ไข</button>
+                        <div class="pt-6 flex justify-between items-center sticky bottom-4 z-40">
+                            <button type="button" onclick="cancelEdit()" id="btn-cancel" class="hidden px-6 py-4 bg-white border-2 border-slate-300 text-slate-700 rounded-2xl hover:bg-slate-100 font-bold shadow-md transition-all">ยกเลิกการแก้ไข</button>
                             <div class="flex-1 text-right">
-                                <button type="submit" id="btn-submit" class="px-8 py-3 bg-primary text-white text-lg font-bold rounded-xl hover:bg-sky-600 shadow-md shadow-sky-500/30 flex items-center justify-center ml-auto">
-                                    <i class="fa-solid fa-save mr-2"></i> <span id="btn-submit-text">บันทึก DUE ใหม่</span>
+                                <button type="submit" id="btn-submit" class="px-10 py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xl font-black rounded-2xl hover:from-sky-600 hover:to-blue-700 shadow-xl shadow-sky-500/40 flex items-center justify-center ml-auto transform hover:-translate-y-1 transition-all">
+                                    <i class="fa-solid fa-paper-plane mr-3"></i> <span id="btn-submit-text">บันทึกข้อมูลเข้าระบบ</span>
                                 </button>
                             </div>
                         </div>
@@ -318,30 +392,30 @@
 
             <!-- ================= VIEW: LIST / TRACKER ================= -->
             <section id="view-list" class="hidden h-full flex-col">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 flex-1 flex flex-col overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <select id="listFilter" onchange="renderList()" class="input-field max-w-xs py-1.5">
-                            <option value="all">ดูทุกกลุ่มยา</option>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                        <select id="listFilter" onchange="renderList()" class="input-field max-w-xs py-2 font-medium">
+                            <option value="all">แสดงทั้งหมด (ทุกกลุ่มยา)</option>
                             <option value="Tracker">เฉพาะ Antibiotics</option>
                             <option value="Tamiflu">เฉพาะ Tamiflu</option>
-                            <option value="Other">เฉพาะ ยาอื่นๆ (Atorvastatin)</option>
+                            <option value="Other">เฉพาะ Atorvastatin</option>
                         </select>
-                        <input type="text" id="searchInput" onkeyup="renderList()" placeholder="ค้นหา HN, ชื่อ, ยา..." class="input-field max-w-xs py-1.5 pl-10" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2394a3b8%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z%22/></svg>'); background-position: 10px center; background-repeat: no-repeat; background-size: 16px;">
+                        <input type="text" id="searchInput" onkeyup="renderList()" placeholder="ค้นหา HN, ชื่อผู้ป่วย, ยา..." class="input-field max-w-xs py-2 pl-10" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2394a3b8%22><path stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z%22/></svg>'); background-position: 10px center; background-repeat: no-repeat; background-size: 18px;">
                     </div>
                     <div class="flex-1 overflow-auto">
-                        <table class="w-full text-left border-collapse text-sm min-w-[800px]">
+                        <table class="w-full text-left border-collapse text-sm min-w-[900px]">
                             <thead class="bg-slate-100 text-slate-600 sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="px-4 py-3 font-semibold">วันที่</th>
-                                    <th class="px-4 py-3 font-semibold">HN / ผู้ป่วย</th>
-                                    <th class="px-4 py-3 font-semibold">กลุ่ม/รายการยา</th>
-                                    <th class="px-4 py-3 font-semibold">แพทย์</th>
-                                    <th class="px-4 py-3 font-semibold">สถานะ</th>
-                                    <th class="px-4 py-3 font-semibold">ประเมิน</th>
-                                    <th class="px-4 py-3 font-semibold text-center">จัดการ</th>
+                                    <th class="px-5 py-4 font-bold">วันที่เริ่มยา</th>
+                                    <th class="px-5 py-4 font-bold">HN / ผู้ป่วย</th>
+                                    <th class="px-5 py-4 font-bold">กลุ่ม/รายการยา</th>
+                                    <th class="px-5 py-4 font-bold">แพทย์ผู้สั่ง</th>
+                                    <th class="px-5 py-4 font-bold">สถานะ</th>
+                                    <th class="px-5 py-4 font-bold">ผลประเมิน</th>
+                                    <th class="px-5 py-4 font-bold text-center">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-body" class="divide-y divide-slate-100 text-slate-700">
+                            <tbody id="table-body" class="divide-y divide-slate-100 text-slate-700 bg-white">
                                 <!-- Rendered by JS -->
                             </tbody>
                         </table>
@@ -352,32 +426,32 @@
             <!-- ================= VIEW: DASHBOARD ================= -->
             <section id="view-dashboard" class="hidden space-y-6">
                 <!-- KPI Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl mr-4"><i class="fa-solid fa-file-medical"></i></div>
-                        <div><p class="text-sm text-slate-500">เคสทั้งหมด</p><h3 id="dash-total" class="text-2xl font-bold text-slate-800">0</h3></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl mr-4"><i class="fa-solid fa-file-medical"></i></div>
+                        <div><p class="text-sm text-slate-500 font-medium">เคสทั้งหมด</p><h3 id="dash-total" class="text-3xl font-black text-slate-800">0</h3></div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xl mr-4"><i class="fa-solid fa-clock"></i></div>
-                        <div><p class="text-sm text-slate-500">รอประเมิน / รอผล</p><h3 id="dash-pending" class="text-2xl font-bold text-amber-600">0</h3></div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mr-4"><i class="fa-solid fa-clock"></i></div>
+                        <div><p class="text-sm text-slate-500 font-medium">รอประเมิน / รอผล</p><h3 id="dash-pending" class="text-3xl font-black text-amber-600">0</h3></div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mr-4"><i class="fa-solid fa-check"></i></div>
-                        <div><p class="text-sm text-slate-500">Appropriate</p><h3 id="dash-appr" class="text-2xl font-bold text-emerald-600">0</h3></div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mr-4"><i class="fa-solid fa-check"></i></div>
+                        <div><p class="text-sm text-slate-500 font-medium">Appropriate</p><h3 id="dash-appr" class="text-3xl font-black text-emerald-600">0</h3></div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl mr-4"><i class="fa-solid fa-xmark"></i></div>
-                        <div><p class="text-sm text-slate-500">Inappropriate</p><h3 id="dash-inapp" class="text-2xl font-bold text-rose-600">0</h3></div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-2xl mr-4"><i class="fa-solid fa-xmark"></i></div>
+                        <div><p class="text-sm text-slate-500 font-medium">Inappropriate</p><h3 id="dash-inapp" class="text-3xl font-black text-rose-600">0</h3></div>
                     </div>
                 </div>
                 <!-- Charts -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-4">มูลค่าการใช้ยา (บาท)</h3>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">มูลค่าการใช้ยา (บาท)</h3>
                         <div class="h-64"><canvas id="valChart"></canvas></div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h3 class="text-lg font-semibold text-slate-800 mb-4">จำนวนการสั่งจ่ายแยกตามแพทย์ (Top 5)</h3>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">จำนวนการสั่งจ่ายแยกตามแพทย์ (Top 5)</h3>
                         <div class="h-64"><canvas id="docChart"></canvas></div>
                     </div>
                 </div>
@@ -390,16 +464,12 @@
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrGJR8EzUhas14AfwUaphyL1gkaAUNPW1F2AZXGH6eWH1BHd14QmrDKd76g8zNwN2QnA/exec';
         
-        // State
         let appData = { tracker: [], tamiflu: [], other: [] };
         let allRecordsFlat = [];
         let formMode = 'create'; // 'create' or 'edit'
 
-        // Initialization
         document.addEventListener('DOMContentLoaded', () => {
-            // เปิดหน้า Form เป็นหน้าแรกสุดเมื่อเข้าสู่ระบบ
             openNewForm(); 
-            // โหลดข้อมูล Dashboard และ List อยู่เบื้องหลัง
             fetchData();
         });
 
@@ -408,7 +478,6 @@
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById('view-' + viewId).classList.remove('hidden');
             
-            // Nav Highlighting
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('bg-sky-500/20', 'text-sky-400', 'font-medium');
                 el.classList.add('text-slate-300');
@@ -419,21 +488,26 @@
                 activeNav.classList.remove('text-slate-300');
             }
 
-            // Titles
             if(viewId === 'dashboard') document.getElementById('page-title').innerText = 'ภาพรวมระบบ (Dashboard)';
             if(viewId === 'list') { document.getElementById('page-title').innerText = 'รายการติดตาม DUE'; renderList(); }
-            if(viewId === 'form') document.getElementById('page-title').innerText = formMode === 'create' ? 'สร้างแบบฟอร์มใหม่' : 'แก้ไขข้อมูล';
+            if(viewId === 'form') document.getElementById('page-title').innerText = formMode === 'create' ? 'สร้างแบบฟอร์มใหม่' : 'แก้ไขข้อมูลเพื่อประเมิน';
         }
 
         function showAlert(msg, type='success') {
             const box = document.getElementById('alert-box');
             const icon = document.getElementById('alert-icon');
             const text = document.getElementById('alert-text');
-            box.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-            if(type === 'success') { box.classList.add('bg-green-100', 'text-green-800'); icon.className = 'fa-solid fa-circle-check text-green-600'; }
-            else { box.classList.add('bg-red-100', 'text-red-800'); icon.className = 'fa-solid fa-triangle-exclamation text-red-600'; }
+            box.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-500', 'bg-rose-50', 'text-rose-800', 'border-rose-500');
+            if(type === 'success') { 
+                box.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-500'); 
+                icon.className = 'fa-solid fa-circle-check text-emerald-600'; 
+            } else { 
+                box.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-500'); 
+                icon.className = 'fa-solid fa-triangle-exclamation text-rose-600'; 
+            }
             text.innerText = msg;
             setTimeout(() => box.classList.add('hidden'), 5000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // ================= FORM LOGIC =================
@@ -442,12 +516,10 @@
             const container = document.getElementById('form-container');
             
             container.classList.remove('mode-atb', 'mode-tamiflu', 'mode-other');
-            
             if(cat === 'Tracker') container.classList.add('mode-atb');
             else if(cat === 'Tamiflu') container.classList.add('mode-tamiflu');
             else if(cat === 'Other') container.classList.add('mode-other');
             
-            // Recalculate limits if needed
             calcTotal();
         }
 
@@ -456,10 +528,11 @@
             const btn = document.getElementById('btn-toggle-part2');
             if(p2.classList.contains('hidden')) {
                 p2.classList.remove('hidden');
-                btn.innerHTML = '<i class="fa-solid fa-chevron-up mr-2"></i> ปิดส่วนที่ 2';
+                btn.innerHTML = '<i class="fa-solid fa-chevron-up mr-2 text-lg"></i> ปิดส่วนประเมินผล';
+                p2.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
                 p2.classList.add('hidden');
-                btn.innerHTML = '<i class="fa-solid fa-chevron-down mr-2"></i> เปิดกรอกข้อมูลส่วนที่ 2 (ผลการรักษา/ประเมิน)';
+                btn.innerHTML = '<i class="fa-solid fa-chevron-down mr-2 text-lg"></i> เปิดส่วนประเมินผล (Part 2)';
             }
         }
 
@@ -468,12 +541,12 @@
             const badge = document.getElementById('form-status-badge');
             const statusInput = document.getElementById('finalStatus');
             if(evals.length > 0) {
-                badge.className = "px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700";
-                badge.innerText = "สถานะ: Completed";
+                badge.className = "px-4 py-1.5 rounded-full text-sm font-bold bg-emerald-100 text-emerald-700 shadow-sm border border-emerald-300";
+                badge.innerHTML = '<i class="fa-solid fa-check-double mr-2"></i> Completed';
                 statusInput.value = "Completed";
             } else {
-                badge.className = "px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-700";
-                badge.innerText = "สถานะ: รับ DUE";
+                badge.className = "px-4 py-1.5 rounded-full text-sm font-bold bg-amber-100 text-amber-700 shadow-sm border border-amber-300 flex items-center";
+                badge.innerHTML = '<i class="fa-solid fa-clock mr-2"></i> รับ DUE';
                 statusInput.value = "รับDUE";
             }
         }
@@ -483,7 +556,7 @@
             const age = parseFloat(document.getElementById('age').value);
             const weight = parseFloat(document.getElementById('weight').value);
             const scr = parseFloat(document.getElementById('scr').value);
-            const sex = document.getElementById('sex').value;
+            const sex = document.querySelector('input[name="sex"]:checked')?.value;
             if(age && weight && scr) {
                 let crcl = ((140 - age) * weight) / (72 * scr);
                 if(sex === 'หญิง') crcl *= 0.85;
@@ -491,8 +564,8 @@
             }
         }
         function calcPerDay() {
-            const sel = document.getElementById('interval');
-            const factor = parseFloat(sel.options[sel.selectedIndex]?.getAttribute('data-f')) || 0;
+            const sel = document.querySelector('input[name="interval"]:checked');
+            const factor = sel ? parseFloat(sel.getAttribute('data-f')) : 0;
             document.getElementById('perDay').value = factor || '';
             calcTotal();
         }
@@ -534,7 +607,7 @@
                     if(!document.getElementById('view-list').classList.contains('hidden')) renderList();
                 }
             } catch(e) {
-                console.warn("Fetch error, using blank data. Check GAS 'Anyone' permissions.", e);
+                console.warn("Fetch error. Check GAS 'Anyone' permissions.", e);
             }
         }
 
@@ -548,7 +621,6 @@
                     allRecordsFlat.push(item);
                 });
             });
-            // Sort by latest (assuming ID is somewhat chronologic or by Started)
             allRecordsFlat.reverse(); 
         }
 
@@ -558,29 +630,26 @@
             let total = allRecordsFlat.length;
             let pending = 0, appr = 0, inapp = 0;
             let docCounts = {};
-            let valuesByCat = { 'Antibiotics': 0, 'Tamiflu': 0, 'Other': 0 };
+            let valuesByCat = { 'Antibiotics': 0, 'Tamiflu': 0, 'Atorvastatin': 0 };
 
             allRecordsFlat.forEach(d => {
                 const status = (d.Status||'').toLowerCase();
                 const ev = (d.Evaluated||'');
                 const cat = d._category;
                 
-                // Status KPI
                 if(!status && !ev) pending++;
                 else if(status === 'pending' || status === 'รับdue') pending++;
                 
                 if(ev.includes('✅') || ev.toLowerCase().includes('appropriate')) appr++;
                 if(ev.includes('❌') || ev.toLowerCase().includes('inappropriate')) inapp++;
 
-                // Value Data
                 let val = parseFloat(d.Value || d.Total || d.มูลค่า) || 0;
                 if(cat === 'Tracker') valuesByCat['Antibiotics'] += val;
                 else if(cat === 'Tamiflu') valuesByCat['Tamiflu'] += val;
-                else valuesByCat['Other'] += val;
+                else valuesByCat['Atorvastatin'] += val;
 
-                // Doctor Data
                 let doc = d.Doctor || d['แพทย์'] || 'ไม่ระบุ';
-                docCounts[doc] = (docCounts[doc] || 0) + 1;
+                if(doc !== 'ไม่ระบุ') docCounts[doc] = (docCounts[doc] || 0) + 1;
             });
 
             document.getElementById('dash-total').innerText = total;
@@ -592,27 +661,25 @@
         }
 
         function renderCharts(values, doctors) {
-            // Pie Chart (Value)
             if(charts.valChart) charts.valChart.destroy();
             charts.valChart = new Chart(document.getElementById('valChart'), {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(values),
-                    datasets: [{ data: Object.values(values), backgroundColor: ['#0284c7', '#9333ea', '#0d9488'] }]
+                    datasets: [{ data: Object.values(values), backgroundColor: ['#0ea5e9', '#a855f7', '#14b8a6'], hoverOffset: 10 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: {font: {family: 'Kanit'}} } } }
             });
 
-            // Bar Chart (Doctors Top 5)
             const sortedDocs = Object.entries(doctors).sort((a,b)=>b[1]-a[1]).slice(0,5);
             if(charts.docChart) charts.docChart.destroy();
             charts.docChart = new Chart(document.getElementById('docChart'), {
                 type: 'bar',
                 data: {
                     labels: sortedDocs.map(d=>d[0].replace('นพ.','').replace('พญ.','')),
-                    datasets: [{ label: 'จำนวนเคส', data: sortedDocs.map(d=>d[1]), backgroundColor: '#38bdf8', borderRadius: 4 }]
+                    datasets: [{ label: 'จำนวนเคส (ครั้ง)', data: sortedDocs.map(d=>d[1]), backgroundColor: '#38bdf8', borderRadius: 6 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
             });
         }
 
@@ -623,10 +690,9 @@
             const search = document.getElementById('searchInput').value.toLowerCase();
             
             tbody.innerHTML = '';
-            
             let count = 0;
+            
             allRecordsFlat.forEach(item => {
-                // Filters
                 if(filterCat !== 'all' && item._category !== filterCat) return;
                 const hnStr = String(item.HN || '');
                 const nameStr = String(item.Name || item['ชื่อ'] || '').toLowerCase();
@@ -635,52 +701,66 @@
 
                 count++;
                 
-                // Formatting
                 const status = (item.Status || 'รอประเมิน');
-                let stClass = "bg-amber-100 text-amber-700";
-                if(status.toLowerCase() === 'completed') stClass = "bg-green-100 text-green-700";
+                let stClass = "bg-amber-100 text-amber-700 border-amber-200";
+                if(status.toLowerCase() === 'completed') stClass = "bg-emerald-100 text-emerald-700 border-emerald-300";
                 
                 const ev = item.Evaluated || '-';
-                let evHtml = `<span class="text-slate-500">${ev}</span>`;
-                if(ev.includes('✅')) evHtml = `<span class="text-green-600 font-medium">${ev}</span>`;
-                if(ev.includes('❌')) evHtml = `<span class="text-red-600 font-medium">${ev}</span>`;
+                let evHtml = `<span class="text-slate-400 italic">${ev}</span>`;
+                if(ev.includes('✅')) evHtml = `<span class="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded">${ev}</span>`;
+                if(ev.includes('❌')) evHtml = `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-1 rounded">${ev}</span>`;
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b border-slate-50";
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                
+                // Color badges for Category
+                let catBadge = "bg-slate-100 text-slate-600";
+                let catLabel = item._category;
+                if(item._category === 'Tracker') { catBadge = "bg-sky-100 text-sky-700 border border-sky-200"; catLabel = "Antibiotics"; }
+                if(item._category === 'Tamiflu') catBadge = "bg-purple-100 text-purple-700 border border-purple-200";
+                if(item._category === 'Other') { catBadge = "bg-teal-100 text-teal-700 border border-teal-200"; catLabel = "Atorvastatin"; }
+
                 tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap">${item.Started || item['วันที่'] || '-'}</td>
-                    <td class="px-4 py-3"><div class="font-bold text-sky-700">${hnStr}</div><div class="text-xs">${nameStr}</div></td>
-                    <td class="px-4 py-3"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-500 mr-1">${item._category}</span><br>${drugStr}</td>
-                    <td class="px-4 py-3 text-xs">${item.Doctor || '-'}</td>
-                    <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-medium ${stClass}">${status}</span></td>
-                    <td class="px-4 py-3 text-xs">${evHtml}</td>
-                    <td class="px-4 py-3 text-center">
-                        <button onclick="editRecord('${item.ID}', '${item._category}')" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="ดู/แก้ไข">
-                            <i class="fa-solid fa-pen-to-square"></i>
+                    <td class="px-5 py-4 whitespace-nowrap text-slate-500 font-medium">${item.Started || item['วันที่'] || '-'}</td>
+                    <td class="px-5 py-4"><div class="font-bold text-sky-700 text-base">${hnStr}</div><div class="text-xs text-slate-500">${nameStr}</div></td>
+                    <td class="px-5 py-4"><span class="px-2 py-0.5 rounded text-xs font-bold ${catBadge} mr-2">${catLabel}</span><br><span class="font-medium text-slate-700 mt-1 block">${drugStr}</span></td>
+                    <td class="px-5 py-4 text-sm text-slate-600 font-medium">${item.Doctor || '-'}</td>
+                    <td class="px-5 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold border ${stClass}">${status}</span></td>
+                    <td class="px-5 py-4 text-xs">${evHtml}</td>
+                    <td class="px-5 py-4 text-center">
+                        <button onclick="editRecord('${item.ID}', '${item._category}')" class="px-3 py-2 bg-sky-50 text-sky-600 hover:bg-sky-500 hover:text-white rounded-lg transition-all shadow-sm font-bold text-sm">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i> ประเมิน/แก้ไข
                         </button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
             
-            if(count === 0) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">ไม่พบข้อมูล</td></tr>`;
+            if(count === 0) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-3 block text-slate-300"></i>ไม่พบข้อมูลในตาราง</td></tr>`;
         }
 
         // ================= EDIT LOGIC =================
+        function setRadioByValue(name, value) {
+            if(!value) return;
+            const radios = document.querySelectorAll(`input[name="${name}"]`);
+            radios.forEach(r => { if(r.value === value || String(value).includes(r.value)) r.checked = true; });
+        }
+
         function openNewForm() {
             formMode = 'create';
             document.getElementById('dueForm').reset();
             document.getElementById('recordId').value = '';
             document.getElementById('startDate').valueAsDate = new Date();
             document.getElementById('part2-container').classList.add('hidden');
+            document.getElementById('btn-toggle-part2').innerHTML = '<i class="fa-solid fa-chevron-down mr-2 text-lg"></i> เปิดส่วนประเมินผล (Part 2)';
             
             // Enable Category Radios
             document.querySelectorAll('input[name="drugCategory"]').forEach(el => el.disabled = false);
             
-            document.getElementById('form-mode-title').innerText = "สร้างแบบฟอร์ม DUE ใหม่";
-            document.getElementById('form-mode-subtitle').innerText = "เลือกกลุ่มยาเพื่อเริ่มกรอกข้อมูล";
+            document.getElementById('form-mode-title').innerText = "ฟอร์มบันทึก DUE";
+            document.getElementById('form-mode-subtitle').innerText = "เลือกแท็บด้านล่างเพื่อประเมินกลุ่มยา";
             document.getElementById('btn-cancel').classList.add('hidden');
-            document.getElementById('btn-submit-text').innerText = "บันทึก DUE ใหม่";
+            document.getElementById('btn-submit-text').innerText = "บันทึกข้อมูลเข้าระบบ";
             
             updateStatusBadge();
             changeFormMode();
@@ -694,60 +774,58 @@
             formMode = 'edit';
             document.getElementById('dueForm').reset();
             
-            // Set Hidden Info
             document.getElementById('recordId').value = id;
             document.getElementById('recordGroup').value = category;
 
-            // Lock Category Radio
             document.querySelectorAll('input[name="drugCategory"]').forEach(el => {
                 if(el.value === category) el.checked = true;
                 el.disabled = true; // Lock in edit mode
             });
             changeFormMode();
 
-            // Populate mapping (Basic mapping. You may need to adjust keys based on exact CSV headers)
+            // Populate Map
             document.getElementsByName('hn')[0].value = record.HN || '';
             document.getElementsByName('patientName')[0].value = record.Name || record['ชื่อ'] || '';
             document.getElementsByName('doctor')[0].value = record.Doctor || record['แพทย์'] || '';
             
-            // Dates
+            // Date Parsing
             if(record.Started) {
-                // Try to parse Date format (assuming MM/DD/YYYY or DD/MM/YYYY from sheets, handle carefully in real app)
                 let parts = record.Started.split('/');
                 if(parts.length===3) {
-                     // Very basic handling, assumes MM/DD/YYYY or similar. Better to use standard YYYY-MM-DD
-                     document.getElementById('startDate').value = parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : ''; // Assuming DD/MM/YYYY from Thai format
+                     document.getElementById('startDate').value = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
                 }
             }
 
-            // Drug specific
+            // Sets Radios
             if(category === 'Tracker') {
-                const drugInputs = document.querySelectorAll('input[name="drugATB"]');
-                drugInputs.forEach(i => { if(record.Drug && record.Drug.includes(i.value)) i.checked = true; });
-                document.getElementsByName('ward')[0].value = record.Ward || '';
+                setRadioByValue('drugATB', record.Drug);
+                setRadioByValue('ward', record.Ward);
+                setRadioByValue('interval', record.Interval);
+                setRadioByValue('source', record.Source);
+                setRadioByValue('siteATB', record.Site);
             } else if(category === 'Tamiflu') {
-                const drugInputs = document.querySelectorAll('input[name="drugTami"]');
-                drugInputs.forEach(i => { if(record.Drug && record.Drug.includes(i.value)) i.checked = true; });
+                setRadioByValue('drugTami', record.Drug);
             }
+
+            setRadioByValue('sex', record.Sex);
+            setRadioByValue('specialistApproved', record['Staff Approved']);
 
             // Evaluation / Part 2 Open
             if(record.Status === 'Completed' || record.Evaluated) {
                 document.getElementById('part2-container').classList.remove('hidden');
-                document.getElementById('btn-toggle-part2').innerHTML = '<i class="fa-solid fa-chevron-up mr-2"></i> ปิดส่วนที่ 2';
+                document.getElementById('btn-toggle-part2').innerHTML = '<i class="fa-solid fa-chevron-up mr-2 text-lg"></i> ปิดส่วนประเมินผล';
                 
-                // Set Evaluation Radio
-                if(record.Evaluated) {
-                    const evals = document.querySelectorAll('input[name="evaluation"]');
-                    evals.forEach(ev => { if(record.Evaluated.includes(ev.value) || ev.value.includes(record.Evaluated)) ev.checked = true; });
-                }
+                setRadioByValue('cultureType', record['Type of culture']);
+                setRadioByValue('result', record.Result);
+                setRadioByValue('evaluation', record.Evaluated);
             } else {
                 document.getElementById('part2-container').classList.add('hidden');
-                document.getElementById('btn-toggle-part2').innerHTML = '<i class="fa-solid fa-chevron-down mr-2"></i> เปิดกรอกข้อมูลส่วนที่ 2 (ผลการรักษา/ประเมิน)';
+                document.getElementById('btn-toggle-part2').innerHTML = '<i class="fa-solid fa-chevron-down mr-2 text-lg"></i> เปิดส่วนประเมินผล (Part 2)';
             }
 
             // UI Updates
-            document.getElementById('form-mode-title').innerText = "แก้ไขข้อมูล DUE: " + (record.HN || id);
-            document.getElementById('form-mode-subtitle').innerText = "คุณสามารถอัปเดตข้อมูลหรือประเมินผลในส่วนที่ 2 ได้";
+            document.getElementById('form-mode-title').innerHTML = `<span class="text-sky-600">แก้ไขข้อมูล DUE :</span> ${record.HN || id}`;
+            document.getElementById('form-mode-subtitle').innerText = "คุณสามารถอัปเดตข้อมูลหรือเปิด Part 2 เพื่อประเมินผลได้";
             document.getElementById('btn-cancel').classList.remove('hidden');
             document.getElementById('btn-submit-text').innerText = "อัปเดตข้อมูล";
             updateStatusBadge();
@@ -765,23 +843,27 @@
             e.preventDefault();
             const btn = document.getElementById('btn-submit');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-3"></i> กำลังบันทึก...';
             btn.disabled = true;
 
             const form = e.target;
             const formData = new FormData(form);
             const dataObj = Object.fromEntries(formData.entries());
             
-            // Extract correct drug name based on active category
             const cat = dataObj.drugCategory || document.querySelector('input[name="drugCategory"]:checked').value;
             if(cat === 'Tracker') dataObj.finalDrug = dataObj.drugATB;
             else if(cat === 'Tamiflu') dataObj.finalDrug = dataObj.drugTami;
             else dataObj.finalDrug = dataObj.drugOther;
 
-            dataObj.mode = formMode; // 'create' or 'edit'
+            dataObj.mode = formMode; 
+
+            // Include calculated disabled fields just in case
+            dataObj.crcl = document.getElementById('crcl').value;
+            dataObj.duration = document.getElementById('duration').value;
+            dataObj.totalDose = document.getElementById('totalDose').value;
+            dataObj.totalValueRaw = (parseFloat(document.getElementById('totalDose').value) || 0) * (parseFloat(document.getElementById('price').value) || 0);
 
             try {
-                // Post to GAS. (Note: Your GAS script doPost needs to handle mode=='edit' logic based on recordId)
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'no-cors', 
@@ -789,16 +871,16 @@
                     body: JSON.stringify(dataObj)
                 });
                 
-                showAlert(formMode === 'create' ? "บันทึกข้อมูลใหม่สำเร็จ" : "อัปเดตข้อมูลสำเร็จ", "success");
+                showAlert(formMode === 'create' ? "บันทึกข้อมูลใหม่ลง Google Sheet เรียบร้อย!" : "อัปเดตข้อมูลสำเร็จ!", "success");
                 
-                // Refresh data
                 setTimeout(() => {
                     fetchData();
-                    cancelEdit(); // resets form and goes to list
+                    if(formMode === 'edit') cancelEdit(); 
+                    else openNewForm();
                 }, 1500);
 
             } catch(err) {
-                showAlert("เกิดข้อผิดพลาด: " + err.message, "error");
+                showAlert("เกิดข้อผิดพลาดในการบันทึก: " + err.message, "error");
             }
 
             btn.innerHTML = originalText;
