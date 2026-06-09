@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Warfarin คิดแป๊ปเดียว !</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+        }
+        /* Custom pill styling for visual representation */
+        .pill { width: 24px; height: 24px; border-radius: 9999px; display: inline-block; margin: 2px; }
+        .pill-1 { background-color: #E5E7EB; border: 1px solid #D1D5DB; } /* Color for 1mg pill */
+        .pill-2 { background-color: orange; } /* Color for 2mg pill */
+        .pill-3 { background-color: skyblue; } /* Color for 3mg pill */
+        .pill-5 { background-color: pink; } /* Color for 5mg pill */
+        .pill-half-left {
+            width: 24px; height: 24px;
+            border-radius: 9999px;
+            display: inline-block;
+            margin: 2px;
+            /* Creates a half-circle effect for half pills */
+            clip-path: inset(0 50% 0 0);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6">
+    <div class="max-w-5xl mx-auto bg-white p-6 rounded-2xl shadow-lg relative">
+        <div class="absolute top-6 right-6">
+            <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Warfarin คิดแป๊ปเดียว !</span>
+        </div>
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-800 bg-blue-50 p-4 rounded-xl shadow">โปรแกรมคำนวณขนาดยา Warfarin</h1>
+        
+        <div class="max-w-4xl mx-auto mb-6">
+            <div style="position: relative; width: 100%; height: 0; padding-top: 56.2500%;
+             padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden;
+             border-radius: 8px; will-change: transform;">
+              <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0;margin: 0;"
+                src="https://www.canva.com/design/DAGr4hxyiRI/T8PUUZhf8fgNkFF_EU0iPQ/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
+              </iframe>
+            </div>
+            <a href="https://www.canva.com/design/DAGr4hxyiRI/T8PUUZhf8fgNkFF_EU0iPQ/view?utm_content=DAGr4hxyiRI&amp;utm_campaign=designshare&amp;utm_medium=embeds&amp;utm_source=link" target="_blank" rel="noopener" class="block text-center text-xs text-gray-500 mt-2 hover:text-blue-600">Design by Narawit Kamyuang</a>
+        </div>
+
+        <hr class="my-6 border-gray-300">
+
+        <div class="max-w-2xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="previousDoseInput" class="block text-gray-700 text-sm font-bold mb-2">ขนาดยาก่อนหน้า (mg/week)</label>
+                    <input type="number" id="previousDoseInput" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" step="0.1" min="0">
+                </div>
+                <div>
+                    <label for="weeklyDoseInput" class="block text-gray-700 text-sm font-bold mb-2">ขนาดยาใหม่ (mg/week)</label>
+                    <input type="number" id="weeklyDoseInput" class="w-full border border-gray-300 px-3 py-2 rounded-lg bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500" step="0.1" min="0">
+                </div>
+            </div>
+            <div class="mb-4 flex justify-center">
+                <div class="flex items-start">
+                    <input type="checkbox" id="allowHalf" checked class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 accent-orange-500 mt-1 flex-shrink-0 cursor-pointer">
+                    <div class="ml-2 text-left">
+                        <label for="allowHalf" class="text-gray-700 text-sm font-bold cursor-pointer">ใช้ทั้งยา เม็ดเต็ม และ ครึ่ง (1/2) เม็ด ในการคำนวณ</label>
+                        <p class="text-xs text-gray-500 mt-1 leading-tight">(หากต้องการใช้เฉพาะยาเม็ดเต็ม ในการคำนวณเท่านั้น! - กรุณาเอาเครื่องหมาย ✓ ออก)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="my-4 pt-2">
+            <label class="block text-gray-700 text-sm font-bold mb-2 text-center">เลือกขนาดยาที่ใช้คำนวณ</label>
+            <div id="pillSelection" class="flex justify-center gap-x-3 sm:gap-x-6 flex-wrap">
+                <div class="flex items-center">
+                    <input type="checkbox" id="pill-1" value="1" class="pill-checkbox form-checkbox h-5 w-5 text-blue-600 accent-orange-500">
+                    <label for="pill-1" class="ml-2 flex items-center gap-x-2 cursor-pointer">
+                        <span class="pill pill-1"></span> 1 mg
+                    </label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="pill-2" value="2" class="pill-checkbox form-checkbox h-5 w-5 text-blue-600 accent-orange-500" checked>
+                    <label for="pill-2" class="ml-2 flex items-center gap-x-2 cursor-pointer">
+                        <span class="pill pill-2"></span> 2 mg
+                    </label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="pill-3" value="3" class="pill-checkbox form-checkbox h-5 w-5 text-blue-600 accent-orange-500" checked>
+                    <label for="pill-3" class="ml-2 flex items-center gap-x-2 cursor-pointer">
+                        <span class="pill pill-3"></span> 3 mg
+                    </label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="pill-5" value="5" class="pill-checkbox form-checkbox h-5 w-5 text-blue-600 accent-orange-500" checked>
+                    <label for="pill-5" class="ml-2 flex items-center gap-x-2 cursor-pointer">
+                        <span class="pill pill-5"></span> 5 mg
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-6 border-gray-300">
+
+        <div class="my-4 pt-2">
+            <label class="block text-gray-700 text-sm font-bold mb-2 text-center">รูปแบบวันพิเศษ/หยุดยา</label>
+            <div class="flex justify-center gap-x-4 sm:gap-x-8">
+                <div class="flex items-center">
+                    <input type="radio" id="patternFriSun" name="specialDayPattern" value="fri-sun" class="form-radio h-4 w-4 text-blue-600 accent-orange-500" checked>
+                    <label for="patternFriSun" class="ml-2 text-gray-700">ศุกร์/เสาร์/อาทิตย์ (ค่าเริ่มต้น)</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="radio" id="patternMonWedFri" name="specialDayPattern" value="mon-wed-fri" class="form-radio h-4 w-4 text-blue-600 accent-orange-500">
+                    <label for="patternMonWedFri" class="ml-2 text-gray-700">กระจายขนาดยา (จันทร์/พุธ/ศุกร์)</label>
+                </div>
+            </div>
+        </div>
+
+        <div id="adjustmentTable" class="my-4"></div>
+        <div class="flex justify-center">
+            <button id="showBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg mb-4 w-full md:w-auto hover:bg-blue-700 transition duration-150 ease-in-out shadow-md flex items-center justify-center">แสดงตัวเลือก</button>
+        </div>
+        <div id="percentageChange" class="text-center my-4" aria-live="polite"></div>
+
+        <hr class="my-6 border-gray-300">
+        
+        <div class="flex items-center justify-center">
+            <input type="checkbox" id="appointmentToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 accent-orange-500">
+            <label for="appointmentToggle" class="ml-2 text-gray-800 font-bold">คำนวณจำนวนยาตามนัด</label>
+        </div>
+        <p class="text-center text-xs text-gray-500 mt-1">*หากไม่ระบุ จะคำนวณยาที่ใช้ใน 1 สัปดาห์</p>
+        
+        <div id="appointmentFields" class="hidden mt-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="startDate" class="block text-gray-700 text-sm font-bold mb-2">วันที่เริ่มต้น (วันที่มา):</label>
+                    <input type="date" id="startDate" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="endDate" class="block text-gray-700 text-sm font-bold mb-2">วันนัดครั้งถัดไป:</label>
+                    <input type="date" id="endDate" class="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div id="daysResult" class="text-center text-lg font-semibold mb-4 text-gray-700" aria-live="polite"></div>
+        </div>
+        
+        <hr class="my-6 border-gray-300">
+
+        <div class="my-4 pt-2">
+            <label class="block text-gray-700 text-sm font-bold mb-2 text-center">การจัดเรียงวัน</label>
+            <div class="flex justify-center gap-x-4 sm:gap-x-8">
+                <div class="flex items-center">
+                    <input type="radio" id="displaySunSat" name="displayOrder" value="sun-sat" class="form-radio h-4 w-4 text-blue-600 accent-orange-500" checked>
+                    <label for="displaySunSat" class="ml-2 text-gray-700">อาทิตย์ - เสาร์ (ค่าเริ่มต้น)</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="radio" id="displayMonSun" name="displayOrder" value="mon-sun" class="form-radio h-4 w-4 text-blue-600 accent-orange-500">
+                    <label for="displayMonSun" class="ml-2 text-gray-700">จันทร์ - อาทิตย์</label>
+                </div>
+            </div>
+        </div>
+
+        <div id="result" class="space-y-4 mt-6" aria-live="polite"></div>
+
+        <div class="mt-8 pt-4 border-t border-gray-200">
+            <!-- เครดิตผู้พัฒนา - มุมขวาล่าง -->
+            <div class="text-right text-xs text-gray-400 mb-6">
+                <p>พัฒนาโดย ภก.นราวิชญ์ คำยวง</p>
+                <p>กลุ่มงานเภสัชกรรม โรงพยาบาลอุทัย</p>
+            </div>
+            
+            <!-- ส่วนแสดงยอดเข้าใช้งาน - กึ่งกลางจอล่างสุด -->
+            <div class="flex justify-center pb-2">
+                <div class="flex items-center gap-1.5 text-blue-600 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 shadow-sm">
+                    <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    <span id="viewCountDisplay" class="font-semibold tracking-wide text-xs">กำลังโหลดสถิติ...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- เปลี่ยน script type เป็น module เพื่อใช้งาน Firebase SDK -->
+    <script type="module">
+    // --- IMPORT FIREBASE MODULES ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+    // --- FIREBASE CONFIGURATION ---
+    // ปรับให้รองรับทั้งสภาพแวดล้อม Preview (Canvas) และโฮสต์จริงของคุณ
+    const isCanvas = typeof __firebase_config !== 'undefined';
+    const firebaseConfig = isCanvas ? JSON.parse(__firebase_config) : {
+      apiKey: "AIzaSyAWKp56uNguelQB7OqYo62yDgBEmPvt8mM",
+      authDomain: "warfarin-planner.firebaseapp.com",
+      projectId: "warfarin-planner",
+      storageBucket: "warfarin-planner.firebasestorage.app",
+      messagingSenderId: "878147766050",
+      appId: "1:878147766050:web:8b1eeae90e698c8605c77b",
+      measurementId: "G-YCKWZRCT5Q"
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // --- FIREBASE INITIALIZATION & VIEW COUNTER LOGIC ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'warfarin-app';
+        
+        const viewCountDisplay = document.getElementById('viewCountDisplay');
+        
+        // กำหนด Path ที่ถูกต้องสำหรับแต่ละสภาพแวดล้อม
+        const statDocRef = isCanvas
+            ? doc(db, 'artifacts', appId, 'public', 'data', 'statistics', 'page_views')
+            : doc(db, 'statistics', 'page_views');
+
+        async function initViewCounter() {
+            try {
+                // 1. เข้าสู่ระบบแบบไม่ระบุตัวตน 
+                if (isCanvas && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // 2. ดึงข้อมูลและสร้าง Real-time Listener อัปเดตยอดวิวบนหน้าจอ
+                onSnapshot(statDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        viewCountDisplay.textContent = `ยอดการเข้าใช้งานสะสม ${data.count.toLocaleString()} ครั้ง`;
+                    } else {
+                        viewCountDisplay.textContent = `ยอดการเข้าใช้งานสะสม 0 ครั้ง`;
+                    }
+                }, (error) => {
+                    console.error("Error listening to view count:", error);
+                    viewCountDisplay.textContent = `เปิดใช้งานออฟไลน์`;
+                });
+
+                // 3. ตรวจสอบ Session Storage เพื่อป้องกันการปั๊มยอดวิวจากการ Refresh
+                if (!sessionStorage.getItem('warfarin_session_active')) {
+                    const docSnap = await getDoc(statDocRef);
+                    if (docSnap.exists()) {
+                        // หากมี Document อยู่แล้ว ให้ +1
+                        await updateDoc(statDocRef, {
+                            count: increment(1)
+                        });
+                    } else {
+                        // หากยังไม่มี (เปิดครั้งแรกสุดของระบบ) ให้สร้างใหม่และเซ็ตค่าเป็น 1
+                        await setDoc(statDocRef, {
+                            count: 1
+                        });
+                    }
+                    // บันทึก Session ว่าได้ทำการนับวิวในรอบนี้ไปแล้ว
+                    sessionStorage.setItem('warfarin_session_active', 'true');
+                }
+            } catch (error) {
+                console.error("Firebase setup error:", error);
+                
+                // ตรวจจับ Error และแสดงข้อความที่ชัดเจน
+                if (error.code === 'auth/configuration-not-found') {
+                    viewCountDisplay.textContent = `โปรดเปิดใช้งาน Anonymous Auth`;
+                    viewCountDisplay.classList.add('text-red-500');
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    viewCountDisplay.textContent = `โดเมนไม่ได้รับอนุญาตใน Firebase`;
+                    viewCountDisplay.classList.add('text-red-500');
+                } else {
+                    viewCountDisplay.textContent = `พร้อมใช้งาน (ไม่เชื่อมต่อสถิติ)`;
+                }
+            }
+        }
+
+        // เริ่มต้นการทำงานของ View Counter
+        initViewCounter();
+
+
+        // --- CONFIGURATION ---
+        const daysName = ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.', 'อา.'];
+        const DOSE_MULTIPLIER_LIMIT = 2.5;
+        const ABSOLUTE_MAX_DAILY_DOSE = 15;
+        const FLOAT_TOLERANCE = 0.01;
+
+        // --- DOM ELEMENT REFERENCES ---
+        const previousDoseInput = document.getElementById('previousDoseInput');
+        const weeklyDoseInput = document.getElementById('weeklyDoseInput');
+        const allowHalfCheckbox = document.getElementById('allowHalf');
+        const showBtn = document.getElementById('showBtn');
+        const adjustmentTableDiv = document.getElementById('adjustmentTable');
+        const percentageChangeDiv = document.getElementById('percentageChange');
+        const resultDiv = document.getElementById('result');
+        const appointmentToggle = document.getElementById('appointmentToggle');
+        const appointmentFields = document.getElementById('appointmentFields');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const daysResultDiv = document.getElementById('daysResult');
+        const patternFriSunRadio = document.getElementById('patternFriSun');
+        const patternMonWedFriRadio = document.getElementById('patternMonWedFri');
+        const displaySunSatRadio = document.getElementById('displaySunSat');
+        const displayMonSunRadio = document.getElementById('displayMonSun');
+        const pillCheckboxes = document.querySelectorAll('.pill-checkbox');
+
+        /**
+         * Gets the currently selected pill strengths from the checkboxes.
+         */
+        function getAvailablePills() {
+            const selectedPills = [];
+            pillCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedPills.push(parseInt(checkbox.value));
+                }
+            });
+            // Sort descending to prioritize larger pills in the findComb algorithm
+            return selectedPills.sort((a, b) => b - a);
+        }
+
+        /**
+         * Maps JS Date.getDay() to local day index (Mon=0, Sun=6).
+         */
+        function getThaiDayIndex(jsDayIndex) {
+            return (jsDayIndex === 0) ? 6 : jsDayIndex - 1;
+        }
+
+        /**
+         * Generates interactive buttons for quick dose adjustment.
+         */
+        function generateDoseAdjustmentTable() {
+            const prev = parseFloat(previousDoseInput.value);
+            if (isNaN(prev) || prev <= 0) {
+                adjustmentTableDiv.innerHTML = '';
+                return;
+            }
+            adjustmentTableDiv.innerHTML = '<h3 class="text-lg font-semibold mb-3 text-center text-gray-700">ปรับขนาดยาอัตโนมัติ <span class="text-sm font-normal">🖱️ (คลิกเพื่อเลือก)</span></h3>';
+            const percentages = [-20, -15, -10, -5, 0, 5, 10, 15, 20];
+            let buttonsHtml = '<div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2 text-center">';
+            percentages.forEach(p => {
+                const exactDose = prev * (1 + p / 100);
+                const roundedDose = Math.round(exactDose * 2) / 2;
+                const buttonColor = p < 0 ? 'bg-red-100 hover:bg-red-200 text-red-800' : (p === 0 ? 'bg-blue-100 hover:bg-blue-200 text-blue-800' : 'bg-green-100 hover:bg-green-200 text-green-800');
+                buttonsHtml += `
+                    <button data-dose="${roundedDose}" class="dose-adjust-btn p-2 rounded-lg ${buttonColor} transition duration-150 ease-in-out shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <div class="font-bold text-lg">${p > 0 ? '+' : ''}${p}%</div>
+                        <div class="text-sm">${roundedDose.toFixed(1)} mg</div>
+                    </button>`;
+            });
+            buttonsHtml += '</div>';
+            adjustmentTableDiv.innerHTML = buttonsHtml;
+
+            adjustmentTableDiv.querySelectorAll('.dose-adjust-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const dose = parseFloat(this.dataset.dose);
+                    setWeeklyDoseAndSuggest(dose);
+                });
+            });
+        }
+
+        /**
+         * Sets the weekly dose input and triggers suggestion generation.
+         */
+        function setWeeklyDoseAndSuggest(dose) {
+            weeklyDoseInput.value = dose.toFixed(1);
+            displayPercentageChange();
+            showBtn.click();
+        }
+
+        /**
+         * Displays the percentage change between previous and new dose.
+         */
+        function displayPercentageChange() {
+            const weeklyDose = parseFloat(weeklyDoseInput.value);
+            const previousDose = parseFloat(previousDoseInput.value);
+            percentageChangeDiv.innerHTML = '';
+
+            if (!isNaN(weeklyDose) && !isNaN(previousDose) && previousDose > 0) {
+                const pctChange = ((weeklyDose - previousDose) / previousDose * 100);
+
+                let content = '';
+                if (Math.abs(pctChange) < 0.05) {
+                    content = `
+                        <div class="p-4 border-2 border-blue-300 bg-blue-50 rounded-lg shadow-md">
+                            <div class="text-lg text-gray-700 mb-1">การเปลี่ยนแปลงขนาดยา</div>
+                            <div class="flex items-center justify-center">
+                                <span class="text-5xl font-bold text-gray-800">คงที่</span>
+                            </div>
+                        </div>`;
+                } else {
+                    const isIncrease = pctChange > 0;
+                    const arrow = isIncrease ? '▲' : '▼';
+                    const absPctChange = Math.abs(pctChange).toFixed(1);
+                    const arrowColor = isIncrease ? 'text-green-600' : 'text-red-600';
+                    const boxClasses = isIncrease 
+                        ? 'border-2 border-green-300 bg-green-50' 
+                        : 'border-2 border-red-300 bg-red-50';
+                    
+                    content = `
+                        <div class="p-4 ${boxClasses} rounded-lg shadow-md">
+                            <div class="text-lg text-gray-700 mb-1">การเปลี่ยนแปลงขนาดยา</div>
+                            <div class="flex items-center justify-center gap-x-2">
+                                <span class="text-5xl font-bold ${arrowColor}">${arrow}</span>
+                                <span class="text-6xl font-bold text-gray-800">${absPctChange}</span>
+                                <span class="text-4xl text-gray-700 self-end mb-1">%</span>
+                            </div>
+                        </div>`;
+                }
+                percentageChangeDiv.innerHTML = content;
+            }
+        }
+
+        /**
+         * Generates and displays suggestions for Warfarin dosage.
+         */
+        function generateSuggestions() {
+            const weeklyDose = parseFloat(weeklyDoseInput.value);
+            const allowHalf = allowHalfCheckbox.checked;
+            const availablePills = getAvailablePills();
+            resultDiv.innerHTML = '';
+
+            if (isNaN(weeklyDose) || weeklyDose < 0) {
+                resultDiv.innerHTML = '<div class="text-red-600 text-center font-bold">กรุณากรอกขนาดยาใหม่ที่ถูกต้อง</div>';
+                return;
+            }
+             if (availablePills.length === 0) {
+                resultDiv.innerHTML = '<div class="text-red-600 text-center font-bold">กรุณาเลือกขนาดยาอย่างน้อย 1 ขนาด</div>';
+                return;
+            }
+            displayPercentageChange();
+
+            let { daysUntilAppointment, isAppointmentCalculation, startDate } = getAppointmentInfo();
+            const specialDayPattern = document.querySelector('input[name="specialDayPattern"]:checked').value;
+            
+            let options = [];
+            const seenOptions = new Set();
+
+            // Case 1: Uniform dose
+            const dailyDoseTarget = weeklyDose / 7;
+            if (dailyDoseTarget >= 0) {
+                const dailyCombos = findComb(dailyDoseTarget, availablePills, allowHalf, dailyDoseTarget === 0 ? 0 : 1, 4);
+                dailyCombos.forEach(c => {
+                    const actualWeeklyDose = c.reduce((sum, p) => sum + (p.half ? p.mg * 0.5 * p.count : p.mg * p.count), 0) * 7;
+                    if (Math.abs(actualWeeklyDose - weeklyDose) < FLOAT_TOLERANCE) {
+                        const key = `uniform-${JSON.stringify(c.map(p => `${p.mg}-${p.count}-${p.half}`).sort())}`;
+                        if (!seenOptions.has(key)) {
+                            seenOptions.add(key);
+                            options.push({ type: 'uniform', combo: c, weeklyDoseActual: actualWeeklyDose, priority: 0 });
+                        }
+                    }
+                });
+            }
+
+            // Case 2: Non-uniform doses
+            for (let numStopDays = 0; numStopDays <= 3; numStopDays++) {
+                for (let numSpecialDays = 0; numSpecialDays <= (3 - numStopDays); numSpecialDays++) {
+                    const normalDaysCount = 7 - numStopDays - numSpecialDays;
+                    if (normalDaysCount === 7) continue;
+
+                    let stopDaysIndices = [];
+                    let specialDaysIndices = [];
+
+                    if (specialDayPattern === 'fri-sun') {
+                        stopDaysIndices = Array.from({ length: numStopDays }, (_, i) => 6 - i);
+                        specialDaysIndices = Array.from({ length: numSpecialDays }, (_, i) => 6 - numStopDays - i);
+                    } else { // mon-wed-fri
+                        if (numSpecialDays === 3) { 
+                            specialDaysIndices = [0, 2, 4];
+                        } else if (numSpecialDays === 2) {
+                            specialDaysIndices = [0, 4];
+                            if (numStopDays === 1) {
+                                stopDaysIndices = [2];
+                            }
+                        } else if (numSpecialDays === 1) {
+                            if (numStopDays === 2) {
+                                specialDaysIndices = [2];
+                                stopDaysIndices = [0, 4];
+                            } else if (numStopDays === 1) {
+                                specialDaysIndices = [0];
+                                stopDaysIndices = [2];
+                            } else {
+                                specialDaysIndices = [2];
+                            }
+                        } else {
+                            if (numStopDays === 3) stopDaysIndices = [0, 2, 4];
+                            else if (numStopDays === 2) stopDaysIndices = [0, 4];
+                            else if (numStopDays === 1) stopDaysIndices = [2];
+                        }
+                    }
+
+                    for (let baseDose = 0.5; baseDose <= ABSOLUTE_MAX_DAILY_DOSE; baseDose += 0.5) {
+                        const normalDayCombos = findComb(baseDose, availablePills, allowHalf, 1, 4);
+                        if (normalDayCombos.length === 0) continue;
+
+                        const remainingDose = weeklyDose - (baseDose * normalDaysCount);
+                        
+                        if (numSpecialDays === 0) {
+                            if (Math.abs(remainingDose) > FLOAT_TOLERANCE) continue;
+                            addNonUniformOption(options, seenOptions, { baseDose, numStopDays, stopDaysIndices, normalDayCombos, weeklyDose, availablePills });
+                        } 
+                        else {
+                            if (remainingDose <= FLOAT_TOLERANCE) continue;
+                            const specialDayDoseTarget = +(remainingDose / numSpecialDays).toFixed(2);
+                            if (Math.abs(specialDayDoseTarget - baseDose) < FLOAT_TOLERANCE || specialDayDoseTarget <= 0) continue;
+                            if (specialDayDoseTarget > ABSOLUTE_MAX_DAILY_DOSE || specialDayDoseTarget > baseDose * DOSE_MULTIPLIER_LIMIT) continue;
+                            
+                            const specialDayCombos = findComb(specialDayDoseTarget, availablePills, allowHalf, 1, 4);
+                            if (specialDayCombos.length === 0) continue;
+                            
+                            addNonUniformOption(options, seenOptions, { baseDose, numStopDays, stopDaysIndices, numSpecialDays, specialDaysIndices, specialDayDoseTarget, normalDayCombos, specialDayCombos, weeklyDose, availablePills });
+                        }
+                    }
+                }
+            }
+
+            sortAndRenderOptions(options, daysUntilAppointment, isAppointmentCalculation, startDate);
+        }
+
+        /**
+         * Helper to add a valid non-uniform option to the list, avoiding duplicates.
+         */
+        function addNonUniformOption(options, seenOptions, params) {
+            const { baseDose, numStopDays, stopDaysIndices, numSpecialDays = 0, specialDaysIndices = [], specialDayDoseTarget = 0, normalDayCombos, specialDayCombos = [[]], weeklyDose } = params;
+            
+            specialDayCombos.forEach(sCombo => {
+                normalDayCombos.forEach(nCombo => {
+                    const comboWeekly = Array(7).fill(null);
+                    let actualWeeklyDose = 0;
+                    for (let i = 0; i < 7; i++) {
+                        if (stopDaysIndices.includes(i)) {
+                            comboWeekly[i] = [];
+                        } else if (specialDaysIndices.includes(i)) {
+                            comboWeekly[i] = sCombo.slice();
+                        } else {
+                            comboWeekly[i] = nCombo.slice();
+                        }
+                        actualWeeklyDose += comboWeekly[i].reduce((sum, p) => sum + (p.half ? p.mg * 0.5 * p.count : p.mg * p.count), 0);
+                    }
+
+                    if (Math.abs(actualWeeklyDose - weeklyDose) < FLOAT_TOLERANCE) {
+                         const key = `nonuniform-${JSON.stringify(comboWeekly.map(day => day ? day.map(p => `${p.mg}-${p.count}-${p.half}`).sort().join('|') : 'null'))}`;
+                         if (!seenOptions.has(key)) {
+                            seenOptions.add(key);
+                            options.push({
+                                type: 'non-uniform', comboWeekly, weeklyDoseActual: actualWeeklyDose,
+                                baseDose, specialDose: specialDayDoseTarget,
+                                numStopDays, stopDays: stopDaysIndices.sort((a,b)=>a-b),
+                                numSpecialDays, specialDays: specialDaysIndices.sort((a,b)=>a-b),
+                                priority: 1
+                            });
+                        }
+                    }
+                });
+            });
+        }
+
+        /**
+         * Sorts the generated options and renders them to the DOM.
+         */
+        function sortAndRenderOptions(options, daysUntilAppointment, isAppointmentCalculation, startDate) {
+             if (options.length === 0) {
+                 resultDiv.innerHTML = '<div class="text-red-600 text-center font-bold">ไม่พบตัวเลือกที่เหมาะสมสำหรับขนาดยาที่ต้องการ</div>';
+                 return;
+             }
+
+            options.sort((a, b) => {
+                const aHalfComplexity = getHalfPillComplexity(a);
+                const bHalfComplexity = getHalfPillComplexity(b);
+                if (aHalfComplexity !== bHalfComplexity) return aHalfComplexity - bHalfComplexity;
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                const aComplexity = (a.numStopDays || 0) + (a.numSpecialDays || 0);
+                const bComplexity = (b.numStopDays || 0) + (b.numSpecialDays || 0);
+                if (aComplexity !== bComplexity) return aComplexity - bComplexity;
+                const aColors = countPillColors(a);
+                const bColors = countPillColors(b);
+                if (aColors !== bColors) return aColors - bColors;
+                const aTotalPills = countTotalPillObjects(a);
+                const bTotalPills = countTotalPillObjects(b);
+                if (aTotalPills !== bTotalPills) return aTotalPills - bTotalPills;
+                return 0;
+            });
+
+            resultDiv.innerHTML = options.slice(0, 30).map((option, index) => {
+                return renderOption(option, index, daysUntilAppointment, isAppointmentCalculation, startDate);
+            }).join('');
+        }
+        
+        /**
+         * Renders a single dosage option card.
+         */
+        function renderOption(option, index, daysUntilAppointment, isAppointmentCalculation, startDate) {
+            let description = '';
+            if (option.type === 'uniform') {
+                const dailyDose = option.combo.reduce((sum, p) => sum + (p.half ? p.mg * 0.5 * p.count : p.mg * p.count), 0);
+                description = dailyDose > 0 ? `ทุกวัน วันละ ${dailyDose.toFixed(1)} mg` : 'หยุดยา';
+            } else { // non-uniform
+                let parts = [];
+                if(option.baseDose > 0) parts.push(`วันธรรมดา ${option.baseDose.toFixed(1)} mg`);
+                if (option.numSpecialDays > 0) {
+                    parts.push(`วันพิเศษ ${option.specialDose.toFixed(1)} mg (${option.specialDays.map(idx => daysName[idx]).join(', ')})`);
+                }
+                if (option.numStopDays > 0) {
+                    parts.push(`หยุดยา ${option.numStopDays} วัน (${option.stopDays.map(idx => daysName[idx]).join(', ')})`);
+                }
+                description = parts.join(', ');
+            }
+
+            const selectedDisplayOrder = document.querySelector('input[name="displayOrder"]:checked').value;
+            const displayOrder = selectedDisplayOrder === 'mon-sun' ? [0, 1, 2, 3, 4, 5, 6] : [6, 0, 1, 2, 3, 4, 5];
+
+            const weeklyScheduleHtml = displayOrder.map(j => {
+                const combo = option.type === 'uniform' ? option.combo : option.comboWeekly[j];
+                let dayType = 'normal';
+                if (option.type === 'non-uniform') {
+                    if (option.stopDays.includes(j)) dayType = 'stop';
+                    else if (option.specialDays.includes(j)) dayType = 'special';
+                }
+                return renderDay(j, combo, dayType);
+            }).join('');
+
+            const totalPillsHeader = isAppointmentCalculation ? `รวมยาถึงวันนัด (${daysUntilAppointment} วัน):` : 'รวมยาสำหรับ 1 สัปดาห์:';
+            const pillsNeededMessage = calculateTotalPills(option, daysUntilAppointment, startDate);
+
+            return `
+                <div class="border border-gray-200 p-4 rounded-lg bg-gray-50 mb-4 shadow-sm">
+                    <div class="font-semibold text-blue-700 mb-2">ตัวเลือก ${index + 1}: ${description} (รวม ${option.weeklyDoseActual.toFixed(1)} mg/สัปดาห์)</div>
+                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-4">${weeklyScheduleHtml}</div>
+                    <div class="mt-4 text-sm border-t border-gray-200 pt-2 text-gray-700">
+                        <span class="font-bold">${totalPillsHeader}</span><br>
+                        ${pillsNeededMessage}
+                    </div>
+                </div>`;
+        }
+
+        /**
+         * Renders the HTML for a single day's dosage display.
+         */
+        function renderDay(idx, combo, dayType) {
+            const dayColors = ['bg-yellow-100', 'bg-pink-100', 'bg-green-100', 'bg-orange-200', 'bg-sky-100', 'bg-purple-100', 'bg-red-200'];
+            let visualPills = '';
+            let textPillsArr = [];
+            let dayDose = 0;
+            
+            if (combo && combo.length > 0) {
+                combo.forEach(p => {
+                    dayDose += p.half ? p.mg * 0.5 * p.count : p.mg * p.count;
+                    if (p.half) {
+                        for (let k = 0; k < p.count; k++) visualPills += `<span class="pill pill-${p.mg} pill-half-left"></span>`;
+                        if (p.count > 0) textPillsArr.push(`${p.mg} mg x(ครึ่ง)`);
+                    } else {
+                        for (let k = 0; k < p.count; k++) visualPills += `<span class="pill pill-${p.mg}"></span>`;
+                        if (p.count > 0) textPillsArr.push(`${p.mg} mg x${p.count}`);
+                    }
+                });
+            }
+
+            let dayContentHtml;
+            let containerClasses = "rounded-lg border text-center flex flex-col h-full overflow-hidden ";
+
+            if (dayType === 'stop' || dayDose < FLOAT_TOLERANCE) {
+                containerClasses += 'bg-gray-100 border-gray-300';
+                dayContentHtml = `
+                    <div class="text-sm text-gray-800">(0.0 mg)</div>
+                    <div class="flex-grow flex flex-col justify-center items-center my-2 min-h-[30px]">
+                        <div class="text-xs text-gray-500">ไม่มีขนาดยา</div>
+                    </div>
+                `;
+            } else {
+                const textPillsHtml = textPillsArr.map(t => `<div class="text-xs text-gray-600">${t}</div>`).join('');
+                if (dayType === 'special') {
+                    containerClasses += 'bg-white border-red-400 border-2';
+                } else {
+                    containerClasses += 'bg-white border-gray-300';
+                }
+                dayContentHtml = `
+                    <div class="text-sm text-gray-800">(${dayDose.toFixed(1)} mg)</div>
+                    <div class="flex-grow flex flex-col justify-center items-center my-2 min-h-[30px]">
+                        <div class="flex justify-center items-center flex-wrap">${visualPills || '&nbsp;'}</div>
+                    </div>
+                    <div>${textPillsHtml}</div>
+                `;
+            }
+
+            return `
+                <div class="${containerClasses}">
+                    <div class="font-bold text-gray-800 py-1 ${dayColors[idx]}">${daysName[idx]}</div>
+                    <div class="p-2 flex-grow flex flex-col">
+                        ${dayContentHtml}
+                    </div>
+                </div>`;
+        }
+        
+        /**
+         * Finds combinations of pills for a target dose.
+         */
+        function findComb(target, availablePills, allowHalf, minPillObjects, maxPillObjects) {
+            const resultCombos = [];
+            if (Math.abs(target) < FLOAT_TOLERANCE) return minPillObjects === 0 ? [[]] : [];
+
+            function findRecursive(currentDose, currentCombo, pillIndex) {
+                if (currentCombo.length > maxPillObjects || currentDose > target + FLOAT_TOLERANCE) return;
+                if (Math.abs(currentDose - target) < FLOAT_TOLERANCE) {
+                    if (currentCombo.length >= minPillObjects) resultCombos.push(aggregateCombo(currentCombo));
+                    return;
+                }
+                if (pillIndex >= availablePills.length) return;
+
+                const pillMg = availablePills[pillIndex];
+                currentCombo.push({ mg: pillMg, half: false });
+                findRecursive(currentDose + pillMg, currentCombo, pillIndex);
+                currentCombo.pop();
+                
+                if (allowHalf) {
+                    currentCombo.push({ mg: pillMg, half: true });
+                    findRecursive(currentDose + pillMg / 2, currentCombo, pillIndex);
+                    currentCombo.pop();
+                }
+                findRecursive(currentDose, currentCombo, pillIndex + 1);
+            }
+            
+            findRecursive(0, [], 0);
+            
+            const seenKeys = new Set();
+            return resultCombos.filter(combo => {
+                for (const pill of combo) {
+                    if (pill.half && pill.count > 1) {
+                        return false; 
+                    }
+                }
+
+                const key = JSON.stringify(combo.sort((a,b) => a.mg - b.mg));
+                if (seenKeys.has(key)) return false;
+                seenKeys.add(key);
+                return true;
+            });
+        }
+        
+        /**
+         * Aggregates a list of pill objects into a counted format.
+         */
+        function aggregateCombo(combo) {
+            const aggregated = {};
+            combo.forEach(pill => {
+                const key = `${pill.mg}-${pill.half}`;
+                if (!aggregated[key]) aggregated[key] = { mg: pill.mg, half: pill.half, count: 0 };
+                aggregated[key].count++;
+            });
+            return Object.values(aggregated);
+        }
+
+        // --- UTILITY & HELPER FUNCTIONS ---
+
+        function getHalfPillComplexity(o) {
+            const halfPillStrengths = new Set();
+            const combosToScan = o.type === 'uniform' ? [o.combo] : (o.comboWeekly || []);
+            combosToScan.forEach(dayCombo => {
+                if (dayCombo) {
+                    dayCombo.forEach(pill => {
+                        if (pill.half) halfPillStrengths.add(pill.mg);
+                    });
+                }
+            });
+            return halfPillStrengths.size;
+        }
+
+        function countPillColors(o) {
+            const colors = new Set();
+            const combosToScan = o.type === 'uniform' ? [o.combo] : (o.comboWeekly || []);
+            combosToScan.forEach(day => day && day.forEach(p => (p.count > 0 || p.half) && colors.add(p.mg)));
+            return colors.size;
+        }
+
+        function countTotalPillObjects(o) {
+            const dailyPillObjects = (day) => day ? day.reduce((s, p) => s + p.count, 0) : 0;
+            if (o.type === 'uniform') return dailyPillObjects(o.combo) * 7;
+            return (o.comboWeekly || []).reduce((s, day) => s + dailyPillObjects(day), 0);
+        }
+        
+        /**
+         * Calculates total pills to dispense for an option.
+         */
+        function calculateTotalPills(option, daysUntilAppointment, startDate) {
+            let halfPillCounts = { 1: 0, 2: 0, 3: 0, 5: 0 };
+            let wholePillCounts = { 1: 0, 2: 0, 3: 0, 5: 0 };
+            const startJsDayIndex = startDate ? startDate.getDay() : 1; 
+
+            for (let day = 0; day < daysUntilAppointment; day++) {
+                const currentDayIndexForCombo = getThaiDayIndex((startJsDayIndex + day) % 7);
+                const comboForDay = option.type === 'uniform' ? option.combo : option.comboWeekly[currentDayIndexForCombo];
+                if (comboForDay) {
+                    comboForDay.forEach(p => {
+                        if (p.half) halfPillCounts[p.mg] += p.count;
+                        else wholePillCounts[p.mg] += p.count;
+                    });
+                }
+            }
+            
+            let message = '';
+            [5, 3, 2, 1].forEach(mg => {
+                const wholePills = wholePillCounts[mg] + Math.floor(halfPillCounts[mg] / 2);
+                const remainingHalves = halfPillCounts[mg] % 2;
+                const dispensedPills = wholePills + remainingHalves;
+                if (dispensedPills > 0) {
+                    const actualUsed = wholePills + remainingHalves * 0.5;
+                    message += `<span class="pill pill-${mg}"></span> ${mg}mg: ${dispensedPills} เม็ด`;
+                    if (remainingHalves > 0) message += ` (ใช้จริง ${actualUsed.toFixed(1)} เม็ด)`;
+                    message += `<br>`;
+                }
+            });
+            return message || '<span>ไม่ต้องจ่ายยา</span>';
+        }
+
+        /**
+         * Gets and validates appointment dates.
+         */
+        function getAppointmentInfo() {
+            let daysUntilAppointment = 7;
+            let isAppointmentCalculation = false;
+            let startDate = null;
+            
+            if (appointmentToggle.checked) {
+                const startVal = startDateInput.value;
+                const endVal = endDateInput.value;
+                if (startVal && endVal) {
+                    const startDt = new Date(startVal);
+                    const endDt = new Date(endVal);
+                    startDt.setHours(0, 0, 0, 0);
+                    endDt.setHours(0, 0, 0, 0);
+                    if (endDt > startDt) {
+                        const timeDiff = endDt.getTime() - startDt.getTime();
+                        daysUntilAppointment = Math.round(timeDiff / (1000 * 3600 * 24));
+                        isAppointmentCalculation = true;
+                        startDate = startDt;
+                    }
+                }
+            }
+            return { daysUntilAppointment, isAppointmentCalculation, startDate };
+        }
+        
+        /**
+         * Updates the appointment days display and triggers recalculation if needed.
+         */
+        function updateAppointmentDaysDisplay() {
+            const { daysUntilAppointment, isAppointmentCalculation } = getAppointmentInfo();
+            if (isAppointmentCalculation) {
+                 daysResultDiv.textContent = `คำนวณสำหรับ ${daysUntilAppointment} วัน`;
+            } else {
+                 daysResultDiv.textContent = '';
+            }
+
+            if (resultDiv.innerHTML.trim() !== '') {
+                generateSuggestions();
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        showBtn.addEventListener('click', generateSuggestions);
+        previousDoseInput.addEventListener('input', generateDoseAdjustmentTable);
+        weeklyDoseInput.addEventListener('input', displayPercentageChange);
+        
+        appointmentToggle.addEventListener('change', () => {
+            if (appointmentToggle.checked) {
+                appointmentFields.classList.remove('hidden');
+                if (!startDateInput.value) {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    startDateInput.value = `${yyyy}-${mm}-${dd}`;
+                }
+            } else {
+                appointmentFields.classList.add('hidden');
+            }
+            updateAppointmentDaysDisplay();
+        });
+
+        startDateInput.addEventListener('change', updateAppointmentDaysDisplay);
+        endDateInput.addEventListener('change', updateAppointmentDaysDisplay);
+        
+        function handleOptionChange() {
+            if (resultDiv.innerHTML.trim() !== '') {
+                generateSuggestions();
+            }
+        }
+
+        patternFriSunRadio.addEventListener('change', handleOptionChange);
+        patternMonWedFriRadio.addEventListener('change', handleOptionChange);
+        displaySunSatRadio.addEventListener('change', handleOptionChange);
+        displayMonSunRadio.addEventListener('change', handleOptionChange);
+        pillCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', handleOptionChange);
+        });
+
+        // Initial call
+        generateDoseAdjustmentTable();
+    });
+    </script>
+</body>
+</html>
