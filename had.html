@@ -6,13 +6,12 @@
     <title>Sawee High Alert</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         * { font-family: 'Sarabun', sans-serif !important; }
         body { background-color: #f3f4f6; margin: 0; padding: 0; }
         
-        /* A4 Strict Bounds */
+        /* A4 Strict Bounds สำหรับดูบนหน้าเว็บ */
         .a4-preview {
             width: 210mm;
             height: 297mm;
@@ -47,7 +46,7 @@
         .doc-table th { font-weight: 600; }
         .doc-table td.text-left { text-align: left; padding-left: 4px; }
         
-        /* อินพุต */
+        /* อินพุตหน้าจอ */
         .cell-input {
             width: 100%; height: 100%; border: none; background: transparent; 
             text-align: center; font-size: 10px; outline: none; color: #dc2626;
@@ -64,25 +63,73 @@
         }
         .time-picker:focus, .date-picker:focus { background: #fecaca; }
 
-        /* การตั้งค่าสำหรับการ Print/PDF (ลบ UI กวนใจออก) */
-        .a4-preview.exporting {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            margin: 0 !important;
-            z-index: 9999 !important;
-            border: none !important;
-            box-shadow: none !important;
+        /* ======================================= */
+        /* การตั้งค่าสำหรับการพิมพ์ PDF (Native Print) */
+        /* ======================================= */
+        @page {
+            size: A4 portrait;
+            margin: 0; /* ตัดขอบของ Browser ออกทั้งหมด เพื่อให้คุมจากหน้าเว็บ 100% */
         }
-        .exporting .cell-input, .exporting .time-picker, .exporting .date-picker { 
-            color: #000 !important; background-color: transparent !important; 
+        
+        @media print {
+            body { 
+                background-color: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+            }
+            /* ซ่อน Sidebar */
+            .md\:w-1\/4 { display: none !important; }
+            .flex-1 { padding: 0 !important; overflow: hidden !important; }
+            
+            /* กำหนดพื้นที่ PDF เป๊ะๆ */
+            .a4-preview {
+                width: 210mm !important;
+                height: 297mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 8mm 10mm !important;
+                transform: none !important;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+            }
+            
+            /* บังคับไม่ให้เกิดหน้า 2 อย่างเด็ดขาด */
+            html, body {
+                height: 297mm !important;
+                overflow: hidden !important;
+            }
+
+            /* ลบ UI กวนใจเวลา Print */
+            .now-btn { display: none !important; }
+            .time-picker-container { width: 100% !important; }
+            
+            /* บังคับให้ Input กลายเป็นเหมือนตัวหนังสือธรรมดา */
+            input, select { 
+                border: none !important; 
+                background: transparent !important; 
+                color: #000 !important; /* เป็นสีดำในเอกสารจริง */
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
+            .time-picker, .date-picker { color: #000 !important; font-weight: normal !important; }
+            
+            /* ช่องที่ไม่ได้เปิดใช้ (Disabled) ให้ซ่อนข้อความและการลงสี */
+            .cell-input:disabled, .time-picker:disabled, .date-picker:disabled { 
+                color: transparent !important; 
+                background-color: transparent !important; 
+            }
+            
+            ::-webkit-input-placeholder { color: transparent !important; }
+            input[type="time"]::-webkit-calendar-picker-indicator,
+            input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+
+            /* บังคับ Browser ให้พิมพ์สีพื้นหลัง Background สีแดงและเทา */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
-        .exporting .cell-input::placeholder { color: transparent !important; }
-        .exporting input[type="time"]::-webkit-calendar-picker-indicator,
-        .exporting input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; -webkit-appearance: none; }
-        .exporting .now-btn { display: none !important; }
-        .exporting .time-picker-container { width: 100% !important; }
-        .exporting .bg-red-50, .exporting .bg-red-100 { background-color: transparent !important; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -90,6 +137,7 @@
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
+    <!-- แผงควบคุมด้านซ้าย -->
     <div class="w-full md:w-1/4 bg-white shadow-xl z-10 flex flex-col h-full border-r border-gray-200">
         <div class="p-4 bg-red-700 text-white flex-shrink-0">
             <h1 class="text-xl font-bold">Sawee High Alert</h1>
@@ -164,11 +212,13 @@
         
         <div class="p-4 border-t border-gray-200 bg-gray-100 flex-shrink-0">
             <button onclick="generatePDF()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded shadow">
-                สร้างไฟล์ PDF (1 หน้า)
+                สร้างไฟล์ PDF (ระบบ Native)
             </button>
+            <p class="text-[9px] text-center text-gray-500 mt-1">เลือกปลายทางเป็น Save as PDF ในหน้าพิมพ์</p>
         </div>
     </div>
 
+    <!-- แผงแสดงผล PDF ด้านขวา -->
     <div class="flex-1 overflow-y-auto p-4 flex justify-center no-scrollbar relative items-start pt-8 pb-8">
         <div id="pdfContent" class="a4-preview">
             <div id="patientHeaderContainer" class="flex-shrink-0"></div>
@@ -361,7 +411,10 @@
             const timeInp = cell.querySelector('.time-picker');
             const d = new Date();
             
-            if(dateInp) dateInp.value = d.toISOString().split('T')[0];
+            if(dateInp) {
+                // แปลงเป็น YYYY-MM-DD เพื่อให้แสดงใน input type date ได้ถูกต้อง
+                dateInp.value = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            }
             if(timeInp) {
                 timeInp.value = d.toTimeString().substring(0,5);
                 toggleCol(timeInp, colClass);
@@ -394,8 +447,6 @@
             html += generateADEHTML(drug);
             container.innerHTML = html;
         }
-
-        // --- STREAMING_CHUNK:Building Table Templates ---
 
         const tdInput = (col) => `<td><input type="text" class="cell-input ${col}" disabled placeholder="-"></td>`;
         const adeSelect = (col) => `<td><select class="cell-input ${col}" disabled><option value=""></option><option value="X">X (ปกติ)</option><option value="O">O (ผิดปกติ)</option></select></td>`;
@@ -580,55 +631,16 @@
             `;
         }
 
-        // --- STREAMING_CHUNK:Exporting PDF logic (Strict 1 Page) ---
+        // ==========================================
+        // ระบบ Native PDF (การสั่ง Print)
+        // ==========================================
         function generatePDF() {
             const drugKey = document.getElementById('drugSelect').value;
             if (!drugKey) return alert('กรุณาเลือกยาก่อนสร้าง PDF');
-
-            const element = document.getElementById('pdfContent');
             
-            // รีเซ็ต Scroll ให้อยู่มุมซ้ายบนสุด ป้องกันบั๊ก PDF ล้นขอบจาก html2canvas
-            window.scrollTo(0, 0);
-            if (element.parentElement) {
-                element.parentElement.scrollTop = 0;
-                element.parentElement.scrollLeft = 0;
-            }
-            
-            // Sync values
-            element.querySelectorAll('input[type="text"], input[type="time"], input[type="date"], select').forEach(inp => {
-                if(inp.tagName === 'SELECT') {
-                    // สร้าง span แทนที่ select ตอนปริ้นท์เพื่อให้แสดงค่าที่เลือกได้ชัดเจน
-                    inp.setAttribute('data-val', inp.value);
-                } else {
-                    inp.setAttribute('value', inp.value);
-                }
-            });
-            element.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                if (cb.checked) cb.setAttribute('checked', 'checked');
-                else cb.removeAttribute('checked');
-            });
-
-            element.classList.add('exporting');
-            
-            // Options ที่บังคับให้อยู่ใน 1 หน้า A4 100%
-            const opt = {
-                margin:       0,
-                filename:     `HAD_${drugKey}.pdf`,
-                image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            // ใช้ jsPDF แทรกแซงโดยตรง เพื่อ "ลบหน้าที่ 2 ทิ้ง" หากมีหลุดไป
-            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-                const totalPages = pdf.internal.getNumberOfPages();
-                // ถ้ามีมากกว่า 1 หน้า ให้ลบหน้า 2 เป็นต้นไปทิ้งให้หมด (ตัดปัญหาล้นหน้าเด็ดขาด)
-                for (let i = totalPages; i > 1; i--) {
-                    pdf.deletePage(i);
-                }
-            }).save().then(() => {
-                element.classList.remove('exporting');
-            });
+            // ใช้ระบบ Native Print ของ Browser แทนการ Capture เป็นภาพ
+            // วิธีนี้จะสร้างไฟล์ PDF ที่คมชัดระดับ Vector และตัดปัญหาภาพล้น หรือหน้าว่าง 100%
+            window.print();
         }
     </script>
 </body>
