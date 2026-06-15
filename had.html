@@ -65,6 +65,15 @@
         .time-picker:focus, .date-picker:focus { background: #fecaca; }
 
         /* การตั้งค่าสำหรับการ Print/PDF (ลบ UI กวนใจออก) */
+        .a4-preview.exporting {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            margin: 0 !important;
+            z-index: 9999 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
         .exporting .cell-input, .exporting .time-picker, .exporting .date-picker { 
             color: #000 !important; background-color: transparent !important; 
         }
@@ -578,6 +587,13 @@
 
             const element = document.getElementById('pdfContent');
             
+            // รีเซ็ต Scroll ให้อยู่มุมซ้ายบนสุด ป้องกันบั๊ก PDF ล้นขอบจาก html2canvas
+            window.scrollTo(0, 0);
+            if (element.parentElement) {
+                element.parentElement.scrollTop = 0;
+                element.parentElement.scrollLeft = 0;
+            }
+            
             // Sync values
             element.querySelectorAll('input[type="text"], input[type="time"], input[type="date"], select').forEach(inp => {
                 if(inp.tagName === 'SELECT') {
@@ -599,7 +615,7 @@
                 margin:       0,
                 filename:     `HAD_${drugKey}.pdf`,
                 image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { scale: 2, useCORS: true, windowWidth: 794, windowHeight: 1123, scrollY: 0 },
+                html2canvas:  { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
