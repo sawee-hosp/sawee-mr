@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sawee High Alert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        * { font-family: 'Sarabun', sans-serif !important; }
+        body { background-color: #f3f4f6; margin: 0; padding: 0; }
+        
+        /* A4 Strict Bounds */
+        .a4-preview {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            padding: 8mm 10mm;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            color: #000;
+            box-sizing: border-box;
+        }
+
+        /* ตาราง - บังคับเส้นขอบบาง 0.5px และตัดช่องว่างทิ้ง */
+        .doc-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 0; 
+            margin-bottom: 0; 
+            font-size: 10px;
+            table-layout: fixed;
+        }
+        .doc-table th, .doc-table td { 
+            border: 0.5px solid #000; 
+            padding: 0; 
+            text-align: center; 
+            vertical-align: middle; 
+            height: 18px; 
+        }
+        .doc-table th { font-weight: 600; }
+        .doc-table td.text-left { text-align: left; padding-left: 4px; }
+        
+        /* อินพุต */
+        .cell-input {
+            width: 100%; height: 100%; border: none; background: transparent; 
+            text-align: center; font-size: 10px; outline: none; color: #dc2626;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+        .cell-input:focus { background-color: #fee2e2; }
+        .cell-input:disabled { background-color: #f3f4f6; cursor: not-allowed; color: #9ca3af; }
+        select.cell-input option { color: #000; }
+        
+        /* Time & Date Pickers */
+        .time-picker, .date-picker {
+            width: 100%; height: 100%; border: none; background: transparent; color: #b91c1c; 
+            text-align: center; font-size: 9px; font-weight: bold; outline: none; cursor: pointer;
+        }
+        .time-picker:focus, .date-picker:focus { background: #fecaca; }
+
+        /* การตั้งค่าสำหรับการ Print/PDF (ลบ UI กวนใจออก) */
+        .exporting .cell-input, .exporting .time-picker, .exporting .date-picker { 
+            color: #000 !important; background-color: transparent !important; 
+        }
+        .exporting .cell-input::placeholder { color: transparent !important; }
+        .exporting input[type="time"]::-webkit-calendar-picker-indicator,
+        .exporting input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; -webkit-appearance: none; }
+        .exporting .now-btn { display: none !important; }
+        .exporting .time-picker-container { width: 100% !important; }
+        .exporting .bg-red-50, .exporting .bg-red-100 { background-color: transparent !important; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <div class="w-full md:w-1/4 bg-white shadow-xl z-10 flex flex-col h-full border-r border-gray-200">
+        <div class="p-4 bg-red-700 text-white flex-shrink-0">
+            <h1 class="text-xl font-bold">Sawee High Alert</h1>
+        </div>
+        
+        <div class="p-4 flex-1 overflow-y-auto no-scrollbar space-y-3">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">1. เลือกตัวยา</label>
+                <select id="drugSelect" class="w-full border border-red-300 rounded p-1.5 text-sm focus:ring-2 focus:ring-red-500 outline-none font-bold text-red-700 bg-red-50" onchange="renderDrugForm()">
+                    <option value="" disabled selected>-- กรุณาเลือกยา --</option>
+                    <option value="adrenaline">1. Adrenaline</option>
+                    <option value="dopamine">2. Dopamine</option>
+                    <option value="levophed">3. Levophed (Norepinephrine)</option>
+                    <option value="adenosine">4. Adenosine</option>
+                    <option value="amiodarone">5. Amiodarone</option>
+                    <option value="nitroglycerin">6. Nitroglycerin</option>
+                    <option value="digoxin">7. Digoxin</option>
+                    <option value="kcl">8. Potassium chloride</option>
+                    <option value="mgso4">9. Magnesium sulphate</option>
+                    <option value="calcium">10. Calcium gluconate</option>
+                    <option value="morphine">11. Morphine</option>
+                    <option value="pethidine">12. Pethidine</option>
+                    <option value="ketamine">13. Ketamine</option>
+                    <option value="phenytoin">14. Phenytoin</option>
+                </select>
+            </div>
+
+            <div class="space-y-2 border border-red-200 p-2 rounded bg-red-50/50">
+                <h3 class="text-sm font-bold text-red-800">2. ข้อมูลผู้ป่วย</h3>
+                <div>
+                    <label class="block text-xs text-gray-600">ชื่อ - สกุล</label>
+                    <input type="text" id="patientName" class="w-full border border-gray-300 rounded p-1 text-sm outline-none" oninput="updatePatientInfo()">
+                </div>
+                <div class="flex gap-2">
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-600">อายุ (ปี)</label>
+                        <input type="text" id="patientAgeY" class="w-full border border-gray-300 rounded p-1 text-sm outline-none text-center" oninput="updatePatientInfo()">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-600">หอผู้ป่วย</label>
+                        <select id="ward" class="w-full border border-gray-300 rounded p-1 text-sm outline-none" onchange="updatePatientInfo()">
+                            <option value="">-- เลือก --</option>
+                            <option value="ผู้ป่วยในชาย">ผู้ป่วยในชาย</option>
+                            <option value="ผู้ป่วยในหญิง">ผู้ป่วยในหญิง</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div class="w-1/4">
+                        <label class="block text-xs text-gray-600">เตียง</label>
+                        <input type="text" id="bed" class="w-full border border-gray-300 rounded p-1 text-sm outline-none text-center" oninput="updatePatientInfo()">
+                    </div>
+                    <div class="w-1/4">
+                        <label class="block text-xs text-gray-600">HN</label>
+                        <input type="text" id="hn" class="w-full border border-gray-300 rounded p-1 text-sm outline-none text-center" oninput="updatePatientInfo()">
+                    </div>
+                    <div class="w-1/4">
+                        <label class="block text-xs text-gray-600">AN</label>
+                        <input type="text" id="an" class="w-full border border-gray-300 rounded p-1 text-sm outline-none text-center" oninput="updatePatientInfo()">
+                    </div>
+                    <div class="w-1/4">
+                        <label class="block text-xs text-gray-600">ว/ด/ป</label>
+                        <input type="text" id="date" class="w-full border border-gray-300 rounded p-1 text-sm outline-none text-center bg-gray-100" readonly oninput="updatePatientInfo()">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-[11px] text-gray-600 mt-2 p-2 rounded">
+                <b>คำแนะนำ:</b> กดปุ่ม <b>Now</b> ในตารางด้านขวา เพื่อดึงเวลาปัจจุบันและเปิดให้กรอกข้อมูล
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-200 bg-gray-100 flex-shrink-0">
+            <button onclick="generatePDF()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded shadow">
+                สร้างไฟล์ PDF (1 หน้า)
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 flex justify-center no-scrollbar relative items-start pt-8 pb-8">
+        <div id="pdfContent" class="a4-preview">
+            <div id="patientHeaderContainer" class="flex-shrink-0"></div>
+            <div id="drugContentContainer" class="flex-1 flex flex-col mt-0">
+                <div class="flex items-center justify-center h-full text-gray-400 text-sm">
+                    -- กรุณาเลือกยาจากเมนูด้านซ้าย --
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        // Auto-fill Today Date on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('date');
+            const d = new Date();
+            const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()+543}`;
+            dateInput.value = dateStr;
+        });
+
+        const drugDatabase = {
+            'adrenaline': {
+                id: 'SAWEE-HAD-01', title: 'Adrenaline injection', strength: 'ความแรง : 1mg/mL หรือ 1:1000',
+                precautions: `ห้ามใช้ในความดันโลหิตสูง | ระวังโรคหัวใจ ไทรอยด์ สูงอายุ | IV push เจือจาง 9 mL ให้ได้ 1:10,000 ใช้แก้ anaphylactic shock รุนแรงเท่านั้น | IV drip เริ่มต้น 0.1 mcg/kg/min (ห้ามให้เร็ว เลือดอาจออกในสมอง)`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'ผิวซีดเย็น/เขียว', 'IV site (อักเสบ)'],
+                timeDesc: 'CPR: ทันทีมีชีพจร | Anaphylaxis: ทุก 10น.(ครบ 30น.) | Drip: ทุก 1 ชม.',
+                condition: 'ผิดปกติ: ผู้ใหญ่ HR>120, BP>160/100; เด็ก HR>180, BP>120/80, ผิวซีด, หลอดเลือดอักเสบ',
+                ades: ['ปวดศีรษะ', 'หายใจหอบเหนื่อย', 'แน่นหน้าอก', 'ปลายมือเท้าเขียว']
+            },
+            'dopamine': {
+                id: 'SAWEE-HAD-02', title: 'Dopamine injection', strength: 'ความแรง : 250 mg/10mL',
+                precautions: `ใช้ infusion pump | ห้ามผสมด่าง (NaHCO3) | เบาหวานใช้ NSS | เปลี่ยนยาทุก 24ชม. สีเหลืองเข้ม/ชมพูห้ามใช้ | เจือจางก่อนฉีดขั้นต่ำ 800mcg/mL | อัตราสูงสุด 20mcg/kg/min`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'IV site (อักเสบ)', 'Urine (≥25cc/hr)', 'ผิวซีดเย็นหรือเขียว'],
+                timeDesc: 'ทุก 15 นาที x 4 ครั้ง จากนั้นทุก 4 ชม.',
+                condition: 'ผิดปกติ: HR>120, BP<90/60 หรือ >160/100, Urine<25cc, ผิวเขียว, IV อักเสบ',
+                ades: ['คลื่นไส้อาเจียน', 'ปวดศีรษะ', 'เจ็บหน้าอก', 'หอบเหนื่อย', 'ปลายมือเท้าเขียว(ลดยา)']
+            },
+            'levophed': {
+                id: 'SAWEE-HAD-03', title: 'Levophed injection', strength: 'Norepinephrine 4 mg/ 4 mL',
+                precautions: `ห้ามผสมใน NSS (ใช้ D5W/D5S) | ความเข้มข้นมาตรฐาน ≤4mg/250mL | สูงสุดไม่เกิน 20 mcg/min | เก็บพ้นแสง ผสมแล้วเก็บ 24ชม. สียาเปลี่ยนห้ามใช้`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'ผิวซีดเย็นหรือเขียว', 'ตรวจ IV site'],
+                timeDesc: 'ทุก 2 นาที จนถึงระดับที่ต้องการ จากนั้นทุก 5 นาที',
+                condition: 'ผิดปกติ: ผู้ใหญ่ HR>120, BP>160/100; เด็ก HR>180, BP>120/80',
+                ades: ['ปวดศีรษะ', 'หายใจหอบเหนื่อย', 'แน่นหน้าอก', 'ปลายมือเท้าเขียว']
+            },
+            'adenosine': {
+                id: 'SAWEE-HAD-04', title: 'Adenosine injection', strength: 'ความแรง : 6 mg/2mL vial',
+                precautions: `bolus เร็วที่สุด 1-2 วิ ตามด้วย NSS flush ทันที (ผู้ใหญ่ 20mL, เด็ก 5mL) | หากไม่ได้ผลซ้ำ 12 mg (MAX 12mg/dose) | ฉีดช้ายาถูกทำลาย (Half-life <5วิ) | ยา Aminophylline หักล้างฤทธิ์`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'EKG (ปกติ/ผิดปกติ)'],
+                timeDesc: 'ทุก 15 นาที จนกว่าจะคงที่',
+                condition: 'ผิดปกติ: HR<60 หรือ >120, BP<90/60 | EKG ผิดปกติ: peaked T, prolonged QRS',
+                ades: ['หน้าแดง', 'หายใจลำบาก', 'คลื่นไส้อาเจียน', 'ปวดศีรษะ/ชาแขน']
+            },
+            'amiodarone': {
+                id: 'SAWEE-HAD-05', title: 'Amiodarone Injection', strength: 'ความแรง : 150 mg/mL',
+                precautions: `ห้ามใช้ในไทรอยด์/คนท้อง | IV push ช้าๆ ใน 10 นาที | IV inf: ผสม D5W เท่านั้น ≤2 mg/mL (MAX 6mg/mL) ถ้ายาข้น >2mg/mL ต้องใส่ขวดแก้วให้ทาง Central line | ระวัง Digoxin, Warfarin`,
+                customTable: 'amiodarone', condition: 'ผิดปกติ: HR<60/>120, BP<90/60, RR<12',
+                ades: ['คลื่นไส้อาเจียน', 'ไอแห้ง/หอบ', 'แขนขาอ่อนแรง', 'ตา/ผิวเหลือง', 'เหนื่อย/สับสน', 'ตามัว/เห็นแสงสี']
+            },
+            'nitroglycerin': {
+                id: 'SAWEE-HAD-06', title: 'Nitroglycerin injection', strength: 'ความแรง : 50 mg/10mL',
+                precautions: `ห้าม IV push ให้ IV inf เท่านั้น ผสมขวดแก้ว (ถุงนิ่ม PVC ยาจะติดถุงหายไป) | ไม่ควรเกิน 24-48ชม. ป้องกันดื้อยา | ความเข้มข้น ≤400 mcg/mL สูงสุด 640 mcg/min`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'Pulmonary WP (6-12)'],
+                timeDesc: 'ทุก 5 นาที x 3 ครั้ง จากนั้นทุก 1 ชม.',
+                condition: 'ผิดปกติ: HR<60/>120, BP<90/60. ห้ามให้ Epinephrine แก้ความดันตก',
+                ades: ['เจ็บหน้าอก', 'นอนราบไม่ได้', 'ใจสั่น', 'ปวดศีรษะรุนแรง', 'คลื่นไส้อาเจียน', 'Cyanosis']
+            },
+            'digoxin': {
+                id: 'SAWEE-HAD-07', title: 'Digoxin injection', strength: 'ความแรง : 0.5mg/2mL',
+                precautions: `เจือจางน้ำกลั่น/NSS/D5W 4mL ขึ้นไป (น้อยกว่านี้ตกตะกอน) ฉีดนาน >5 นาที | เก็บพ้นแสง | รักษาระดับ K, Ca, Mg ในเลือด | เป็นยาช่วงแคบมาก ห้ามใช้ในคนโพแทสเซียมต่ำ`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'EKG', 'K level (≤3.5)'],
+                timeDesc: 'ทุก 5 นาที x 4 ครั้ง จากนั้นทุก 1 ชม.',
+                condition: 'ผิดปกติ: HR<60/>120, K>3.5. อาการพิษ: เห็นแสงสีเขียว/สับสน ให้ทำ EKG ทันที',
+                ades: ['เบื่ออาหาร', 'คลื่นไส้อาเจียน', 'ปวดศีรษะ/ท้อง', 'อ่อนแรง', 'สับสน', 'เห็นภาพหลอน/แสงสีเขียว']
+            },
+            'kcl': {
+                id: 'SAWEE-HAD-08', title: 'Potassium chloride', strength: 'ความแรง : 20mEq/10mL',
+                precautions: `**ห้ามให้ IV push เด็ดขาด** | เจือจาง NSS (Dextrose เกิด hypo K) | อัตราไม่เกิน 20 mEq/hr | Peripheral: ≤80 mEq/L, Central: ≤150 mEq/L | ระวังคนไข้ไม่มีปัสสาวะ`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'Urine (≥25cc/hr)', 'K level (3.5-5.5)', 'EKG', 'IV site'],
+                timeDesc: 'ทุก 15 นาที x 4 ครั้ง จากนั้นทุก 4 ชม.',
+                condition: 'ผิดปกติ: HR>120, BP<90/60, Urine<25, K>5.5, IV อักเสบ',
+                ades: ['คลื่นไส้อาเจียน', 'ใจสั่น', 'หัวใจเต้นผิดจังหวะ', 'กล้ามเนื้ออ่อนแรง', 'แน่นหน้าอก', 'ชาปลายมือเท้า']
+            },
+            'mgso4': {
+                id: 'SAWEE-HAD-09', title: 'Magnesium sulphate', strength: '10% (10mL), 50% (2mL) amp',
+                precautions: `50% ให้ IM/IV slow (อัตรา ≤2 gm/hr) | 10% Push ช้าๆ (≤1 gm/min) | ระวังไตบกพร่องลดครึ่งนึง | ห้ามผสมยาที่มี Phosphate/Carbonate | Antidote: 10% Calcium gluconate`,
+                monitors: ['RR (14-24)', 'HR (60-120)', 'BP (90/60-160/110)', 'Urine (≥25cc)', 'Deep tendon reflex', 'Serum Mg'],
+                timeDesc: 'ทุก 15น.x2, 30น.x2, ทุก 1 ชม.จน off ยา',
+                condition: 'ผิดปกติ: RR<14, BPตก, Mg>2.9, Reflex หาย (พิจารณาหยุดยา)',
+                ades: ['คลื่นไส้อาเจียน', 'หน้าแดง', 'เหงื่อออก', 'ชักกระตุก/ตะคริว', 'ง่วงหลับ/สับสน']
+            },
+            'calcium': {
+                id: 'SAWEE-HAD-10', title: 'Calcium gluconate', strength: '10% in 10 mL',
+                precautions: `เจือจาง Sterile water/D5W (ไม่ควรใช้ NSS) ให้ได้ 1-2 g/100 mL | ห้ามผสม NaHCO3, ยา Bactrim, Ceftriaxone, Dexamethasone | ห้าม SC/IM เนื้อเยื่อจะตาย | Rate ≤1.5 mEq/min`,
+                monitors: ['HR (60-120)', 'BP (90/60-160/100)', 'Serum Calcium', 'EKG', 'IV site'],
+                timeDesc: 'ทุก 15 นาที x 4 ครั้ง จากนั้นทุก 4 ชม.',
+                condition: 'ผิดปกติ: HR>120, BP<90/60, Ca>11, EKG ผิดปกติ',
+                ades: ['Caต่ำ: ชัก/ปากเบี้ยว', 'Caสูง: กล้ามเนื้อเปลี้ย/ซึม', 'คลื่นไส้อาเจียน', 'ปวดหัวรุนแรง', 'ท้องผูก']
+            },
+            'morphine': {
+                id: 'SAWEE-HAD-11', title: 'Morphine', strength: 'Injection 10mg/mL, Syrup, Cap',
+                precautions: `**เขียนใบ ยส.5 กำกับ** | IV push เจือจาง 1mg/mL ฉีดช้า >3-5 นาที | เตรียม Naloxone แก้พิษเสมอ (0.2-0.4mg MAX 10mg) | อัตราเกิดการกดการหายใจสูง`,
+                customTable: 'morphine', condition: 'ผิดปกติ: RR<12, BP<90/60, HR<60, Sedative≥2, Pain≥4, O2<94%',
+                ades: ['ปวดศีรษะ', 'เกร็งกระตุก', 'คลื่นไส้อาเจียน', 'ท้องผูก >3 วัน', 'ปัสสาวะลำบาก', 'ตัวเขียว/เย็น']
+            },
+            'pethidine': {
+                id: 'SAWEE-HAD-12', title: 'Pethidine Injection', strength: 'ความแรง : 50 mg/mL',
+                precautions: `**เขียนใบ ยส.5 กำกับ** | ไม่ควรใช้ลดปวดมะเร็ง (ใช้ ≤48 ชม.) ยาสะสมเกิดพิษประสาท (ชัก/สับสน) | ห้ามใช้ร่วม MAOIs | IV push เจือจาง ≤10mg/mL ให้ช้า ≥5 นาที`,
+                monitors: ['RR (12-16)', 'HR (60-120)', 'BP (90/60-160/100)', 'Sedative score', 'Pain score', 'O2 sat (≥94%)'],
+                timeDesc: 'ทุก 1 ชม. x4 ครั้ง, แล้วทุก 4 ชั่วโมง',
+                condition: 'ผิดปกติ: RR<12, HR<60, Sedative≥2, O2<94%',
+                ades: ['ปวดศีรษะ', 'เกร็งกระตุก', 'คลื่นไส้อาเจียน', 'ท้องผูก >3 วัน', 'ปัสสาวะลำบาก', 'ตัวเขียว/เย็น']
+            },
+            'ketamine': {
+                id: 'SAWEE-HAD-13', title: 'Ketamine Injection', strength: 'ความแรง : 50 mg/mL',
+                precautions: `เป็นวัตถุออกฤทธิ์ต่อจิตประสาท | Rate ≤0.5 mg/kg/min | เจือจาง NSS/D5W เข้มข้น ≤2 mg/mL | ห้ามผสม Thiopental/Diazepam (ตกตะกอน)`,
+                monitors: ['RR (12-24)', 'HR (60-120)', 'BP (90/60-150/90)', 'O2 sat (≥92%)'],
+                timeDesc: 'ทุก 5 นาทีตลอด OR, หลัง OR ทุก 15น. x4',
+                condition: 'ผิดปกติ: RR<12/>24, BP>150/90, O2<92%',
+                ades: ['ฝันร้าย/ภาพหลอน', 'น้ำลายมาก', 'เกร็ง/ชัก', 'คลื่นไส้อาเจียน', 'ตัวเขียว/เย็น']
+            },
+            'phenytoin': {
+                id: 'SAWEE-HAD-14', title: 'Phenytoin injection', strength: '250 mg/5mL',
+                customTable: 'phenytoin'
+            }
+        };
+
+        function updatePatientInfo() {
+            const p = {
+                name: document.getElementById('patientName').value || '......................',
+                ageY: document.getElementById('patientAgeY').value || '.......',
+                ward: document.getElementById('ward').value || '......................',
+                bed: document.getElementById('bed').value || '.......',
+                date: document.getElementById('date').value || '................',
+                hn: document.getElementById('hn').value || '................',
+                an: document.getElementById('an').value || '................'
+            };
+
+            const drugKey = document.getElementById('drugSelect').value;
+            let docId = '', title = '';
+            if(drugKey && drugDatabase[drugKey]) {
+                docId = drugDatabase[drugKey].id;
+                title = drugDatabase[drugKey].title;
+            }
+
+            const headerHtml = `
+                <div class="flex justify-between items-start mb-1 text-[11px] leading-tight">
+                    <div class="w-[55%]">
+                        <div class="text-[10px] text-gray-500">${docId}</div>
+                        <h2 class="text-2xl text-red-600 font-bold leading-tight uppercase tracking-tight">แบบบันทึกการเฝ้าระวังการใช้ยา<br>${title}</h2>
+                    </div>
+                    <div class="w-[44%] border-[0.5px] border-black p-1.5 rounded-sm bg-white">
+                        <div class="flex"><span class="w-8 text-right pr-1 font-bold">ชื่อ:</span><span class="flex-1 border-b-[0.5px] border-dotted border-black px-1">${p.name}</span></div>
+                        <div class="flex mt-0.5">
+                            <span class="w-8 text-right pr-1 font-bold">อายุ:</span><span class="w-8 border-b-[0.5px] border-dotted border-black text-center">${p.ageY}</span><span class="px-1">ปี</span>
+                            <span class="w-12 text-right pr-1 font-bold">เตียง:</span><span class="flex-1 border-b-[0.5px] border-dotted border-black text-center">${p.bed}</span>
+                        </div>
+                        <div class="flex mt-0.5">
+                            <span class="w-10 text-right pr-1 font-bold">ตึก:</span><span class="flex-1 border-b-[0.5px] border-dotted border-black text-center">${p.ward}</span>
+                            <span class="w-10 text-right pr-1 font-bold">วันที่:</span><span class="flex-1 border-b-[0.5px] border-dotted border-black text-center">${p.date}</span>
+                        </div>
+                        <div class="flex mt-0.5">
+                            <span class="w-8 text-right pr-1 font-bold">HN:</span><span class="flex-1 border-b-[0.5px] border-dotted border-black text-center">${p.hn}</span>
+                            <span class="w-8 text-right pr-1 font-bold">AN:</span><span class="flex-1 border-b-[0.5px] border-dotted border-black text-center">${p.an}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('patientHeaderContainer').innerHTML = headerHtml;
+        }
+
+        // Logic เปิดปิด Column อัตโนมัติ
+        window.toggleCol = function(timeInput, colClass) {
+            const isActive = timeInput.value !== "";
+            const table = timeInput.closest('table');
+            const inputs = table.querySelectorAll('.' + colClass);
+            
+            inputs.forEach(inp => {
+                inp.disabled = !isActive;
+                if(isActive) inp.placeholder = "";
+                else { inp.placeholder = "-"; inp.value = ""; }
+            });
+        };
+
+        // ปุ่ม "Now"
+        window.setNow = function(btn, colClass) {
+            const cell = btn.closest('.dateTimeCell');
+            const dateInp = cell.querySelector('.date-picker');
+            const timeInp = cell.querySelector('.time-picker');
+            const d = new Date();
+            
+            if(dateInp) dateInp.value = d.toISOString().split('T')[0];
+            if(timeInp) {
+                timeInp.value = d.toTimeString().substring(0,5);
+                toggleCol(timeInp, colClass);
+            }
+        };
+
+        function renderDrugForm() {
+            updatePatientInfo();
+            const drugKey = document.getElementById('drugSelect').value;
+            const container = document.getElementById('drugContentContainer');
+            if (!drugKey) return;
+            const drug = drugDatabase[drugKey];
+
+            if (drug.customTable === 'phenytoin') {
+                container.innerHTML = generatePhenytoinHTML(drug);
+                return;
+            }
+
+            let html = `
+                <div class="mb-1 text-[11px] font-bold bg-red-100 border-[0.5px] border-red-300 inline-block px-2 py-0.5 rounded-sm">${drug.strength}</div>
+                <div class="border-[0.5px] border-black p-1 text-[10px] mb-1 bg-white leading-tight">
+                    <b class="text-red-700">ข้อควรระวัง:</b> ${drug.precautions}
+                </div>
+            `;
+
+            if (drug.customTable === 'amiodarone') html += generateAmiodaroneHTML(drug);
+            else if (drug.customTable === 'morphine') html += generateMorphineHTML(drug);
+            else html += generateStandardHTML(drug);
+
+            html += generateADEHTML(drug);
+            container.innerHTML = html;
+        }
+
+        // --- STREAMING_CHUNK:Building Table Templates ---
+
+        const tdInput = (col) => `<td><input type="text" class="cell-input ${col}" disabled placeholder="-"></td>`;
+        const adeSelect = (col) => `<td><select class="cell-input ${col}" disabled><option value=""></option><option value="X">X (ปกติ)</option><option value="O">O (ผิดปกติ)</option></select></td>`;
+        
+        const dateTimeCell = (colClass) => `
+            <th class="dateTimeCell p-0 align-top bg-red-50 relative border-[0.5px] border-black">
+                <input type="date" class="date-picker block w-full h-1/2 border-b-[0.5px] border-gray-300">
+                <div class="flex h-1/2 w-full">
+                    <div class="time-picker-container w-2/3 h-full"><input type="time" class="time-picker w-full h-full" onchange="toggleCol(this, '${colClass}')"></div>
+                    <button class="now-btn w-1/3 bg-red-600 hover:bg-red-700 text-white text-[8px] font-bold border-l-[0.5px] border-gray-300" onclick="setNow(this, '${colClass}')">Now</button>
+                </div>
+            </th>
+        `;
+
+        function generateStandardHTML(drug) {
+            let cols = 8;
+            let thead = `<tr><th class="text-left px-1 w-[16%] bg-red-50 text-red-900 leading-tight">วันที่ / เวลา<br><span class="text-[8px] font-normal text-gray-700">${drug.timeDesc}</span></th>`;
+            for(let i=0; i<cols; i++) thead += dateTimeCell(`s-col-${i}`);
+            thead += `</tr>`;
+
+            let tbody = '';
+            drug.monitors.forEach(row => {
+                tbody += `<tr><td class="text-left px-1">${row}</td>`;
+                for(let i=0; i<cols; i++) tbody += tdInput(`s-col-${i}`);
+                tbody += `</tr>`;
+            });
+
+            tbody += `<tr><td class="text-right px-1 font-bold bg-red-50">ลงชื่อผู้ประเมิน</td>`;
+            for(let i=0; i<cols; i++) tbody += tdInput(`s-col-${i}`);
+            tbody += `</tr>`;
+
+            return `
+                <div class="font-bold text-[11px] bg-red-100 text-red-900 px-1 border-[0.5px] border-black border-b-0">การติดตามสัญญาณชีพ</div>
+                <table class="doc-table">${thead}${tbody}</table>
+                <div class="text-[9px] text-red-600 font-bold mb-0 leading-tight">* ${drug.condition}</div>
+            `;
+        }
+
+        function generateAmiodaroneHTML(drug) {
+            let thead = `<tr><th class="text-left px-1 w-[16%] bg-red-50 text-red-900">วันที่ / เวลา</th>`;
+            for(let i=0; i<6; i++) {
+                if(i < 4) thead += `<th class="bg-red-50 font-bold p-0 text-[9px] leading-tight"><div class="border-b-[0.5px] border-black h-1/2 flex items-center justify-center">${['Baseline','15 นาที','30 นาที','45 นาที'][i]}</div><div class="flex h-1/2"><div class="time-picker-container w-2/3 h-full"><input type="time" class="time-picker" onchange="toggleCol(this, 'am-col-${i}')"></div><button class="now-btn w-1/3 bg-red-600 hover:bg-red-700 text-white text-[8px]" onclick="setNow(this, 'am-col-${i}')">Now</button></div></th>`;
+                else thead += dateTimeCell(`am-col-${i}`);
+            }
+            thead += `</tr>`;
+
+            let tbody = '';
+            const rows = ['HR (60-120)', 'BP (90/60-160/100)', 'RR (12-16)', 'IV site ปวด'];
+            rows.forEach(r => {
+                tbody += `<tr><td class="text-left px-1">${r}</td>`;
+                for(let i=0; i<6; i++) tbody += tdInput(`am-col-${i}`);
+                tbody += `</tr>`;
+            });
+            tbody += `<tr><td class="text-right px-1 font-bold bg-red-50">ลงชื่อผู้ประเมิน</td>`;
+            for(let i=0; i<6; i++) tbody += tdInput(`am-col-${i}`);
+            tbody += `</tr>`;
+
+            return `
+                <div class="font-bold text-[11px] bg-red-100 text-red-900 px-1 border-[0.5px] border-black border-b-0">การติดตามสัญญาณชีพ (Amiodarone)</div>
+                <table class="doc-table">${thead}${tbody}</table>
+                <div class="text-[9px] text-red-600 font-bold mb-0 leading-tight">* ${drug.condition}</div>
+            `;
+        }
+
+        function generateMorphineHTML(drug) {
+            let cols = 7;
+            let thead = `<tr><th class="text-left px-1 w-[16%] bg-red-50 text-red-900 leading-tight">วันที่ / เวลา</th>`;
+            for(let i=0; i<cols; i++) thead += dateTimeCell(`mo-col-${i}`);
+            thead += `</tr>`;
+
+            let tbody = '';
+            const rows = ['RR (12-16)', 'HR (60-120)', 'BP (90/60-160)', 'Sedative <2', 'Pain <4', 'O2 Sat ≥94%'];
+            rows.forEach(r => {
+                tbody += `<tr><td class="text-left px-1">${r}</td>`;
+                for(let i=0; i<cols; i++) tbody += tdInput(`mo-col-${i}`);
+                tbody += `</tr>`;
+            });
+
+            return `
+                <div class="font-bold text-[11px] bg-red-100 text-red-900 px-1 border-[0.5px] border-black border-b-0 mt-0">การติดตามสัญญาณชีพ</div>
+                <div class="flex text-[9px] border-[0.5px] border-black border-b-0 px-1 font-bold bg-white leading-tight py-0.5">
+                    <span class="mr-3"><input type="checkbox"> IV Push (5น.x4, 30น.x2)</span>
+                    <span class="mr-3"><input type="checkbox"> SC/IM (5น.x4, 30น.x2)</span>
+                    <span><input type="checkbox"> IV Drip (1ชม.x4, แล้วทุก 4ชม.)</span>
+                </div>
+                <table class="doc-table">${thead}${tbody}</table>
+                <div class="text-[9px] text-red-600 font-bold mb-0 leading-tight">* ${drug.condition}</div>
+            `;
+        }
+
+        function generateADEHTML(drug) {
+            let thead = `
+                <tr>
+                    <th rowspan="2" class="w-[16%] text-left px-1 bg-red-50 text-red-900">อาการไม่พึงประสงค์</th>
+                    <th colspan="3" class="bg-red-50 p-0">${dateTimeCell('ade-col-1').replace('<th','<div').replace('</th>','</div>')}</th>
+                    <th colspan="3" class="bg-red-50 p-0">${dateTimeCell('ade-col-2').replace('<th','<div').replace('</th>','</div>')}</th>
+                    <th colspan="3" class="bg-red-50 p-0">${dateTimeCell('ade-col-3').replace('<th','<div').replace('</th>','</div>')}</th>
+                    <th colspan="3" class="bg-red-50 p-0">${dateTimeCell('ade-col-4').replace('<th','<div').replace('</th>','</div>')}</th>
+                </tr>
+                <tr class="bg-red-50 text-[9px]">
+                    <th>ช</th><th>บ</th><th>ด</th> <th>ช</th><th>บ</th><th>ด</th>
+                    <th>ช</th><th>บ</th><th>ด</th> <th>ช</th><th>บ</th><th>ด</th>
+                </tr>
+            `;
+            let tbody = '';
+            drug.ades.forEach(row => {
+                tbody += `<tr><td class="text-left px-1 text-[9px] leading-tight">${row}</td>`;
+                for(let i=0; i<12; i++) {
+                    const group = Math.floor(i/3) + 1;
+                    tbody += adeSelect(`ade-col-${group}`);
+                }
+                tbody += `</tr>`;
+            });
+            tbody += `<tr><td class="text-right px-1 font-bold bg-red-50">ผู้ประเมิน</td>`;
+            for(let i=0; i<12; i++) {
+                const group = Math.floor(i/3) + 1;
+                tbody += tdInput(`ade-col-${group}`);
+            }
+            tbody += `</tr>`;
+
+            return `
+                <div class="font-bold text-[11px] bg-red-100 text-red-900 px-1 border-[0.5px] border-black border-b-0 mt-0">อาการไม่พึงประสงค์ (เลือก X เมื่อปกติ, เลือก O หรือพิมพ์ค่าเมื่อผิดปกติ)</div>
+                <table class="doc-table">${thead}${tbody}</table>
+            `;
+        }
+
+        function generatePhenytoinHTML(drug) {
+            const vRow = (label, colPrefix) => {
+                let html = `<tr><td class="text-left px-1 w-[16%] tracking-tighter">${label}</td>`;
+                for(let i=0; i<9; i++) html += tdInput(`${colPrefix}-${i}`);
+                return html + `</tr>`;
+            };
+
+            const doseTable = (num) => {
+                const prefix = `pht-d${num}`;
+                let headers = '';
+                for(let i=0; i<9; i++) {
+                    headers += `<th class="p-0 align-top relative border-[0.5px] border-black"><div class="flex h-full"><div class="time-picker-container w-2/3 h-full"><input type="time" class="time-picker w-full h-full" onchange="toggleCol(this, '${prefix}-${i}')"></div><button class="now-btn w-1/3 bg-red-600 text-white text-[8px] font-bold border-l-[0.5px] border-gray-300" onclick="setNow(this, '${prefix}-${i}')">Now</button></div></th>`;
+                }
+
+                return `
+                <table class="doc-table mb-0">
+                    <tr class="bg-red-50">
+                        <th class="text-left px-1 text-red-800">DOSE ${num}</th>
+                        ${headers}
+                    </tr>
+                    <tr class="bg-red-50 text-[8px] font-bold">
+                        <td></td><td>Stat</td><td>15น.</td><td>30น.</td><td>45น.</td><td>60น.</td><td>1.5ชม</td><td>2ชม</td><td>3ชม</td><td>4ชม</td>
+                    </tr>
+                    ${vRow('HR (60-120)', prefix)}
+                    ${vRow('BP(90/60-160/100)', prefix)}
+                    ${vRow('RR (12-24)', prefix)}
+                    ${vRow('IV site/ชักกระตุก', prefix)}
+                </table>`;
+            };
+
+            return `
+                <div class="mb-1 text-[11px] font-bold bg-red-100 border-[0.5px] border-red-300 inline-block px-2 rounded-sm">${drug.strength}</div>
+                <div class="border-[0.5px] border-black p-1 text-[10px] mb-0 bg-white flex leading-tight">
+                    <div class="w-1/2 pr-1 border-r-[0.5px] border-black">
+                        <b>IV push:</b> เจือจาง 50 mg/ml | <b>IV inf:</b> 1-10 mg/ml (ห้ามใช้ D5W)<br>
+                        <b>Adult:</b> Load 15-25 mg/kg, Maint 100mg q6-8hr<br>
+                        <b>อัตราสูงสุด:</b> สูงอายุ <50mg/min, โรคหัวใจ <20mg/min
+                    </div>
+                    <div class="w-1/2 pl-1">
+                        <b class="text-red-700">เป็นพิษ:</b> >20 ตากระตุก, >30 เดินเซ, >40 สับสน coma<br>
+                        <b class="text-red-700">ยาตีกัน:</b> Amiodarone, Omeprazole ทำให้ PHT เป็นพิษ
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2 text-[10px] font-bold mb-0 bg-red-50 p-0.5 border-[0.5px] border-black border-b-0">
+                    วันที่ <input type="date" class="w-24 text-center border-b-[0.5px] border-black bg-transparent"> 
+                    ก่อนให้ยา BP=<input type="text" class="w-10 text-center bg-transparent border-b-[0.5px] border-black"> 
+                    HR=<input type="text" class="w-10 text-center bg-transparent border-b-[0.5px] border-black"> 
+                    RR=<input type="text" class="w-10 text-center bg-transparent border-b-[0.5px] border-black">
+                </div>
+
+                ${doseTable(1)}
+                ${doseTable(2)}
+                ${doseTable(3)}
+                ${doseTable(4)}
+            `;
+        }
+
+        // --- STREAMING_CHUNK:Exporting PDF logic (Strict 1 Page) ---
+        function generatePDF() {
+            const drugKey = document.getElementById('drugSelect').value;
+            if (!drugKey) return alert('กรุณาเลือกยาก่อนสร้าง PDF');
+
+            const element = document.getElementById('pdfContent');
+            
+            // Sync values
+            element.querySelectorAll('input[type="text"], input[type="time"], input[type="date"], select').forEach(inp => {
+                if(inp.tagName === 'SELECT') {
+                    // สร้าง span แทนที่ select ตอนปริ้นท์เพื่อให้แสดงค่าที่เลือกได้ชัดเจน
+                    inp.setAttribute('data-val', inp.value);
+                } else {
+                    inp.setAttribute('value', inp.value);
+                }
+            });
+            element.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                if (cb.checked) cb.setAttribute('checked', 'checked');
+                else cb.removeAttribute('checked');
+            });
+
+            element.classList.add('exporting');
+            
+            // Options ที่บังคับให้อยู่ใน 1 หน้า A4 100%
+            const opt = {
+                margin:       0,
+                filename:     `HAD_${drugKey}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 2, useCORS: true, windowWidth: 794, windowHeight: 1123, scrollY: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // ใช้ jsPDF แทรกแซงโดยตรง เพื่อ "ลบหน้าที่ 2 ทิ้ง" หากมีหลุดไป
+            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+                const totalPages = pdf.internal.getNumberOfPages();
+                // ถ้ามีมากกว่า 1 หน้า ให้ลบหน้า 2 เป็นต้นไปทิ้งให้หมด (ตัดปัญหาล้นหน้าเด็ดขาด)
+                for (let i = totalPages; i > 1; i--) {
+                    pdf.deletePage(i);
+                }
+            }).save().then(() => {
+                element.classList.remove('exporting');
+            });
+        }
+    </script>
+</body>
+</html>
