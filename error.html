@@ -30,6 +30,17 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- บังคับให้ Babel ใช้ Classic Runtime -->
+    <script>
+        Babel.registerPreset('my-react-preset', {
+            presets: [
+                [Babel.availablePresets['env']],
+                [Babel.availablePresets['react'], { runtime: 'classic' }]
+            ]
+        });
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -64,7 +75,9 @@
         </div>
     </div>
 
-    <script type="text/babel">
+    <!-- เรียกใช้ my-react-preset ที่เราตั้งค่าไว้ -->
+    <script type="text/babel" data-presets="my-react-preset">
+        
         const { useState, useEffect, useMemo, useRef } = React;
         
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz8y9YIjm-vWKpAS8MhuWmFZqkDLtJ1XsgmSvJevvQy7QSzwZVxkleVxsWewUXsK65hyw/exec";
