@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Sawee Rxfill (Standalone)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Sarabun', sans-serif; }
+    @media print {
+      body * { visibility: hidden; }
+      .print-area, .print-area * { visibility: visible; }
+      .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #0d9488; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- ส่วนตั้งค่า URL ของ Backend ---
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyxqnZlYJKW22S_DO9PnYFQYsxs6SMbUVI5ckB7yZCDC6KhlqKpE8incdkzmuyVILCd/exec";
+
+    // ฟังก์ชัน Fetch กลาง (ใช้ text/plain เพื่อป้องกันปัญหา CORS Preflight ใน GAS)
+    const fetchAPI = async (action, payload = null) => {
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8' 
+          },
+          body: JSON.stringify({ action, payload })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+      }
+    };
+
+    // --- Component การแจ้งเตือน ---
+    const Toast = ({ message, type, onClose }) => {
+      useEffect(() => {
+        const timer = setTimeout(onClose, 3000);
+        return () => clearTimeout(timer);
+      }, [onClose]);
+      const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+      return (
+        <div className={`fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center z-50`}>
+          <i className={`fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'} mr-2`}></i>
+          {message}
+        </div>
+      );
+    };
+
+    // --- Main App ---
+    function App() {
+      const [loading, setLoading] = useState(true);
+      const [db, setDb] = useState(null);
+      const [currentUser, setCurrentUser] = useState(null);
+      const [currentView, setCurrentView] = useState('login');
+      const [toast, setToast] = useState(null);
+      const [currentReqId, setCurrentReqId] = useState(null);
+
+      const showToast = (message, type = 'success') => setToast({ message, type });
+
+      // ดึงข้อมูลผ่าน fetch()
+      const fetchData = () => {
+        setLoading(true);
+        fetchAPI('getInitialData')
+          .then(res => {
+            if(res.status === 'success') {
+              setDb(res.data);
+            } else {
+              showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
+            }
+          })
+          .catch(err => {
+            showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error');
+          })
+          .finally(() => setLoading(false));
+      };
+
+      useEffect(() => {
+        fetchData();
+      }, []);
+
+      const handleLogin = (username, password) => {
+        if(!db) return;
+        const user = db.users.find(u => u.username === username && u.password === String(password));
+        if (user) {
+          setCurrentUser(user);
+          setCurrentView('dashboard');
+          showToast('เข้าสู่ระบบสำเร็จ');
+        } else {
+          showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+        }
+      };
+
+      if (loading) {
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+            <div className="loader mb-4"></div>
+            <p className="text-teal-600 font-semibold animate-pulse">กำลังซิงค์ข้อมูลกับฐานข้อมูล (Google Sheets)...</p>
+          </div>
+        );
+      }
+
+      // --- Views ---
+      const LoginView = () => {
+        const [username, setUsername] = useState('');
+        const [password, setPassword] = useState('');
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+              <div className="flex flex-col items-center mb-8">
+                <div className="bg-teal-600 p-4 rounded-full text-white mb-4 shadow-lg text-2xl">
+                  <i className="fa-solid fa-heart-pulse"></i>
+                </div>
+                <h1 className="text-2xl font-bold">Sawee Rxfill</h1>
+                <p className="text-slate-500 text-sm">ระบบเบิกยา รพ.สต. เครือข่าย รพ.สวี</p>
+              </div>
+              <div className="space-y-4">
+                <input type="text" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="ชื่อผู้ใช้ (Username)" value={username} onChange={e => setUsername(e.target.value)} />
+                <input type="password" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="รหัสผ่าน (Password)" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin(username, password)} />
+                <button onClick={() => handleLogin(username, password)} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">เข้าสู่ระบบ</button>
+              </div>
+              <div className="mt-6 text-center text-xs text-slate-400">
+                <p>Admin: admin / 123</p>
+                <p>รพ.สต.: h01 / 123</p>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const DashboardView = () => {
+        const isHospital = currentUser.role === 'hospital';
+        const myReqs = isHospital ? db.requisitions.filter(r => r.hospitalId === currentUser.hospital_id) : db.requisitions;
+        
+        return (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex justify-between items-end">
+              <div>
+                <h2 className="text-2xl font-bold">แดชบอร์ด</h2>
+                <p className="text-slate-500">ยินดีต้อนรับ, {currentUser.name}</p>
+              </div>
+              {isHospital && (
+                <button onClick={() => setCurrentView('create_req')} className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-teal-700 shadow">
+                  <i className="fa-solid fa-plus mr-2"></i> สร้างใบเบิก
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                <div className="text-slate-500 text-sm mb-1">ใบเบิกทั้งหมด</div>
+                <div className="text-3xl font-bold text-slate-800">{myReqs.length}</div>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500">
+                <div className="text-slate-500 text-sm mb-1">รอดำเนินการ</div>
+                <div className="text-3xl font-bold text-slate-800">{myReqs.filter(r => r.status === 'Pending').length}</div>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                <div className="text-slate-500 text-sm mb-1">อนุมัติแล้ว</div>
+                <div className="text-3xl font-bold text-slate-800">{myReqs.filter(r => r.status === 'Completed').length}</div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b font-semibold bg-slate-50">ประวัติการเบิก</div>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b text-sm text-slate-500">
+                    <th className="p-4">รหัสเอกสาร</th>
+                    {!isHospital && <th className="p-4">รพ.สต.</th>}
+                    <th className="p-4">รอบบิล</th>
+                    <th className="p-4">สถานะ</th>
+                    <th className="p-4 text-right">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myReqs.map(req => {
+                    const hosp = db.hospitals.find(h => h.hospital_id === req.hospitalId);
+                    return (
+                      <tr key={req.id} className="border-b hover:bg-slate-50">
+                        <td className="p-4 font-medium">{req.id}</td>
+                        {!isHospital && <td className="p-4 text-slate-600">{hosp?.hospital_name}</td>}
+                        <td className="p-4">{req.month}/{req.year}</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${req.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                            {req.status === 'Pending' ? 'รออนุมัติ' : 'จัดยาแล้ว'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                           <button onClick={() => { setCurrentReqId(req.id); setCurrentView('view_req'); }} className="text-teal-600 hover:text-teal-800 text-sm">
+                             <i className="fa-solid fa-file-lines mr-1"></i> เปิดดู
+                           </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {myReqs.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-slate-400">ยังไม่มีข้อมูล</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      };
+
+      const CreateReqView = () => {
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const hospId = currentUser.hospital_id;
+
+        const [items, setItems] = useState(() => {
+          const myPars = db.parLevels.filter(p => p.hospital_id === hospId);
+          return myPars.map(par => {
+            const drug = db.drugs.find(d => d.drug_id === par.drug_id);
+            const bal = db.balances.find(b => b.hospital_id === hospId && b.drug_id === par.drug_id);
+            const excess = bal ? bal.excess_balance : 0;
+            return {
+              drugId: drug.drug_id, name: drug.drug_name, packSize: drug.pack_size,
+              parQty: par.par_qty, prevExcess: excess, usage: 0, netNeed: 0,
+              dispensePack: 0, dispenseQty: 0, newExcess: excess
+            };
+          });
+        });
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        const updateUsage = (index, val) => {
+          const usage = parseInt(val) || 0;
+          const newItems = [...items];
+          const row = newItems[index];
+          row.usage = usage;
+          let netNeed = usage - row.prevExcess;
+          if (netNeed <= 0) {
+            row.netNeed = 0; row.dispensePack = 0; row.dispenseQty = 0;
+            row.newExcess = Math.abs(netNeed);
+          } else {
+            row.netNeed = netNeed;
+            row.dispensePack = Math.ceil(netNeed / row.packSize);
+            row.dispenseQty = row.dispensePack * row.packSize;
+            row.newExcess = row.dispenseQty - netNeed;
+          }
+          setItems(newItems);
+        };
+
+        // ยิงผ่าน Fetch API
+        const handleSubmit = () => {
+          setIsSubmitting(true);
+          const newReq = {
+            id: `REQ-${currentYear}-${String(currentMonth).padStart(2, '0')}-${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`,
+            hospitalId: hospId, month: currentMonth, year: currentYear, items: items
+          };
+
+          fetchAPI('submitRequisition', newReq)
+            .then(res => {
+              if(res.status === 'success') {
+                showToast('ส่งใบเบิกสำเร็จ');
+                fetchData(); // Reload data from sheet
+                setCurrentView('dashboard');
+              } else {
+                showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
+              }
+            })
+            .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
+            .finally(() => setIsSubmitting(false));
+        };
+
+        return (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-xl font-bold">ใบเบิกยาใหม่ ({currentMonth}/{currentYear})</h2>
+              <button onClick={() => setCurrentView('dashboard')} className="text-slate-500">ยกเลิก</button>
+            </div>
+            <div className="overflow-x-auto mb-6">
+              <table className="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-teal-50 text-teal-800 text-sm">
+                    <th className="p-3 border-b-2 border-teal-200">รายการยา</th>
+                    <th className="p-3 text-center border-b-2 border-teal-200">Pack</th>
+                    <th className="p-3 text-center bg-blue-50 border-b-2 border-blue-200">ยกมา (A)</th>
+                    <th className="p-3 text-center bg-yellow-50 border-b-2 border-yellow-200">ใช้จริง (B)</th>
+                    <th className="p-3 text-center border-b-2 border-slate-200">ต้องการ (B-A)</th>
+                    <th className="p-3 text-center bg-green-50 border-b-2 border-green-200">จ่าย (Pack)</th>
+                    <th className="p-3 text-center bg-green-50 border-b-2 border-green-200">จ่ายจริง</th>
+                    <th className="p-3 text-center bg-purple-50 border-b-2 border-purple-200">ยกไปเดือนหน้า</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, idx) => (
+                    <tr key={item.drugId} className="border-b hover:bg-slate-50">
+                      <td className="p-3">{item.name} <br/><span className="text-xs text-slate-400">Par: {item.parQty}</span></td>
+                      <td className="p-3 text-center">{item.packSize}</td>
+                      <td className="p-3 text-center text-blue-600 font-semibold">{item.prevExcess}</td>
+                      <td className="p-3 text-center bg-yellow-50">
+                        <input type="number" min="0" className="w-20 border rounded p-1 text-center outline-none focus:border-teal-500" value={item.usage || ''} onChange={e => updateUsage(idx, e.target.value)} />
+                      </td>
+                      <td className="p-3 text-center">{item.netNeed}</td>
+                      <td className="p-3 text-center text-green-600 font-bold">{item.dispensePack}</td>
+                      <td className="p-3 text-center text-green-600">{item.dispenseQty}</td>
+                      <td className="p-3 text-center text-purple-600 font-bold">{item.newExcess}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={handleSubmit} disabled={isSubmitting} className="bg-teal-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-teal-700 disabled:opacity-50">
+                {isSubmitting ? 'กำลังบันทึก...' : <span><i className="fa-solid fa-paper-plane mr-2"></i> ส่งเบิกยา</span>}
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      const ViewReqView = () => {
+        const req = db.requisitions.find(r => r.id === currentReqId);
+        if(!req) return null;
+        const hosp = db.hospitals.find(h => h.hospital_id === req.hospitalId);
+        const [isApproving, setIsApproving] = useState(false);
+
+        // ยิงผ่าน Fetch API
+        const handleApprove = () => {
+          setIsApproving(true);
+          const payload = { reqId: req.id, items: req.items, hospitalId: req.hospitalId };
+          
+          fetchAPI('approveRequisition', payload)
+            .then(res => {
+              if(res.status === 'success') {
+                showToast('อนุมัติและอัปเดตสต๊อกเรียบร้อย');
+                fetchData();
+                setCurrentView('dashboard');
+              } else {
+                showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
+              }
+            })
+            .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
+            .finally(() => setIsApproving(false));
+        };
+
+        return (
+          <div className="bg-white rounded-xl shadow-sm p-6 print:p-0 print:shadow-none">
+            <div className="flex justify-between mb-6 no-print">
+              <button onClick={() => setCurrentView('dashboard')} className="text-slate-500">← กลับ</button>
+              <div className="space-x-2">
+                <button onClick={() => window.print()} className="bg-slate-200 text-slate-700 px-4 py-2 rounded"><i className="fa-solid fa-print mr-2"></i>พิมพ์</button>
+                {currentUser.role === 'admin' && req.status === 'Pending' && (
+                  <button onClick={handleApprove} disabled={isApproving} className="bg-teal-600 text-white px-4 py-2 rounded">
+                    {isApproving ? 'รอสักครู่...' : <span><i className="fa-solid fa-check mr-2"></i>อนุมัติจ่ายยา</span>}
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            <div className="print-area">
+              <div className="text-center mb-6 border-b-2 border-slate-800 pb-4">
+                <h1 className="text-2xl font-bold">ใบเบิกและจัดยา รพ.สต. เครือข่าย รพ.สวี</h1>
+                <p>รอบเดือน: {req.month}/{req.year} | เอกสาร: {req.id}</p>
+                <p className="text-lg font-semibold mt-2">หน่วยงาน: {hosp?.hospital_name}</p>
+              </div>
+              <table className="w-full text-left border-collapse border border-slate-300">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-800 border-b border-slate-300">
+                    <th className="p-2 border-r text-center">ลำดับ</th>
+                    <th className="p-2 border-r">รายการยา</th>
+                    <th className="p-2 border-r text-center">ยอดใช้</th>
+                    <th className="p-2 border-r text-center">จัดเป็นแพ็ค</th>
+                    <th className="p-2 text-center bg-slate-200">ยอดเม็ด/ขวด ที่จัด</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {req.items.map((it, i) => {
+                    const d = db.drugs.find(x => x.drug_id === it.drugId);
+                    return (
+                      <tr key={i} className="border-b border-slate-300">
+                        <td className="p-2 border-r text-center">{i+1}</td>
+                        <td className="p-2 border-r">{d?.drug_name}</td>
+                        <td className="p-2 border-r text-center text-slate-500">{it.usage}</td>
+                        <td className="p-2 border-r text-center font-bold">{it.dispensePack}</td>
+                        <td className="p-2 text-center font-bold text-lg bg-slate-50">{it.dispenseQty}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      };
+
+      // --- Layout ---
+      return (
+        <div className="min-h-screen flex">
+          {/* Sidebar */}
+          <div className="w-64 bg-teal-800 text-white flex flex-col no-print">
+            <div className="p-6 flex items-center border-b border-teal-700">
+              <i className="fa-solid fa-heart-pulse text-2xl text-teal-300 mr-3"></i>
+              <h1 className="text-xl font-bold">Sawee Rxfill</h1>
+            </div>
+            <nav className="flex-1 p-4 space-y-2">
+              <button onClick={() => setCurrentView('dashboard')} className={`w-full text-left p-3 rounded-lg ${currentView==='dashboard'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-house mr-3 w-5"></i> แดชบอร์ด</button>
+              {currentUser.role === 'hospital' && (
+                <button onClick={() => setCurrentView('create_req')} className={`w-full text-left p-3 rounded-lg ${currentView==='create_req'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-plus mr-3 w-5"></i> เบิกยาใหม่</button>
+              )}
+            </nav>
+            <div className="p-4 border-t border-teal-700">
+              <div className="text-teal-200 text-sm mb-3"><i className="fa-solid fa-user mr-2"></i> {currentUser.name}</div>
+              <button onClick={() => {setCurrentUser(null); setCurrentView('login');}} className="w-full text-left p-2 rounded text-teal-200 hover:bg-red-600 hover:text-white"><i className="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</button>
+            </div>
+          </div>
+          
+          {/* Main */}
+          <div className="flex-1 p-8 bg-slate-100 overflow-auto">
+            <div className="max-w-5xl mx-auto">
+              {currentView === 'dashboard' && <DashboardView />}
+              {currentView === 'create_req' && <CreateReqView />}
+              {currentView === 'view_req' && <ViewReqView />}
+            </div>
+          </div>
+          
+          {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
