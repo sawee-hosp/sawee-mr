@@ -9,11 +9,11 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- React & ReactDOM (ระบุเวอร์ชันชัดเจนเพื่อความเสถียร) -->
+  <!-- React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
   
-  <!-- Babel for JSX (ใช้เวอร์ชันที่เสถียรและไม่มีบั๊กกับ import) -->
+  <!-- Babel for JSX -->
   <script crossorigin src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
   
   <style>
@@ -32,22 +32,18 @@
 <body class="bg-slate-100 text-slate-800">
   <div id="root"></div>
 
-  <!-- เพิ่ม data-presets="react" เพื่อบอก Babel ให้แปลงเฉพาะ JSX ไม่ต้องแทรก polyfill ของ async/await -->
   <script type="text/babel" data-presets="react">
     const { useState, useEffect } = React;
 
     // --- ส่วนตั้งค่า URL ของ Backend ---
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyxqnZlYJKW22S_DO9PnYFQYsxs6SMbUVI5ckB7yZCDC6KhlqKpE8incdkzmuyVILCd/exec";
 
-    // ฟังก์ชัน Fetch กลาง (ใช้ text/plain เพื่อป้องกันปัญหา CORS Preflight ใน GAS)
     const fetchAPI = async (action, payload = null) => {
       try {
         const response = await fetch(GAS_URL, {
           method: 'POST',
           redirect: 'follow',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8' 
-          },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action, payload })
         });
         return await response.json();
@@ -57,7 +53,6 @@
       }
     };
 
-    // --- Component การแจ้งเตือน ---
     const Toast = ({ message, type, onClose }) => {
       useEffect(() => {
         const timer = setTimeout(onClose, 3000);
@@ -72,7 +67,6 @@
       );
     };
 
-    // --- Main App ---
     function App() {
       const [loading, setLoading] = useState(true);
       const [db, setDb] = useState(null);
@@ -84,25 +78,18 @@
 
       const showToast = (message, type = 'success') => setToast({ message, type });
 
-      // ดึงข้อมูลผ่าน fetch()
       const fetchData = () => {
         setLoading(true);
         fetchAPI('getInitialData')
           .then(res => {
-            if(res.status === 'success') {
-              setDb(res.data);
-            } else {
-              showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
-            }
+            if(res.status === 'success') setDb(res.data);
+            else showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
           })
-          .catch(err => {
-            showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error');
-          })
+          .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
           .finally(() => setLoading(false));
       };
 
       useEffect(() => {
-        // เช็คว่ามี Token รีเซ็ตรหัสผ่านแนบมาใน URL หรือไม่
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('view') === 'reset' && urlParams.get('token')) {
           setResetToken(urlParams.get('token'));
@@ -119,9 +106,7 @@
               setCurrentUser(res.data);
               setCurrentView('dashboard');
               showToast('เข้าสู่ระบบสำเร็จ');
-            } else {
-              showToast(res.message, 'error');
-            }
+            } else showToast(res.message, 'error');
           })
           .catch(err => showToast('เชื่อมต่อล้มเหลว', 'error'))
           .finally(() => setLoading(false));
@@ -177,9 +162,7 @@
             if (res.status === 'success') {
               showToast(res.message);
               setCurrentView('login');
-            } else {
-              showToast(res.message, 'error');
-            }
+            } else showToast(res.message, 'error');
           }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
         };
 
@@ -213,14 +196,12 @@
         const handleResetRequest = () => {
           if (!email) return showToast('กรุณากรอกอีเมล', 'error');
           setIsSubmitting(true);
-          const appUrl = window.location.href.split('?')[0]; // ส่ง URL ของหน้าเว็บปัจจุบันไปให้ส่งอีเมลกลับ
+          const appUrl = window.location.href.split('?')[0]; 
           fetchAPI('forgotPassword', { email, appUrl }).then(res => {
             if (res.status === 'success') {
               showToast(res.message);
               setCurrentView('login');
-            } else {
-              showToast(res.message, 'error');
-            }
+            } else showToast(res.message, 'error');
           }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
         };
 
@@ -252,12 +233,9 @@
           fetchAPI('resetPassword', { token: resetToken, newPassword }).then(res => {
             if (res.status === 'success') {
               showToast(res.message);
-              // เคลียร์ URL ลบทิ้งพารามิเตอร์ token
               window.history.pushState({}, '', window.location.pathname);
               setCurrentView('login');
-            } else {
-              showToast(res.message, 'error');
-            }
+            } else showToast(res.message, 'error');
           }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
         };
 
@@ -310,7 +288,6 @@
               </div>
             </div>
 
-            {/* Table */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               <div className="p-4 border-b font-semibold bg-slate-50">ประวัติการเบิก</div>
               <table className="w-full text-left border-collapse">
@@ -358,15 +335,17 @@
         const hospId = currentUser.hospital_id;
 
         const [items, setItems] = useState(() => {
-          const myPars = db.parLevels.filter(p => p.hospital_id === hospId);
-          // ทำการดักจับข้อผิดพลาดกรณีข้อมูลยาไม่มีในฐานข้อมูลหลัก (Optional Chaining)
+          const myPars = db.parLevels.filter(p => String(p.hospital_id) === String(hospId));
           return myPars.map(par => {
-            const drug = db.drugs.find(d => d.drug_id === par.drug_id);
-            const bal = db.balances.find(b => b.hospital_id === hospId && b.drug_id === par.drug_id);
+            const drug = db.drugs.find(d => String(d.drug_id) === String(par.drug_id));
+            const bal = db.balances.find(b => String(b.hospital_id) === String(hospId) && String(b.drug_id) === String(par.drug_id));
             const excess = bal ? bal.excess_balance : 0;
+            const typeLabel = drug ? (drug.type === 'DRUG' ? 'ยา' : 'เวชภัณฑ์') : '';
             return {
               drugId: par.drug_id, 
               name: drug ? drug.drug_name : 'ไม่พบข้อมูลยาในระบบ (กรุณาเช็คฐานข้อมูล)', 
+              type: typeLabel,
+              unit: drug ? drug.unit_display_name : '',
               packSize: drug ? drug.pack_size : 1,
               parQty: par.par_qty, 
               prevExcess: excess, 
@@ -398,7 +377,6 @@
           setItems(newItems);
         };
 
-        // ยิงผ่าน Fetch API
         const handleSubmit = () => {
           setIsSubmitting(true);
           const newReq = {
@@ -410,11 +388,9 @@
             .then(res => {
               if(res.status === 'success') {
                 showToast('ส่งใบเบิกสำเร็จ');
-                fetchData(); // Reload data from sheet
+                fetchData();
                 setCurrentView('dashboard');
-              } else {
-                showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
-              }
+              } else showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
             })
             .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
             .finally(() => setIsSubmitting(false));
@@ -443,7 +419,12 @@
                 <tbody>
                   {items.map((item, idx) => (
                     <tr key={item.drugId} className="border-b hover:bg-slate-50">
-                      <td className="p-3">{item.name} <br/><span className="text-xs text-slate-400">Par: {item.parQty}</span></td>
+                      <td className="p-3">
+                        {item.name} <br/>
+                        <span className="text-xs text-slate-500 font-medium">
+                           [{item.type}] Par Stock: {item.parQty} {item.unit}
+                        </span>
+                      </td>
                       <td className="p-3 text-center">{item.packSize}</td>
                       <td className="p-3 text-center text-blue-600 font-semibold">{item.prevExcess}</td>
                       <td className="p-3 text-center bg-yellow-50">
@@ -473,7 +454,6 @@
         const hosp = db.hospitals.find(h => h.hospital_id === req.hospitalId);
         const [isApproving, setIsApproving] = useState(false);
 
-        // ยิงผ่าน Fetch API
         const handleApprove = () => {
           setIsApproving(true);
           const payload = { reqId: req.id, items: req.items, hospitalId: req.hospitalId };
@@ -484,9 +464,7 @@
                 showToast('อนุมัติและอัปเดตสต๊อกเรียบร้อย');
                 fetchData();
                 setCurrentView('dashboard');
-              } else {
-                showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
-              }
+              } else showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
             })
             .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
             .finally(() => setIsApproving(false));
@@ -524,11 +502,14 @@
                 </thead>
                 <tbody>
                   {req.items.map((it, i) => {
-                    const d = db.drugs.find(x => x.drug_id === it.drugId);
+                    const d = db.drugs.find(x => String(x.drug_id) === String(it.drugId));
                     return (
                       <tr key={i} className="border-b border-slate-300">
                         <td className="p-2 border-r text-center">{i+1}</td>
-                        <td className="p-2 border-r">{d ? d.drug_name : it.drugId}</td>
+                        <td className="p-2 border-r">
+                           {d ? d.drug_name : it.drugId}
+                           {d && <div className="text-xs text-slate-500 font-normal">({d.unit_display_name})</div>}
+                        </td>
                         <td className="p-2 border-r text-center text-slate-500">{it.usage}</td>
                         <td className="p-2 border-r text-center font-bold">{it.dispensePack}</td>
                         <td className="p-2 text-center font-bold text-lg bg-slate-50">{it.dispenseQty}</td>
@@ -542,19 +523,17 @@
         );
       };
 
-      // --- Admin View: Stock Config ---
       const StockConfigView = () => {
         const [selectedHosp, setSelectedHosp] = useState(db.hospitals[0]?.hospital_id || '');
         const [localData, setLocalData] = useState({});
         const [savingId, setSavingId] = useState(null);
 
-        // โหลดข้อมูลมาใส่ฟอร์มทุกครั้งที่เปลี่ยน รพ.สต.
         useEffect(() => {
           if (!selectedHosp) return;
           const newLocalData = {};
           db.drugs.forEach(d => {
-            const par = db.parLevels.find(p => p.hospital_id === selectedHosp && p.drug_id === d.drug_id);
-            const bal = db.balances.find(b => b.hospital_id === selectedHosp && b.drug_id === d.drug_id);
+            const par = db.parLevels.find(p => String(p.hospital_id) === String(selectedHosp) && String(p.drug_id) === String(d.drug_id));
+            const bal = db.balances.find(b => String(b.hospital_id) === String(selectedHosp) && String(b.drug_id) === String(d.drug_id));
             newLocalData[d.drug_id] = {
               parQty: par ? par.par_qty : 0,
               excessQty: bal ? bal.excess_balance : 0
@@ -583,10 +562,8 @@
             .then(res => {
               if (res.status === 'success') {
                 showToast('บันทึกการเปลี่ยนแปลงแล้ว');
-                fetchData(); // ดึงฐานข้อมูลใหม่ให้ตรงกับเซิร์ฟเวอร์
-              } else {
-                showToast('ข้อผิดพลาด: ' + res.message, 'error');
-              }
+                fetchData(); 
+              } else showToast('ข้อผิดพลาด: ' + res.message, 'error');
             })
             .catch(() => showToast('เชื่อมต่อล้มเหลว', 'error'))
             .finally(() => setSavingId(null));
@@ -594,7 +571,7 @@
 
         return (
           <div className="bg-white rounded-xl shadow-sm p-6 animate-fade-in">
-            <h2 className="text-2xl font-bold mb-2">ตั้งค่าสต๊อกตั้งต้น (Par) และปรับปรุงยอดยกมา</h2>
+            <h2 className="text-2xl font-bold mb-2">ตั้งค่า Par Stock และปรับปรุงยอดยกมา</h2>
             <p className="text-slate-500 mb-6 text-sm">สำหรับผู้ดูแลระบบ: ปรับแก้ยอด Par ระดับคลัง หรือแก้ไขยอดยกมาหากตรวจพบความคลาดเคลื่อน</p>
             
             <div className="mb-6">
@@ -614,9 +591,9 @@
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-100 text-slate-700 text-sm border-b-2 border-slate-200">
-                    <th className="p-3">รหัส - ชื่อยา</th>
+                    <th className="p-3">รหัส - ชื่อยา/เวชภัณฑ์</th>
                     <th className="p-3 text-center">Pack</th>
-                    <th className="p-3 text-center bg-blue-50">ยอดตั้งต้น (Par)</th>
+                    <th className="p-3 text-center bg-blue-50">ยอด Par Stock</th>
                     <th className="p-3 text-center bg-yellow-50">ยอดยกมาปัจจุบัน</th>
                     <th className="p-3 text-right">ดำเนินการ</th>
                   </tr>
@@ -625,11 +602,13 @@
                   {db.drugs.map(drug => {
                     const rowData = localData[drug.drug_id];
                     if (!rowData) return null;
+                    const typeLabel = drug.type === 'DRUG' ? 'ยา' : 'เวชภัณฑ์';
 
                     return (
                       <tr key={drug.drug_id} className="border-b hover:bg-slate-50">
                         <td className="p-3 font-medium text-slate-800">
                           {drug.drug_id} - {drug.drug_name}
+                          <div className="text-xs text-slate-500 font-normal">[{typeLabel}] หน่วย: {drug.unit_display_name}</div>
                         </td>
                         <td className="p-3 text-center text-sm text-slate-500">{drug.pack_size}</td>
                         <td className="p-3 bg-blue-50 text-center">
@@ -675,7 +654,6 @@
 
       return (
         <div className="min-h-screen flex">
-          {/* Sidebar */}
           <div className="w-64 bg-teal-800 text-white flex flex-col no-print">
             <div className="p-6 flex items-center border-b border-teal-700">
               <i className="fa-solid fa-heart-pulse text-2xl text-teal-300 mr-3"></i>
@@ -688,7 +666,6 @@
                 <button onClick={() => setCurrentView('create_req')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='create_req'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-plus mr-3 w-5"></i> เบิกยาใหม่</button>
               )}
               
-              {/* เมนูเฉพาะ Admin */}
               {currentUser.role === 'admin' && (
                 <button onClick={() => setCurrentView('stock_config')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='stock_config'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}>
                   <i className="fa-solid fa-boxes-stacked mr-3 w-5"></i> ตั้งค่าสต๊อก (Admin)
@@ -701,7 +678,6 @@
             </div>
           </div>
           
-          {/* Main Content Area */}
           <div className="flex-1 p-8 bg-slate-100 overflow-auto">
             <div className="max-w-5xl mx-auto">
               {currentView === 'dashboard' && <DashboardView />}
