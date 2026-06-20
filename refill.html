@@ -359,14 +359,22 @@
 
         const [items, setItems] = useState(() => {
           const myPars = db.parLevels.filter(p => p.hospital_id === hospId);
+          // ทำการดักจับข้อผิดพลาดกรณีข้อมูลยาไม่มีในฐานข้อมูลหลัก (Optional Chaining)
           return myPars.map(par => {
             const drug = db.drugs.find(d => d.drug_id === par.drug_id);
             const bal = db.balances.find(b => b.hospital_id === hospId && b.drug_id === par.drug_id);
             const excess = bal ? bal.excess_balance : 0;
             return {
-              drugId: drug.drug_id, name: drug.drug_name, packSize: drug.pack_size,
-              parQty: par.par_qty, prevExcess: excess, usage: 0, netNeed: 0,
-              dispensePack: 0, dispenseQty: 0, newExcess: excess
+              drugId: par.drug_id, 
+              name: drug ? drug.drug_name : 'ไม่พบข้อมูลยาในระบบ (กรุณาเช็คฐานข้อมูล)', 
+              packSize: drug ? drug.pack_size : 1,
+              parQty: par.par_qty, 
+              prevExcess: excess, 
+              usage: 0, 
+              netNeed: 0,
+              dispensePack: 0, 
+              dispenseQty: 0, 
+              newExcess: excess
             };
           });
         });
@@ -520,7 +528,7 @@
                     return (
                       <tr key={i} className="border-b border-slate-300">
                         <td className="p-2 border-r text-center">{i+1}</td>
-                        <td className="p-2 border-r">{d?.drug_name}</td>
+                        <td className="p-2 border-r">{d ? d.drug_name : it.drugId}</td>
                         <td className="p-2 border-r text-center text-slate-500">{it.usage}</td>
                         <td className="p-2 border-r text-center font-bold">{it.dispensePack}</td>
                         <td className="p-2 text-center font-bold text-lg bg-slate-50">{it.dispenseQty}</td>
