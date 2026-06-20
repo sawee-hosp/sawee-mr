@@ -542,6 +542,131 @@
         );
       };
 
+      // --- Admin View: Stock Config ---
+      const StockConfigView = () => {
+        const [selectedHosp, setSelectedHosp] = useState(db.hospitals[0]?.hospital_id || '');
+        const [localData, setLocalData] = useState({});
+        const [savingId, setSavingId] = useState(null);
+
+        // โหลดข้อมูลมาใส่ฟอร์มทุกครั้งที่เปลี่ยน รพ.สต.
+        useEffect(() => {
+          if (!selectedHosp) return;
+          const newLocalData = {};
+          db.drugs.forEach(d => {
+            const par = db.parLevels.find(p => p.hospital_id === selectedHosp && p.drug_id === d.drug_id);
+            const bal = db.balances.find(b => b.hospital_id === selectedHosp && b.drug_id === d.drug_id);
+            newLocalData[d.drug_id] = {
+              parQty: par ? par.par_qty : 0,
+              excessQty: bal ? bal.excess_balance : 0
+            };
+          });
+          setLocalData(newLocalData);
+        }, [selectedHosp, db]);
+
+        const handleUpdateField = (drugId, field, value) => {
+          setLocalData(prev => ({
+            ...prev,
+            [drugId]: { ...prev[drugId], [field]: parseInt(value) || 0 }
+          }));
+        };
+
+        const handleSaveRow = (drugId) => {
+          setSavingId(drugId);
+          const payload = {
+            hospitalId: selectedHosp,
+            drugId: drugId,
+            parQty: localData[drugId].parQty,
+            excessQty: localData[drugId].excessQty
+          };
+
+          fetchAPI('updateStockConfig', payload)
+            .then(res => {
+              if (res.status === 'success') {
+                showToast('บันทึกการเปลี่ยนแปลงแล้ว');
+                fetchData(); // ดึงฐานข้อมูลใหม่ให้ตรงกับเซิร์ฟเวอร์
+              } else {
+                showToast('ข้อผิดพลาด: ' + res.message, 'error');
+              }
+            })
+            .catch(() => showToast('เชื่อมต่อล้มเหลว', 'error'))
+            .finally(() => setSavingId(null));
+        };
+
+        return (
+          <div className="bg-white rounded-xl shadow-sm p-6 animate-fade-in">
+            <h2 className="text-2xl font-bold mb-2">ตั้งค่าสต๊อกตั้งต้น (Par) และปรับปรุงยอดยกมา</h2>
+            <p className="text-slate-500 mb-6 text-sm">สำหรับผู้ดูแลระบบ: ปรับแก้ยอด Par ระดับคลัง หรือแก้ไขยอดยกมาหากตรวจพบความคลาดเคลื่อน</p>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">เลือก รพ.สต. ที่ต้องการตั้งค่า</label>
+              <select 
+                className="border border-slate-300 rounded-lg p-2 w-full max-w-md bg-white outline-none focus:ring-2 focus:ring-teal-500"
+                value={selectedHosp}
+                onChange={e => setSelectedHosp(e.target.value)}
+              >
+                {db.hospitals.map(h => (
+                  <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_id} - {h.hospital_name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 text-sm border-b-2 border-slate-200">
+                    <th className="p-3">รหัส - ชื่อยา</th>
+                    <th className="p-3 text-center">Pack</th>
+                    <th className="p-3 text-center bg-blue-50">ยอดตั้งต้น (Par)</th>
+                    <th className="p-3 text-center bg-yellow-50">ยอดยกมาปัจจุบัน</th>
+                    <th className="p-3 text-right">ดำเนินการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {db.drugs.map(drug => {
+                    const rowData = localData[drug.drug_id];
+                    if (!rowData) return null;
+
+                    return (
+                      <tr key={drug.drug_id} className="border-b hover:bg-slate-50">
+                        <td className="p-3 font-medium text-slate-800">
+                          {drug.drug_id} - {drug.drug_name}
+                        </td>
+                        <td className="p-3 text-center text-sm text-slate-500">{drug.pack_size}</td>
+                        <td className="p-3 bg-blue-50 text-center">
+                          <input 
+                            type="number" min="0" 
+                            className="w-24 border rounded p-1 text-center font-semibold text-blue-700 outline-none focus:border-blue-500"
+                            value={rowData.parQty}
+                            onChange={(e) => handleUpdateField(drug.drug_id, 'parQty', e.target.value)}
+                          />
+                        </td>
+                        <td className="p-3 bg-yellow-50 text-center">
+                          <input 
+                            type="number" min="0" 
+                            className="w-24 border rounded p-1 text-center font-semibold text-amber-700 outline-none focus:border-yellow-500"
+                            value={rowData.excessQty}
+                            onChange={(e) => handleUpdateField(drug.drug_id, 'excessQty', e.target.value)}
+                          />
+                        </td>
+                        <td className="p-3 text-right">
+                          <button 
+                            onClick={() => handleSaveRow(drug.drug_id)}
+                            disabled={savingId === drug.drug_id}
+                            className="bg-teal-600 text-white px-3 py-1.5 rounded text-sm hover:bg-teal-700 disabled:opacity-50"
+                          >
+                            {savingId === drug.drug_id ? <i className="fa-solid fa-spinner fa-spin"></i> : 'บันทึก'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      };
+
       // --- Layout ---
       if (currentView === 'login') return <><LoginView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
       if (currentView === 'register') return <><RegisterView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
@@ -557,14 +682,22 @@
               <h1 className="text-xl font-bold">Sawee Rxfill</h1>
             </div>
             <nav className="flex-1 p-4 space-y-2">
-              <button onClick={() => setCurrentView('dashboard')} className={`w-full text-left p-3 rounded-lg ${currentView==='dashboard'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-house mr-3 w-5"></i> แดชบอร์ด</button>
+              <button onClick={() => setCurrentView('dashboard')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='dashboard'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-house mr-3 w-5"></i> แดชบอร์ด</button>
+              
               {currentUser.role === 'hospital' && (
-                <button onClick={() => setCurrentView('create_req')} className={`w-full text-left p-3 rounded-lg ${currentView==='create_req'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-plus mr-3 w-5"></i> เบิกยาใหม่</button>
+                <button onClick={() => setCurrentView('create_req')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='create_req'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-plus mr-3 w-5"></i> เบิกยาใหม่</button>
+              )}
+              
+              {/* เมนูเฉพาะ Admin */}
+              {currentUser.role === 'admin' && (
+                <button onClick={() => setCurrentView('stock_config')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='stock_config'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}>
+                  <i className="fa-solid fa-boxes-stacked mr-3 w-5"></i> ตั้งค่าสต๊อก (Admin)
+                </button>
               )}
             </nav>
             <div className="p-4 border-t border-teal-700">
               <div className="text-teal-200 text-sm mb-3"><i className="fa-solid fa-user mr-2"></i> {currentUser.name}</div>
-              <button onClick={() => {setCurrentUser(null); setCurrentView('login');}} className="w-full text-left p-2 rounded text-teal-200 hover:bg-red-600 hover:text-white"><i className="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</button>
+              <button onClick={() => {setCurrentUser(null); setCurrentView('login');}} className="w-full text-left p-2 rounded text-teal-200 hover:bg-red-600 hover:text-white transition"><i className="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</button>
             </div>
           </div>
           
@@ -574,6 +707,7 @@
               {currentView === 'dashboard' && <DashboardView />}
               {currentView === 'create_req' && <CreateReqView />}
               {currentView === 'view_req' && <ViewReqView />}
+              {currentView === 'stock_config' && <StockConfigView />}
             </div>
           </div>
           
