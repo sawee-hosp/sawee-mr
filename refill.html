@@ -76,6 +76,7 @@
       const [currentView, setCurrentView] = useState('login');
       const [toast, setToast] = useState(null);
       const [currentReqId, setCurrentReqId] = useState(null);
+      const [resetToken, setResetToken] = useState(null);
 
       const showToast = (message, type = 'success') => setToast({ message, type });
 
@@ -97,19 +98,29 @@
       };
 
       useEffect(() => {
+        // เช็คว่ามี Token รีเซ็ตรหัสผ่านแนบมาใน URL หรือไม่
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('view') === 'reset' && urlParams.get('token')) {
+          setResetToken(urlParams.get('token'));
+          setCurrentView('reset_password');
+        }
         fetchData();
       }, []);
 
       const handleLogin = (username, password) => {
-        if(!db) return;
-        const user = db.users.find(u => u.username === username && u.password === String(password));
-        if (user) {
-          setCurrentUser(user);
-          setCurrentView('dashboard');
-          showToast('เข้าสู่ระบบสำเร็จ');
-        } else {
-          showToast('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
-        }
+        setLoading(true);
+        fetchAPI('login', { username, password })
+          .then(res => {
+            if(res.status === 'success') {
+              setCurrentUser(res.data);
+              setCurrentView('dashboard');
+              showToast('เข้าสู่ระบบสำเร็จ');
+            } else {
+              showToast(res.message, 'error');
+            }
+          })
+          .catch(err => showToast('เชื่อมต่อล้มเหลว', 'error'))
+          .finally(() => setLoading(false));
       };
 
       if (loading) {
@@ -140,9 +151,122 @@
                 <input type="password" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="รหัสผ่าน (Password)" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin(username, password)} />
                 <button onClick={() => handleLogin(username, password)} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">เข้าสู่ระบบ</button>
               </div>
-              <div className="mt-6 text-center text-xs text-slate-400">
-                <p>Admin: admin / 123</p>
-                <p>รพ.สต.: h01 / 123</p>
+              <div className="flex justify-between mt-4 text-sm text-teal-600">
+                <button onClick={() => setCurrentView('register')} className="hover:underline">ลงทะเบียนผู้ใช้ใหม่</button>
+                <button onClick={() => setCurrentView('forgot_password')} className="hover:underline">ลืมรหัสผ่าน?</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const RegisterView = () => {
+        const [formData, setFormData] = useState({ username: '', password: '', name: '', email: '', hospitalId: '' });
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        const handleRegister = () => {
+          if (!formData.username || !formData.password || !formData.name || !formData.email || !formData.hospitalId) {
+            return showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+          }
+          setIsSubmitting(true);
+          fetchAPI('register', formData).then(res => {
+            if (res.status === 'success') {
+              showToast(res.message);
+              setCurrentView('login');
+            } else {
+              showToast(res.message, 'error');
+            }
+          }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
+        };
+
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+              <h2 className="text-2xl font-bold mb-6 text-center text-teal-800">ลงทะเบียนผู้ใช้ รพ.สต.</h2>
+              <div className="space-y-4">
+                <input type="text" className="w-full border rounded-lg p-3" placeholder="ชื่อผู้ใช้ (Username)" onChange={e => setFormData({...formData, username: e.target.value})} />
+                <input type="password" className="w-full border rounded-lg p-3" placeholder="รหัสผ่าน (Password)" onChange={e => setFormData({...formData, password: e.target.value})} />
+                <input type="text" className="w-full border rounded-lg p-3" placeholder="ชื่อ-นามสกุล ผู้ใช้งาน" onChange={e => setFormData({...formData, name: e.target.value})} />
+                <input type="email" className="w-full border rounded-lg p-3" placeholder="อีเมล (สำหรับกู้คืนรหัส)" onChange={e => setFormData({...formData, email: e.target.value})} />
+                <select className="w-full border rounded-lg p-3 bg-white" onChange={e => setFormData({...formData, hospitalId: e.target.value})}>
+                  <option value="">-- เลือก รพ.สต. ต้นสังกัด --</option>
+                  {db?.hospitals.map(h => <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_name}</option>)}
+                </select>
+                <button onClick={handleRegister} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">
+                  {isSubmitting ? 'กำลังบันทึก...' : 'ลงทะเบียน'}
+                </button>
+                <button onClick={() => setCurrentView('login')} className="w-full text-slate-500 mt-2 hover:underline">กลับไปหน้าเข้าสู่ระบบ</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const ForgotPasswordView = () => {
+        const [email, setEmail] = useState('');
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        const handleResetRequest = () => {
+          if (!email) return showToast('กรุณากรอกอีเมล', 'error');
+          setIsSubmitting(true);
+          const appUrl = window.location.href.split('?')[0]; // ส่ง URL ของหน้าเว็บปัจจุบันไปให้ส่งอีเมลกลับ
+          fetchAPI('forgotPassword', { email, appUrl }).then(res => {
+            if (res.status === 'success') {
+              showToast(res.message);
+              setCurrentView('login');
+            } else {
+              showToast(res.message, 'error');
+            }
+          }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
+        };
+
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-2 text-center">ลืมรหัสผ่าน</h2>
+              <p className="text-slate-500 text-sm mb-6 text-center">กรอกอีเมลที่ลงทะเบียนไว้ ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปให้ครับ</p>
+              <div className="space-y-4">
+                <input type="email" className="w-full border rounded-lg p-3" placeholder="อีเมลของคุณ" value={email} onChange={e => setEmail(e.target.value)} />
+                <button onClick={handleResetRequest} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">
+                  {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ขอลิงก์รีเซ็ตรหัสผ่าน'}
+                </button>
+                <button onClick={() => setCurrentView('login')} className="w-full text-slate-500 mt-2 hover:underline">กลับ</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const ResetPasswordView = () => {
+        const [newPassword, setNewPassword] = useState('');
+        const [confirmPassword, setConfirmPassword] = useState('');
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        const handleReset = () => {
+          if (!newPassword || newPassword !== confirmPassword) return showToast('รหัสผ่านไม่ตรงกัน', 'error');
+          setIsSubmitting(true);
+          fetchAPI('resetPassword', { token: resetToken, newPassword }).then(res => {
+            if (res.status === 'success') {
+              showToast(res.message);
+              // เคลียร์ URL ลบทิ้งพารามิเตอร์ token
+              window.history.pushState({}, '', window.location.pathname);
+              setCurrentView('login');
+            } else {
+              showToast(res.message, 'error');
+            }
+          }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
+        };
+
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-6 text-center">ตั้งรหัสผ่านใหม่</h2>
+              <div className="space-y-4">
+                <input type="password" className="w-full border rounded-lg p-3" placeholder="รหัสผ่านใหม่" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                <input type="password" className="w-full border rounded-lg p-3" placeholder="ยืนยันรหัสผ่านใหม่" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                <button onClick={handleReset} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold">
+                  {isSubmitting ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
+                </button>
               </div>
             </div>
           </div>
@@ -407,6 +531,11 @@
       };
 
       // --- Layout ---
+      if (currentView === 'login') return <><LoginView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
+      if (currentView === 'register') return <><RegisterView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
+      if (currentView === 'forgot_password') return <><ForgotPasswordView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
+      if (currentView === 'reset_password') return <><ResetPasswordView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
+
       return (
         <div className="min-h-screen flex">
           {/* Sidebar */}
