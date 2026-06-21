@@ -4,18 +4,13 @@
   <meta charset="UTF-8">
   <title>Sawee Rxfill (Firebase Edition)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <!-- Babel for JSX -->
   <script crossorigin src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
 
-  <!-- ⭐️ 1. นำเข้า Firebase SDK (เวอร์ชัน Compat ใช้งานง่ายสำหรับ HTML ไฟล์เดียว) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -39,7 +34,7 @@
   <script type="text/babel" data-presets="react">
     const { useState, useEffect } = React;
 
-    // ⭐️ 2. ใส่ Config ของ Firebase ที่ Copy มาจาก Step 4 (เปลี่ยนข้อมูลด้านล่างให้เป็นของคุณ)
+    // ⭐️ Config ของคุณใส่ไว้ให้แล้วครับ
     const firebaseConfig = {
       apiKey: "AIzaSyAnzXAEkH8Zz0Ur4lCQ00qa4UqYATTikAs",
       authDomain: "sawee-rxfill.firebaseapp.com",
@@ -50,14 +45,12 @@
       measurementId: "G-XFL0L1L213"
     };
 
-    // ⭐️ 3. สั่งเริ่มต้นใช้งาน Firebase
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // --- Component แจ้งเตือน ---
     const Toast = ({ message, type, onClose }) => {
       useEffect(() => {
         const timer = setTimeout(onClose, 3000);
@@ -74,7 +67,7 @@
 
     function App() {
       const [loading, setLoading] = useState(true);
-      const [appDb, setAppDb] = useState(null); // ข้อมูลทั้งหมดจาก Firestore
+      const [appDb, setAppDb] = useState(null); 
       const [currentUser, setCurrentUser] = useState(null);
       const [currentView, setCurrentView] = useState('login');
       const [toast, setToast] = useState(null);
@@ -82,11 +75,9 @@
 
       const showToast = (message, type = 'success') => setToast({ message, type });
 
-      // ⭐️ 4. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Firestore แบบ Realtime
       const fetchData = async () => {
         setLoading(true);
         try {
-          // ดึงข้อมูลแต่ละ Collection แบบขนานกัน (เร็วขึ้น)
           const [hospSnap, unitSnap, drugSnap, parSnap, balSnap, reqSnap] = await Promise.all([
             db.collection('master_hospitals').get(),
             db.collection('master_unit').get(),
@@ -102,8 +93,6 @@
             const matchedUnit = units.find(u => u.unit_id === data.unit_id);
             return { ...data, unit_display_name: matchedUnit ? matchedUnit.unit_name : data.unit_id };
           });
-
-          // ดึงประวัติการเบิกและ items ย่อย (ใน Firebase เราเก็บ items ไว้ใน document เดียวกันได้เลย)
           const requisitions = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
           setAppDb({
@@ -121,11 +110,9 @@
         }
       };
 
-      // ⭐️ เช็คสถานะการ Login ของ Firebase ทุกครั้งที่โหลดหน้าเว็บ
       useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
           if (user) {
-            // ดึงข้อมูล Role จาก Firestore
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists) {
               setCurrentUser({ uid: user.uid, email: user.email, ...userDoc.data() });
@@ -135,12 +122,11 @@
             setCurrentUser(null);
             setCurrentView('login');
           }
-          fetchData(); // ดึงข้อมูลพื้นฐานมาเตรียมไว้
+          fetchData(); 
         });
         return () => unsubscribe();
       }, []);
 
-      // ⭐️ 5. ระบบ Login ด้วย Firebase Auth
       const handleLogin = async (email, password) => {
         setLoading(true);
         try {
@@ -152,63 +138,97 @@
         }
       };
 
-      // ⭐️ 6. ระบบสมัครสมาชิกด้วย Firebase Auth + Firestore
       const handleRegister = async (formData) => {
         try {
-          // สร้างรหัสผู้ใช้ในระบบ Auth
           const userCredential = await auth.createUserWithEmailAndPassword(formData.email, formData.password);
           const user = userCredential.user;
-          
-          // บันทึกข้อมูลส่วนตัว (เช่น ชื่อ, รพ.สต.) ลงใน Firestore collection 'users'
           await db.collection('users').doc(user.uid).set({
             name: formData.name,
             hospital_id: formData.hospitalId,
             role: 'hospital',
             created_at: firebase.firestore.FieldValue.serverTimestamp()
           });
-          
           showToast('ลงทะเบียนสำเร็จ ระบบล็อกอินให้อัตโนมัติ');
         } catch (error) {
           showToast(error.message, 'error');
         }
       };
 
-      // --- ฟังก์ชันช่วยเหลือสำหรับ Admin จัดการข้อมูลตั้งต้น (ใช้คลิกปุ่ม Setup ทีเดียว) ---
-      const setupInitialFirebaseData = async () => {
-        showToast('กำลังสร้างฐานข้อมูลตั้งต้น กรุณารอสักครู่...');
-        try {
-          const batch = db.batch();
-          
-          // หน่วยนับ
-          batch.set(db.collection('master_unit').doc('U01'), { unit_id: 'U01', unit_name: 'เม็ด' });
-          batch.set(db.collection('master_unit').doc('U02'), { unit_id: 'U02', unit_name: 'แคปซูล' });
-          
-          // รพ.สต.
-          batch.set(db.collection('master_hospitals').doc('H01'), { hospital_id: 'H01', hospital_name: 'รพ.สต. บ้านดอน' });
-          
-          // ยา
-          batch.set(db.collection('master_drugs').doc('01201'), { drug_id: '01201', drug_name: 'Paracetamol 500mg', pack_size: 100, unit_id: 'U01', type: 'DRUG' });
-          batch.set(db.collection('master_drugs').doc('01202'), { drug_id: '01202', drug_name: 'Amoxicillin 500mg', pack_size: 50, unit_id: 'U02', type: 'DRUG' });
-          
-          // Par Stock (รหัสเอกสารใช้ hospId_drugId)
-          batch.set(db.collection('config_par').doc('H01_01201'), { hospital_id: 'H01', drug_id: '01201', par_qty: 2000 });
-          batch.set(db.collection('config_par').doc('H01_01202'), { hospital_id: 'H01', drug_id: '01202', par_qty: 500 });
+      // ⭐️ ฟังก์ชันดูดข้อมูลจาก Sheets โดยตรง
+      const migrateFromSheets = async () => {
+        const gasUrl = prompt("กรุณาวาง URL ของ Google Apps Script (Web App) เดิมที่คุณเคยใช้เชื่อมต่อ:");
+        if (!gasUrl) return;
 
-          // ให้อัปเดตสิทธิ์ให้ตัวเองเป็น Admin เสมอเวลาคนกด Setup DB (แก้ปัญหาไก่กับไข่)
-          if (currentUser) {
-             batch.update(db.collection('users').doc(currentUser.uid), { role: 'admin' });
+        showToast('กำลังโหลดข้อมูลจาก Sheets... อาจใช้เวลาสักครู่');
+        
+        try {
+          const res = await fetch(gasUrl, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'getInitialData' })
+          });
+          
+          const responseData = await res.json();
+          if(responseData.status !== 'success') {
+             throw new Error(responseData.message || "รูปแบบข้อมูลผิดพลาด");
+          }
+
+          const data = responseData.data;
+          const batch = db.batch();
+
+          // โอนถ่ายข้อมูล รพ.สต.
+          if(data.hospitals) {
+            data.hospitals.forEach(h => {
+              if(h.hospital_id) batch.set(db.collection('master_hospitals').doc(String(h.hospital_id)), h);
+            });
+          }
+
+          // โอนถ่ายข้อมูลยา
+          if(data.drugs) {
+            data.drugs.forEach(d => {
+              if(d.drug_id) {
+                d.pack_size = Number(d.pack_size) || 1;
+                batch.set(db.collection('master_drugs').doc(String(d.drug_id)), d);
+              }
+            });
+          }
+
+          // โอนถ่ายข้อมูล Par
+          if(data.parLevels) {
+            data.parLevels.forEach(p => {
+              if(p.hospital_id && p.drug_id) {
+                const docId = `${p.hospital_id}_${p.drug_id}`;
+                p.par_qty = Number(p.par_qty) || 0;
+                batch.set(db.collection('config_par').doc(docId), p);
+              }
+            });
+          }
+
+          // โอนถ่ายข้อมูลยอดยกมา
+          if(data.balances) {
+            data.balances.forEach(b => {
+              if(b.hospital_id && b.drug_id) {
+                const docId = `${b.hospital_id}_${b.drug_id}`;
+                b.excess_balance = Number(b.excess_balance) || 0;
+                b.last_updated = firebase.firestore.FieldValue.serverTimestamp();
+                batch.set(db.collection('current_excess').doc(docId), b);
+              }
+            });
           }
 
           await batch.commit();
-          showToast('สร้างข้อมูลตั้งต้นสำเร็จ!');
-          // Refresh user data manually to update role state instantly
-          const userDoc = await db.collection('users').doc(currentUser.uid).get();
-          if (userDoc.exists) setCurrentUser({ uid: currentUser.uid, email: currentUser.email, ...userDoc.data() });
-          fetchData();
+          showToast('✅ ย้ายข้อมูลจาก Google Sheets เข้าสู่ Firebase สำเร็จ!');
+          
+          // เปลี่ยนสิทธิ์ตัวเองให้เป็น Admin ด้วย
+          await db.collection('users').doc(currentUser.uid).update({ role: 'admin' });
+          setCurrentUser({...currentUser, role: 'admin'});
+          
+          fetchData(); // โหลดหน้าใหม่
         } catch (e) {
-          showToast('Error: ' + e.message, 'error');
+          showToast('ผิดพลาด: ' + e.message, 'error');
         }
-      }
+      };
 
       if (loading) {
         return (
@@ -219,7 +239,6 @@
         );
       }
 
-      // --- Views ต่างๆ ---
       const LoginView = () => {
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
@@ -259,13 +278,13 @@
         return (
           <div className="min-h-screen flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-              <h2 className="text-2xl font-bold mb-6 text-center text-teal-800">ลงทะเบียน รพ.สต.</h2>
+              <h2 className="text-2xl font-bold mb-6 text-center text-teal-800">ลงทะเบียนเข้าใช้งาน</h2>
               <div className="space-y-4">
                 <input type="email" className="w-full border rounded-lg p-3" placeholder="อีเมล (สำหรับ Login และกู้รหัส)" onChange={e => setFormData({...formData, email: e.target.value})} />
                 <input type="password" className="w-full border rounded-lg p-3" placeholder="รหัสผ่าน (ขั้นต่ำ 6 ตัวอักษร)" onChange={e => setFormData({...formData, password: e.target.value})} />
                 <input type="text" className="w-full border rounded-lg p-3" placeholder="ชื่อ-นามสกุล ผู้ใช้งาน" onChange={e => setFormData({...formData, name: e.target.value})} />
                 <select className="w-full border rounded-lg p-3 bg-white" onChange={e => setFormData({...formData, hospitalId: e.target.value})}>
-                  <option value="">-- เลือก รพ.สต. ต้นสังกัด --</option>
+                  <option value="">-- เลือก รพ.สต. (ถ้ามี) --</option>
                   {appDb?.hospitals?.map(h => <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_name}</option>)}
                 </select>
                 <button onClick={() => { setIsSubmitting(true); handleRegister(formData).finally(()=>setIsSubmitting(false)); }} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">
@@ -290,10 +309,10 @@
                 <p className="text-slate-500">ยินดีต้อนรับ, {currentUser.name}</p>
               </div>
               <div className="space-x-2">
-                {/* ⭐️ แก้ไขให้ปุ่ม Setup DB แสดงเมื่อยังไม่มีข้อมูล รพ.สต. ในระบบด้วย (แก้ปัญหาตั้งต้น) */}
+                {/* ⭐️ ปุ่มนี้จะโผล่มาให้แอดมิน หรือคนที่ลงทะเบียนคนแรกกดเพื่อนำเข้าข้อมูล */}
                 {(currentUser.role === 'admin' || !appDb?.hospitals || appDb.hospitals.length === 0) && (
-                  <button onClick={setupInitialFirebaseData} className="bg-amber-500 text-white px-4 py-2 rounded-lg shadow text-sm">
-                     <i className="fa-solid fa-database mr-1"></i> Setup DB เริ่มต้น
+                  <button onClick={migrateFromSheets} className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow text-sm hover:bg-indigo-700">
+                     <i className="fa-solid fa-cloud-arrow-down mr-1"></i> ดึงข้อมูลจาก Sheets ลง Firebase
                   </button>
                 )}
                 {isHospital && (
@@ -401,7 +420,6 @@
           setItems(newItems);
         };
 
-        // ⭐️ บันทึกใบเบิกลง Firestore
         const handleSubmit = async () => {
           setIsSubmitting(true);
           const newId = `REQ-${currentYear}-${String(currentMonth).padStart(2, '0')}-${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`;
@@ -412,7 +430,7 @@
               month: currentMonth,
               year: currentYear,
               status: 'Pending',
-              items: items, // Firestore เก็บ Array ของ Object ได้เลย!
+              items: items, 
               created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             showToast('ส่งใบเบิกสำเร็จ');
@@ -481,16 +499,13 @@
         const hosp = appDb.hospitals.find(h => h.hospital_id === req.hospitalId);
         const [isApproving, setIsApproving] = useState(false);
 
-        // ⭐️ อนุมัติการเบิก และอัปเดตยอดยกไป
         const handleApprove = async () => {
           setIsApproving(true);
           try {
-            const batch = db.batch(); // ใช้ Batch เพื่อบันทึกหลายอย่างพร้อมกัน (ป้องกันเน็ตหลุดกลางคัน)
+            const batch = db.batch(); 
             
-            // 1. เปลี่ยนสถานะเอกสาร
             batch.update(db.collection('requisitions').doc(req.id), { status: 'Completed' });
             
-            // 2. อัปเดตยอดคงเหลือ
             req.items.forEach(item => {
               const docId = `${req.hospitalId}_${item.drugId}`;
               batch.set(db.collection('current_excess').doc(docId), {
@@ -498,7 +513,7 @@
                 drug_id: item.drugId,
                 excess_balance: item.newExcess,
                 last_updated: firebase.firestore.FieldValue.serverTimestamp()
-              }, { merge: true }); // merge: true คือถ้ามีอยู่แล้วให้อัปเดต ถ้าไม่มีให้สร้างใหม่
+              }, { merge: true });
             });
 
             await batch.commit();
@@ -651,7 +666,6 @@
         );
       };
 
-      // --- Layout กฎของระบบ ---
       if (currentView === 'login') return <><LoginView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
       if (currentView === 'register') return <><RegisterView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
 
