@@ -154,12 +154,17 @@
         }
       };
 
-      // ⭐️ ฟังก์ชันดูดข้อมูลจาก Sheets โดยตรง
+      // ⭐️ ฟังก์ชันดูดข้อมูลจาก Sheets โดยตรง (แก้ไขให้รองรับข้อมูลเกิน 500 รายการ)
       const migrateFromSheets = async () => {
-        const gasUrl = prompt("กรุณาวาง URL ของ Google Apps Script (Web App) เดิมที่คุณเคยใช้เชื่อมต่อ:");
+        const gasUrl = prompt("กรุณาวาง URL ของ Google Apps Script (Web App) เดิม ที่ลงท้ายด้วย /exec:");
         if (!gasUrl) return;
+        
+        if (!gasUrl.includes('/exec')) {
+          showToast('URL ต้องลงท้ายด้วย /exec เท่านั้นครับ', 'error');
+          return;
+        }
 
-        showToast('กำลังโหลดข้อมูลจาก Sheets... อาจใช้เวลาสักครู่');
+        showToast('กำลังโหลดและโอนถ่ายข้อมูล... อาจใช้เวลา 1-2 นาที');
         
         try {
           const res = await fetch(gasUrl, {
@@ -175,12 +180,12 @@
           }
 
           const data = responseData.data;
-          const batch = db.batch();
+          const operations = []; // เก็บชุดคำสั่งทั้งหมดไว้ก่อน
 
           // โอนถ่ายข้อมูล รพ.สต.
           if(data.hospitals) {
             data.hospitals.forEach(h => {
-              if(h.hospital_id) batch.set(db.collection('master_hospitals').doc(String(h.hospital_id)), h);
+              if(h.hospital_id) operations.push({ col: 'master_hospitals', id: String(h.hospital_id), doc: h });
             });
           }
 
@@ -189,7 +194,7 @@
             data.drugs.forEach(d => {
               if(d.drug_id) {
                 d.pack_size = Number(d.pack_size) || 1;
-                batch.set(db.collection('master_drugs').doc(String(d.drug_id)), d);
+                operations.push({ col: 'master_drugs', id: String(d.drug_id), doc: d });
               }
             });
           }
@@ -200,7 +205,7 @@
               if(p.hospital_id && p.drug_id) {
                 const docId = `${p.hospital_id}_${p.drug_id}`;
                 p.par_qty = Number(p.par_qty) || 0;
-                batch.set(db.collection('config_par').doc(docId), p);
+                operations.push({ col: 'config_par', id: docId, doc: p });
               }
             });
           }
@@ -211,13 +216,24 @@
               if(b.hospital_id && b.drug_id) {
                 const docId = `${b.hospital_id}_${b.drug_id}`;
                 b.excess_balance = Number(b.excess_balance) || 0;
-                b.last_updated = firebase.firestore.FieldValue.serverTimestamp();
-                batch.set(db.collection('current_excess').doc(docId), b);
+                // ใช้ timestamp ฝั่ง Client ชั่วคราวเพื่อให้เซฟผ่านง่ายๆ
+                b.last_updated = new Date().toISOString(); 
+                operations.push({ col: 'current_excess', id: docId, doc: b });
               }
             });
           }
 
-          await batch.commit();
+          // ⭐️ พระเอกอยู่ตรงนี้: แบ่งเซฟทีละ 450 รายการ เพื่อไม่ให้เกินลิมิต 500 ของ Firebase
+          const BATCH_SIZE = 450;
+          for (let i = 0; i < operations.length; i += BATCH_SIZE) {
+            const batch = db.batch();
+            const chunk = operations.slice(i, i + BATCH_SIZE);
+            chunk.forEach(op => {
+              batch.set(db.collection(op.col).doc(op.id), op.doc);
+            });
+            await batch.commit(); // ทยอยส่งทีละกล่อง
+          }
+
           showToast('✅ ย้ายข้อมูลจาก Google Sheets เข้าสู่ Firebase สำเร็จ!');
           
           // เปลี่ยนสิทธิ์ตัวเองให้เป็น Admin ด้วย
@@ -227,6 +243,7 @@
           fetchData(); // โหลดหน้าใหม่
         } catch (e) {
           showToast('ผิดพลาด: ' + e.message, 'error');
+          console.error(e);
         }
       };
 
