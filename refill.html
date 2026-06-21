@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>Sawee Rxfill (Standalone)</title>
+  <title>Sawee Rxfill (Firebase Edition)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,9 +12,13 @@
   <!-- React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  
   <!-- Babel for JSX -->
   <script crossorigin src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+
+  <!-- ⭐️ 1. นำเข้า Firebase SDK (เวอร์ชัน Compat ใช้งานง่ายสำหรับ HTML ไฟล์เดียว) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
@@ -35,24 +39,25 @@
   <script type="text/babel" data-presets="react">
     const { useState, useEffect } = React;
 
-    // --- ส่วนตั้งค่า URL ของ Backend ---
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyxqnZlYJKW22S_DO9PnYFQYsxs6SMbUVI5ckB7yZCDC6KhlqKpE8incdkzmuyVILCd/exec";
-
-    const fetchAPI = async (action, payload = null) => {
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          redirect: 'follow',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action, payload })
-        });
-        return await response.json();
-      } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-      }
+    // ⭐️ 2. ใส่ Config ของ Firebase ที่ Copy มาจาก Step 4 (เปลี่ยนข้อมูลด้านล่างให้เป็นของคุณ)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAnzXAEkH8Zz0Ur4lCQ00qa4UqYATTikAs",
+      authDomain: "sawee-rxfill.firebaseapp.com",
+      projectId: "sawee-rxfill",
+      storageBucket: "sawee-rxfill.firebasestorage.app",
+      messagingSenderId: "186506077335",
+      appId: "1:186506077335:web:71c5f6f90bb26e767df5d2",
+      measurementId: "G-XFL0L1L213"
     };
 
+    // ⭐️ 3. สั่งเริ่มต้นใช้งาน Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // --- Component แจ้งเตือน ---
     const Toast = ({ message, type, onClose }) => {
       useEffect(() => {
         const timer = setTimeout(onClose, 3000);
@@ -69,80 +74,178 @@
 
     function App() {
       const [loading, setLoading] = useState(true);
-      const [db, setDb] = useState(null);
+      const [appDb, setAppDb] = useState(null); // ข้อมูลทั้งหมดจาก Firestore
       const [currentUser, setCurrentUser] = useState(null);
       const [currentView, setCurrentView] = useState('login');
       const [toast, setToast] = useState(null);
       const [currentReqId, setCurrentReqId] = useState(null);
-      const [resetToken, setResetToken] = useState(null);
 
       const showToast = (message, type = 'success') => setToast({ message, type });
 
-      const fetchData = () => {
+      // ⭐️ 4. ฟังก์ชันดึงข้อมูลทั้งหมดจาก Firestore แบบ Realtime
+      const fetchData = async () => {
         setLoading(true);
-        fetchAPI('getInitialData')
-          .then(res => {
-            if(res.status === 'success') setDb(res.data);
-            else showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
-          })
-          .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
-          .finally(() => setLoading(false));
+        try {
+          // ดึงข้อมูลแต่ละ Collection แบบขนานกัน (เร็วขึ้น)
+          const [hospSnap, unitSnap, drugSnap, parSnap, balSnap, reqSnap] = await Promise.all([
+            db.collection('master_hospitals').get(),
+            db.collection('master_unit').get(),
+            db.collection('master_drugs').get(),
+            db.collection('config_par').get(),
+            db.collection('current_excess').get(),
+            db.collection('requisitions').orderBy('created_at', 'desc').get()
+          ]);
+
+          const units = unitSnap.docs.map(d => d.data());
+          const drugs = drugSnap.docs.map(d => {
+            const data = d.data();
+            const matchedUnit = units.find(u => u.unit_id === data.unit_id);
+            return { ...data, unit_display_name: matchedUnit ? matchedUnit.unit_name : data.unit_id };
+          });
+
+          // ดึงประวัติการเบิกและ items ย่อย (ใน Firebase เราเก็บ items ไว้ใน document เดียวกันได้เลย)
+          const requisitions = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+          setAppDb({
+            hospitals: hospSnap.docs.map(d => d.data()),
+            drugs: drugs,
+            parLevels: parSnap.docs.map(d => d.data()),
+            balances: balSnap.docs.map(d => d.data()),
+            requisitions: requisitions
+          });
+        } catch (error) {
+          console.error(error);
+          showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error');
+        } finally {
+          setLoading(false);
+        }
       };
 
+      // ⭐️ เช็คสถานะการ Login ของ Firebase ทุกครั้งที่โหลดหน้าเว็บ
       useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('view') === 'reset' && urlParams.get('token')) {
-          setResetToken(urlParams.get('token'));
-          setCurrentView('reset_password');
-        }
-        fetchData();
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            // ดึงข้อมูล Role จาก Firestore
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+              setCurrentUser({ uid: user.uid, email: user.email, ...userDoc.data() });
+              setCurrentView('dashboard');
+            }
+          } else {
+            setCurrentUser(null);
+            setCurrentView('login');
+          }
+          fetchData(); // ดึงข้อมูลพื้นฐานมาเตรียมไว้
+        });
+        return () => unsubscribe();
       }, []);
 
-      const handleLogin = (username, password) => {
+      // ⭐️ 5. ระบบ Login ด้วย Firebase Auth
+      const handleLogin = async (email, password) => {
         setLoading(true);
-        fetchAPI('login', { username, password })
-          .then(res => {
-            if(res.status === 'success') {
-              setCurrentUser(res.data);
-              setCurrentView('dashboard');
-              showToast('เข้าสู่ระบบสำเร็จ');
-            } else showToast(res.message, 'error');
-          })
-          .catch(err => showToast('เชื่อมต่อล้มเหลว', 'error'))
-          .finally(() => setLoading(false));
+        try {
+          await auth.signInWithEmailAndPassword(email, password);
+          showToast('เข้าสู่ระบบสำเร็จ');
+        } catch (error) {
+          showToast('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 'error');
+          setLoading(false);
+        }
       };
+
+      // ⭐️ 6. ระบบสมัครสมาชิกด้วย Firebase Auth + Firestore
+      const handleRegister = async (formData) => {
+        try {
+          // สร้างรหัสผู้ใช้ในระบบ Auth
+          const userCredential = await auth.createUserWithEmailAndPassword(formData.email, formData.password);
+          const user = userCredential.user;
+          
+          // บันทึกข้อมูลส่วนตัว (เช่น ชื่อ, รพ.สต.) ลงใน Firestore collection 'users'
+          await db.collection('users').doc(user.uid).set({
+            name: formData.name,
+            hospital_id: formData.hospitalId,
+            role: 'hospital',
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          
+          showToast('ลงทะเบียนสำเร็จ ระบบล็อกอินให้อัตโนมัติ');
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      // --- ฟังก์ชันช่วยเหลือสำหรับ Admin จัดการข้อมูลตั้งต้น (ใช้คลิกปุ่ม Setup ทีเดียว) ---
+      const setupInitialFirebaseData = async () => {
+        showToast('กำลังสร้างฐานข้อมูลตั้งต้น กรุณารอสักครู่...');
+        try {
+          const batch = db.batch();
+          
+          // หน่วยนับ
+          batch.set(db.collection('master_unit').doc('U01'), { unit_id: 'U01', unit_name: 'เม็ด' });
+          batch.set(db.collection('master_unit').doc('U02'), { unit_id: 'U02', unit_name: 'แคปซูล' });
+          
+          // รพ.สต.
+          batch.set(db.collection('master_hospitals').doc('H01'), { hospital_id: 'H01', hospital_name: 'รพ.สต. บ้านดอน' });
+          
+          // ยา
+          batch.set(db.collection('master_drugs').doc('01201'), { drug_id: '01201', drug_name: 'Paracetamol 500mg', pack_size: 100, unit_id: 'U01', type: 'DRUG' });
+          batch.set(db.collection('master_drugs').doc('01202'), { drug_id: '01202', drug_name: 'Amoxicillin 500mg', pack_size: 50, unit_id: 'U02', type: 'DRUG' });
+          
+          // Par Stock (รหัสเอกสารใช้ hospId_drugId)
+          batch.set(db.collection('config_par').doc('H01_01201'), { hospital_id: 'H01', drug_id: '01201', par_qty: 2000 });
+          batch.set(db.collection('config_par').doc('H01_01202'), { hospital_id: 'H01', drug_id: '01202', par_qty: 500 });
+
+          // ให้อัปเดตสิทธิ์ให้ตัวเองเป็น Admin เสมอเวลาคนกด Setup DB (แก้ปัญหาไก่กับไข่)
+          if (currentUser) {
+             batch.update(db.collection('users').doc(currentUser.uid), { role: 'admin' });
+          }
+
+          await batch.commit();
+          showToast('สร้างข้อมูลตั้งต้นสำเร็จ!');
+          // Refresh user data manually to update role state instantly
+          const userDoc = await db.collection('users').doc(currentUser.uid).get();
+          if (userDoc.exists) setCurrentUser({ uid: currentUser.uid, email: currentUser.email, ...userDoc.data() });
+          fetchData();
+        } catch (e) {
+          showToast('Error: ' + e.message, 'error');
+        }
+      }
 
       if (loading) {
         return (
           <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
             <div className="loader mb-4"></div>
-            <p className="text-teal-600 font-semibold animate-pulse">กำลังซิงค์ข้อมูลกับฐานข้อมูล (Google Sheets)...</p>
+            <p className="text-teal-600 font-semibold animate-pulse">กำลังโหลดข้อมูลจาก Firebase...</p>
           </div>
         );
       }
 
-      // --- Views ---
+      // --- Views ต่างๆ ---
       const LoginView = () => {
-        const [username, setUsername] = useState('');
+        const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
         return (
           <div className="min-h-screen flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
               <div className="flex flex-col items-center mb-8">
                 <div className="bg-teal-600 p-4 rounded-full text-white mb-4 shadow-lg text-2xl">
-                  <i className="fa-solid fa-heart-pulse"></i>
+                  <i className="fa-solid fa-fire"></i>
                 </div>
                 <h1 className="text-2xl font-bold">Sawee Rxfill</h1>
-                <p className="text-slate-500 text-sm">ระบบเบิกยา รพ.สต. เครือข่าย รพ.สวี</p>
+                <p className="text-slate-500 text-sm">Powered by Firebase</p>
               </div>
               <div className="space-y-4">
-                <input type="text" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="ชื่อผู้ใช้ (Username)" value={username} onChange={e => setUsername(e.target.value)} />
-                <input type="password" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="รหัสผ่าน (Password)" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin(username, password)} />
-                <button onClick={() => handleLogin(username, password)} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">เข้าสู่ระบบ</button>
+                <input type="email" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="อีเมล (Email)" value={email} onChange={e => setEmail(e.target.value)} />
+                <input type="password" className="w-full border rounded-lg p-3 outline-none focus:ring-2 focus:ring-teal-500" placeholder="รหัสผ่าน (Password)" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin(email, password)} />
+                <button onClick={() => handleLogin(email, password)} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">เข้าสู่ระบบ</button>
               </div>
               <div className="flex justify-between mt-4 text-sm text-teal-600">
                 <button onClick={() => setCurrentView('register')} className="hover:underline">ลงทะเบียนผู้ใช้ใหม่</button>
-                <button onClick={() => setCurrentView('forgot_password')} className="hover:underline">ลืมรหัสผ่าน?</button>
+                <button onClick={() => {
+                  const resetEmail = prompt("กรุณากรอกอีเมลของคุณเพื่อรับลิงก์ตั้งรหัสผ่านใหม่:");
+                  if(resetEmail) {
+                    auth.sendPasswordResetEmail(resetEmail).then(() => showToast('ส่งลิงก์ไปที่อีเมลแล้ว')).catch(e => showToast(e.message, 'error'));
+                  }
+                }} className="hover:underline">ลืมรหัสผ่าน?</button>
               </div>
             </div>
           </div>
@@ -150,36 +253,22 @@
       };
 
       const RegisterView = () => {
-        const [formData, setFormData] = useState({ username: '', password: '', name: '', email: '', hospitalId: '' });
+        const [formData, setFormData] = useState({ email: '', password: '', name: '', hospitalId: '' });
         const [isSubmitting, setIsSubmitting] = useState(false);
-
-        const handleRegister = () => {
-          if (!formData.username || !formData.password || !formData.name || !formData.email || !formData.hospitalId) {
-            return showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
-          }
-          setIsSubmitting(true);
-          fetchAPI('register', formData).then(res => {
-            if (res.status === 'success') {
-              showToast(res.message);
-              setCurrentView('login');
-            } else showToast(res.message, 'error');
-          }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
-        };
 
         return (
           <div className="min-h-screen flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-              <h2 className="text-2xl font-bold mb-6 text-center text-teal-800">ลงทะเบียนผู้ใช้ รพ.สต.</h2>
+              <h2 className="text-2xl font-bold mb-6 text-center text-teal-800">ลงทะเบียน รพ.สต.</h2>
               <div className="space-y-4">
-                <input type="text" className="w-full border rounded-lg p-3" placeholder="ชื่อผู้ใช้ (Username)" onChange={e => setFormData({...formData, username: e.target.value})} />
-                <input type="password" className="w-full border rounded-lg p-3" placeholder="รหัสผ่าน (Password)" onChange={e => setFormData({...formData, password: e.target.value})} />
+                <input type="email" className="w-full border rounded-lg p-3" placeholder="อีเมล (สำหรับ Login และกู้รหัส)" onChange={e => setFormData({...formData, email: e.target.value})} />
+                <input type="password" className="w-full border rounded-lg p-3" placeholder="รหัสผ่าน (ขั้นต่ำ 6 ตัวอักษร)" onChange={e => setFormData({...formData, password: e.target.value})} />
                 <input type="text" className="w-full border rounded-lg p-3" placeholder="ชื่อ-นามสกุล ผู้ใช้งาน" onChange={e => setFormData({...formData, name: e.target.value})} />
-                <input type="email" className="w-full border rounded-lg p-3" placeholder="อีเมล (สำหรับกู้คืนรหัส)" onChange={e => setFormData({...formData, email: e.target.value})} />
                 <select className="w-full border rounded-lg p-3 bg-white" onChange={e => setFormData({...formData, hospitalId: e.target.value})}>
                   <option value="">-- เลือก รพ.สต. ต้นสังกัด --</option>
-                  {db?.hospitals.map(h => <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_name}</option>)}
+                  {appDb?.hospitals?.map(h => <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_name}</option>)}
                 </select>
-                <button onClick={handleRegister} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">
+                <button onClick={() => { setIsSubmitting(true); handleRegister(formData).finally(()=>setIsSubmitting(false)); }} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">
                   {isSubmitting ? 'กำลังบันทึก...' : 'ลงทะเบียน'}
                 </button>
                 <button onClick={() => setCurrentView('login')} className="w-full text-slate-500 mt-2 hover:underline">กลับไปหน้าเข้าสู่ระบบ</button>
@@ -189,75 +278,9 @@
         );
       };
 
-      const ForgotPasswordView = () => {
-        const [email, setEmail] = useState('');
-        const [isSubmitting, setIsSubmitting] = useState(false);
-
-        const handleResetRequest = () => {
-          if (!email) return showToast('กรุณากรอกอีเมล', 'error');
-          setIsSubmitting(true);
-          const appUrl = window.location.href.split('?')[0]; 
-          fetchAPI('forgotPassword', { email, appUrl }).then(res => {
-            if (res.status === 'success') {
-              showToast(res.message);
-              setCurrentView('login');
-            } else showToast(res.message, 'error');
-          }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
-        };
-
-        return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-2 text-center">ลืมรหัสผ่าน</h2>
-              <p className="text-slate-500 text-sm mb-6 text-center">กรอกอีเมลที่ลงทะเบียนไว้ ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ไปให้ครับ</p>
-              <div className="space-y-4">
-                <input type="email" className="w-full border rounded-lg p-3" placeholder="อีเมลของคุณ" value={email} onChange={e => setEmail(e.target.value)} />
-                <button onClick={handleResetRequest} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold hover:bg-teal-700">
-                  {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ขอลิงก์รีเซ็ตรหัสผ่าน'}
-                </button>
-                <button onClick={() => setCurrentView('login')} className="w-full text-slate-500 mt-2 hover:underline">กลับ</button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      const ResetPasswordView = () => {
-        const [newPassword, setNewPassword] = useState('');
-        const [confirmPassword, setConfirmPassword] = useState('');
-        const [isSubmitting, setIsSubmitting] = useState(false);
-
-        const handleReset = () => {
-          if (!newPassword || newPassword !== confirmPassword) return showToast('รหัสผ่านไม่ตรงกัน', 'error');
-          setIsSubmitting(true);
-          fetchAPI('resetPassword', { token: resetToken, newPassword }).then(res => {
-            if (res.status === 'success') {
-              showToast(res.message);
-              window.history.pushState({}, '', window.location.pathname);
-              setCurrentView('login');
-            } else showToast(res.message, 'error');
-          }).catch(() => showToast('เชื่อมต่อล้มเหลว', 'error')).finally(() => setIsSubmitting(false));
-        };
-
-        return (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-              <h2 className="text-xl font-bold mb-6 text-center">ตั้งรหัสผ่านใหม่</h2>
-              <div className="space-y-4">
-                <input type="password" className="w-full border rounded-lg p-3" placeholder="รหัสผ่านใหม่" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-                <input type="password" className="w-full border rounded-lg p-3" placeholder="ยืนยันรหัสผ่านใหม่" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-                <button onClick={handleReset} disabled={isSubmitting} className="w-full bg-teal-600 text-white rounded-lg p-3 font-semibold">
-                  {isSubmitting ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-
       const DashboardView = () => {
-        const isHospital = currentUser.role === 'hospital';
-        const myReqs = isHospital ? db.requisitions.filter(r => r.hospitalId === currentUser.hospital_id) : db.requisitions;
+        const isHospital = currentUser?.role === 'hospital';
+        const myReqs = isHospital ? appDb.requisitions.filter(r => r.hospitalId === currentUser.hospital_id) : appDb.requisitions;
         
         return (
           <div className="space-y-6 animate-fade-in">
@@ -266,11 +289,19 @@
                 <h2 className="text-2xl font-bold">แดชบอร์ด</h2>
                 <p className="text-slate-500">ยินดีต้อนรับ, {currentUser.name}</p>
               </div>
-              {isHospital && (
-                <button onClick={() => setCurrentView('create_req')} className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-teal-700 shadow">
-                  <i className="fa-solid fa-plus mr-2"></i> สร้างใบเบิก
-                </button>
-              )}
+              <div className="space-x-2">
+                {/* ⭐️ แก้ไขให้ปุ่ม Setup DB แสดงเมื่อยังไม่มีข้อมูล รพ.สต. ในระบบด้วย (แก้ปัญหาตั้งต้น) */}
+                {(currentUser.role === 'admin' || !appDb?.hospitals || appDb.hospitals.length === 0) && (
+                  <button onClick={setupInitialFirebaseData} className="bg-amber-500 text-white px-4 py-2 rounded-lg shadow text-sm">
+                     <i className="fa-solid fa-database mr-1"></i> Setup DB เริ่มต้น
+                  </button>
+                )}
+                {isHospital && (
+                  <button onClick={() => setCurrentView('create_req')} className="bg-teal-600 text-white px-4 py-2 rounded-lg shadow">
+                    <i className="fa-solid fa-plus mr-2"></i> สร้างใบเบิก
+                  </button>
+                )}
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -302,7 +333,7 @@
                 </thead>
                 <tbody>
                   {myReqs.map(req => {
-                    const hosp = db.hospitals.find(h => h.hospital_id === req.hospitalId);
+                    const hosp = appDb.hospitals.find(h => h.hospital_id === req.hospitalId);
                     return (
                       <tr key={req.id} className="border-b hover:bg-slate-50">
                         <td className="p-4 font-medium">{req.id}</td>
@@ -335,25 +366,21 @@
         const hospId = currentUser.hospital_id;
 
         const [items, setItems] = useState(() => {
-          const myPars = db.parLevels.filter(p => String(p.hospital_id) === String(hospId));
+          const myPars = appDb.parLevels.filter(p => String(p.hospital_id) === String(hospId));
           return myPars.map(par => {
-            const drug = db.drugs.find(d => String(d.drug_id) === String(par.drug_id));
-            const bal = db.balances.find(b => String(b.hospital_id) === String(hospId) && String(b.drug_id) === String(par.drug_id));
+            const drug = appDb.drugs.find(d => String(d.drug_id) === String(par.drug_id));
+            const bal = appDb.balances.find(b => String(b.hospital_id) === String(hospId) && String(b.drug_id) === String(par.drug_id));
             const excess = bal ? bal.excess_balance : 0;
             const typeLabel = drug ? (drug.type === 'DRUG' ? 'ยา' : 'เวชภัณฑ์') : '';
             return {
               drugId: par.drug_id, 
-              name: drug ? drug.drug_name : 'ไม่พบข้อมูลยาในระบบ (กรุณาเช็คฐานข้อมูล)', 
+              name: drug ? drug.drug_name : 'ไม่พบข้อมูลยา', 
               type: typeLabel,
               unit: drug ? drug.unit_display_name : '',
               packSize: drug ? drug.pack_size : 1,
               parQty: par.par_qty, 
               prevExcess: excess, 
-              usage: 0, 
-              netNeed: 0,
-              dispensePack: 0, 
-              dispenseQty: 0, 
-              newExcess: excess
+              usage: 0, netNeed: 0, dispensePack: 0, dispenseQty: 0, newExcess: excess
             };
           });
         });
@@ -366,34 +393,36 @@
           row.usage = usage;
           let netNeed = usage - row.prevExcess;
           if (netNeed <= 0) {
-            row.netNeed = 0; row.dispensePack = 0; row.dispenseQty = 0;
-            row.newExcess = Math.abs(netNeed);
+             row.netNeed = 0; row.dispensePack = 0; row.dispenseQty = 0; row.newExcess = Math.abs(netNeed);
           } else {
-            row.netNeed = netNeed;
-            row.dispensePack = Math.ceil(netNeed / row.packSize);
-            row.dispenseQty = row.dispensePack * row.packSize;
-            row.newExcess = row.dispenseQty - netNeed;
+             row.netNeed = netNeed; row.dispensePack = Math.ceil(netNeed / row.packSize);
+             row.dispenseQty = row.dispensePack * row.packSize; row.newExcess = row.dispenseQty - netNeed;
           }
           setItems(newItems);
         };
 
-        const handleSubmit = () => {
+        // ⭐️ บันทึกใบเบิกลง Firestore
+        const handleSubmit = async () => {
           setIsSubmitting(true);
-          const newReq = {
-            id: `REQ-${currentYear}-${String(currentMonth).padStart(2, '0')}-${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`,
-            hospitalId: hospId, month: currentMonth, year: currentYear, items: items
-          };
-
-          fetchAPI('submitRequisition', newReq)
-            .then(res => {
-              if(res.status === 'success') {
-                showToast('ส่งใบเบิกสำเร็จ');
-                fetchData();
-                setCurrentView('dashboard');
-              } else showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
-            })
-            .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
-            .finally(() => setIsSubmitting(false));
+          const newId = `REQ-${currentYear}-${String(currentMonth).padStart(2, '0')}-${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`;
+          
+          try {
+            await db.collection('requisitions').doc(newId).set({
+              hospitalId: hospId,
+              month: currentMonth,
+              year: currentYear,
+              status: 'Pending',
+              items: items, // Firestore เก็บ Array ของ Object ได้เลย!
+              created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('ส่งใบเบิกสำเร็จ');
+            fetchData();
+            setCurrentView('dashboard');
+          } catch (e) {
+            showToast(e.message, 'error');
+          } finally {
+            setIsSubmitting(false);
+          }
         };
 
         return (
@@ -421,9 +450,7 @@
                     <tr key={item.drugId} className="border-b hover:bg-slate-50">
                       <td className="p-3">
                         {item.name} <br/>
-                        <span className="text-xs text-slate-500 font-medium">
-                           [{item.type}] Par Stock: {item.parQty} {item.unit}
-                        </span>
+                        <span className="text-xs text-slate-500 font-medium">[{item.type}] Par Stock: {item.parQty} {item.unit}</span>
                       </td>
                       <td className="p-3 text-center">{item.packSize}</td>
                       <td className="p-3 text-center text-blue-600 font-semibold">{item.prevExcess}</td>
@@ -449,25 +476,40 @@
       };
 
       const ViewReqView = () => {
-        const req = db.requisitions.find(r => r.id === currentReqId);
+        const req = appDb.requisitions.find(r => r.id === currentReqId);
         if(!req) return null;
-        const hosp = db.hospitals.find(h => h.hospital_id === req.hospitalId);
+        const hosp = appDb.hospitals.find(h => h.hospital_id === req.hospitalId);
         const [isApproving, setIsApproving] = useState(false);
 
-        const handleApprove = () => {
+        // ⭐️ อนุมัติการเบิก และอัปเดตยอดยกไป
+        const handleApprove = async () => {
           setIsApproving(true);
-          const payload = { reqId: req.id, items: req.items, hospitalId: req.hospitalId };
-          
-          fetchAPI('approveRequisition', payload)
-            .then(res => {
-              if(res.status === 'success') {
-                showToast('อนุมัติและอัปเดตสต๊อกเรียบร้อย');
-                fetchData();
-                setCurrentView('dashboard');
-              } else showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
-            })
-            .catch(err => showToast('เชื่อมต่อฐานข้อมูลล้มเหลว', 'error'))
-            .finally(() => setIsApproving(false));
+          try {
+            const batch = db.batch(); // ใช้ Batch เพื่อบันทึกหลายอย่างพร้อมกัน (ป้องกันเน็ตหลุดกลางคัน)
+            
+            // 1. เปลี่ยนสถานะเอกสาร
+            batch.update(db.collection('requisitions').doc(req.id), { status: 'Completed' });
+            
+            // 2. อัปเดตยอดคงเหลือ
+            req.items.forEach(item => {
+              const docId = `${req.hospitalId}_${item.drugId}`;
+              batch.set(db.collection('current_excess').doc(docId), {
+                hospital_id: req.hospitalId,
+                drug_id: item.drugId,
+                excess_balance: item.newExcess,
+                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+              }, { merge: true }); // merge: true คือถ้ามีอยู่แล้วให้อัปเดต ถ้าไม่มีให้สร้างใหม่
+            });
+
+            await batch.commit();
+            showToast('อนุมัติและอัปเดตสต๊อกเรียบร้อย');
+            fetchData();
+            setCurrentView('dashboard');
+          } catch (e) {
+            showToast(e.message, 'error');
+          } finally {
+            setIsApproving(false);
+          }
         };
 
         return (
@@ -502,13 +544,12 @@
                 </thead>
                 <tbody>
                   {req.items.map((it, i) => {
-                    const d = db.drugs.find(x => String(x.drug_id) === String(it.drugId));
                     return (
                       <tr key={i} className="border-b border-slate-300">
                         <td className="p-2 border-r text-center">{i+1}</td>
                         <td className="p-2 border-r">
-                           {d ? d.drug_name : it.drugId}
-                           {d && <div className="text-xs text-slate-500 font-normal">({d.unit_display_name})</div>}
+                           {it.name}
+                           <div className="text-xs text-slate-500 font-normal">({it.unit})</div>
                         </td>
                         <td className="p-2 border-r text-center text-slate-500">{it.usage}</td>
                         <td className="p-2 border-r text-center font-bold">{it.dispensePack}</td>
@@ -524,66 +565,52 @@
       };
 
       const StockConfigView = () => {
-        const [selectedHosp, setSelectedHosp] = useState(db.hospitals[0]?.hospital_id || '');
+        const [selectedHosp, setSelectedHosp] = useState(appDb.hospitals[0]?.hospital_id || '');
         const [localData, setLocalData] = useState({});
         const [savingId, setSavingId] = useState(null);
 
         useEffect(() => {
           if (!selectedHosp) return;
           const newLocalData = {};
-          db.drugs.forEach(d => {
-            const par = db.parLevels.find(p => String(p.hospital_id) === String(selectedHosp) && String(p.drug_id) === String(d.drug_id));
-            const bal = db.balances.find(b => String(b.hospital_id) === String(selectedHosp) && String(b.drug_id) === String(d.drug_id));
-            newLocalData[d.drug_id] = {
-              parQty: par ? par.par_qty : 0,
-              excessQty: bal ? bal.excess_balance : 0
-            };
+          appDb.drugs.forEach(d => {
+            const par = appDb.parLevels.find(p => String(p.hospital_id) === String(selectedHosp) && String(p.drug_id) === String(d.drug_id));
+            const bal = appDb.balances.find(b => String(b.hospital_id) === String(selectedHosp) && String(b.drug_id) === String(d.drug_id));
+            newLocalData[d.drug_id] = { parQty: par ? par.par_qty : 0, excessQty: bal ? bal.excess_balance : 0 };
           });
           setLocalData(newLocalData);
-        }, [selectedHosp, db]);
+        }, [selectedHosp, appDb]);
 
         const handleUpdateField = (drugId, field, value) => {
-          setLocalData(prev => ({
-            ...prev,
-            [drugId]: { ...prev[drugId], [field]: parseInt(value) || 0 }
-          }));
+          setLocalData(prev => ({ ...prev, [drugId]: { ...prev[drugId], [field]: parseInt(value) || 0 } }));
         };
 
-        const handleSaveRow = (drugId) => {
+        const handleSaveRow = async (drugId) => {
           setSavingId(drugId);
-          const payload = {
-            hospitalId: selectedHosp,
-            drugId: drugId,
-            parQty: localData[drugId].parQty,
-            excessQty: localData[drugId].excessQty
-          };
-
-          fetchAPI('updateStockConfig', payload)
-            .then(res => {
-              if (res.status === 'success') {
-                showToast('บันทึกการเปลี่ยนแปลงแล้ว');
-                fetchData(); 
-              } else showToast('ข้อผิดพลาด: ' + res.message, 'error');
-            })
-            .catch(() => showToast('เชื่อมต่อล้มเหลว', 'error'))
-            .finally(() => setSavingId(null));
+          try {
+             const batch = db.batch();
+             const docId = `${selectedHosp}_${drugId}`;
+             
+             batch.set(db.collection('config_par').doc(docId), { hospital_id: selectedHosp, drug_id: drugId, par_qty: localData[drugId].parQty }, { merge: true });
+             batch.set(db.collection('current_excess').doc(docId), { hospital_id: selectedHosp, drug_id: drugId, excess_balance: localData[drugId].excessQty, last_updated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+             
+             await batch.commit();
+             showToast('บันทึกการเปลี่ยนแปลงแล้ว');
+             fetchData();
+          } catch (e) {
+             showToast(e.message, 'error');
+          } finally {
+             setSavingId(null);
+          }
         };
 
         return (
           <div className="bg-white rounded-xl shadow-sm p-6 animate-fade-in">
             <h2 className="text-2xl font-bold mb-2">ตั้งค่า Par Stock และปรับปรุงยอดยกมา</h2>
-            <p className="text-slate-500 mb-6 text-sm">สำหรับผู้ดูแลระบบ: ปรับแก้ยอด Par ระดับคลัง หรือแก้ไขยอดยกมาหากตรวจพบความคลาดเคลื่อน</p>
             
             <div className="mb-6">
               <label className="block text-sm font-semibold text-slate-700 mb-2">เลือก รพ.สต. ที่ต้องการตั้งค่า</label>
-              <select 
-                className="border border-slate-300 rounded-lg p-2 w-full max-w-md bg-white outline-none focus:ring-2 focus:ring-teal-500"
-                value={selectedHosp}
-                onChange={e => setSelectedHosp(e.target.value)}
-              >
-                {db.hospitals.map(h => (
-                  <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_id} - {h.hospital_name}</option>
-                ))}
+              <select className="border rounded-lg p-2 w-full max-w-md bg-white outline-none" value={selectedHosp} onChange={e => setSelectedHosp(e.target.value)}>
+                {appDb.hospitals.map(h => <option key={h.hospital_id} value={h.hospital_id}>{h.hospital_id} - {h.hospital_name}</option>)}
               </select>
             </div>
 
@@ -599,7 +626,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {db.drugs.map(drug => {
+                  {appDb.drugs.map(drug => {
                     const rowData = localData[drug.drug_id];
                     if (!rowData) return null;
                     const typeLabel = drug.type === 'DRUG' ? 'ยา' : 'เวชภัณฑ์';
@@ -611,31 +638,9 @@
                           <div className="text-xs text-slate-500 font-normal">[{typeLabel}] หน่วย: {drug.unit_display_name}</div>
                         </td>
                         <td className="p-3 text-center text-sm text-slate-500">{drug.pack_size}</td>
-                        <td className="p-3 bg-blue-50 text-center">
-                          <input 
-                            type="number" min="0" 
-                            className="w-24 border rounded p-1 text-center font-semibold text-blue-700 outline-none focus:border-blue-500"
-                            value={rowData.parQty}
-                            onChange={(e) => handleUpdateField(drug.drug_id, 'parQty', e.target.value)}
-                          />
-                        </td>
-                        <td className="p-3 bg-yellow-50 text-center">
-                          <input 
-                            type="number" min="0" 
-                            className="w-24 border rounded p-1 text-center font-semibold text-amber-700 outline-none focus:border-yellow-500"
-                            value={rowData.excessQty}
-                            onChange={(e) => handleUpdateField(drug.drug_id, 'excessQty', e.target.value)}
-                          />
-                        </td>
-                        <td className="p-3 text-right">
-                          <button 
-                            onClick={() => handleSaveRow(drug.drug_id)}
-                            disabled={savingId === drug.drug_id}
-                            className="bg-teal-600 text-white px-3 py-1.5 rounded text-sm hover:bg-teal-700 disabled:opacity-50"
-                          >
-                            {savingId === drug.drug_id ? <i className="fa-solid fa-spinner fa-spin"></i> : 'บันทึก'}
-                          </button>
-                        </td>
+                        <td className="p-3 bg-blue-50 text-center"><input type="number" min="0" className="w-24 border rounded p-1 text-center font-semibold text-blue-700" value={rowData.parQty} onChange={(e) => handleUpdateField(drug.drug_id, 'parQty', e.target.value)} /></td>
+                        <td className="p-3 bg-yellow-50 text-center"><input type="number" min="0" className="w-24 border rounded p-1 text-center font-semibold text-amber-700" value={rowData.excessQty} onChange={(e) => handleUpdateField(drug.drug_id, 'excessQty', e.target.value)} /></td>
+                        <td className="p-3 text-right"><button onClick={() => handleSaveRow(drug.drug_id)} disabled={savingId === drug.drug_id} className="bg-teal-600 text-white px-3 py-1.5 rounded text-sm disabled:opacity-50">{savingId === drug.drug_id ? '...' : 'บันทึก'}</button></td>
                       </tr>
                     );
                   })}
@@ -646,11 +651,9 @@
         );
       };
 
-      // --- Layout ---
+      // --- Layout กฎของระบบ ---
       if (currentView === 'login') return <><LoginView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
       if (currentView === 'register') return <><RegisterView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
-      if (currentView === 'forgot_password') return <><ForgotPasswordView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
-      if (currentView === 'reset_password') return <><ResetPasswordView />{toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}</>;
 
       return (
         <div className="min-h-screen flex">
@@ -660,21 +663,13 @@
               <h1 className="text-xl font-bold">Sawee Rxfill</h1>
             </div>
             <nav className="flex-1 p-4 space-y-2">
-              <button onClick={() => setCurrentView('dashboard')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='dashboard'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-house mr-3 w-5"></i> แดชบอร์ด</button>
-              
-              {currentUser.role === 'hospital' && (
-                <button onClick={() => setCurrentView('create_req')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='create_req'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-plus mr-3 w-5"></i> เบิกยาใหม่</button>
-              )}
-              
-              {currentUser.role === 'admin' && (
-                <button onClick={() => setCurrentView('stock_config')} className={`w-full text-left p-3 rounded-lg transition ${currentView==='stock_config'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}>
-                  <i className="fa-solid fa-boxes-stacked mr-3 w-5"></i> ตั้งค่าสต๊อก (Admin)
-                </button>
-              )}
+              <button onClick={() => setCurrentView('dashboard')} className={`w-full text-left p-3 rounded-lg ${currentView==='dashboard'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-house mr-3 w-5"></i> แดชบอร์ด</button>
+              {currentUser?.role === 'hospital' && <button onClick={() => setCurrentView('create_req')} className={`w-full text-left p-3 rounded-lg ${currentView==='create_req'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-plus mr-3 w-5"></i> เบิกยาใหม่</button>}
+              {currentUser?.role === 'admin' && <button onClick={() => setCurrentView('stock_config')} className={`w-full text-left p-3 rounded-lg ${currentView==='stock_config'?'bg-teal-700':'hover:bg-teal-700 text-teal-100'}`}><i className="fa-solid fa-boxes-stacked mr-3 w-5"></i> ตั้งค่าสต๊อก (Admin)</button>}
             </nav>
             <div className="p-4 border-t border-teal-700">
-              <div className="text-teal-200 text-sm mb-3"><i className="fa-solid fa-user mr-2"></i> {currentUser.name}</div>
-              <button onClick={() => {setCurrentUser(null); setCurrentView('login');}} className="w-full text-left p-2 rounded text-teal-200 hover:bg-red-600 hover:text-white transition"><i className="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</button>
+              <div className="text-teal-200 text-sm mb-3"><i className="fa-solid fa-user mr-2"></i> {currentUser?.name}</div>
+              <button onClick={() => auth.signOut()} className="w-full text-left p-2 rounded text-teal-200 hover:bg-red-600 hover:text-white transition"><i className="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</button>
             </div>
           </div>
           
@@ -686,7 +681,6 @@
               {currentView === 'stock_config' && <StockConfigView />}
             </div>
           </div>
-          
           {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
       );
