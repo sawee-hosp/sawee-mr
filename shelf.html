@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse & Shelf Manager - ระบบจัดวางคลังยาอัจฉริยะ</title>
+    <!-- Tailwind CSS for Premium Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* ล็อคให้ทุกอย่างพอดีหน้าจอเดียว */
+        }
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        /* Custom scrollbar for dropdown lists */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #fb7185;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col">
+
+    <!-- Top Main Header & View Switcher -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-2.5 flex flex-wrap justify-between items-center shadow-lg shrink-0 z-40">
+        <div class="flex items-center gap-3">
+            <div class="bg-rose-500 text-white p-1.5 rounded-lg shadow-lg shadow-rose-500/20">
+                <i class="fa-solid fa-cubes text-base"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-white flex items-center gap-2">
+                    Warehouse & Shelf Suite
+                    <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-normal">Full Canvas Screen v3.1</span>
+                </h1>
+            </div>
+        </div>
+
+        <!-- Mode Toggle Tabs (Floor Plan vs. Shelf Stack) -->
+        <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 shadow-inner">
+            <button id="viewBtnFloor" onclick="switchView('floor_plan')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-rose-600 text-white shadow-md">
+                <i class="fa-solid fa-map-location-dot"></i> 1. แผนผังห้องคลังยา (Floor Plan)
+            </button>
+            <button id="viewBtnShelf" onclick="switchView('shelf_manager')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-layer-group"></i> 2. ชั้นวางยาแนวตั้ง (Shelf Manager)
+            </button>
+        </div>
+    </header>
+
+    <!-- Dropdown Control Navigation Bar (Dropdown menus strictly on top) -->
+    <div class="bg-slate-950 border-b border-slate-800 px-6 py-2 flex flex-wrap items-center gap-3 shadow-md shrink-0 z-30">
+        
+        <!-- ==================== FLOOR PLAN CONTROLS (VIEW 1) ==================== -->
+        <div id="controlsFloorPlan" class="flex flex-wrap items-center gap-2.5">
+            <!-- Dropdown 1: Room Dimensions -->
+            <div class="relative">
+                <button onclick="toggleDropdown('dropRoomSize')" class="bg-slate-900 border border-slate-800 hover:bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition text-slate-300">
+                    <i class="fa-solid fa-vector-square text-rose-400"></i> ตั้งค่าขนาดห้อง <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+                <div id="dropRoomSize" class="hidden absolute left-0 mt-2 w-72 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-4 z-50 space-y-3.5">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2">ความกว้างและความยาวห้องคลังยา</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">ความกว้าง (เมตร)</label>
+                            <input type="number" id="roomW" value="10" min="2" max="40" step="0.2" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">ความยาว (เมตร)</label>
+                            <input type="number" id="roomH" value="8" min="2" max="30" step="0.2" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 outline-none">
+                        </div>
+                    </div>
+                    <button onclick="resizeFloorPlanRoom()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i> อัปเดตขนาดพื้นที่ห้อง
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dropdown 2: Add Warehouse Items -->
+            <div class="relative">
+                <button onclick="toggleDropdown('dropAddFloorItem')" class="bg-slate-900 border border-slate-800 hover:bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition text-slate-300">
+                    <i class="fa-solid fa-circle-plus text-sky-400"></i> แทรกอุปกรณ์จัดเก็บ <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+                <div id="dropAddFloorItem" class="hidden absolute left-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-4.5 z-50 p-4 space-y-3">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2 mb-1">เลือกประเภทอุปกรณ์สำหรับวางแผนผัง</h4>
+                    <button onclick="addPalletFloor()" class="w-full bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition text-left flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 bg-sky-500 rounded border border-sky-400 inline-block"></span>
+                            เพิ่มพาเลทวางยามาตรฐาน (Pallet)
+                        </span>
+                        <span class="text-[10px] opacity-75">1.2 x 1.0 m</span>
+                    </button>
+                    <button onclick="addShelfFloor()" class="w-full bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 border border-pink-500/20 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition text-left flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <span class="w-4 h-4 bg-pink-300 rounded border border-pink-400 inline-block"></span>
+                            เพิ่มตู้ชั้นวางยาสีชมพูอ่อน (Shelf)
+                        </span>
+                        <span class="text-[10px] opacity-75">0.8 x 2.0 m</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dropdown 3: Selected Floor Item Manipulator (Displays selection menu) -->
+            <div class="relative">
+                <button id="floorManipulatorBtn" onclick="toggleDropdown('dropManageFloorItem')" class="bg-slate-900 border border-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition text-slate-300 opacity-60 pointer-events-none">
+                    <i class="fa-solid fa-pen-to-square text-amber-400"></i> จัดการวัตถุที่เลือก <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+                <div id="dropManageFloorItem" class="hidden absolute left-0 mt-2 w-72 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-4 z-50 space-y-3">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800 pb-2 flex justify-between items-center">
+                        <span>รายการปรับแก้คุณสมบัติ</span>
+                        <span id="selectedFloorItemLabel" class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-medium">ไม่มี</span>
+                    </h4>
+                    <button onclick="flipSelectedFloorItem()" class="w-full bg-slate-950 hover:bg-slate-800 text-slate-200 font-bold py-2 px-3 rounded-lg text-xs border border-slate-800 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> พลิกทิศทางวัตถุ (Flip Width/Height)
+                    </button>
+                    <button onclick="deleteSelectedFloorItem()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-2 px-3 rounded-lg text-xs border border-red-500/20 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> ลบอุปกรณ์นี้ออก
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SHELF MANAGER CONTROLS (VIEW 2) ==================== -->
+        <div id="controlsShelfPlan" class="hidden flex-wrap items-center gap-2.5">
+            <!-- Dropdown 1: Shelf Structure Details -->
+            <div class="relative">
+                <button onclick="toggleDropdown('dropShelfStruct')" class="bg-slate-900 border border-slate-800 hover:bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition text-slate-300">
+                    <i class="fa-solid fa-table-rows text-rose-400"></i> ปรับโครงสร้างชั้นวางยา <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+                <div id="dropShelfStruct" class="hidden absolute left-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-4.5 z-50 p-4 space-y-3.5">
+                    <div class="border-b border-slate-800 pb-2 flex justify-between items-center mb-1">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">โครงสร้างชั้นวางแนวดิ่ง</h4>
+                        <button onclick="addNewLevel()" class="text-[10px] bg-rose-500 hover:bg-rose-600 text-white px-2 py-1 rounded transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> เพิ่มช่องบนสุด
+                        </button>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1.5 font-medium">ความกว้างรวมคานหน้าชั้น (เมตร)</label>
+                        <div class="relative">
+                            <input type="number" id="shelfWidth" value="2.4" min="1.0" max="5.0" step="0.1" onchange="updateShelfWidth()" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-100 outline-none">
+                            <span class="absolute right-3 top-1.5 text-[10px] text-slate-500">เมตร</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">ส่วนสูงแต่ละช่องชั้น (ล่างขึ้นบน)</label>
+                        <div id="levelsList" class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1 custom-scroll">
+                            <!-- Dynamic height fields added in script -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dropdown 2: Create Box/Crate Templates -->
+            <div class="relative">
+                <button onclick="toggleDropdown('dropAddShelfItem')" class="bg-slate-900 border border-slate-800 hover:bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition text-slate-300">
+                    <i class="fa-solid fa-boxes-packing text-sky-400"></i> แทรกลังบรรจุยา <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+                <div id="dropAddShelfItem" class="hidden absolute left-0 mt-2 w-96 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-4 z-50 space-y-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2 mb-2">เลือกกล่องยารูปแบบมาตรฐาน</h4>
+                        <div id="templatePalette" class="grid grid-cols-2 gap-2 max-h-[140px] overflow-y-auto pr-1 custom-scroll">
+                            <!-- JS templates injected dynamically -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800/80 rounded-lg p-3 space-y-2.5">
+                        <h4 class="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-sliders"></i> สร้างลังยาขนาดพิเศษกำหนดเอง</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] text-slate-500 mb-1">ชื่อกล่อง</label>
+                                <input type="text" id="newBoxName" value="กล่องยาพิเศษ" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-500 mb-1">สีลังยา</label>
+                                <input type="color" id="newBoxColor" value="#d946ef" class="w-full h-7 bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-[9px] text-slate-500 mb-1">กว้าง (W) ม.</label>
+                                <input type="number" id="newBoxW" value="0.30" step="0.05" min="0.1" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-500 mb-1">สูง (H) ม.</label>
+                                <input type="number" id="newBoxH" value="0.30" step="0.05" min="0.1" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-500 mb-1">ลึก (D) ม.</label>
+                                <input type="number" id="newBoxD" value="0.35" step="0.05" min="0.1" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-slate-100 outline-none">
+                            </div>
+                        </div>
+                        <button onclick="createNewTemplateAndSpawn()" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-1.5 rounded text-xs transition flex items-center justify-center gap-1.5 shadow">
+                            <i class="fa-solid fa-plus"></i> บันทึกและวางบนชั้น
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dropdown 3: Selected Shelf Item Adjuster -->
+            <div class="relative">
+                <button id="shelfManipulatorBtn" onclick="toggleDropdown('dropManageShelfItem')" class="bg-slate-900 border border-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition text-slate-300 opacity-60 pointer-events-none">
+                    <i class="fa-solid fa-pen-to-square text-amber-400"></i> จัดการกล่องที่เลือก <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+                <div id="dropManageShelfItem" class="hidden absolute left-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-4 z-50 space-y-3.5">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800 pb-2 flex justify-between items-center">
+                        <span id="selectedShelfItemLabel">ไม่มีกล่องที่เลือก</span>
+                    </h4>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                        <div>สัดส่วน: <span id="selectedShelfDim" class="font-bold text-slate-200">-</span></div>
+                        <div>พิกัด X: <span id="selectedShelfPos" class="font-bold text-slate-200">-</span></div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">ขยับปรับตำแหน่งละเอียด</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg p-1">
+                                <button onclick="nudgeShelfItem(-0.05)" class="bg-slate-900 hover:bg-slate-800 text-slate-100 w-7 h-7 rounded flex items-center justify-center font-bold text-sm" title="ขยับซ้าย 5cm"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span class="text-[9px] text-slate-500">ขยับ X (5cm)</span>
+                                <button onclick="nudgeShelfItem(0.05)" class="bg-slate-900 hover:bg-slate-800 text-slate-100 w-7 h-7 rounded flex items-center justify-center font-bold text-sm" title="ขยับขวา 5cm"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                            <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg p-1">
+                                <button onclick="moveShelfItemLevel(-1)" class="bg-slate-900 hover:bg-slate-800 text-slate-100 w-7 h-7 rounded flex items-center justify-center font-bold text-sm" title="ย้ายสลับชั้นลง"><i class="fa-solid fa-chevron-down"></i></button>
+                                <span class="text-[9px] text-slate-500">ระดับชั้นช่อง</span>
+                                <button onclick="moveShelfItemLevel(1)" class="bg-slate-900 hover:bg-slate-800 text-slate-100 w-7 h-7 rounded flex items-center justify-center font-bold text-sm" title="ย้ายสลับชั้นขึ้น"><i class="fa-solid fa-chevron-up"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="deleteSelectedShelfItem()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-2 rounded-lg text-xs border border-red-500/20 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> ลบกล่องยานี้ออกจากตู้
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shared Action: Save Canvas Image as PNG -->
+        <button onclick="exportCurrentMap()" class="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow shadow-emerald-950/20">
+            <i class="fa-solid fa-download"></i> บันทึกรูปแผนผัง (PNG Blueprint)
+        </button>
+    </div>
+
+    <!-- Main Workspace Area - Expands fully to maximize width and height -->
+    <main class="flex-1 bg-slate-900 overflow-auto p-8 flex justify-center items-center relative h-full">
+        
+        <!-- Floating Canvas Box with heavy shadow and responsive container -->
+        <div class="bg-slate-950 p-4 shadow-2xl rounded-2xl border border-slate-800/80 max-w-full max-h-full overflow-auto">
+            <canvas id="mainCanvas" class="block rounded-lg bg-slate-950"></canvas>
+        </div>
+
+        <!-- Floating Glassmorphic HUD Dashboard for Real-time Statistics -->
+        <div class="absolute bottom-6 right-6 bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-4 w-72 z-20 pointer-events-none transition-all duration-300">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-bar text-rose-500 animate-pulse"></i> ข้อมูลพื้นที่ & สรุปวิเคราะห์เรียลไทม์
+            </h3>
+            
+            <!-- Floor Plan Stats HUD Section -->
+            <div id="hudFloorStats" class="space-y-3">
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[10px] font-bold">
+                        <span class="text-slate-400">สัดส่วนพื้นที่ถูกครอบครอง</span>
+                        <span id="hudFloorPercentage" class="text-rose-400">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                        <div id="hudFloorBar" class="bg-rose-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-slate-950/50 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[9px] text-slate-500 block uppercase font-medium">ห้องทั้งหมด</span>
+                        <span id="hudFloorTotal" class="text-xs font-bold text-slate-200">0.00</span>
+                        <span class="text-[9px] text-slate-500">ตร.ม.</span>
+                    </div>
+                    <div class="bg-slate-950/50 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[9px] text-slate-500 block uppercase font-medium">คงเหลือว่าง</span>
+                        <span id="hudFloorFree" class="text-xs font-bold text-emerald-400">0.00</span>
+                        <span class="text-[9px] text-slate-500">ตร.ม.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shelf Stack Stats HUD Section -->
+            <div id="hudShelfStats" class="hidden space-y-2.5 max-h-[160px] overflow-y-auto custom-scroll pr-1">
+                <!-- Javascript will append levels analytics here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-900 text-slate-500 text-center py-2 text-[10px] shrink-0">
+        <p>© 2026 Dual Warehouse Layout Engine | ขยายขอบเขตทำงานขีดสูงสุดด้วยเครื่องมือแบบพกพาเมนูด้านบน</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Floor and Shelf Item Control buttons in header bar
+        const floorManipulatorBtn = document.getElementById('floorManipulatorBtn');
+        const selectedFloorItemLabel = document.getElementById('selectedFloorItemLabel');
+        const shelfManipulatorBtn = document.getElementById('shelfManipulatorBtn');
+        const selectedShelfItemLabel = document.getElementById('selectedShelfItemLabel');
+        const selectedShelfDim = document.getElementById('selectedShelfDim');
+        const selectedShelfPos = document.getElementById('selectedShelfPos');
+
+        const hudFloorStats = document.getElementById('hudFloorStats');
+        const hudShelfStats = document.getElementById('hudShelfStats');
+
+        // Application State Management
+        let currentView = 'floor_plan'; // 'floor_plan' | 'shelf_manager'
+        
+        // ----------------------------------------------------
+        // STATE 1: FLOOP PLAN STORAGE & SCALING
+        // ----------------------------------------------------
+        const pxPerMeterFloor = 50; // Scale 1m = 50px
+        const floorGridStep = 0.2 * pxPerMeterFloor; // 10px
+        let floorWidth = 10; // m
+        let floorHeight = 8; // m
+        let floorItems = [];
+        let selectedFloorItemId = null;
+        let isFloorDragging = false;
+        let floorDragTarget = null;
+        let floorDragOffsetX = 0;
+        let floorDragOffsetY = 0;
+        let floorAutoSequence = 1;
+
+        // ----------------------------------------------------
+        // STATE 2: SHELF STACK PACKING STORAGE & SCALING
+        // ----------------------------------------------------
+        const pxPerMeterShelf = 320; // High res vertical scale
+        const shelfGridStep = 0.05 * pxPerMeterShelf; // Scale 5cm = 16px
+        let shelfWidth = 2.4; // m
+        let levels = [
+            { id: 1, height: 0.65 },
+            { id: 2, height: 0.50 },
+            { id: 3, height: 0.45 },
+            { id: 4, height: 0.40 }
+        ];
+        const boardThickness = 0.03; 
+        const baseHeight = 0.12;     
+        const paddingLeft = 85;      
+        const paddingBottom = 60;    
+        let shelfItems = [];
+        let selectedShelfItemId = null;
+        let isShelfDragging = false;
+        let shelfDragTarget = null;
+        let shelfDragOffsetX = 0;
+        let shelfDragOffsetY = 0;
+        let shelfAutoSequence = 1;
+
+        // Box Standard Preset templates
+        let boxPresets = [
+            { id: 't1', name: 'กล่องยาพารา (S)', w: 0.30, h: 0.25, d: 0.30, color: '#38bdf8' },
+            { id: 't2', name: 'ลังยาเวชภัณฑ์ (L)', w: 0.50, h: 0.40, d: 0.40, color: '#fb7185' },
+            { id: 't3', name: 'กล่องเก็บความเย็น (M)', w: 0.35, h: 0.30, d: 0.35, color: '#34d399' },
+            { id: 't4', name: 'กล่องยาน้ำแก้ไอ (XL)', w: 0.60, h: 0.35, d: 0.45, color: '#fbbf24' }
+        ];
+
+        // ----------------------------------------------------
+        // DROPDOWN POPOVER LOGIC
+        // ----------------------------------------------------
+        function toggleDropdown(id) {
+            const dropdownIds = ['dropRoomSize', 'dropAddFloorItem', 'dropManageFloorItem', 'dropShelfStruct', 'dropAddShelfItem', 'dropManageShelfItem'];
+            dropdownIds.forEach(dId => {
+                const el = document.getElementById(dId);
+                if (dId === id) {
+                    el.classList.toggle('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function closeAllDropdowns() {
+            const dropdownIds = ['dropRoomSize', 'dropAddFloorItem', 'dropManageFloorItem', 'dropShelfStruct', 'dropAddShelfItem', 'dropManageShelfItem'];
+            dropdownIds.forEach(dId => {
+                const el = document.getElementById(dId);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.relative') && !e.target.closest('button')) {
+                closeAllDropdowns();
+            }
+        });
+
+        // ----------------------------------------------------
+        // SYSTEM VIEW NAVIGATION
+        // ----------------------------------------------------
+        function switchView(view) {
+            currentView = view;
+            closeAllDropdowns();
+
+            const floorControls = document.getElementById('controlsFloorPlan');
+            const shelfControls = document.getElementById('controlsShelfPlan');
+            const viewBtnFloor = document.getElementById('viewBtnFloor');
+            const viewBtnShelf = document.getElementById('viewBtnShelf');
+
+            if (currentView === 'floor_plan') {
+                floorControls.classList.remove('hidden');
+                floorControls.classList.add('flex');
+                shelfControls.classList.add('hidden');
+                shelfControls.classList.remove('flex');
+                
+                viewBtnFloor.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-rose-600 text-white shadow-md";
+                viewBtnShelf.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-slate-200";
+                
+                hudFloorStats.classList.remove('hidden');
+                hudShelfStats.classList.add('hidden');
+            } else {
+                floorControls.classList.add('hidden');
+                floorControls.classList.remove('flex');
+                shelfControls.classList.remove('hidden');
+                shelfControls.classList.add('flex');
+                
+                viewBtnFloor.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-slate-200";
+                viewBtnShelf.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-rose-600 text-white shadow-md";
+                
+                hudFloorStats.classList.add('hidden'); // FIXED: replaced .add with .classList.add to prevent TypeError
+                hudShelfStats.classList.remove('hidden');
+            }
+
+            initCanvasSize();
+        }
+
+        function initCanvasSize() {
+            if (currentView === 'floor_plan') {
+                canvas.width = floorWidth * pxPerMeterFloor;
+                canvas.height = floorHeight * pxPerMeterFloor;
+            } else {
+                let totalH = baseHeight + (levels.length * boardThickness);
+                levels.forEach(l => totalH += l.height);
+                canvas.width = (shelfWidth * pxPerMeterShelf) + paddingLeft + 60;
+                canvas.height = (totalH * pxPerMeterShelf) + paddingBottom + 50;
+            }
+            resolveGravity();
+            draw();
+            updateStatistics();
+        }
+
+        // ----------------------------------------------------
+        // SYSTEM VIEW 1: FLOOR PLAN IMPLEMENTATION
+        // ----------------------------------------------------
+        function resizeFloorPlanRoom() {
+            const wInput = parseFloat(document.getElementById('roomW').value);
+            const hInput = parseFloat(document.getElementById('roomH').value);
+            if (wInput >= 2 && hInput >= 2) {
+                floorWidth = wInput;
+                floorHeight = hInput;
+                // Boundaries check for active items
+                floorItems.forEach(item => {
+                    if (item.x + item.w > floorWidth * pxPerMeterFloor) item.x = (floorWidth * pxPerMeterFloor) - item.w;
+                    if (item.y + item.h > floorHeight * pxPerMeterFloor) item.y = (floorHeight * pxPerMeterFloor) - item.h;
+                    item.x = Math.max(0, Math.round(item.x / floorGridStep) * floorGridStep);
+                    item.y = Math.max(0, Math.round(item.y / floorGridStep) * floorGridStep);
+                });
+                initCanvasSize();
+            }
+        }
+
+        function addPalletFloor() {
+            const newItem = {
+                id: Date.now(),
+                type: 'pallet',
+                sequenceNumber: floorAutoSequence++,
+                x: 0,
+                y: 0,
+                w: 1.2 * pxPerMeterFloor, // 60px
+                h: 1.0 * pxPerMeterFloor  // 50px
+            };
+            floorItems.push(newItem);
+            selectedFloorItemId = newItem.id;
+            closeAllDropdowns();
+            draw();
+            updateStatistics();
+        }
+
+        function addShelfFloor() {
+            const newItem = {
+                id: Date.now(),
+                type: 'shelf',
+                sequenceNumber: floorAutoSequence++,
+                x: 0,
+                y: 0,
+                w: 0.8 * pxPerMeterFloor, // 40px
+                h: 2.0 * pxPerMeterFloor  // 100px
+            };
+            floorItems.push(newItem);
+            selectedFloorItemId = newItem.id;
+            closeAllDropdowns();
+            draw();
+            updateStatistics();
+        }
+
+        function flipSelectedFloorItem() {
+            if (selectedFloorItemId !== null) {
+                const item = floorItems.find(i => i.id === selectedFloorItemId);
+                if (item) {
+                    const oldW = item.w;
+                    const oldH = item.h;
+                    item.w = oldH;
+                    item.h = oldW;
+                    // Out of boundary prevent checks
+                    if (item.x + item.w > canvas.width) item.x = Math.max(0, canvas.width - item.w);
+                    if (item.y + item.h > canvas.height) item.y = Math.max(0, canvas.height - item.h);
+                    
+                    item.x = Math.round(item.x / floorGridStep) * floorGridStep;
+                    item.y = Math.round(item.y / floorGridStep) * floorGridStep;
+                    closeAllDropdowns();
+                    draw();
+                    updateStatistics();
+                }
+            }
+        }
+
+        function deleteSelectedFloorItem() {
+            if (selectedFloorItemId !== null) {
+                floorItems = floorItems.filter(i => i.id !== selectedFloorItemId);
+                selectedFloorItemId = null;
+                closeAllDropdowns();
+                draw();
+                updateStatistics();
+            }
+        }
+
+        function drawFloorPlan() {
+            // 1. Draw grids (0.2m = 10px)
+            ctx.strokeStyle = '#1e293b'; 
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            for (let x = 0; x <= canvas.width; x += floorGridStep) {
+                ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+            }
+            for (let y = 0; y <= canvas.height; y += floorGridStep) {
+                ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+            }
+            ctx.stroke();
+
+            // Draw major grid lines every 1.0m (50px)
+            ctx.strokeStyle = '#334155'; 
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = 0; x <= canvas.width; x += pxPerMeterFloor) {
+                ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height);
+            }
+            for (let y = 0; y <= canvas.height; y += pxPerMeterFloor) {
+                ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+            }
+            ctx.stroke();
+
+            // 2. Draw placed items
+            floorItems.forEach(item => {
+                const isSelected = item.id === selectedFloorItemId;
+                
+                // Color configuration
+                if (item.type === 'pallet') {
+                    ctx.fillStyle = isSelected ? '#7dd3fc' : '#0284c7'; // Brighter sky for selected
+                } else {
+                    ctx.fillStyle = isSelected ? '#fbcfe8' : '#db2777'; // Pink shades for shelf
+                }
+
+                ctx.fillRect(item.x, item.y, item.w, item.h);
+
+                // Borders
+                ctx.lineWidth = isSelected ? 3 : 1.5;
+                ctx.strokeStyle = isSelected ? '#f43f5e' : '#e2e8f0';
+                ctx.strokeRect(item.x, item.y, item.w, item.h);
+
+                // Circle identifier sequence badge
+                const cX = item.x + item.w / 2;
+                const cY = item.y + item.h / 2;
+                ctx.beginPath();
+                ctx.arc(cX, cY, 10, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.sequenceNumber, cX, cY);
+
+                // Dimension specs text
+                ctx.fillStyle = isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.7)';
+                ctx.font = '8px monospace';
+                ctx.textAlign = 'right';
+                const label = `${(item.w / pxPerMeterFloor).toFixed(1)}x${(item.h / pxPerMeterFloor).toFixed(1)}m`;
+                ctx.fillText(label, item.x + item.w - 4, item.y + item.h - 4);
+            });
+
+            // 3. Draw automated lines measurement if active selection
+            if (selectedFloorItemId !== null) {
+                drawFloorMeasurements();
+            }
+        }
+
+        function drawFloorMeasurements() {
+            const sel = floorItems.find(i => i.id === selectedFloorItemId);
+            if (!sel) return;
+
+            // Clearance defaults against room walls
+            let clL = { dist: sel.x, x1: 0, x2: sel.x, y: sel.y + sel.h / 2 };
+            let clR = { dist: canvas.width - (sel.x + sel.w), x1: sel.x + sel.w, x2: canvas.width, y: sel.y + sel.h / 2 };
+            let clT = { dist: sel.y, x: sel.x + sel.w / 2, y1: 0, y2: sel.y };
+            let clB = { dist: canvas.height - (sel.y + sel.h), x: sel.x + sel.w / 2, y1: sel.y + sel.h, y2: canvas.height };
+
+            // Dynamic overlaps detection against neighboring targets
+            floorItems.forEach(other => {
+                if (other.id === sel.id) return;
+
+                // Vertical overlap checks side by side
+                const overlapV = (sel.y < other.y + other.h) && (sel.y + sel.h > other.y);
+                if (overlapV) {
+                    const midY = (Math.max(sel.y, other.y) + Math.min(sel.y + sel.h, other.y + other.h)) / 2;
+                    if (other.x + other.w <= sel.x) {
+                        const dist = sel.x - (other.x + other.w);
+                        if (dist < clL.dist) clL = { dist, x1: other.x + other.w, x2: sel.x, y: midY };
+                    } else if (sel.x + sel.w <= other.x) {
+                        const dist = other.x - (sel.x + sel.w);
+                        if (dist < clR.dist) clR = { dist, x1: sel.x + sel.w, x2: other.x, y: midY };
+                    }
+                }
+
+                // Horizontal overlap checks stacked
+                const overlapH = (sel.x < other.x + other.w) && (sel.x + sel.w > other.x);
+                if (overlapH) {
+                    const midX = (Math.max(sel.x, other.x) + Math.min(sel.x + sel.w, other.x + other.w)) / 2;
+                    if (other.y + other.h <= sel.y) {
+                        const dist = sel.y - (other.y + other.h);
+                        if (dist < clT.dist) clT = { dist, x: midX, y1: other.y + other.h, y2: sel.y };
+                    } else if (sel.y + sel.h <= other.y) {
+                        const dist = other.y - (sel.y + sel.h);
+                        if (dist < clB.dist) clB = { dist, x: midX, y1: sel.y + sel.h, y2: other.y };
+                    }
+                }
+            });
+
+            // Drawing rules
+            renderFloorDimensionLine(clL.x1, clL.y, clL.x2, clL.y, 'H');
+            renderFloorDimensionLine(clR.x1, clR.y, clR.x2, clR.y, 'H');
+            renderFloorDimensionLine(clT.x, clT.y1, clT.x, clT.y2, 'V');
+            renderFloorDimensionLine(clB.x, clB.y1, clB.x, clB.y2, 'V');
+        }
+
+        function renderFloorDimensionLine(x1, y1, x2, y2, align) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const pxDist = Math.sqrt(dx * dx + dy * dy);
+            if (pxDist < 2) return;
+
+            const meters = pxDist / pxPerMeterFloor;
+
+            ctx.save();
+            ctx.strokeStyle = '#f97316'; // Vivid measurement orange
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([3, 2]);
+
+            // Linear line connector
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            // End tick limits
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            const tick = 4;
+            if (align === 'H') {
+                ctx.moveTo(x1, y1 - tick); ctx.lineTo(x1, y1 + tick);
+                ctx.moveTo(x2, y2 - tick); ctx.lineTo(x2, y2 + tick);
+            } else {
+                ctx.moveTo(x1 - tick, y1); ctx.lineTo(x1 + tick, y1);
+                ctx.moveTo(x2 - tick, y2); ctx.lineTo(x2 + tick, y2);
+            }
+            ctx.stroke();
+
+            // Floating value label
+            const midX = (x1 + x2) / 2;
+            const midY = (y1 + y2) / 2;
+            const text = `${meters.toFixed(2)} m`;
+            ctx.font = 'bold 9px monospace';
+            const tW = ctx.measureText(text).width;
+
+            ctx.fillStyle = '#ffedd5';
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.roundRect(midX - (tW + 6) / 2, midY - 7, tW + 6, 14, 3);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#ea580c';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, midX, midY);
+            ctx.restore();
+        }
+
+        // ----------------------------------------------------
+        // SYSTEM VIEW 2: VERTICAL SHELF MANAGER IMPLEMENTATION
+        // ----------------------------------------------------
+        function updateShelfWidth() {
+            const val = parseFloat(document.getElementById('shelfWidth').value);
+            if (val >= 1.0 && val <= 5.0) {
+                shelfWidth = val;
+                // Prevent boxes falling off the right edges
+                shelfItems.forEach(item => {
+                    if (item.xOffset + item.w > shelfWidth) {
+                        item.xOffset = Math.max(0, shelfWidth - item.w);
+                        item.xOffset = Math.round(item.xOffset / 0.05) * 0.05;
+                    }
+                });
+                initCanvasSize();
+            }
+        }
+
+        function addNewLevel() {
+            if (levels.length >= 8) {
+                return;
+            }
+            levels.push({ id: Date.now(), height: 0.40 });
+            renderLevelsListInputs();
+            initCanvasSize();
+        }
+
+        function removeLevel(idx) {
+            if (levels.length <= 1) return;
+            shelfItems = shelfItems.filter(i => i.levelIndex !== idx);
+            shelfItems.forEach(i => {
+                if (i.levelIndex > idx) i.levelIndex--;
+            });
+            levels.splice(idx, 1);
+            renderLevelsListInputs();
+            initCanvasSize();
+        }
+
+        function changeLevelHeight(idx, val) {
+            const h = parseFloat(val);
+            if (h >= 0.2 && h <= 1.5) {
+                levels[idx].height = h;
+                initCanvasSize();
+            }
+        }
+
+        function renderLevelsListInputs() {
+            const container = document.getElementById('levelsList');
+            container.innerHTML = '';
+            const rev = [...levels].reverse();
+            rev.forEach((l, i) => {
+                const actIdx = levels.length - 1 - i;
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-1.5 bg-slate-950 p-2 border border-slate-800 rounded-lg";
+                div.innerHTML = `
+                    <span class="text-[10px] text-slate-400 font-bold w-12">ชั้นที่ ${actIdx + 1}</span>
+                    <input type="number" value="${l.height.toFixed(2)}" min="0.2" max="1.5" step="0.05" onchange="changeLevelHeight(${actIdx}, this.value)" class="w-16 bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 text-xs text-slate-100 outline-none focus:border-rose-500">
+                    <span class="text-[9px] text-slate-500">ม.</span>
+                    <button onclick="removeLevel(${actIdx})" class="text-slate-500 hover:text-red-400 p-1 ml-auto"><i class="fa-solid fa-trash text-xs"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderPresetsAndCustomForm() {
+            const container = document.getElementById('templatePalette');
+            container.innerHTML = '';
+            boxPresets.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = "flex items-center gap-2 p-1.5 rounded-lg border border-slate-800 hover:border-slate-700 hover:bg-slate-900/60 bg-slate-950 text-left transition text-[10px]";
+                btn.onclick = () => spawnPresetBox(p);
+                btn.innerHTML = `
+                    <span class="w-3.5 h-3.5 rounded flex-shrink-0 border border-slate-800" style="background-color: ${p.color}"></span>
+                    <div class="flex-1 min-w-0">
+                        <span class="font-semibold block truncate text-slate-200 text-[10px]">${p.name}</span>
+                        <span class="text-[8px] text-slate-500 block">${p.w.toFixed(2)}x${p.h.toFixed(2)}m</span>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function spawnPresetBox(p) {
+            let targetLevel = 0;
+            for (let i = 0; i < levels.length; i++) {
+                if (levels[i].height >= p.h) {
+                    targetLevel = i;
+                    break;
+                }
+            }
+            const newItem = {
+                id: Date.now() + Math.random(),
+                name: p.name,
+                w: p.w, h: p.h, d: p.d,
+                color: p.color,
+                levelIndex: targetLevel,
+                xOffset: 0,
+                yOffset: 0,
+                sequenceNumber: shelfAutoSequence++
+            };
+            shelfItems.push(newItem);
+            selectedShelfItemId = newItem.id;
+            closeAllDropdowns();
+            resolveGravity();
+            draw();
+            updateStatistics();
+        }
+
+        function createNewTemplateAndSpawn() {
+            const name = document.getElementById('newBoxName').value;
+            const w = parseFloat(document.getElementById('newBoxW').value);
+            const h = parseFloat(document.getElementById('newBoxH').value);
+            const d = parseFloat(document.getElementById('newBoxD').value);
+            const color = document.getElementById('newBoxColor').value;
+
+            if (isNaN(w) || isNaN(h) || isNaN(d) || w < 0.05 || h < 0.05 || d < 0.05) {
+                return;
+            }
+            const customBox = {
+                id: 'custom_' + Date.now(),
+                name: name,
+                w: Math.round(w / 0.05) * 0.05,
+                h: Math.round(h / 0.05) * 0.05,
+                d: Math.round(d / 0.05) * 0.05,
+                color: color
+            };
+            boxPresets.push(customBox);
+            renderPresetsAndCustomForm();
+            spawnPresetBox(customBox);
+        }
+
+        function calculateTotalShelfHeight() {
+            let hSum = baseHeight + (levels.length * boardThickness);
+            levels.forEach(l => hSum += l.height);
+            return hSum;
+        }
+
+        // ฟังก์ชันช่วยคำนวณตำแหน่งพื้นของชั้นวางแต่ละระดับ
+        function getLevelFloorY(levelIndex) {
+            const baseY = canvas.height - paddingBottom;
+            const boardThicknessPx = boardThickness * pxPerMeterShelf;
+            const baseHeightPx = baseHeight * pxPerMeterShelf;
+
+            let floorY = baseY - baseHeightPx - boardThicknessPx;
+            for (let j = 0; j < levelIndex; j++) {
+                floorY -= (levels[j].height * pxPerMeterShelf) + boardThicknessPx;
+            }
+            return floorY;
+        }
+
+        function resolveGravity() {
+            let sorted = [...shelfItems].sort((a, b) => a.yOffset - b.yOffset);
+            sorted.forEach(item => {
+                if (isShelfDragging && shelfDragTarget && item.id === shelfDragTarget.id) return;
+                let highestSupport = 0;
+                sorted.forEach(other => {
+                    if (other.id !== item.id && other.levelIndex === item.levelIndex) {
+                        if (isShelfDragging && shelfDragTarget && other.id === shelfDragTarget.id) return;
+                        if (other.yOffset < item.yOffset + 0.01) {
+                            const overlap = item.xOffset < other.xOffset + other.w - 0.01 && 
+                                            item.xOffset + item.w > other.xOffset + 0.01;
+                            if (overlap) {
+                                highestSupport = Math.max(highestSupport, other.yOffset + other.h);
+                            }
+                        }
+                    }
+                });
+                item.yOffset = Math.round(highestSupport / 0.05) * 0.05;
+            });
+        }
+
+        function checkCollisionsAndShelfOverheights() {
+            shelfItems.forEach(it => {
+                it.hasCollision = false;
+                it.exceedsHeight = false;
+            });
+
+            shelfItems.forEach(it1 => {
+                const limH = levels[it1.levelIndex].height;
+                if (it1.yOffset + it1.h > limH + 0.01) {
+                    it1.exceedsHeight = true;
+                }
+                shelfItems.forEach(it2 => {
+                    if (it1.id !== it2.id && it1.levelIndex === it2.levelIndex) {
+                        const overlapX = it1.xOffset < it2.xOffset + it2.w - 0.01 && 
+                                         it1.xOffset + it1.w > it2.xOffset + 0.01;
+                        const overlapY = it1.yOffset < it2.yOffset + it2.h - 0.01 && 
+                                         it1.yOffset + it1.h > it2.yOffset + 0.01;
+                        if (overlapX && overlapY) {
+                            it1.hasCollision = true;
+                            it2.hasCollision = true;
+                        }
+                    }
+                });
+            });
+        }
+
+        function drawShelfManager() {
+            const baseY = canvas.height - paddingBottom;
+            const shelfWidthPx = shelfWidth * pxPerMeterShelf;
+            const shelfLeft = paddingLeft;
+            const shelfRight = paddingLeft + shelfWidthPx;
+            const boardThicknessPx = boardThickness * pxPerMeterShelf;
+
+            checkCollisionsAndShelfOverheights();
+
+            // 1. Draw Grid Inside Shelf Boxes (Every 5cm)
+            levels.forEach((l, i) => {
+                const floorY = getLevelFloorY(i);
+                const ceilingY = floorY - (l.height * pxPerMeterShelf);
+
+                ctx.strokeStyle = '#111827';
+                ctx.lineWidth = 0.5;
+                for (let x = shelfGridStep; x < shelfWidthPx; x += shelfGridStep) {
+                    ctx.beginPath(); ctx.moveTo(shelfLeft + x, floorY); ctx.lineTo(shelfLeft + x, ceilingY); ctx.stroke();
+                }
+                for (let y = shelfGridStep; y < l.height * pxPerMeterShelf; y += shelfGridStep) {
+                    ctx.beginPath(); ctx.moveTo(shelfLeft, floorY - y); ctx.lineTo(shelfRight, floorY - y); ctx.stroke();
+                }
+            });
+
+            // 2. Draw Side Steel Racks (Fixed Syntax Error by removing the invalid parameter assignment)
+            ctx.fillStyle = '#1e293b'; // Slate side panels
+            ctx.fillRect(shelfLeft - 10, baseY - (calculateTotalShelfHeight() * pxPerMeterShelf), 10, calculateTotalShelfHeight() * pxPerMeterShelf);
+            ctx.fillRect(shelfRight, baseY - (calculateTotalShelfHeight() * pxPerMeterShelf), 10, calculateTotalShelfHeight() * pxPerMeterShelf);
+
+            // 3. Draw Wooden Support Shelves
+            ctx.fillStyle = '#7c2d12'; // Oak Brown
+            ctx.fillRect(shelfLeft, baseY - (baseHeight * pxPerMeterShelf), shelfWidthPx, boardThicknessPx); // Base board
+            levels.forEach((l, i) => {
+                const floorY = getLevelFloorY(i);
+                ctx.fillRect(shelfLeft, floorY, shelfWidthPx, boardThicknessPx);
+            });
+            const topFloorY = getLevelFloorY(levels.length - 1) - (levels[levels.length - 1].height * pxPerMeterShelf);
+            ctx.fillRect(shelfLeft, topFloorY, shelfWidthPx, boardThicknessPx);
+
+            // 4. Draw Side & Floor Rulers
+            drawShelfRulers(shelfLeft, shelfRight, baseY);
+
+            // 5. Draw stackable boxes
+            shelfItems.forEach(item => {
+                const isSelected = item.id === selectedShelfItemId;
+                const floorY = getLevelFloorY(item.levelIndex);
+                const itemXPx = shelfLeft + (item.xOffset * pxPerMeterShelf);
+                const itemYPx = floorY - (item.yOffset * pxPerMeterShelf) - (item.h * pxPerMeterShelf);
+                const itemWPx = item.w * pxPerMeterShelf;
+                const itemHPx = item.h * pxPerMeterShelf;
+
+                // Box fill
+                ctx.fillStyle = item.color;
+                ctx.fillRect(itemXPx, itemYPx, itemWPx, itemHPx);
+
+                // Shadows for depth
+                ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                ctx.fillRect(itemXPx + itemWPx - 8, itemYPx, 8, itemHPx);
+                ctx.fillRect(itemXPx, itemYPx + itemHPx - 4, itemWPx, 4);
+
+                // Top tape
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(itemXPx + (itemWPx / 2) - 6, itemYPx, 12, itemHPx);
+
+                // Borders
+                ctx.lineWidth = isSelected ? 3 : 1.5;
+                ctx.strokeStyle = isSelected ? '#ef4444' : '#1e293b';
+
+                if (item.hasCollision || item.exceedsHeight) {
+                    ctx.strokeStyle = '#f43f5e';
+                    ctx.lineWidth = 2.5;
+                    ctx.setLineDash([4, 3]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+                ctx.strokeRect(itemXPx, itemYPx, itemWPx, itemHPx);
+                ctx.setLineDash([]);
+
+                // Index badge circle
+                ctx.beginPath();
+                ctx.arc(itemXPx + 12, itemYPx + 12, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.sequenceNumber, itemXPx + 12, itemYPx + 12);
+
+                // Measure size overlay
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 8px monospace';
+                ctx.fillText(`${item.w.toFixed(2)}x${item.h.toFixed(2)}m`, itemXPx + (itemWPx / 2), itemYPx + itemHPx - 10);
+
+                if (isSelected) {
+                    drawBoxDimensionLines(itemXPx, itemYPx, itemWPx, itemHPx, item.xOffset, shelfLeft, shelfWidthPx);
+                }
+            });
+        }
+
+        function drawBoxDimensionLines(itemX, itemY, itemW, itemH, xOffset, shelfLeft, shelfWidthPx) {
+            const centerHeightY = itemY + (itemH / 2);
+            ctx.save();
+            ctx.strokeStyle = '#f97316'; 
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([3, 2]);
+
+            if (xOffset > 0) {
+                ctx.beginPath();
+                ctx.moveTo(shelfLeft, centerHeightY);
+                ctx.lineTo(itemX, centerHeightY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#f97316';
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(shelfLeft, centerHeightY);
+                ctx.lineTo(shelfLeft + 5, centerHeightY - 3);
+                ctx.lineTo(shelfLeft + 5, centerHeightY + 3);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(itemX, centerHeightY);
+                ctx.lineTo(itemX - 5, centerHeightY - 3);
+                ctx.lineTo(itemX - 5, centerHeightY + 3);
+                ctx.fill();
+
+                // วาดป้ายตัวเลขบอกเมตร
+                ctx.fillStyle = '#fed7aa';
+                ctx.font = '9px monospace';
+                const labelText = `${xOffset.toFixed(2)}m`;
+                const textW = ctx.measureText(labelText).width;
+                ctx.fillRect(shelfLeft + (itemX - shelfLeft)/2 - (textW + 6)/2, centerHeightY - 6, textW + 6, 12);
+                ctx.fillStyle = '#ea580c';
+                ctx.fillText(labelText, shelfLeft + (itemX - shelfLeft)/2, centerHeightY + 1);
+            }
+            ctx.restore();
+        }
+
+        function drawShelfRulers(shelfLeft, shelfRight, baseY) {
+            ctx.save();
+            ctx.fillStyle = '#475569';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            // Base width ruler
+            ctx.beginPath();
+            ctx.moveTo(shelfLeft, baseY + 12);
+            ctx.lineTo(shelfRight, baseY + 12);
+            ctx.stroke();
+
+            for (let x = 0; x <= shelfWidth; x += 0.1) {
+                const isMajor = Math.round(x * 10) % 5 === 0;
+                const xPx = shelfLeft + (x * pxPerMeterShelf);
+                const tickH = isMajor ? 6 : 3;
+
+                ctx.beginPath(); ctx.moveTo(xPx, baseY + 12); ctx.lineTo(xPx, baseY + 12 + tickH); ctx.stroke();
+                if (isMajor) ctx.fillText(`${x.toFixed(1)}m`, xPx, baseY + 20);
+            }
+
+            // Verticals limits indicator specs on the left
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            levels.forEach((l, i) => {
+                const floorY = getLevelFloorY(i);
+                const ceilingY = floorY - (l.height * pxPerMeterShelf);
+                const midY = (floorY + ceilingY) / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(shelfLeft - 18, floorY); ctx.lineTo(shelfLeft - 26, floorY);
+                ctx.moveTo(shelfLeft - 18, ceilingY); ctx.lineTo(shelfLeft - 26, ceilingY);
+                ctx.moveTo(shelfLeft - 22, floorY); ctx.lineTo(shelfLeft - 22, ceilingY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillText(`ชั้นที่ ${i+1}: ${l.height.toFixed(2)}m`, shelfLeft - 32, midY);
+            });
+            ctx.restore();
+        }
+
+        function nudgeShelfItem(val) {
+            if (selectedShelfItemId !== null) {
+                const sel = shelfItems.find(i => i.id === selectedShelfItemId);
+                if (sel) {
+                    let targetX = sel.xOffset + val;
+                    targetX = Math.max(0, Math.min(targetX, shelfWidth - sel.w));
+                    sel.xOffset = Math.round(targetX / 0.05) * 0.05;
+                    resolveGravity();
+                    draw();
+                    updateStatistics();
+                }
+            }
+        }
+
+        function moveShelfItemLevel(dir) {
+            if (selectedShelfItemId !== null) {
+                const sel = shelfItems.find(i => i.id === selectedShelfItemId);
+                if (sel) {
+                    const nextL = sel.levelIndex + dir;
+                    if (nextL >= 0 && nextL < levels.length) {
+                        sel.levelIndex = nextL;
+                        sel.yOffset = 0;
+                        resolveGravity();
+                        draw();
+                        updateStatistics();
+                    }
+                }
+            }
+        }
+
+        function deleteSelectedShelfItem() {
+            if (selectedShelfItemId !== null) {
+                shelfItems = shelfItems.filter(i => i.id !== selectedShelfItemId);
+                selectedShelfItemId = null;
+                closeAllDropdowns();
+                resolveGravity();
+                draw();
+                updateStatistics();
+            }
+        }
+
+        // ----------------------------------------------------
+        // SYSTEM STATS & VISUAL HUD DATA ENGINE
+        // ----------------------------------------------------
+        function updateStatistics() {
+            if (currentView === 'floor_plan') {
+                const totalA = floorWidth * floorHeight;
+                let usedA = 0;
+                floorItems.forEach(item => {
+                    usedA += (item.w / pxPerMeterFloor) * (item.h / pxPerMeterFloor);
+                });
+                const freeA = Math.max(0, totalA - usedA);
+                const usedPercent = totalA > 0 ? (usedA / totalA) * 100 : 0;
+
+                document.getElementById('hudFloorTotal').innerText = totalA.toFixed(2);
+                document.getElementById('hudFloorFree').innerText = freeA.toFixed(2);
+                document.getElementById('hudFloorPercentage').innerText = usedPercent.toFixed(0) + '%';
+                document.getElementById('hudFloorBar').style.width = Math.min(100, usedPercent) + '%';
+
+                // Setup top dropdown configuration menu values
+                if (selectedFloorItemId !== null) {
+                    const sel = floorItems.find(i => i.id === selectedFloorItemId);
+                    floorManipulatorBtn.classList.remove('opacity-60', 'pointer-events-none');
+                    selectedFloorItemLabel.innerText = `${sel.type === 'pallet' ? 'Pallet' : 'Shelf'} #${sel.sequenceNumber}`;
+                } else {
+                    floorManipulatorBtn.classList.add('opacity-60', 'pointer-events-none');
+                    selectedFloorItemLabel.innerText = 'ไม่มี';
+                }
+            } else {
+                // Shelf stack levels calculations
+                hudShelfStats.innerHTML = '';
+                levels.forEach((l, idx) => {
+                    let usedWidth = 0;
+                    let usedVolume = 0;
+                    shelfItems.forEach(item => {
+                        if (item.levelIndex === idx) {
+                            usedWidth += item.w;
+                            usedVolume += (item.w * item.h * item.d);
+                        }
+                    });
+
+                    const totalV = shelfWidth * l.height * 0.50; // Average depth 0.5m
+                    const widthPct = (usedWidth / shelfWidth) * 100;
+                    const volPct = totalV > 0 ? (usedVolume / totalV) * 100 : 0;
+
+                    const barDiv = document.createElement('div');
+                    barDiv.className = "space-y-1 bg-slate-950/40 p-2 border border-slate-800/60 rounded-xl";
+                    barDiv.innerHTML = `
+                        <div class="flex justify-between text-[9px] font-bold">
+                            <span class="text-rose-400">ชั้นที่ ${idx+1} (สูง ${l.height.toFixed(2)}ม.)</span>
+                            <span class="text-slate-400">ปริมาตรบรรจุ ${volPct.toFixed(0)}%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
+                            <div class="bg-rose-500 h-full rounded-full" style="width: ${Math.min(100, volPct)}%"></div>
+                        </div>
+                    `;
+                    hudShelfStats.appendChild(barDiv);
+                });
+
+                // Setup selected shelf template panel details
+                if (selectedShelfItemId !== null) {
+                    const sel = shelfItems.find(i => i.id === selectedShelfItemId);
+                    shelfManipulatorBtn.classList.remove('opacity-60', 'pointer-events-none');
+                    selectedShelfItemLabel.innerText = `${sel.name} #${sel.sequenceNumber}`;
+                    selectedShelfDim.innerText = `${sel.w.toFixed(2)}x${sel.h.toFixed(2)}x${sel.d.toFixed(2)}m`;
+                    selectedShelfPos.innerText = `${sel.xOffset.toFixed(2)}m จากซ้าย`;
+                } else {
+                    shelfManipulatorBtn.classList.add('opacity-60', 'pointer-events-none');
+                    selectedShelfItemLabel.innerText = 'ไม่มีกล่องที่เลือก';
+                    selectedShelfDim.innerText = '-';
+                    selectedShelfPos.innerText = '-';
+                }
+            }
+        }
+
+        // Draw selection routing selector (FIXED: Added clearRect to prevent trails/ghosting during drags)
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // ล้างแคนวาสทุกครั้งก่อนวาดใหม่ เพื่อป้องกันเงาซ้อนและรอยลากสะสม
+            if (currentView === 'floor_plan') {
+                drawFloorPlan();
+            } else {
+                drawShelfManager();
+            }
+        }
+
+        // Export active layout view
+        function exportCurrentMap() {
+            const tempSelectedFloor = selectedFloorItemId;
+            const tempSelectedShelf = selectedShelfItemId;
+            selectedFloorItemId = null;
+            selectedShelfItemId = null;
+            
+            draw();
+
+            const link = document.createElement('a');
+            link.download = currentView === 'floor_plan' ? 'warehouse_floor_layout.png' : 'shelf_vertical_layout.png';
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+
+            selectedFloorItemId = tempSelectedFloor;
+            selectedShelfItemId = tempSelectedShelf;
+            draw();
+        }
+
+        // ----------------------------------------------------
+        // SYSTEM UNIFIED INPUT DRAGGING HANDLERS
+        // ----------------------------------------------------
+        function handleDragStart(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const mX = clientX - rect.left;
+            const mY = clientY - rect.top;
+
+            if (currentView === 'floor_plan') {
+                floorDragTarget = [...floorItems].reverse().find(i => 
+                    mX >= i.x && mX <= i.x + i.w && mY >= i.y && mY <= i.y + i.h
+                );
+                if (floorDragTarget) {
+                    selectedFloorItemId = floorDragTarget.id;
+                    isFloorDragging = true;
+                    floorDragOffsetX = mX - floorDragTarget.x;
+                    floorDragOffsetY = mY - floorDragTarget.y;
+                    if (e.cancelable) e.preventDefault();
+                } else {
+                    selectedFloorItemId = null;
+                }
+            } else {
+                shelfDragTarget = [...shelfItems].reverse().find(item => {
+                    const floorY = getLevelFloorY(item.levelIndex);
+                    const itemXPx = paddingLeft + (item.xOffset * pxPerMeterShelf);
+                    const itemYPx = floorY - (item.yOffset * pxPerMeterShelf) - (item.h * pxPerMeterShelf);
+                    const itemWPx = item.w * pxPerMeterShelf;
+                    const itemHPx = item.h * pxPerMeterShelf;
+
+                    return mX >= itemXPx && mX <= itemXPx + itemWPx && mY >= itemYPx && mY <= itemYPx + itemHPx;
+                });
+
+                if (shelfDragTarget) {
+                    selectedShelfItemId = shelfDragTarget.id;
+                    isShelfDragging = true;
+                    
+                    const itemXPx = paddingLeft + (shelfDragTarget.xOffset * pxPerMeterShelf);
+                    const floorY = getLevelFloorY(shelfDragTarget.levelIndex);
+                    const itemYPx = floorY - (shelfDragTarget.yOffset * pxPerMeterShelf) - (shelfDragTarget.h * pxPerMeterShelf);
+                    
+                    shelfDragOffsetX = mX - itemXPx;
+                    shelfDragOffsetY = mY - itemYPx;
+                    if (e.cancelable) e.preventDefault();
+                } else {
+                    selectedShelfItemId = null;
+                }
+            }
+            draw();
+            updateStatistics();
+        }
+
+        function handleDragMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const mX = clientX - rect.left;
+            const mY = clientY - rect.top;
+
+            if (currentView === 'floor_plan' && isFloorDragging && floorDragTarget) {
+                let targetX = mX - floorDragOffsetX;
+                let targetY = mY - floorDragOffsetY;
+                
+                // Snap to 0.2m grid automatically
+                targetX = Math.round(targetX / floorGridStep) * floorGridStep;
+                targetY = Math.round(targetY / floorGridStep) * floorGridStep;
+
+                if (targetX < 0) targetX = 0;
+                if (targetY < 0) targetY = 0;
+                if (targetX + floorDragTarget.w > canvas.width) targetX = canvas.width - floorDragTarget.w;
+                if (targetY + floorDragTarget.h > canvas.height) targetY = canvas.height - floorDragTarget.h;
+
+                floorDragTarget.x = targetX;
+                floorDragTarget.y = targetY;
+                draw();
+                if (e.cancelable) e.preventDefault();
+            } else if (currentView === 'shelf_manager' && isShelfDragging && shelfDragTarget) {
+                let targetXPx = mX - shelfDragOffsetX;
+                let relX = targetXPx - paddingLeft;
+                let snapXOffset = Math.round(relX / (0.05 * pxPerMeterShelf)) * 0.05;
+
+                snapXOffset = Math.max(0, Math.min(snapXOffset, shelfWidth - shelfDragTarget.w));
+                shelfDragTarget.xOffset = snapXOffset;
+
+                // Detect hovering shelf level
+                let closestLevelIdx = 0;
+                let deltaYMin = Infinity;
+                levels.forEach((l, idx) => {
+                    const floorY = getLevelFloorY(idx);
+                    const centerLevelY = floorY - ((l.height * pxPerMeterShelf) / 2);
+                    const dY = Math.abs(mY - centerLevelY);
+                    if (dY < deltaYMin) {
+                        deltaYMin = dY;
+                        closestLevelIdx = idx;
+                    }
+                });
+                shelfDragTarget.levelIndex = closestLevelIdx;
+
+                // Real-time hover preview levels stacking
+                let highestSupport = 0;
+                shelfItems.forEach(other => {
+                    if (other.id !== shelfDragTarget.id && other.levelIndex === shelfDragTarget.levelIndex) {
+                        const overlap = shelfDragTarget.xOffset < other.xOffset + other.w - 0.01 && 
+                                        shelfDragTarget.xOffset + shelfDragTarget.w > other.xOffset + 0.01;
+                        if (overlap) {
+                            highestSupport = Math.max(highestSupport, other.yOffset + other.h);
+                        }
+                    }
+                });
+                shelfDragTarget.yOffset = highestSupport;
+
+                draw();
+                if (e.cancelable) e.preventDefault();
+            }
+        }
+
+        function handleDragEnd() {
+            isFloorDragging = false;
+            floorDragTarget = null;
+            isShelfDragging = false;
+            shelfDragTarget = null;
+            resolveGravity();
+            draw();
+            updateStatistics();
+        }
+
+        // Global key event listeners (Delete/Backspace shortcuts)
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (document.activeElement.tagName !== 'INPUT') {
+                    if (currentView === 'floor_plan') deleteSelectedFloorItem();
+                    else deleteSelectedShelfItem();
+                }
+            }
+        });
+
+        // Register Unified drag gestures
+        canvas.addEventListener('mousedown', handleDragStart);
+        canvas.addEventListener('mousemove', handleDragMove);
+        canvas.addEventListener('mouseup', handleDragEnd);
+        canvas.addEventListener('mouseleave', handleDragEnd);
+
+        canvas.addEventListener('touchstart', handleDragStart, { passive: false });
+        canvas.addEventListener('touchmove', handleDragMove, { passive: false });
+        canvas.addEventListener('touchend', handleDragEnd);
+
+        // First load initiation sequence
+        renderLevelsListInputs();
+        renderPresetsAndCustomForm();
+        initCanvasSize();
+    </script>
+</body>
+</html>
