@@ -78,7 +78,7 @@
             height: var(--a4-height); 
             max-height: var(--a4-height);
             background: white; 
-            padding: 13.5mm 15mm 10mm 15mm; /* เพิ่มพื้นที่หัวกระดาษอีก 10pt */
+            padding: 13.5mm 15mm 10mm 15mm;
             font-weight: 300; 
             font-size: 14.5px; 
             line-height: 1.5; 
@@ -86,7 +86,7 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.5); 
             position: relative; 
             box-sizing: border-box; 
-            overflow: hidden; /* ป้องกันหน้าว่างงอกตอนท้ายกระดาษ */
+            overflow: hidden;
             page-break-inside: avoid;
             page-break-after: avoid; 
             margin-bottom: 20px;
@@ -105,16 +105,15 @@
             width: 100%; 
             border-collapse: collapse; 
             margin-top: 15px; 
-            border: 1px solid #000; /* ตีกรอบใหญ่สีดำ */
+            border: 1px solid #000;
         } 
         .pdf-table th, .pdf-table td { 
-            border: 1px solid #000; /* เส้นสีดำชัดเจน ป้องกันเทา */
+            border: 1px solid #000;
             padding: 6px; 
             text-align: center; 
             font-weight: 300; 
             box-sizing: border-box; 
         } 
-        /* ซ่อนเส้นขอบของ html2canvas ด้วยเทคนิค border right/bottom เท่านั้น ป้องกันเส้นซ้อนเวลาพิมพ์ */
         .pdf-export-mode .pdf-table th, .pdf-export-mode .pdf-table td {
             border: none;
             border-right: 1px solid #000;
@@ -137,7 +136,6 @@
 </head>
 <body>
 
-    <!-- Custom Modals สำหรับการทำงานร่วมกับ Sandbox -->
     <div id="custom-alert" class="modal-overlay">
         <div class="modal-box">
             <p id="alert-message" style="font-size: 15px; margin-bottom: 20px; color: #333; line-height: 1.5;"></p>
@@ -163,10 +161,8 @@
         </div>
     </div>
 
-    <!-- Dashboard หลัก 3 คอลัมน์ -->
     <div class="dashboard-grid" id="dashboard">
         
-        <!-- Column 1: แก้ไข/ลงทะเบียน ข้อมูล -->
         <div class="panel">
             <h3 id="panel-title-1">📝 1. แก้ไขข้อมูลส่วนตัว & ประวัติ</h3>
             <div id="user-form" oninput="updatePDF()">
@@ -192,7 +188,6 @@
                     <div class="form-group"><label>จำนวนเงิน (บาท)</label><input type="number" id="fm-money"></div>
                 </div>
                 
-                <!-- เลือกแสดงเศษวัน -->
                 <div class="form-row" style="background: #e9ecef; padding: 6px; border-radius: 4px; margin-bottom: 10px;">
                     <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
                         <input type="checkbox" id="fm-show-fraction" onchange="updatePDF()">
@@ -244,7 +239,6 @@
             <div class="watermark">By Bm MR Sawee</div>
         </div>
 
-        <!-- Column 2: เลือกเดือนแบบ Grid -->
         <div class="panel" id="panel-month">
             <h3>📅 2. เลือกเดือนเพื่อคำนวณและพิมพ์</h3>
             <div class="year-selector">
@@ -269,7 +263,6 @@
             <div class="watermark">By Bm MR Sawee</div>
         </div>
 
-        <!-- Column 3: วันลา -->
         <div class="panel" id="panel-leave">
             <h3>🏖️ 3. ข้อมูลวันลา <span id="lbl-leave-month" style="color:#0d6efd;"></span></h3>
             <div style="font-size:11px; color:#555; margin-bottom:8px; line-height: 1.4;">
@@ -295,16 +288,13 @@
         </div>
     </div>
 
-    <!-- ส่วน PDF Preview -->
     <div class="pdf-preview-wrapper" id="pdf-wrapper" style="display: none;">
         <div style="width: 210mm; display: flex; justify-content: space-between; margin-bottom: 15px;">
             <h2 style="color: white; margin: 0; font-size: 18px;">📄 พรีวิวเอกสาร PDF</h2>
             <button class="btn-primary" onclick="generatePDF()">⬇️ ดาวน์โหลด PDF / พิมพ์</button>
         </div>
 
-        <!-- กล่องจำลองกระดาษที่จะถูกนำไปพิมพ์ -->
         <div id="pdf-container">
-            <!-- หน้า 1 -->
             <div class="page">
                 <div class="text-center font-medium" style="font-size: 16px;">
                     ใบขอรับเงินค่าตอบแทนเบี้ยเลี้ยงเหมาจ่ายสำหรับเจ้าหน้าที่<br>
@@ -328,10 +318,10 @@
                     &nbsp;&nbsp;จังหวัด <span class="dot text-center font-bold" id="pdf-cur-prov" style="width: 110px;">ชุมพร</span>
                     &nbsp;&nbsp;ระดับ/กลุ่ม <span class="dot text-center font-bold" id="pdf-cur-level" style="width: 115px;">พื้นที่ปกติ 2</span>
                 </div>
+                
                 <div class="mt-1 flex-row">
-                    ปฏิบัติงานในหน่วยบริการ <span class="dot text-center font-bold" id="pdf-work-hosp" style="width: 195px;"></span>
-                    &nbsp;&nbsp;ปี <span class="dot text-center font-bold" id="pdf-work-year" style="width: 50px;"></span> 
-                    &nbsp;&nbsp;เดือน <span class="dot text-center font-bold" id="pdf-work-month" style="width: 50px;"></span>
+                    ปฏิบัติงานในหน่วยบริการ <span class="dot text-center font-bold" id="pdf-work-year" style="width: 150px;"></span> ปี 
+                    &nbsp;&nbsp;<span class="dot text-center font-bold" id="pdf-work-month" style="width: 100px;"></span> เดือน
                     &nbsp;&nbsp;(นับถึงสิ้นเดือนที่เบิกจ่าย)
                 </div>
                 
@@ -342,7 +332,6 @@
                 <div class="ml-1 mt-1 flex-row"><input type="radio" style="margin-right: 5px;"> รพศ./ท. <span class="dot" style="width: 140px;"></span>&nbsp;&nbsp;จังหวัด <span class="dot" style="width: 100px;"></span>&nbsp;&nbsp;ตั้งแต่ <span class="dot" style="width: 100px;"></span>&nbsp;&nbsp;ถึง <span class="dot" style="width: 100px;"></span></div>
                 <div class="ml-1 mt-1 flex-row"><input type="radio" style="margin-right: 5px;"> รพช./ <span class="dot" style="width: 150px;"></span>&nbsp;&nbsp;จังหวัด <span class="dot" style="width: 100px;"></span>&nbsp;&nbsp;ตั้งแต่ <span class="dot" style="width: 100px;"></span>&nbsp;&nbsp;ถึง <span class="dot" style="width: 100px;"></span></div>
 
-                <!-- ข้อ 2 ถึง 6 แบบ Dynamic (รพ.1-3 โชว์ข้อมูล, 4-5 เว้นว่างเสมอ) -->
                 <script>
                     for(let i=1; i<=5; i++){
                         document.write(`
@@ -392,19 +381,17 @@
                         <div class="mb-1">เรียน ผู้อำนวยการโรงพยาบาลสวี</div>
                         <div style="padding-left: 35px;">
                             <div class="mb-1">ได้ตรวจสอบ / วันปฏิบัติงานแล้ว</div>
-                            <div class="flex-row" style="gap: 10px;">( &nbsp;&nbsp;&nbsp; ) ครบ 15 วันทำการ  ( &nbsp;&nbsp;&nbsp; ) ไม่ครบ 15 วันทำการ</div>
+                            <div class="flex-row" style="gap: 10px;">( &nbsp;&nbsp;&nbsp; ) ครบ 15 วันทำการ  ( &nbsp;&nbsp;&nbsp; ) ไม่ครบ 15 วันทำการ</div>
                         </div>
                         <div class="mt-3 text-center">
                             <div>(ลงชื่อ) <span class="dot" style="width: 150px;"></span></div>
                             <div class="mt-1">( <span class="dot text-center font-bold" style="width: 160px;">นางอทิตา มณีรัตน์</span> )</div>
-                            <!-- แก้ไขไม่ให้ตำแหน่งขึ้นบรรทัดใหม่ -->
                             <div class="mt-1" style="white-space: nowrap;">ตำแหน่ง <span class="dot text-center font-bold" style="width: 180px;">เจ้าพนักงานธุรการชำนาญงาน</span></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- หน้า 2 -->
             <div class="page">
                 <div class="text-center font-medium" style="font-size: 20px; margin-top: 45px;">สรุปวันลา</div>
                 <div class="mt-3 flex-row" style="justify-content: center;">
@@ -422,7 +409,6 @@
                         </tr>
                     </thead>
                     <tbody id="pdf-leave-body">
-                        <!-- ถูกสร้างผ่าน JS -->
                     </tbody>
                 </table>
 
@@ -453,7 +439,7 @@
             flatpickr(".date-picker", { dateFormat: "d/m/Y", locale: "th", allowInput: true });
         };
 
-        /* Custom Popup Helpers to avoid Sandbox issues */
+        /* Custom Popup Helpers */
         function showCustomAlert(msg) {
             document.getElementById('alert-message').innerText = msg;
             document.getElementById('custom-alert').style.display = 'flex';
@@ -614,10 +600,8 @@
             const getV = id => document.getElementById(id).value.trim();
             const setT = (id, text) => { if(document.getElementById(id)) document.getElementById(id).innerText = text; }
             
-            // ดึงค่าจากการติ๊ก Checkbox เศษวัน
             const showFraction = document.getElementById('fm-show-fraction').checked;
 
-            // เช็คประเภทเพื่อซ่อน/แสดง กรอบตรวจสอบมุมซ้ายล่าง
             const empType = document.getElementById('fm-type').value;
             if(empType === 'ข้าราชการ') {
                 document.getElementById('pdf-approval-section').style.visibility = 'hidden';
@@ -642,11 +626,10 @@
             else if(getV('fm-hosp1').includes('สวี')) saweeStart = getV('fm-start1');
 
             if(saweeStart) {
-                setT('pdf-work-hosp', 'โรงพยาบาลสวี');
                 let dur = calculateDuration(parseDate(saweeStart), endDateForCalc);
                 setT('pdf-work-year', dur.y); setT('pdf-work-month', dur.m);
             } else {
-                setT('pdf-work-hosp', ''); setT('pdf-work-year', ''); setT('pdf-work-month', '');
+                setT('pdf-work-year', ''); setT('pdf-work-month', '');
             }
 
             let totDur = calculateDuration(parseDate(getV('fm-start-all')), endDateForCalc);
@@ -702,12 +685,18 @@
             for(let i=0; i<6; i++) {
                 let tr = document.createElement('tr');
                 if (i === 0) {
+                    // การเปลี่ยนแปลงที่ 2: แทนค่าด้วย '-' และยอดรวมเป็น '0' หากไม่มีข้อมูล
+                    let sickStr = sick.length > 0 ? sick.join(', ') : '-';
+                    let personalStr = personal.length > 0 ? personal.join(', ') : '-';
+                    let vacStr = vacation.length > 0 ? vacation.join(', ') : '-';
+                    let totalStr = totalCount > 0 ? totalCount : '0';
+
                     tr.innerHTML = `
                         <td>${currentMonthYear}</td>
-                        <td class="font-bold">${sick.join(', ')}</td>
-                        <td class="font-bold">${personal.join(', ')}</td>
-                        <td class="font-bold">${vacation.join(', ')}</td>
-                        <td class="font-bold">${totalCount > 0 ? totalCount : ''}</td>
+                        <td class="font-bold">${sickStr}</td>
+                        <td class="font-bold">${personalStr}</td>
+                        <td class="font-bold">${vacStr}</td>
+                        <td class="font-bold">${totalStr}</td>
                     `;
                 } else {
                     tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td>`;
@@ -745,7 +734,7 @@
             const queryInput = document.getElementById('inp-search').value.trim();
             const formUsername = document.getElementById('fm-username').value.trim();
             
-            let oldUsername = globalData.user?.username; // เก็บ username เดิมเผื่อมีการเปลี่ยน
+            let oldUsername = globalData.user?.username;
             let usernameToSave = formUsername;
             
             if(!usernameToSave) {
@@ -759,7 +748,7 @@
             }
 
             const payload = {
-                old_username: oldUsername, // ส่งค่าเก่าไปให้ Backend หาบรรทัดเดิมเจอ
+                old_username: oldUsername,
                 username: usernameToSave, email: emailField.value.trim(),
                 name: document.getElementById('fm-name').value, surname: document.getElementById('fm-surname').value,
                 job: document.getElementById('fm-job').value, type: document.getElementById('fm-type').value,
@@ -802,7 +791,6 @@
             const sendEmail = document.getElementById('chk-send-email').checked;
 
             try {
-                // ถ้าเลือกให้ส่งอีเมล ให้สร้างไฟล์ PDF สดๆ เพื่อแนบไปด้วย
                 if (sendEmail) {
                     btn.innerText = "⏳ กำลังสร้างไฟล์เพื่อส่งอีเมล...";
                     
@@ -813,7 +801,7 @@
                         margin: 0, 
                         filename: 'temp.pdf', 
                         image: { type: 'jpeg', quality: 1.0 }, 
-                        pagebreak: { mode: ['avoid-all'] }, // กันหน้าว่าง
+                        pagebreak: { mode: ['avoid-all'] },
                         html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
                     };
@@ -861,7 +849,7 @@
             const count = document.getElementById('lv-count').value;
             if(!date || !count) return showCustomAlert("กรุณากรอกช่วงวันที่และจำนวนวัน");
 
-            const newId = Date.now().toString(); // สร้าง id อัตโนมัติ
+            const newId = Date.now().toString();
             const payload = { id: newId, username: globalData.user.username, month_year: currentMonthYear, type_of_leave: type, date_range: date, count: count };
             try {
                 const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'saveLeave', payload: payload }) });
@@ -953,9 +941,9 @@
                 margin: 0, 
                 filename: `ใบขอรับเงิน_${currentMonthYear}.pdf`, 
                 image: { type: 'jpeg', quality: 1.0 }, 
-                pagebreak: { mode: ['avoid-all'] }, // บังคับป้องกันไม่ให้สร้างหน้าว่างส่วนเกินเด็ดขาด
+                pagebreak: { mode: ['avoid-all'] }, 
                 html2canvas: { 
-                    scale: 2, // Scale 2 ภาพชัดขึ้น แต่ไม่ทำให้เส้นบวมพอง
+                    scale: 2,
                     useCORS: true, 
                     scrollY: 0
                 }, 
