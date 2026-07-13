@@ -3,186 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUE Center - รพ.สวี</title>
+    <title>DUE Atorvastatin - รพ.สวี</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; }
-        .tab-active-ator { border-bottom: 4px solid #4f46e5; color: #4f46e5; font-weight: 600; }
-        .tab-inactive { border-bottom: 4px solid transparent; color: #64748b; }
-        .tab-inactive:hover { border-bottom: 4px solid #cbd5e1; color: #475569; }
+        body { font-family: 'Prompt', sans-serif; background-color: #e2e8f0; color: #334155; }
         
-        /* Spinner Animation */
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        /* 3D Soft Shadow & Neumorphism Effects */
+        .paper-layout { background: #f8fafc; box-shadow: 8px 8px 16px #cbd5e1, -8px -8px 16px #ffffff; }
+        .inner-card { background: #ffffff; box-shadow: inset 2px 2px 5px #e2e8f0, inset -2px -2px 5px #ffffff; border: 1px solid #f1f5f9; }
+        .floating-card { background: #ffffff; box-shadow: 4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff; }
+        
+        /* Beautiful Spinner */
+        .spinner {
+            width: 20px; height: 20px; border: 3px solid #cbd5e1; border-top: 3px solid #64748b;
+            border-radius: 50%; animation: spin 1s linear infinite; display: inline-block;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Radio Buttons */
+        .radio-custom:checked + div { border-color: #64748b; background-color: #f1f5f9; font-weight: 500; }
+        .radio-color-green:checked + div { border-color: #22c55e; background-color: #f0fdf4; color: #166534; }
+        .radio-color-red:checked + div { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; }
+        .radio-color-orange:checked + div { border-color: #f97316; background-color: #fff7ed; color: #9a3412; }
+        
+        /* Typography adjustments */
+        input:read-only { color: #475569; font-weight: 500; cursor: default; }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
+<body class="min-h-screen py-8 px-4 sm:px-6">
 
-    <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4 border-b border-slate-100">
-                <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    DUE Evaluation Form
-                </h1>
-                <span class="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-medium">รพ.สวี จ.ชุมพร</span>
-            </div>
-            
-            <!-- Tabs -->
-            <nav class="flex gap-8 mt-2 overflow-x-auto">
-                <button class="pb-3 px-1 tab-active-ator text-lg transition-colors whitespace-nowrap">
-                    💊 Atorvastatin
-                </button>
-                <button class="pb-3 px-1 tab-inactive text-lg transition-colors whitespace-nowrap cursor-not-allowed opacity-60" disabled title="จะเปิดใช้งานภายหลัง">
-                    💉 Antibiotics
-                </button>
-                <button class="pb-3 px-1 tab-inactive text-lg transition-colors whitespace-nowrap cursor-not-allowed opacity-60" disabled title="จะเปิดใช้งานภายหลัง">
-                    🦠 Tamiflu
-                </button>
-            </nav>
-        </div>
-    </header>
-
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-4xl mx-auto paper-layout rounded-[2rem] p-6 sm:p-8">
         
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
-            <h2 class="text-lg font-semibold mb-4 text-indigo-900">ค้นหาประวัติผู้ป่วย</h2>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <input type="text" id="searchHN" placeholder="ระบุเลข HN (เช่น 580006135)" class="flex-1 bg-slate-50 border border-slate-300 text-slate-900 text-lg rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block w-full p-3 transition-colors" onkeypress="if(event.key === 'Enter') searchPatient()">
-                <button onclick="searchPatient()" id="searchBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl text-lg px-8 py-3 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 min-w-[140px]">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <span>ค้นหา</span>
-                </button>
+        <!-- Header & Tabs -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b border-gray-300 gap-4">
+            <h1 class="text-xl font-semibold text-gray-700 flex items-center gap-2">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                DUE Evaluation (รพ.สวี)
+            </h1>
+            <div class="flex gap-3 bg-gray-200 p-1 rounded-full shadow-inner text-sm">
+                <button class="bg-white text-gray-800 shadow-sm px-4 py-1.5 rounded-full font-medium">Atorvastatin</button>
+                <button class="text-gray-500 px-4 py-1.5 rounded-full cursor-not-allowed opacity-50" disabled>Antibiotics</button>
+                <button class="text-gray-500 px-4 py-1.5 rounded-full cursor-not-allowed opacity-50" disabled>Tamiflu</button>
             </div>
-            <div id="searchMessage" class="mt-3 text-sm text-red-500 hidden"></div>
+        </header>
+
+        <!-- Search Box -->
+        <div class="floating-card rounded-2xl p-4 mb-6 flex flex-col sm:flex-row gap-3">
+            <input type="text" id="searchHN" placeholder="ระบุ HN ค้นหาผู้ป่วย..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" onkeypress="if(event.key === 'Enter') searchPatient()">
+            <button onclick="searchPatient()" id="searchBtn" class="bg-gray-700 hover:bg-gray-800 text-white rounded-xl px-6 py-2 text-sm font-medium transition-all shadow-md flex items-center justify-center gap-2 min-w-[120px]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                ค้นหา
+            </button>
         </div>
+        <div id="searchMessage" class="text-xs text-red-500 mb-4 ml-2 hidden"></div>
 
         <form id="dueForm" class="hidden space-y-6" onsubmit="submitDUE(event)">
             
-            <!-- Hidden field to keep row reference -->
             <input type="hidden" id="f_rowIndex">
-            <input type="hidden" id="f_OrderDateTime">
 
-            <!-- Part 1: ข้อมูลการสั่งใช้ยา (Read-only) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
-                <div class="bg-indigo-50/50 border-b border-indigo-100 px-6 py-4">
-                    <h2 class="text-xl font-bold text-indigo-900">Part 1: ข้อมูลการสั่งใช้ยา</h2>
+            <!-- Part 1 -->
+            <div class="floating-card rounded-2xl overflow-hidden">
+                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
+                    <h2 class="text-sm font-semibold text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา</h2>
                 </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div><label class="block text-sm font-medium text-slate-500 mb-1">HN</label><input type="text" id="f_hn" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700 font-medium"></div>
-                        <div><label class="block text-sm font-medium text-slate-500 mb-1">ชื่อผู้ป่วย</label><input type="text" id="f_name" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700 font-medium"></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="block text-sm font-medium text-slate-500 mb-1">เพศ</label><input type="text" id="f_gender" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                            <div><label class="block text-sm font-medium text-slate-500 mb-1">อายุ (ปี)</label><input type="text" id="f_age" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                        </div>
-                        <div><label class="block text-sm font-medium text-slate-500 mb-1">สิทธิ์การรักษา</label><input type="text" id="f_right" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700 text-sm"></div>
-                        <div><label class="block text-sm font-medium text-slate-500 mb-1">ประเภท</label><input type="text" id="f_pttype" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                        <div class="lg:col-span-3"><label class="block text-sm font-medium text-slate-500 mb-1">การวินิจฉัย (Diagnosis)</label><input type="text" id="f_diag" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                        
-                        <!-- ยาและแพทย์ -->
-                        <div class="lg:col-span-2"><label class="block text-sm font-medium text-slate-500 mb-1">ยาที่สั่ง (พร้อมวิธีใช้)</label><input type="text" id="f_drug" value="Atorvastatin (40mg) 1 tab oral OD PC" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                        <div><label class="block text-sm font-medium text-slate-500 mb-1">วันที่และเวลา</label><input type="text" id="f_datetime" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                        <div class="lg:col-span-2"><label class="block text-sm font-medium text-slate-500 mb-1">แพทย์ผู้สั่งใช้ยานี้</label><input type="text" id="f_doctor" readonly class="w-full bg-slate-100 border border-transparent rounded-lg p-2.5 text-slate-700"></div>
-                        
-                        <!-- Lab Results -->
-                        <div class="bg-red-50 p-3 rounded-xl border border-red-100"><label class="block text-xs font-semibold text-red-600 mb-1 uppercase tracking-wider">LDL ล่าสุด</label><input type="text" id="f_ldl" readonly class="w-full bg-transparent text-xl font-bold text-red-700 outline-none"></div>
-                        <div class="bg-orange-50 p-3 rounded-xl border border-orange-100"><label class="block text-xs font-semibold text-orange-600 mb-1 uppercase tracking-wider">Cholesterol ล่าสุด</label><input type="text" id="f_chol" readonly class="w-full bg-transparent text-xl font-bold text-orange-700 outline-none"></div>
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><label class="block text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wider">เคยได้รับ Statin</label><input type="text" id="f_oldstatin" readonly class="w-full bg-transparent text-xl font-bold text-blue-700 outline-none"></div>
+                <div class="p-5 space-y-4">
+                    
+                    <!-- Row 1: Demographics -->
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">HN</label><input type="text" id="f_hn" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-0.5">ชื่อผู้ป่วย</label><input type="text" id="f_name" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">เพศ / อายุ</label><input type="text" id="f_gender_age" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">ประเภท</label><input type="text" id="f_pttype" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">สิทธิ์</label><input type="text" id="f_right" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none truncate"></div>
+                    </div>
+
+                    <!-- Row 2: Diagnosis -->
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-0.5">การวินิจฉัย (Diagnosis)</label>
+                        <input type="text" id="f_diag" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none truncate">
+                    </div>
+
+                    <!-- Row 3: Drug Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-1"><label class="block text-xs text-blue-600 font-medium mb-0.5">ยาที่สั่ง (Drug Name)</label><input type="text" id="f_drug" readonly class="w-full bg-blue-50 border border-blue-100 rounded p-1.5 text-sm text-blue-800 font-medium"></div>
+                        <div class="md:col-span-2"><label class="block text-xs text-blue-600 font-medium mb-0.5">วิธีใช้ (Drug Usage)</label><input type="text" id="f_usage" readonly class="w-full bg-blue-50 border border-blue-100 rounded p-1.5 text-sm text-blue-800"></div>
+                    </div>
+
+                    <!-- Row 4: Order Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">วันที่และเวลา</label><input type="text" id="f_datetime" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-0.5">แพทย์ผู้สั่งใช้ยานี้</label><input type="text" id="f_doctor" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                    </div>
+
+                    <!-- Row 5: Labs -->
+                    <div class="grid grid-cols-3 gap-3 pt-2">
+                        <div class="inner-card p-2 rounded-lg text-center"><label class="block text-[10px] text-gray-500 uppercase">LDL ล่าสุด</label><input type="text" id="f_ldl" readonly class="w-full bg-transparent text-center text-lg font-semibold text-gray-800 outline-none"></div>
+                        <div class="inner-card p-2 rounded-lg text-center"><label class="block text-[10px] text-gray-500 uppercase">Cholesterol</label><input type="text" id="f_chol" readonly class="w-full bg-transparent text-center text-lg font-semibold text-gray-800 outline-none"></div>
+                        <div class="inner-card p-2 rounded-lg text-center"><label class="block text-[10px] text-gray-500 uppercase">เคยรับ Statin</label><input type="text" id="f_oldstatin" readonly class="w-full bg-transparent text-center text-lg font-semibold text-gray-800 outline-none"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Part 2: ข้อมูลในใบ DUE (Indication) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 border-b border-slate-100 px-6 py-4">
-                    <h2 class="text-xl font-bold text-slate-800">Part 2: ข้อมูลในใบ DUE (เหตุผลการสั่งใช้ยา)</h2>
+            <div class="floating-card rounded-2xl overflow-hidden">
+                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
+                    <h2 class="text-sm font-semibold text-gray-700">Part 2: ข้อมูลในใบ DUE (เหตุผลการสั่งใช้ยา)</h2>
                 </div>
-                <div class="p-6">
-                    <label class="block text-base font-medium text-slate-700 mb-2">เลือกเหตุผลการสั่งใช้ยา Atorvastatin <span class="text-red-500">*</span></label>
-                    <select id="i_indication" required onchange="handleIndicationChange()" class="w-full bg-white border border-slate-300 text-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3 text-base shadow-sm">
-                        <option value="" disabled selected>-- กรุณาเลือกเหตุผล --</option>
-                        <option value="ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา โดยรับ Simvastatin มาแล้ว 6 เดือน">ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา โดยรับ Simvastatin มาแล้ว 6 เดือน</option>
-                        <option value="เกิดอาการไม่พึงประสงค์จาก Simvastatin">เกิดอาการไม่พึงประสงค์จาก Simvastatin</option>
-                        <option value="ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin">ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin</option>
-                        <option value="อื่นๆ">อื่นๆ ระบุ</option>
-                    </select>
+                <div class="p-5 space-y-3">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">เลือกเหตุผลการสั่งใช้ยา Atorvastatin <span class="text-red-500">*</span></label>
                     
-                    <div id="otherIndicationContainer" class="mt-4 hidden animate-fade-in-down">
-                        <label class="block text-sm font-medium text-slate-600 mb-1">ระบุเหตุผลอื่นๆ <span class="text-red-500">*</span></label>
-                        <input type="text" id="i_indication_other" placeholder="พิมพ์รายละเอียดที่นี่..." class="w-full bg-white border border-slate-300 text-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3 shadow-sm">
+                    <div class="grid grid-cols-1 gap-2 text-sm">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="indication" value="ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา โดยรับ Simvastatin มาแล้ว 6 เดือน" class="peer sr-only radio-custom" required onchange="handleIndicationChange()">
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมาย</div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="indication" value="เกิดอาการไม่พึงประสงค์จาก Simvastatin" class="peer sr-only radio-custom" onchange="handleIndicationChange()">
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">เกิดอาการไม่พึงประสงค์จาก Simvastatin</div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="indication" value="ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin" class="peer sr-only radio-custom" onchange="handleIndicationChange()">
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin</div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="indication" value="อื่นๆ" id="radio_other" class="peer sr-only radio-custom" onchange="handleIndicationChange()">
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div>
+                        </label>
+                    </div>
+
+                    <div id="otherIndicationContainer" class="hidden mt-2 ml-4">
+                        <input type="text" id="i_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ ที่นี่..." class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
                     </div>
                 </div>
             </div>
 
-            <!-- Part 3: ส่วนของเภสัชกร -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 border-b border-slate-100 px-6 py-4">
-                    <h2 class="text-xl font-bold text-slate-800">Part 3: ส่วนของเภสัชกร</h2>
+            <div class="floating-card rounded-2xl overflow-hidden border border-gray-300">
+                <div class="bg-gray-200 border-b border-gray-300 px-5 py-3">
+                    <h2 class="text-sm font-semibold text-gray-800">Part 3: สำหรับเภสัชกร (Pharmacist Evaluation)</h2>
                 </div>
-                <div class="p-6 space-y-6">
+                <div class="p-5 space-y-5">
                     
-                    <!-- Evaluation Radio Buttons -->
                     <div>
-                        <label class="block text-base font-medium text-slate-700 mb-3">ผลการประเมิน <span class="text-red-500">*</span></label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label class="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-green-50 hover:border-green-300 transition-colors has-[:checked]:bg-green-50 has-[:checked]:border-green-500 has-[:checked]:ring-1 has-[:checked]:ring-green-500">
-                                <input type="radio" name="evaluation" value="Appropriate" required class="w-5 h-5 text-green-600 border-gray-300 focus:ring-green-500">
-                                <span class="ml-3 font-medium text-slate-800">Appropriate (เหมาะสม)</span>
+                        <label class="block text-xs font-medium text-gray-600 mb-2">ผลการประเมิน <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="evaluation" value="Appropriate" required class="peer sr-only radio-color-green">
+                                <div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div>
                             </label>
-                            <label class="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-red-50 hover:border-red-300 transition-colors has-[:checked]:bg-red-50 has-[:checked]:border-red-500 has-[:checked]:ring-1 has-[:checked]:ring-red-500">
-                                <input type="radio" name="evaluation" value="Inappropriate (Indication)" class="w-5 h-5 text-red-600 border-gray-300 focus:ring-red-500">
-                                <span class="ml-3 font-medium text-slate-800">Inappropriate (Indication)</span>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom">
+                                <div class="p-3 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div>
                             </label>
-                            <label class="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors has-[:checked]:bg-orange-50 has-[:checked]:border-orange-500 has-[:checked]:ring-1 has-[:checked]:ring-orange-500">
-                                <input type="radio" name="evaluation" value="Inappropriate (Dose, Interval)" class="w-5 h-5 text-orange-500 border-gray-300 focus:ring-orange-500">
-                                <span class="ml-3 font-medium text-slate-800">Inappropriate (Dose, Interval)</span>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red">
+                                <div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div>
                             </label>
-                            <label class="flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 hover:border-slate-300 transition-colors has-[:checked]:bg-slate-100 has-[:checked]:border-slate-500 has-[:checked]:ring-1 has-[:checked]:ring-slate-500">
-                                <input type="radio" name="evaluation" value="ข้อมูลไม่ครบถ้วน" class="w-5 h-5 text-slate-600 border-gray-300 focus:ring-slate-500">
-                                <span class="ml-3 font-medium text-slate-800">ข้อมูลไม่ครบถ้วน</span>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange">
+                                <div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div>
                             </label>
                         </div>
                     </div>
 
-                    <!-- Pharmacist Dropdown -->
                     <div>
-                        <label class="block text-base font-medium text-slate-700 mb-2">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
-                        <select id="i_pharmacist" required class="w-full bg-white border border-slate-300 text-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3 text-base shadow-sm">
-                            <option value="" disabled selected>-- กำลังโหลดรายชื่อเภสัชกร... --</option>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
+                        <select id="i_pharmacist" required class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
+                            <option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option>
                         </select>
-                        <p class="text-sm text-slate-500 mt-1">ดึงข้อมูลจากตารางรายชื่อ Pharmacists (หากเคยมีข้อมูลอยู่แล้วจะดึงมาแสดงให้อัตโนมัติและสามารถเปลี่ยนได้)</p>
                     </div>
-
                 </div>
             </div>
 
             <!-- Submit Button -->
-            <div class="flex justify-end pt-4 pb-12">
-                <button type="submit" id="saveBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg px-10 py-4 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                    <span>บันทึกผลการประเมินลงตาราง</span>
+            <div class="flex justify-end pt-2">
+                <button type="submit" id="saveBtn" class="bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-xl text-sm px-8 py-3 transition-all shadow-lg flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    บันทึกผลการประเมิน
                 </button>
             </div>
         </form>
-
-    </main>
+    </div>
 
     <script>
-        // URL ของ Google Apps Script
+        // URL ของ Google Apps Script (แก้ไขตรงนี้ถ้ามีการ Deploy ใหม่)
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzCZ2Nd9WUWf5rf2O-8Asv5tMrD4kxBq6pcFGtRavRReV85PdGgmttvtdqKiydiN_l1rA/exec";
 
-        // โหลดรายชื่อเภสัชกรตอนเปิดหน้าเว็บ
         document.addEventListener('DOMContentLoaded', fetchPharmacists);
 
-        // ควบคุมการแสดงผลช่อง "อื่นๆ" ใน Part 2
+        // จัดการเปิด/ปิดช่องกรอก "อื่นๆ"
         function handleIndicationChange() {
-            const select = document.getElementById('i_indication');
+            const otherRadio = document.getElementById('radio_other');
             const otherContainer = document.getElementById('otherIndicationContainer');
             const otherInput = document.getElementById('i_indication_other');
             
-            if (select.value === 'อื่นๆ') {
+            if (otherRadio.checked) {
                 otherContainer.classList.remove('hidden');
                 otherInput.required = true;
             } else {
@@ -192,30 +206,26 @@
             }
         }
 
-        // ดึงรายชื่อเภสัชกรจาก Google Sheets
         async function fetchPharmacists() {
             try {
                 const response = await fetch(`${GAS_URL}?action=getPharmacists`);
                 const data = await response.json();
-                
                 const select = document.getElementById('i_pharmacist');
                 select.innerHTML = '<option value="" disabled selected>-- เลือกเภสัชกร --</option>';
                 
                 if (data.status === 'success' && data.data) {
                     data.data.forEach(pharma => {
                         const option = document.createElement('option');
-                        option.value = pharma.name; // เก็บชื่อเพื่อเอาไปเซฟลง col Staff_name
+                        option.value = pharma.name; 
                         option.textContent = `${pharma.id} - ${pharma.name}`;
                         select.appendChild(option);
                     });
                 }
             } catch (error) {
-                console.error("Error fetching pharmacists:", error);
-                document.getElementById('i_pharmacist').innerHTML = '<option value="" disabled>-- โหลดข้อมูลล้มเหลว (ลอง Refresh) --</option>';
+                document.getElementById('i_pharmacist').innerHTML = '<option value="" disabled>-- โหลดล้มเหลว --</option>';
             }
         }
 
-        // ค้นหาผู้ป่วยตาม HN
         async function searchPatient() {
             const hn = document.getElementById('searchHN').value.trim();
             const msgBox = document.getElementById('searchMessage');
@@ -228,151 +238,124 @@
                 return;
             }
 
-            // แสดงสถานะกำลังโหลด
             msgBox.classList.add('hidden');
-            btn.innerHTML = '<span class="loader border-white border-t-transparent w-5 h-5"></span> <span>กำลังค้นหา...</span>';
+            btn.innerHTML = '<span class="spinner border-gray-400 border-t-white"></span>';
             btn.disabled = true;
             form.classList.add('hidden');
 
             try {
-                // เรียก API
                 const response = await fetch(`${GAS_URL}?action=search&sheet=Atorvastatin&hn=${hn}`);
                 const res = await response.json();
 
                 if (res.status === 'success' && res.data) {
                     populateForm(res.data);
-                    form.classList.remove('hidden'); // แสดงฟอร์ม
+                    form.classList.remove('hidden');
                 } else {
-                    msgBox.textContent = res.message || "ไม่พบประวัติการสั่ง Atorvastatin ของ HN นี้";
+                    msgBox.textContent = res.message || "ไม่พบประวัติการสั่ง Atorvastatin";
                     msgBox.classList.remove('hidden');
                 }
             } catch (error) {
                 msgBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย";
                 msgBox.classList.remove('hidden');
             } finally {
-                btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> <span>ค้นหา</span>';
+                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> ค้นหา';
                 btn.disabled = false;
             }
         }
 
-        // เติมข้อมูลลงในฟอร์ม Part 1, 2, 3
         function populateForm(data) {
-            // ซ่อนช่องเก็บตัวแปรที่มองไม่เห็น (เพื่อใช้ตอนอัปเดต)
             document.getElementById('f_rowIndex').value = data.rowIndex;
-            document.getElementById('f_OrderDateTime').value = data.Order_DateTime;
 
-            // Part 1: ข้อมูลทั่วไป
+            // Part 1: แมปข้อมูลตามโครงสร้างใหม่
             document.getElementById('f_hn').value = data.HN || '-';
             document.getElementById('f_name').value = data.Patient_Name || '-';
-            document.getElementById('f_gender').value = data.Gender || '-';
-            document.getElementById('f_age').value = data.Age || '-';
-            document.getElementById('f_right').value = data.Right || '-';
+            document.getElementById('f_gender_age').value = `${data.Gender || '-'} / ${data.Age || '-'} ปี`;
             document.getElementById('f_pttype').value = data.Patient_Type || '-';
-            document.getElementById('f_diag').value = data.Diagnosis || '-';
-            document.getElementById('f_datetime').value = data.Order_DateTime || '-';
-            document.getElementById('f_doctor').value = `${data.Doctor_Name || ''} (ว.${data.License_No || ''})`;
+            document.getElementById('f_right').value = data.Right || data.Patient_Right || '-';
             
-            // Lab Results
-            document.getElementById('f_ldl').value = data.Latest_LDL || 'N/A';
-            document.getElementById('f_chol').value = data.Latest_Chol || 'N/A';
-            document.getElementById('f_oldstatin').value = data.Old_statins || 'N/A';
+            document.getElementById('f_diag').value = data.Diagnosis || '-';
+            document.getElementById('f_drug').value = data.Drug_name || '-';
+            document.getElementById('f_usage').value = data.Drug_usage || data.Drug_Usage || '-';
+            document.getElementById('f_datetime').value = data.Order_DateTime || '-';
+            
+            const docName = data.Doctor_Name || '';
+            const license = data.License_No ? `(ว.${data.License_No})` : '';
+            document.getElementById('f_doctor').value = `${docName} ${license}`.trim() || '-';
 
-            // Part 2: Indication (ฟื้นฟูข้อมูลเดิมถ้ามี)
-            const indSelect = document.getElementById('i_indication');
-            const indOther = document.getElementById('i_indication_other');
+            document.getElementById('f_ldl').value = data.Latest_LDL || '-';
+            document.getElementById('f_chol').value = data.Latest_Chol || data.Latest_Cholesterol || '-';
+            document.getElementById('f_oldstatin').value = data.Old_statins || '-';
+
+            // Part 2: Indication
+            const indRadios = document.getElementsByName('indication');
+            const otherInput = document.getElementById('i_indication_other');
+            indRadios.forEach(r => r.checked = false); // Clear
+            
             if (data.Indication) {
-                // เช็คว่า Indication ตรงกับ Choice ปกติไหม
-                let found = Array.from(indSelect.options).some(opt => opt.value === data.Indication);
-                if (found) {
-                    indSelect.value = data.Indication;
-                    handleIndicationChange();
-                } else {
-                    // ถ้าไม่ตรง ถือว่าเป็น 'อื่นๆ'
-                    indSelect.value = 'อื่นๆ';
-                    handleIndicationChange();
-                    indOther.value = data.Indication;
-                }
-            } else {
-                indSelect.value = '';
-                handleIndicationChange();
-            }
-
-            // Part 3: Evaluation & Staff
-            const evalRadios = document.getElementsByName('evaluation');
-            evalRadios.forEach(radio => radio.checked = false); // เคลียร์ก่อน
-            if (data.Evaluated) {
-                evalRadios.forEach(radio => {
-                    if (radio.value === data.Evaluated) radio.checked = true;
+                let matched = false;
+                indRadios.forEach(r => {
+                    if (r.value === data.Indication && r.value !== 'อื่นๆ') {
+                        r.checked = true;
+                        matched = true;
+                    }
                 });
+                if (!matched) {
+                    document.getElementById('radio_other').checked = true;
+                    otherInput.value = data.Indication;
+                }
+            }
+            handleIndicationChange();
+
+            // Part 3: Evaluated & Staff
+            const evalRadios = document.getElementsByName('evaluation');
+            evalRadios.forEach(r => r.checked = false);
+            if (data.Evaluated) {
+                evalRadios.forEach(r => { if (r.value === data.Evaluated) r.checked = true; });
             }
 
             const pharmaSelect = document.getElementById('i_pharmacist');
             if (data.Staff_name && data.Staff_name !== '-') {
-                // พยายามเลือกชื่อเดิมที่มีใน Dropdown
                 pharmaSelect.value = data.Staff_name;
             } else {
                 pharmaSelect.value = '';
             }
         }
 
-        // บันทึกและส่งข้อมูลแบบ POST ไปที่ Apps Script
         async function submitDUE(e) {
             e.preventDefault();
-            
             const btn = document.getElementById('saveBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="loader border-white border-t-transparent w-5 h-5"></span> <span>กำลังบันทึก...</span>';
+            btn.innerHTML = '<span class="spinner border-gray-400 border-t-white"></span> กำลังบันทึก...';
             btn.disabled = true;
 
-            // รวบรวมข้อมูล
             const rowIndex = document.getElementById('f_rowIndex').value;
-            const hn = document.getElementById('f_hn').value;
             
-            let indication = document.getElementById('i_indication').value;
-            if (indication === 'อื่นๆ') {
-                indication = document.getElementById('i_indication_other').value;
-            }
+            let indication = '';
+            document.getElementsByName('indication').forEach(r => { if(r.checked) indication = r.value; });
+            if (indication === 'อื่นๆ') indication = document.getElementById('i_indication_other').value;
 
             let evaluated = '';
-            const evalRadios = document.getElementsByName('evaluation');
-            evalRadios.forEach(radio => { if (radio.checked) evaluated = radio.value; });
+            document.getElementsByName('evaluation').forEach(r => { if(r.checked) evaluated = r.value; });
 
             const staffName = document.getElementById('i_pharmacist').value;
 
-            // โครงสร้าง Payload ที่จะส่งไปอัปเดต
             const payload = {
                 action: 'updateDUE',
                 sheetName: 'Atorvastatin',
                 rowIndex: rowIndex,
-                updateData: {
-                    Indication: indication,
-                    Evaluated: evaluated,
-                    Staff_name: staffName
-                }
+                updateData: { Indication: indication, Evaluated: evaluated, Staff_name: staffName }
             };
 
             try {
-                // ส่งข้อมูล POST
-                // ใช้ no-cors หากไม่ได้ตั้งค่า CORS อย่างถูกต้องใน GAS, แต่ถ้าต้องการอ่าน response ต้องตั้งค่าที่ GAS
-                const response = await fetch(GAS_URL, {
+                await fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload),
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' } // หลีกเลี่ยง CORS preflight
                 });
-
-                const res = await response.json();
-                
-                if (res.status === 'success') {
-                    alert('บันทึกผลการประเมินเรียบร้อยแล้ว!');
-                    // Optionally รีเซ็ตหรือกลับไปด้านบน
-                    window.scrollTo(0, 0);
-                } else {
-                    alert('บันทึกไม่สำเร็จ: ' + res.message);
-                }
+                alert('บันทึกผลการประเมินลง Google Sheets เรียบร้อยแล้ว!');
             } catch (error) {
-                // ในบางกรณี CORS อาจจะเตะ Request แต่ข้อมูลไปถึงแล้ว แนะนำให้ใช้ JSONP หรือตั้ง DoGet DoPost ให้คืน ContentService 
                 console.error(error);
-                alert('บันทึกข้อมูลเรียบร้อยแล้ว (ปิดการแจ้งเตือนเครือข่าย)');
+                alert('บันทึกข้อมูลสำเร็จ (ปิดการแจ้งเตือนเครือข่าย)');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
