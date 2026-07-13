@@ -4,371 +4,370 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUE Center - รพ.สวี</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Noto+Serif+Thai:wght@100..900&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #e2e8f0; color: #334155; }
+        body { 
+            background-color: #e2e8f0; 
+            color: #334155; 
+            font-family: 'Noto Serif Thai', serif; 
+            font-weight: 300;
+        }
+        h1, h2, h3, h4, h5, h6, .font-heading { 
+            font-family: 'Google Sans', sans-serif; 
+            font-weight: 700; 
+        }
         
-        /* 3D Soft Shadow & Neumorphism Effects */
         .paper-layout { background: #f8fafc; box-shadow: 8px 8px 16px #cbd5e1, -8px -8px 16px #ffffff; }
         .inner-card { background: #ffffff; box-shadow: inset 2px 2px 5px #e2e8f0, inset -2px -2px 5px #ffffff; border: 1px solid #f1f5f9; }
         .floating-card { background: #ffffff; box-shadow: 4px 4px 10px #cbd5e1, -4px -4px 10px #ffffff; }
         
-        /* Spinner */
-        .spinner { width: 18px; height: 18px; border: 3px solid #cbd5e1; border-top: 3px solid #64748b; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Custom Radio Buttons */
-        .radio-custom:checked + div { border-color: #64748b; background-color: #f1f5f9; font-weight: 500; }
-        .radio-color-green:checked + div { border-color: #22c55e; background-color: #f0fdf4; color: #166534; }
-        .radio-color-red:checked + div { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; }
-        .radio-color-orange:checked + div { border-color: #f97316; background-color: #fff7ed; color: #9a3412; }
-        
-        /* Editable Inputs (Oseltamivir) */
+        /* Compact Inputs */
         .editable-input {
             width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.5rem; 
-            padding: 0.375rem 0.75rem; font-size: 0.875rem; color: #1e293b; box-shadow: inset 1px 1px 3px #cbd5e1; transition: all 0.2s;
+            padding: 0.375rem 0.75rem; font-size: 0.85rem; color: #1e293b; box-shadow: inset 1px 1px 3px #cbd5e1; transition: all 0.2s;
         }
         .editable-input:focus { outline: none; border-color: #94a3b8; box-shadow: inset 1px 1px 4px #94a3b8; }
 
-        /* Readonly Text Style (Atorvastatin/Antibiotics) */
-        input:read-only { color: #475569; font-weight: 500; cursor: default; }
+        /* Custom Radio Buttons */
+        .radio-custom:checked + div { border-color: #64748b; background-color: #f1f5f9; font-weight: 500; font-family: 'Google Sans', sans-serif;}
+        .radio-color-green:checked + div { border-color: #22c55e; background-color: #f0fdf4; color: #166534; font-family: 'Google Sans', sans-serif;}
+        .radio-color-red:checked + div { border-color: #ef4444; background-color: #fef2f2; color: #991b1b; font-family: 'Google Sans', sans-serif;}
+        .radio-color-orange:checked + div { border-color: #f97316; background-color: #fff7ed; color: #9a3412; font-family: 'Google Sans', sans-serif;}
 
-        /* Tab Active States */
-        .tab-active { background-color: #ffffff; color: #1f2937; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-weight: 500; }
-        .tab-inactive { color: #6b7280; }
+        /* Error Blinking Animation */
+        @keyframes blink-red {
+            0%, 100% { background-color: #fee2e2; border-color: #ef4444; color: #991b1b;}
+            50% { background-color: #ffffff; border-color: #e2e8f0; color: #1e293b;}
+        }
+        .error-blink { animation: blink-red 1.5s infinite; border-width: 2px;}
+
+        /* Loading Spinner */
+        .spinner { width: 18px; height: 18px; border: 3px solid #cbd5e1; border-top: 3px solid #64748b; border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Tabs */
+        .tab-active { background-color: #ffffff; color: #1f2937; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-family: 'Google Sans', sans-serif; }
+        .tab-inactive { color: #6b7280; font-family: 'Google Sans', sans-serif; font-weight: 400;}
         .tab-inactive:hover { color: #374151; }
     </style>
 </head>
-<body class="min-h-screen py-8 px-4 sm:px-6">
+<body class="min-h-screen py-6 px-4 sm:px-6">
 
-    <div class="max-w-4xl mx-auto paper-layout rounded-[2rem] p-6 sm:p-8">
+    <div class="max-w-5xl mx-auto paper-layout rounded-[2rem] p-5 sm:p-8">
         
-        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b border-gray-300 gap-4">
-            <h1 class="text-xl font-semibold text-gray-700 flex items-center gap-2">
-                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                DUE Center (รพ.สวี)
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 pb-4 border-b border-gray-300 gap-4">
+            <h1 class="text-2xl text-gray-800 flex items-center gap-2">
+                📄 DUE Center (รพ.สวี)
             </h1>
             <div class="flex gap-2 bg-gray-200 p-1.5 rounded-full shadow-inner text-sm overflow-x-auto w-full sm:w-auto">
-                <button onclick="switchTab('Atorvastatin')" id="tab-Atorvastatin" class="tab-btn tab-active px-4 py-1.5 rounded-full transition-all whitespace-nowrap">Atorvastatin</button>
-                <button onclick="switchTab('Oseltamivir')" id="tab-Oseltamivir" class="tab-btn tab-inactive px-4 py-1.5 rounded-full transition-all whitespace-nowrap">Oseltamivir</button>
-                <button onclick="switchTab('Antibiotics')" id="tab-Antibiotics" class="tab-btn tab-inactive px-4 py-1.5 rounded-full transition-all whitespace-nowrap">Antibiotics</button>
+                <button onclick="switchTab('Atorvastatin')" id="tab-Atorvastatin" class="tab-btn tab-active px-5 py-1.5 rounded-full transition-all whitespace-nowrap">Atorvastatin</button>
+                <button onclick="switchTab('Oseltamivir')" id="tab-Oseltamivir" class="tab-btn tab-inactive px-5 py-1.5 rounded-full transition-all whitespace-nowrap">Oseltamivir</button>
+                <button onclick="switchTab('Antibiotics')" id="tab-Antibiotics" class="tab-btn tab-inactive px-5 py-1.5 rounded-full transition-all whitespace-nowrap">Antibiotics</button>
             </div>
         </header>
 
+        <!-- Last Updated Banner -->
+        <div class="text-xs text-gray-500 mb-4 flex justify-between items-center bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+            <span class="font-heading text-gray-700">ฐานข้อมูล: <span id="currentTabLabel" class="text-blue-600">Atorvastatin</span></span>
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                อัปเดตล่าสุด: <span id="lastUpdateText" class="font-medium text-gray-700">กำลังโหลด...</span>
+            </div>
+        </div>
+
         <div class="floating-card rounded-2xl p-4 mb-4 flex flex-col sm:flex-row gap-3">
-            <input type="text" id="searchHN" placeholder="ระบุ HN ค้นหาผู้ป่วย..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" onkeypress="if(event.key === 'Enter') searchPatient()">
-            <button onclick="searchPatient()" id="searchBtn" class="bg-gray-700 hover:bg-gray-800 text-white rounded-xl px-6 py-2 text-sm font-medium transition-all shadow-md flex items-center justify-center gap-2 min-w-[120px]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" id="searchHN" placeholder="ระบุ HN ค้นหาผู้ป่วย..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" onkeypress="if(event.key === 'Enter') searchPatient()">
+            <button onclick="searchPatient()" id="searchBtn" class="bg-gray-800 hover:bg-gray-900 text-white font-heading rounded-xl px-6 py-2 text-sm transition-all shadow-md flex items-center justify-center gap-2 min-w-[120px]">
                 ค้นหา
             </button>
         </div>
         
         <div id="searchMessage" class="text-sm bg-blue-50 text-blue-800 border border-blue-200 rounded-xl p-4 mb-4 hidden flex justify-between items-center">
             <span id="searchMessageText"></span>
-            <button id="addNewBtn" onclick="prepareNewRecord()" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium shadow transition-colors">
+            <button id="addNewBtn" onclick="prepareNewRecord()" class="hidden font-heading bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs shadow transition-colors">
                 + เพิ่มข้อมูลใหม่
             </button>
         </div>
 
-        <!-- =================================================================================== -->
-        <!-- TAB 1: ATORVASTATIN FORM (READONLY CLINICAL DATA) -->
-        <!-- =================================================================================== -->
-        <form id="form-Atorvastatin" class="due-form hidden space-y-6" onsubmit="submitDUE(event, 'Atorvastatin')">
+        <form id="form-Atorvastatin" class="due-form hidden space-y-5" onsubmit="submitDUE(event, 'Atorvastatin')">
             <input type="hidden" id="ator_rowIndex">
-            
             <div class="floating-card rounded-2xl overflow-hidden">
-                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
-                    <h2 class="text-sm font-semibold text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา (Atorvastatin)</h2>
-                </div>
-                <div class="p-5 space-y-4">
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">HN</label><input type="text" id="ator_hn" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-0.5">ชื่อผู้ป่วย</label><input type="text" id="ator_name" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">เพศ / อายุ</label><input type="text" id="ator_gender_age" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">ประเภท</label><input type="text" id="ator_pttype" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">สิทธิ์</label><input type="text" id="ator_right" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none truncate"></div>
+                <div class="bg-gray-100 border-b border-gray-200 px-4 py-2.5"><h2 class="text-sm text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา</h2></div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">HN</label><input type="text" id="ator_HN" class="editable-input font-heading" required></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mb-0.5">ชื่อผู้ป่วย</label><input type="text" id="ator_Patient_Name" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">เพศ</label><input type="text" id="ator_Gender" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">อายุ</label><input type="text" id="ator_Age" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">ประเภท</label><input type="text" id="ator_Patient_Type" class="editable-input"></div>
                     </div>
-                    <div><label class="block text-xs text-gray-500 mb-0.5">การวินิจฉัย (Diagnosis)</label><input type="text" id="ator_diag" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none truncate"></div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-blue-600 font-medium mb-0.5">ยาที่สั่ง (Drug Name)</label><input type="text" id="ator_drug" readonly class="w-full bg-blue-50 border border-blue-100 rounded p-1.5 text-sm text-blue-800 font-medium"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-blue-600 font-medium mb-0.5">วิธีใช้ (Drug Usage)</label><input type="text" id="ator_usage" readonly class="w-full bg-blue-50 border border-blue-100 rounded p-1.5 text-sm text-blue-800"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">สิทธิ์</label><input type="text" id="ator_Right" class="editable-input"></div>
+                        <div class="md:col-span-3"><label class="block text-[11px] text-gray-500 mb-0.5">การวินิจฉัย (Diagnosis)</label><input type="text" id="ator_Diagnosis" class="editable-input"></div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">วันที่และเวลา</label><input type="text" id="ator_datetime" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-0.5">แพทย์ผู้สั่งใช้ยานี้</label><input type="text" id="ator_doctor" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-blue-600 font-heading mb-0.5">ยาที่สั่ง (Drug Name)</label><input type="text" id="ator_Drug_name" class="editable-input bg-blue-50"></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-blue-600 font-heading mb-0.5">วิธีใช้ (Drug Usage)</label><input type="text" id="ator_Drug_usage" class="editable-input bg-blue-50"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">วันเวลาที่สั่ง</label><input type="text" id="ator_Order_DateTime" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">แพทย์ผู้สั่ง</label><input type="text" id="ator_Doctor_Name" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">ใบประกอบวิชาชีพ</label><input type="text" id="ator_License_No" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-3 gap-3 pt-2">
-                        <div class="inner-card p-2 rounded-lg text-center"><label class="block text-[10px] text-gray-500 uppercase">LDL ล่าสุด</label><input type="text" id="ator_ldl" readonly class="w-full bg-transparent text-center text-lg font-semibold text-gray-800 outline-none"></div>
-                        <div class="inner-card p-2 rounded-lg text-center"><label class="block text-[10px] text-gray-500 uppercase">Cholesterol</label><input type="text" id="ator_chol" readonly class="w-full bg-transparent text-center text-lg font-semibold text-gray-800 outline-none"></div>
-                        <div class="inner-card p-2 rounded-lg text-center"><label class="block text-[10px] text-gray-500 uppercase">เคยรับ Statin</label><input type="text" id="ator_oldstatin" readonly class="w-full bg-transparent text-center text-lg font-semibold text-gray-800 outline-none"></div>
+                        <div class="inner-card p-2 rounded-lg"><label class="block text-[10px] text-gray-500 uppercase text-center">LDL ล่าสุด</label><input type="text" id="ator_Latest_LDL" class="w-full bg-transparent text-center text-lg font-heading text-red-600 outline-none"></div>
+                        <div class="inner-card p-2 rounded-lg"><label class="block text-[10px] text-gray-500 uppercase text-center">Cholesterol</label><input type="text" id="ator_Latest_Chol" class="w-full bg-transparent text-center text-lg font-heading text-orange-600 outline-none"></div>
+                        <div class="inner-card p-2 rounded-lg"><label class="block text-[10px] text-gray-500 uppercase text-center">เคยรับ Statin</label><input type="text" id="ator_Old_statins" class="w-full bg-transparent text-center text-lg font-heading text-gray-800 outline-none"></div>
                     </div>
                 </div>
             </div>
 
             <div class="floating-card rounded-2xl overflow-hidden">
-                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
-                    <h2 class="text-sm font-semibold text-gray-700">Part 2: ข้อมูลในใบ DUE (เหตุผลการสั่งใช้ยา)</h2>
-                </div>
-                <div class="p-5 space-y-3">
-                    <div class="grid grid-cols-1 gap-2 text-sm">
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="ator_indication" value="ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา โดยรับ Simvastatin มาแล้ว 6 เดือน" class="peer sr-only radio-custom" required onchange="handleIndication('ator')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมาย</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="ator_indication" value="เกิดอาการไม่พึงประสงค์จาก Simvastatin" class="peer sr-only radio-custom" onchange="handleIndication('ator')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">เกิดอาการไม่พึงประสงค์จาก Simvastatin</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="ator_indication" value="ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin" class="peer sr-only radio-custom" onchange="handleIndication('ator')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="ator_indication" value="อื่นๆ" id="ator_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('ator')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div>
-                        </label>
+                <div class="bg-gray-100 border-b border-gray-200 px-4 py-2.5"><h2 class="text-sm text-gray-700">Part 2: เหตุผลการสั่งใช้ยา (Indication)</h2></div>
+                <div class="p-4">
+                    <div class="grid grid-cols-1 gap-2 text-xs">
+                        <label class="relative cursor-pointer"><input type="radio" name="ator_indication" value="ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมายของการรักษา โดยรับ Simvastatin มาแล้ว 6 เดือน" class="peer sr-only radio-custom" required onchange="handleIndication('ator')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">ได้รับ Simvastatin ขนาดสูงมาแล้ว 3-6 เดือน แต่ระดับ LDL-Cholesterol ยังไม่บรรลุเป้าหมาย</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="ator_indication" value="เกิดอาการไม่พึงประสงค์จาก Simvastatin" class="peer sr-only radio-custom" onchange="handleIndication('ator')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">เกิดอาการไม่พึงประสงค์จาก Simvastatin</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="ator_indication" value="ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin" class="peer sr-only radio-custom" onchange="handleIndication('ator')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">ได้รับยาที่ร่วมที่อาจเกิด Drug Interaction กับ Simvastatin</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="ator_indication" value="อื่นๆ" id="ator_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('ator')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div></label>
                     </div>
-                    <div id="ator_other_box" class="hidden mt-2 ml-4">
-                        <input type="text" id="ator_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ..." class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
-                    </div>
+                    <div id="ator_other_box" class="hidden mt-2 ml-4"><input type="text" id="ator_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ..." class="editable-input"></div>
                 </div>
             </div>
-            
-            <!-- Shared Pharmacist Part included inside the form via JS templating approach or direct HTML -->
+
             <div class="floating-card rounded-2xl overflow-hidden border border-gray-300">
-                <div class="bg-gray-200 border-b border-gray-300 px-5 py-3"><h2 class="text-sm font-semibold text-gray-800">Part 3: สำหรับเภสัชกร (Pharmacist Evaluation)</h2></div>
-                <div class="p-5 space-y-5">
+                <div class="bg-gray-200 border-b border-gray-300 px-4 py-2.5"><h2 class="text-sm text-gray-800">Part 3: สำหรับเภสัชกร</h2></div>
+                <div class="p-4 space-y-4">
                     <div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
-                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div></label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="ator_evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div></label>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
-                        <select id="ator_pharmacist" required class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
-                            <option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option>
-                        </select>
+                        <label class="block text-[11px] text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
+                        <select id="ator_pharmacist" required class="editable-input"><option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option></select>
                     </div>
                 </div>
             </div>
-            <div class="flex justify-end pt-2">
-                <button type="submit" class="saveBtn bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-xl text-sm px-8 py-3 transition-all shadow-lg">บันทึกผลการประเมิน Atorvastatin</button>
-            </div>
+            <div class="flex justify-end pt-1"><button type="submit" class="saveBtn font-heading bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-sm px-8 py-2.5 shadow-lg">บันทึกผล Atorvastatin</button></div>
         </form>
 
-        <!-- =================================================================================== -->
-        <!-- TAB 2: OSELTAMIVIR FORM (EDITABLE DATA & ADD NEW) -->
-        <!-- =================================================================================== -->
-        <form id="form-Oseltamivir" class="due-form hidden space-y-6" onsubmit="submitDUE(event, 'Oseltamivir')">
+        <form id="form-Oseltamivir" class="due-form hidden space-y-5" onsubmit="submitDUE(event, 'Oseltamivir')">
             <input type="hidden" id="osel_rowIndex">
-            
             <div class="floating-card rounded-2xl overflow-hidden">
-                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3 flex justify-between items-center">
-                    <h2 class="text-sm font-semibold text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา (Oseltamivir - สามารถแก้ไขได้)</h2>
-                </div>
-                <div class="p-5 space-y-3">
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">HN</label><input type="text" id="osel_HN" class="editable-input font-semibold" required></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">ชื่อผู้ป่วย</label><input type="text" id="osel_Patient_Name" class="editable-input"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">เพศ</label>
-                            <select id="osel_Gender" class="editable-input"><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option></select>
-                        </div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">อายุ (ปี)</label><input type="number" id="osel_Age" class="editable-input"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">ประเภท</label>
-                            <select id="osel_Patient_Type" class="editable-input"><option value="OPD">OPD</option><option value="IPD">IPD</option></select>
-                        </div>
+                <div class="bg-gray-100 border-b border-gray-200 px-4 py-2.5"><h2 class="text-sm text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา</h2></div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">HN</label><input type="text" id="osel_HN" class="editable-input font-heading" required></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mb-0.5">ชื่อผู้ป่วย</label><input type="text" id="osel_Patient_Name" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">เพศ</label><input type="text" id="osel_Gender" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">อายุ (ปี)</label><input type="number" step="0.1" id="osel_Age" class="editable-input" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">ประเภท</label><input type="text" id="osel_Patient_Type" class="editable-input"></div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">น้ำหนัก (kg)</label><input type="number" step="0.1" id="osel_Weight_kg" class="editable-input"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">Latest ClCr</label><input type="text" id="osel_Latest_ClCr" class="editable-input text-blue-700 bg-blue-50"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">การวินิจฉัย (Diagnosis)</label><input type="text" id="osel_Diagnosis" class="editable-input"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">น้ำหนัก (kg)</label><input type="number" step="0.1" id="osel_Weight_kg" class="editable-input" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">Latest ClCr</label><input type="text" id="osel_Latest_ClCr" class="editable-input text-blue-700 bg-blue-50" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mb-0.5">การวินิจฉัย (Diagnosis)</label><input type="text" id="osel_Diagnosis" class="editable-input"></div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">ชื่อยา</label><input type="text" id="osel_Drug_name" class="editable-input font-medium" defaultValue="Oseltamivir"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-1">วิธีใช้ยา</label><input type="text" id="osel_Drug_usage" class="editable-input"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">จำนวน (Total Qty)</label><input type="number" id="osel_Total_Qty" class="editable-input"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-blue-600 font-heading mb-0.5">ชื่อยา</label><input type="text" id="osel_Drug_name" class="editable-input font-heading transition-all" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-blue-600 font-heading mb-0.5">วิธีใช้ยา</label><input type="text" id="osel_Drug_usage" class="editable-input transition-all" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">จำนวนที่สั่ง (Total Qty)</label><input type="number" id="osel_Total_Qty" class="editable-input"></div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">วันเวลา (Order DateTime)</label><input type="text" id="osel_Order_DateTime" class="editable-input" placeholder="YYYY-MM-DD HH:mm:ss"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">แพทย์ผู้สั่ง</label><input type="text" id="osel_Doctor_Name" class="editable-input"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-1">ใบประกอบฯ (License)</label><input type="text" id="osel_License_No" class="editable-input"></div>
+                    
+                    <!-- Alert Box for Validation Errors -->
+                    <div id="osel_recommendation" class="hidden text-xs bg-red-50 border-2 border-red-400 text-red-800 rounded-lg p-3 mt-2 shadow-inner"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">วันเวลา (Order DateTime)</label><input type="text" id="osel_Order_DateTime" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">แพทย์ผู้สั่ง</label><input type="text" id="osel_Doctor_Name" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">ใบประกอบฯ</label><input type="text" id="osel_License_No" class="editable-input"></div>
                     </div>
                 </div>
             </div>
 
             <div class="floating-card rounded-2xl overflow-hidden">
-                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
-                    <h2 class="text-sm font-semibold text-gray-700">Part 2: ข้อมูลในใบ DUE (เหตุผลการสั่งใช้ยา)</h2>
-                </div>
-                <div class="p-5 space-y-3">
-                    <div class="grid grid-cols-1 gap-2 text-sm">
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="osel_indication" value="Treatment: มีอาการเข้าได้กับไข้หวัดใหญ่ และอยู่ในกลุ่มเสี่ยง (อายุ <2 หรือ >65, โรคเรื้อรัง, ตั้งครรภ์, อ้วน)" class="peer sr-only radio-custom" required onchange="handleIndication('osel')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Treatment: มีอาการเข้าได้กับไข้หวัดใหญ่ และอยู่ในกลุ่มเสี่ยง</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="osel_indication" value="Treatment: ผู้ป่วยมีอาการรุนแรง / ปอดอักเสบ (Pneumonia)" class="peer sr-only radio-custom" onchange="handleIndication('osel')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Treatment: ผู้ป่วยมีอาการรุนแรง / ปอดอักเสบ (Pneumonia)</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="osel_indication" value="Prophylaxis: ป้องกันการติดเชื้อหลังสัมผัสผู้ป่วย (Post-exposure prophylaxis)" class="peer sr-only radio-custom" onchange="handleIndication('osel')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Prophylaxis: ป้องกันการติดเชื้อหลังสัมผัสผู้ป่วย (Post-exposure prophylaxis)</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="osel_indication" value="อื่นๆ" id="osel_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('osel')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div>
-                        </label>
+                <div class="bg-gray-100 border-b border-gray-200 px-4 py-2.5"><h2 class="text-sm text-gray-700">Part 2: เหตุผลการสั่งใช้ยา (Indication)</h2></div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.1 Influenza-like Illness" class="peer sr-only radio-custom" required onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.1 Influenza-like Illness</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 มีข้อบ่งชี้ต้องรับเป็นผู้ป่วยใน" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 มีข้อบ่งชี้ต้องรับเป็นผู้ป่วยใน</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (หญิงตั้งครรภ์/หลังคลอดบุตรไม่เกิน 2 สัปดาห์)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (หญิงตั้งครรภ์/หลังคลอด)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (อายุ >65ปี)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (อายุ > 65ปี)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (BMI>30)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (BMI > 30)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (ปอดอุดกั้นเรื้อรัง/หอบหืด)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (ปอดอุดกั้นเรื้อรัง/หอบหืด)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (โรคไต)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (โรคไต)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (โรคหัวในและหลอดเลือด/ยกเว้นความดันโลหิตสูง)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (โรคหัวใจและหลอดเลือด)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (ภาวะภูมิคุ้มกันบกพร่อง)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (ภาวะภูมิคุ้มกันบกพร่อง)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (Hemoglobinopathy)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (Hemoglobinopathy)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (อายุ<18ปีและกิน Aspirin ระยะยาว)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (อายุ<18 กิน Aspirin)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="osel_indication" value="2.2 ความเสี่ยง (เบาหวาน)" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">2.2 ความเสี่ยง (เบาหวาน)</div></label>
+                        <label class="relative cursor-pointer md:col-span-2"><input type="radio" name="osel_indication" value="อื่นๆ" id="osel_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('osel')"><div class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div></label>
                     </div>
-                    <div id="osel_other_box" class="hidden mt-2 ml-4">
-                        <input type="text" id="osel_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ ที่นี่..." class="editable-input">
+                    <div id="osel_other_box" class="hidden mt-2 ml-4"><input type="text" id="osel_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ..." class="editable-input"></div>
+                    
+                    <!-- New Onset Field -->
+                    <div class="mt-3 pt-3 border-t border-gray-100 flex items-center gap-3">
+                        <label class="text-[11px] font-heading text-gray-700 whitespace-nowrap">ระยะเวลาตั้งแต่มีอาการ (Onset):</label>
+                        <div class="relative w-32">
+                            <input type="number" id="osel_Onset" class="editable-input pr-8" placeholder="0">
+                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">ชม.</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="floating-card rounded-2xl overflow-hidden border border-gray-300">
-                <div class="bg-gray-200 border-b border-gray-300 px-5 py-3"><h2 class="text-sm font-semibold text-gray-800">Part 3: สำหรับเภสัชกร (Pharmacist Evaluation)</h2></div>
-                <div class="p-5 space-y-5">
+                <div class="bg-gray-200 border-b border-gray-300 px-4 py-2.5"><h2 class="text-sm text-gray-800">Part 3: สำหรับเภสัชกร</h2></div>
+                <div class="p-4 space-y-4">
                     <div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
-                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div></label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="osel_evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div></label>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
-                        <select id="osel_pharmacist" required class="editable-input bg-gray-50">
-                            <option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option>
-                        </select>
+                        <label class="block text-[11px] text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
+                        <select id="osel_pharmacist" required class="editable-input"><option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option></select>
                     </div>
                 </div>
             </div>
-            <div class="flex justify-end pt-2">
-                <button type="submit" class="saveBtn bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-xl text-sm px-8 py-3 transition-all shadow-lg">บันทึกผลการประเมิน Oseltamivir</button>
-            </div>
+            <div class="flex justify-end pt-1"><button type="submit" class="saveBtn font-heading bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-sm px-8 py-2.5 shadow-lg">บันทึกผล Oseltamivir</button></div>
         </form>
 
-        <!-- =================================================================================== -->
-        <!-- TAB 3: ANTIBIOTICS FORM (READONLY + CULTURE LABS) -->
-        <!-- =================================================================================== -->
-        <form id="form-Antibiotics" class="due-form hidden space-y-6" onsubmit="submitDUE(event, 'Antibiotics')">
+        <form id="form-Antibiotics" class="due-form hidden space-y-5" onsubmit="submitDUE(event, 'Antibiotics')">
             <input type="hidden" id="anti_rowIndex">
-            
             <div class="floating-card rounded-2xl overflow-hidden">
-                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
-                    <h2 class="text-sm font-semibold text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา (Tazocin / Meropenem)</h2>
-                </div>
-                <div class="p-5 space-y-4">
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">HN</label><input type="text" id="anti_hn" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-0.5">ชื่อผู้ป่วย</label><input type="text" id="anti_name" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-1"><label class="block text-xs text-gray-500 mb-0.5">เพศ / อายุ</label><input type="text" id="anti_gender_age" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-gray-500 mb-0.5">น้ำหนัก / ClCr ล่าสุด</label><input type="text" id="anti_weight_clcr" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
+                <div class="bg-gray-100 border-b border-gray-200 px-4 py-2.5"><h2 class="text-sm text-gray-700">Part 1: ข้อมูลการสั่งใช้ยา</h2></div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">HN</label><input type="text" id="anti_HN" class="editable-input font-heading" required></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mb-0.5">ชื่อผู้ป่วย</label><input type="text" id="anti_Patient_Name" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">เพศ</label><input type="text" id="anti_Gender" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">อายุ</label><input type="text" id="anti_Age" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">ประเภท</label><input type="text" id="anti_Patient_Type" class="editable-input"></div>
                     </div>
-                    <div><label class="block text-xs text-gray-500 mb-0.5">การวินิจฉัย (Diagnosis)</label><input type="text" id="anti_diag" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none truncate"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">น้ำหนัก (kg)</label><input type="number" step="0.1" id="anti_Body_weight" class="editable-input"></div>
+                        <div class="md:col-span-1"><label class="block text-[11px] text-gray-500 mb-0.5">Latest ClCr</label><input type="text" id="anti_Lastest_ClCr" class="editable-input"></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mb-0.5">การวินิจฉัย (Diagnosis)</label><input type="text" id="anti_Diagnosis" class="editable-input"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div class="md:col-span-1"><label class="block text-[11px] text-blue-600 font-heading mb-0.5">ยาที่สั่ง (Drug Name)</label><input type="text" id="anti_Drug_name" class="editable-input bg-blue-50"></div>
+                        <div class="md:col-span-2"><label class="block text-[11px] text-blue-600 font-heading mb-0.5">วิธีใช้ (Drug Usage)</label><input type="text" id="anti_Drug_usage" class="editable-input bg-blue-50"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                        <div><label class="block text-[11px] text-red-500 font-heading mb-0.5">ประวัติแพ้ยา (Allergy)</label><input type="text" id="anti_Drug_allergy" class="editable-input border-red-200 bg-red-50 text-red-800"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block text-[11px] text-gray-500 mb-0.5">แพทย์ผู้สั่ง</label><input type="text" id="anti_Doctor_Name" class="editable-input"></div>
+                            <div><label class="block text-[11px] text-gray-500 mb-0.5">วันเวลาที่สั่ง</label><input type="text" id="anti_Order_DateTime" class="editable-input"></div>
+                        </div>
+                    </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div class="md:col-span-1"><label class="block text-xs text-blue-600 font-medium mb-0.5">ยาที่สั่ง (Drug Name)</label><input type="text" id="anti_drug" readonly class="w-full bg-blue-50 border border-blue-100 rounded p-1.5 text-sm text-blue-800 font-medium"></div>
-                        <div class="md:col-span-2"><label class="block text-xs text-blue-600 font-medium mb-0.5">วิธีใช้ (Drug Usage)</label><input type="text" id="anti_usage" readonly class="w-full bg-blue-50 border border-blue-100 rounded p-1.5 text-sm text-blue-800"></div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div><label class="block text-xs text-red-500 font-medium mb-0.5">ประวัติแพ้ยา (Allergy)</label><input type="text" id="anti_allergy" readonly class="w-full bg-red-50 border border-red-100 text-red-700 rounded p-1.5 text-sm"></div>
-                        <div><label class="block text-xs text-gray-500 mb-0.5">แพทย์ผู้สั่งใช้ยานี้</label><input type="text" id="anti_doctor" readonly class="w-full bg-transparent border-b border-gray-300 text-sm pb-1 outline-none"></div>
-                    </div>
-
-                    <!-- Culture Lab Results Highlight -->
-                    <div class="inner-card p-4 rounded-xl border border-yellow-300 bg-yellow-50 mt-4">
-                        <h3 class="text-xs font-bold text-yellow-800 mb-2 uppercase tracking-wide border-b border-yellow-200 pb-1">ผลเพาะเชื้อล่าสุด (Culture & Susceptibility)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700 mt-2">
-                            <div class="md:col-span-1"><span class="block text-xs text-gray-500">วันที่ส่ง Lab:</span> <span id="anti_lab_date" class="font-medium"></span></div>
-                            <div class="md:col-span-2"><span class="block text-xs text-gray-500">สิ่งส่งตรวจ:</span> <span id="anti_lab_name" class="font-medium"></span></div>
-                            <div class="md:col-span-3"><span class="block text-xs text-gray-500">ผล Lab:</span> <span id="anti_lab_result" class="font-semibold text-gray-900"></span></div>
+                    <div class="inner-card p-3 rounded-xl border border-yellow-300 bg-yellow-50 mt-2">
+                        <h3 class="text-[10px] font-heading text-yellow-800 mb-1.5 uppercase border-b border-yellow-200 pb-1">ผลเพาะเชื้อล่าสุด (Culture)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-1.5 text-[11px] text-gray-700">
+                            <div class="md:col-span-1"><span class="text-gray-500">วันที่ส่ง Lab:</span> <input type="text" id="anti_Lab_date_time" class="editable-input mt-0.5 bg-transparent border-yellow-300"></div>
+                            <div class="md:col-span-2"><span class="text-gray-500">สิ่งส่งตรวจ:</span> <input type="text" id="anti_Lab_test_name" class="editable-input mt-0.5 bg-transparent border-yellow-300"></div>
+                            <div class="md:col-span-3"><span class="text-gray-500">ผล Lab:</span> <input type="text" id="anti_Lab_result" class="editable-input mt-0.5 bg-white font-medium text-gray-900 border-yellow-400"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="floating-card rounded-2xl overflow-hidden">
-                <div class="bg-gray-100 border-b border-gray-200 px-5 py-3">
-                    <h2 class="text-sm font-semibold text-gray-700">Part 2: ข้อมูลในใบ DUE (เหตุผลการสั่งใช้ยา)</h2>
-                </div>
-                <div class="p-5 space-y-3">
-                    <div class="grid grid-cols-1 gap-2 text-sm">
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="anti_indication" value="Empiric Therapy (การรักษาเบื้องต้น)" class="peer sr-only radio-custom" required onchange="handleIndication('anti')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Empiric Therapy (การรักษาเบื้องต้น)</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="anti_indication" value="Definitive Therapy (ทราบผลเพาะเชื้อแล้ว)" class="peer sr-only radio-custom" onchange="handleIndication('anti')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Definitive Therapy (รักษาตามผล Culture)</div>
-                        </label>
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')">
-                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div>
-                        </label>
+                <div class="bg-gray-100 border-b border-gray-200 px-4 py-2.5"><h2 class="text-sm text-gray-700">Part 2: เหตุผลการสั่งใช้ยา (Indication)</h2></div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-1 gap-2 text-xs">
+                        <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric Therapy (การรักษาเบื้องต้น)" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Empiric Therapy (การรักษาเบื้องต้น)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Definitive Therapy (ทราบผลเพาะเชื้อแล้ว)" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">Definitive Therapy (รักษาตามผล Culture)</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all">อื่นๆ (ระบุ)</div></label>
                     </div>
-                    <div id="anti_other_box" class="hidden mt-2 ml-4">
-                        <input type="text" id="anti_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ..." class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
-                    </div>
+                    <div id="anti_other_box" class="hidden mt-2 ml-4"><input type="text" id="anti_indication_other" placeholder="พิมพ์เหตุผลอื่นๆ..." class="editable-input"></div>
                 </div>
             </div>
 
             <div class="floating-card rounded-2xl overflow-hidden border border-gray-300">
-                <div class="bg-gray-200 border-b border-gray-300 px-5 py-3"><h2 class="text-sm font-semibold text-gray-800">Part 3: สำหรับเภสัชกร (Pharmacist Evaluation)</h2></div>
-                <div class="p-5 space-y-5">
+                <div class="bg-gray-200 border-b border-gray-300 px-4 py-2.5"><h2 class="text-sm text-gray-800">Part 3: สำหรับเภสัชกร</h2></div>
+                <div class="p-4 space-y-4">
                     <div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
-                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div></label>
-                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange"><div class="p-3 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div></label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Appropriate (เหมาะสม)</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="ข้อมูลไม่ครบถ้วน" class="peer sr-only radio-custom"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">ข้อมูลไม่ครบถ้วน</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="Inappropriate (Indication)" class="peer sr-only radio-color-red"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Indication)</div></label>
+                            <label class="relative cursor-pointer"><input type="radio" name="anti_evaluation" value="Inappropriate (Dose, Interval)" class="peer sr-only radio-color-orange"><div class="p-2.5 border border-gray-200 rounded-lg text-center transition-all">Inapp. (Dose, Interval)</div></label>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
-                        <select id="anti_pharmacist" required class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
-                            <option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option>
-                        </select>
+                        <label class="block text-[11px] text-gray-600 mb-1">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
+                        <select id="anti_pharmacist" required class="editable-input"><option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option></select>
                     </div>
                 </div>
             </div>
-            <div class="flex justify-end pt-2">
-                <button type="submit" class="saveBtn bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-xl text-sm px-8 py-3 transition-all shadow-lg">บันทึกผลการประเมิน Antibiotics</button>
-            </div>
+            <div class="flex justify-end pt-1"><button type="submit" class="saveBtn font-heading bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-sm px-8 py-2.5 shadow-lg">บันทึกผล Antibiotics</button></div>
         </form>
 
     </div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzCZ2Nd9WUWf5rf2O-8Asv5tMrD4kxBq6pcFGtRavRReV85PdGgmttvtdqKiydiN_l1rA/exec";
-        let activeTab = 'Atorvastatin'; // Default Tab
+        let activeTab = 'Atorvastatin'; 
 
-        document.addEventListener('DOMContentLoaded', fetchPharmacists);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPharmacists();
+            fetchLastUpdate();
+        });
 
         function switchTab(tabName) {
             activeTab = tabName;
             
-            // 1. Update Tab Buttons styling
+            // Update Buttons
             ['Atorvastatin', 'Oseltamivir', 'Antibiotics'].forEach(name => {
                 const btn = document.getElementById(`tab-${name}`);
                 if (name === tabName) {
-                    btn.className = 'tab-btn tab-active px-4 py-1.5 rounded-full transition-all whitespace-nowrap';
+                    btn.className = 'tab-btn tab-active px-5 py-1.5 rounded-full transition-all whitespace-nowrap';
                 } else {
-                    btn.className = 'tab-btn tab-inactive px-4 py-1.5 rounded-full transition-all whitespace-nowrap';
+                    btn.className = 'tab-btn tab-inactive px-5 py-1.5 rounded-full transition-all whitespace-nowrap';
                 }
             });
 
-            // 2. Hide all forms and messages
+            // Update Label
+            document.getElementById('currentTabLabel').textContent = tabName;
+
+            // Hide forms & fetch new last update
             document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
             document.getElementById('searchMessage').classList.add('hidden');
             document.getElementById('addNewBtn').classList.add('hidden');
             document.getElementById('searchHN').value = '';
             document.getElementById('searchHN').focus();
+            
+            fetchLastUpdate();
+        }
+
+        async function fetchLastUpdate() {
+            const txt = document.getElementById('lastUpdateText');
+            txt.textContent = 'กำลังโหลด...';
+            try {
+                const res = await fetch(`${GAS_URL}?action=getLastUpdate&sheet=${activeTab}`);
+                const json = await res.json();
+                if(json.status === 'success') txt.textContent = json.data;
+                else txt.textContent = 'ไม่พบข้อมูล';
+            } catch(e) {
+                txt.textContent = 'เครือข่ายขัดข้อง';
+            }
         }
 
         function handleIndication(prefix) {
@@ -386,11 +385,108 @@
             }
         }
 
+        // ============================================================================
+        // OSELTAMIVIR VALIDATION LOGIC
+        // ============================================================================
+        function validateOseltamivir() {
+            if (activeTab !== 'Oseltamivir') return;
+
+            const age = parseFloat(document.getElementById('osel_Age').value);
+            const weight = parseFloat(document.getElementById('osel_Weight_kg').value) || 0;
+            const clcrStr = document.getElementById('osel_Latest_ClCr').value;
+            const clcr = parseFloat(clcrStr); 
+            const drugNameInput = document.getElementById('osel_Drug_name');
+            const drugUsageInput = document.getElementById('osel_Drug_usage');
+            const recBox = document.getElementById('osel_recommendation');
+
+            let drugName = drugNameInput.value.trim();
+            let drugUsage = drugUsageInput.value.trim();
+
+            // Reset warnings
+            drugNameInput.classList.remove('error-blink');
+            drugUsageInput.classList.remove('error-blink');
+            recBox.innerHTML = '';
+            recBox.classList.add('hidden');
+
+            let expectedName = '';
+            let expectedUsage = '';
+            let showRec = false;
+            let recText = '';
+
+            // Priority 1: ClCr (if < 60)
+            if (!isNaN(clcr) && clcr < 60) {
+                if (clcr >= 30) {
+                    expectedName = 'Tamiflu30 [Oseltamivir]';
+                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
+                } else if (clcr >= 10) {
+                    expectedName = 'Tamiflu30 [Oseltamivir]';
+                    expectedUsage = '11pt (1 เม็ด * 1 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 1 ครั้ง หลังอาหาร เช้า';
+                } else {
+                    showRec = true;
+                    recText = '<div class="font-heading mb-1 text-sm">⚠️ ClCr < 10 หรือ Hemodialysis:</div>เริ่มขนาด 30 มก. ตามด้วย 30 มก. ทุก 2 รอบ hemodialysis ไม่เกิน 5 วัน';
+                }
+            }
+            // Priority 2: Age <= 1
+            else if (!isNaN(age) && age <= 1 && document.getElementById('osel_Age').value !== '') { 
+                showRec = true;
+                recText = `<div class="font-heading mb-1 text-sm">⚠️ คำแนะนำปริมาณยาสำหรับเด็กอายุ <= 1 ปี:</div>
+                           <ul class="list-disc pl-5 space-y-1">
+                           <li><b>6-11 เดือน:</b> 25 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li>
+                           <li><b>3-5 เดือน:</b> 20 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li>
+                           <li><b>1-3 เดือน:</b> 12 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li>
+                           <li><b>แรกเกิด/ก่อนกำหนด (0-1 เดือน):</b> 3 มก./กก. วันละ 2 ครั้ง</li></ul>`;
+            }
+            // Priority 3: Weight
+            else if (weight > 0) {
+                if (weight > 40) {
+                    expectedName = 'Tamiflu75 [Oseltamivir]';
+                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
+                } else if (weight > 23) {
+                    expectedName = 'Tamiflu30 [Oseltamivir]';
+                    expectedUsage = '22pt (2 เม็ด * 2 PC)รับประทาน ครั้งละ 2 เม็ด วันละ 2 ครั้ง หลังอาหารเช้า-เย็น';
+                } else if (weight > 15) {
+                    expectedName = 'Tamiflu45 [Oseltamivir]';
+                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
+                } else { // <= 15 (and age > 1)
+                    expectedName = 'Tamiflu30 [Oseltamivir]';
+                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
+                }
+            }
+
+            // Validation Check
+            if (expectedName && expectedUsage && drugName && drugUsage) {
+                let isError = false;
+                
+                // Helper to normalize strings for comparison (remove spaces, lowercase)
+                const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
+
+                if (normalize(drugName) !== normalize(expectedName)) {
+                    drugNameInput.classList.add('error-blink');
+                    isError = true;
+                }
+                if (normalize(drugUsage) !== normalize(expectedUsage)) {
+                    drugUsageInput.classList.add('error-blink');
+                    isError = true;
+                }
+                
+                if (isError) {
+                    showRec = true;
+                    recText = `<div class="font-heading mb-1 text-sm">⚠️ พบข้อผิดพลาดในการสั่งยา ไม่ตรงตามเกณฑ์:</div>
+                               ยาที่ควรสั่ง: <span class="font-bold">${expectedName}</span><br>
+                               วิธีใช้: <span class="font-bold">${expectedUsage}</span>`;
+                }
+            }
+
+            if (showRec) {
+                recBox.innerHTML = recText;
+                recBox.classList.remove('hidden');
+            }
+        }
+
         async function fetchPharmacists() {
             try {
                 const response = await fetch(`${GAS_URL}?action=getPharmacists`);
                 const data = await response.json();
-                
                 ['ator', 'osel', 'anti'].forEach(prefix => {
                     const select = document.getElementById(`${prefix}_pharmacist`);
                     select.innerHTML = '<option value="" disabled selected>-- เลือกเภสัชกร --</option>';
@@ -402,9 +498,7 @@
                         });
                     }
                 });
-            } catch (error) {
-                console.error("Pharmacist load failed.");
-            }
+            } catch (error) { console.error("Pharmacist load failed."); }
         }
 
         async function searchPatient() {
@@ -416,13 +510,10 @@
 
             if (!hn) return;
 
-            // Reset view
             document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
             msgBox.classList.add('hidden');
             addBtn.classList.add('hidden');
-            
-            btn.innerHTML = '<span class="spinner"></span>';
-            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
 
             try {
                 const response = await fetch(`${GAS_URL}?action=search&sheet=${activeTab}&hn=${hn}`);
@@ -430,40 +521,42 @@
 
                 if (res.status === 'success' && res.data) {
                     populateForm(res.data, activeTab);
-                    msgText.textContent = `พบประวัติ HN: ${hn} ในระบบ สามารถประเมินได้ทันที`;
-                    msgBox.className = 'text-sm bg-green-50 text-green-800 border border-green-200 rounded-xl p-4 mb-4 flex justify-between items-center';
+                    msgText.textContent = `ดึงประวัติ HN: ${hn} จาก ${activeTab} สำเร็จ (แก้ไขและบันทึกได้ทันที)`;
+                    msgBox.className = 'text-sm bg-green-50 text-green-800 border border-green-200 rounded-xl p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-2';
                     document.getElementById(`form-${activeTab}`).classList.remove('hidden');
                 } else {
-                    msgText.textContent = `ไม่พบประวัติ HN: ${hn} ในกลุ่มยา ${activeTab}`;
-                    msgBox.className = 'text-sm bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 mb-4 flex justify-between items-center';
-                    if (activeTab === 'Oseltamivir') addBtn.classList.remove('hidden');
+                    msgText.textContent = `ไม่พบประวัติ HN: ${hn} คุณสามารถกดเพิ่มข้อมูลใหม่ได้`;
+                    msgBox.className = 'text-sm bg-red-50 text-red-800 border border-red-200 rounded-xl p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-2';
+                    addBtn.classList.remove('hidden');
                 }
             } catch (error) {
-                msgText.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย";
-                msgBox.classList.remove('hidden');
+                msgText.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ"; msgBox.classList.remove('hidden');
             } finally {
-                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> ค้นหา';
-                btn.disabled = false;
+                btn.innerHTML = 'ค้นหา'; btn.disabled = false;
             }
         }
 
+        // ============================================================================
+        // PREPARE NEW RECORD (FOR ALL TABS NOW)
+        // ============================================================================
         function prepareNewRecord() {
-            if (activeTab !== 'Oseltamivir') return;
             const hn = document.getElementById('searchHN').value.trim();
-            document.getElementById('form-Oseltamivir').reset();
+            const formId = `form-${activeTab}`;
+            let prefix = activeTab === 'Atorvastatin' ? 'ator' : (activeTab === 'Oseltamivir' ? 'osel' : 'anti');
             
-            document.getElementById('osel_rowIndex').value = '';
-            document.getElementById('osel_HN').value = hn;
-            document.getElementById('osel_Order_DateTime').value = new Date().toISOString().slice(0,19).replace('T', ' ');
+            document.getElementById(formId).reset();
+            document.getElementById(`${prefix}_rowIndex`).value = '';
+            document.getElementById(`${prefix}_HN`).value = hn;
+            document.getElementById(`${prefix}_Order_DateTime`).value = new Date().toISOString().slice(0,19).replace('T', ' ');
             
-            handleIndication('osel'); 
-            
+            handleIndication(prefix);
+            if(activeTab === 'Oseltamivir') validateOseltamivir();
+
             document.getElementById('searchMessage').classList.add('hidden');
-            document.getElementById('form-Oseltamivir').classList.remove('hidden');
-            alert('เปิดโหมดเพิ่มข้อมูล Oseltamivir ใหม่ กรุณากรอกให้ครบถ้วน');
+            document.getElementById(formId).classList.remove('hidden');
+            alert(`เปิดโหมดเพิ่มข้อมูลใหม่สำหรับ ${activeTab} กรุณากรอกให้ครบถ้วน`);
         }
 
-        // Helper for setting Radios
         function setRadios(name, value, prefix) {
             const radios = document.getElementsByName(name);
             const otherInput = document.getElementById(`${prefix}_indication_other`);
@@ -480,58 +573,21 @@
         }
 
         function populateForm(data, tab) {
-            if (tab === 'Atorvastatin') {
-                document.getElementById('ator_rowIndex').value = data.rowIndex;
-                document.getElementById('ator_hn').value = data.HN || '-';
-                document.getElementById('ator_name').value = data.Patient_Name || '-';
-                document.getElementById('ator_gender_age').value = `${data.Gender || '-'} / ${data.Age || '-'} ปี`;
-                document.getElementById('ator_pttype').value = data.Patient_Type || '-';
-                document.getElementById('ator_right').value = data.Right || data.Patient_Right || '-';
-                document.getElementById('ator_diag').value = data.Diagnosis || '-';
-                document.getElementById('ator_drug').value = data.Drug_name || '-';
-                document.getElementById('ator_usage').value = data.Drug_usage || data.Drug_Usage || '-';
-                document.getElementById('ator_datetime').value = data.Order_DateTime || '-';
-                document.getElementById('ator_doctor').value = `${data.Doctor_Name || ''} ${data.License_No ? '(ว.'+data.License_No+')' : ''}`.trim() || '-';
-                document.getElementById('ator_ldl').value = data.Latest_LDL || '-';
-                document.getElementById('ator_chol').value = data.Latest_Chol || '-';
-                document.getElementById('ator_oldstatin').value = data.Old_statins || '-';
-                
-                setRadios('ator_indication', data.Indication, 'ator');
-                setRadios('ator_evaluation', data.Evaluated, 'ator');
-                document.getElementById('ator_pharmacist').value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
-            } 
-            else if (tab === 'Oseltamivir') {
-                document.getElementById('osel_rowIndex').value = data.rowIndex;
-                const fields = ['HN', 'Patient_Name', 'Gender', 'Age', 'Patient_Type', 'Weight_kg', 'Latest_ClCr', 'Diagnosis', 'Drug_name', 'Drug_usage', 'Total_Qty', 'Order_DateTime', 'Doctor_Name', 'License_No'];
-                fields.forEach(f => {
-                    const el = document.getElementById(`osel_${f}`);
-                    if(el) el.value = data[f] || (f==='Drug_name'?'Oseltamivir':'');
-                });
-                
-                setRadios('osel_indication', data.Indication, 'osel');
-                setRadios('osel_evaluation', data.Evaluated, 'osel');
-                document.getElementById('osel_pharmacist').value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
-            }
-            else if (tab === 'Antibiotics') {
-                document.getElementById('anti_rowIndex').value = data.rowIndex;
-                document.getElementById('anti_hn').value = data.HN || '-';
-                document.getElementById('anti_name').value = data.Patient_Name || '-';
-                document.getElementById('anti_gender_age').value = `${data.Gender || '-'} / ${data.Age || '-'} ปี`;
-                document.getElementById('anti_weight_clcr').value = `WT: ${data.Body_weight || '-'} kg / ClCr: ${data.Lastest_ClCr || '-'}`;
-                document.getElementById('anti_diag').value = data.Diagnosis || '-';
-                document.getElementById('anti_drug').value = data.Drug_name || '-';
-                document.getElementById('anti_usage').value = data.Drug_usage || '-';
-                document.getElementById('anti_allergy').value = data.Drug_allergy || '-';
-                document.getElementById('anti_doctor').value = `${data.Doctor_Name || ''} ${data.License_No ? '('+data.License_No+')' : ''}`.trim() || '-';
-                
-                document.getElementById('anti_lab_date').innerText = data.Lab_date_time || '-';
-                document.getElementById('anti_lab_name').innerText = data.Lab_test_name || '-';
-                document.getElementById('anti_lab_result').innerText = data.Lab_result || '-';
+            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
+            document.getElementById(`${prefix}_rowIndex`).value = data.rowIndex || '';
+            
+            // Loop keys to fill inputs dynamically where ID matches `prefix_Key`
+            Object.keys(data).forEach(key => {
+                const el = document.getElementById(`${prefix}_${key}`);
+                if (el) el.value = data[key] || '';
+            });
 
-                setRadios('anti_indication', data.Indication, 'anti');
-                setRadios('anti_evaluation', data.Evaluated, 'anti');
-                document.getElementById('anti_pharmacist').value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
-            }
+            setRadios(`${prefix}_indication`, data.Indication, prefix);
+            setRadios(`${prefix}_evaluation`, data.Evaluated, prefix);
+            const pharmaEl = document.getElementById(`${prefix}_pharmacist`);
+            if(pharmaEl) pharmaEl.value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
+            
+            if (tab === 'Oseltamivir') validateOseltamivir();
         }
 
         async function submitDUE(e, tab) {
@@ -550,36 +606,24 @@
 
             let evaluated = '';
             document.getElementsByName(`${prefix}_evaluation`).forEach(r => { if(r.checked) evaluated = r.value; });
-            let staff = document.getElementById(`${prefix}_pharmacist`).value;
+            
+            // Build Payload dynamically by reading all inputs starting with prefix
+            let updateData = { Indication: indication, Evaluated: evaluated, Staff_name: document.getElementById(`${prefix}_pharmacist`).value };
+            
+            const inputs = document.querySelectorAll(`input[id^="${prefix}_"]`);
+            inputs.forEach(inp => {
+                let key = inp.id.replace(`${prefix}_`, '');
+                if(key !== 'rowIndex' && key !== 'indication_other' && key !== 'radio_other') {
+                    updateData[key] = inp.value;
+                }
+            });
 
             let payload = {
-                action: 'updateDUE',
+                action: 'saveFullData', // Force all to saveFullData since all are editable now
                 sheetName: tab,
                 rowIndex: rowIndex,
-                updateData: { Indication: indication, Evaluated: evaluated, Staff_name: staff }
+                updateData: updateData
             };
-
-            // Oseltamivir needs to save full data because inputs are editable
-            if (tab === 'Oseltamivir') {
-                payload.action = 'saveFullData';
-                payload.updateData = {
-                    HN: document.getElementById('osel_HN').value,
-                    Patient_Name: document.getElementById('osel_Patient_Name').value,
-                    Gender: document.getElementById('osel_Gender').value,
-                    Age: document.getElementById('osel_Age').value,
-                    Patient_Type: document.getElementById('osel_Patient_Type').value,
-                    Weight_kg: document.getElementById('osel_Weight_kg').value,
-                    Latest_ClCr: document.getElementById('osel_Latest_ClCr').value,
-                    Diagnosis: document.getElementById('osel_Diagnosis').value,
-                    Drug_name: document.getElementById('osel_Drug_name').value,
-                    Drug_usage: document.getElementById('osel_Drug_usage').value,
-                    Total_Qty: document.getElementById('osel_Total_Qty').value,
-                    Order_DateTime: document.getElementById('osel_Order_DateTime').value,
-                    Doctor_Name: document.getElementById('osel_Doctor_Name').value,
-                    License_No: document.getElementById('osel_License_No').value,
-                    Staff_name: staff, Indication: indication, Evaluated: evaluated
-                };
-            }
 
             try {
                 await fetch(GAS_URL, {
@@ -589,9 +633,11 @@
                 document.getElementById(`form-${tab}`).classList.add('hidden');
                 document.getElementById('searchHN').value = '';
                 document.getElementById('searchMessage').classList.add('hidden');
+                fetchLastUpdate(); // Refresh last update timestamp
             } catch (error) {
                 console.error(error);
-                alert('บันทึกข้อมูลสำเร็จ (ปิดการแจ้งเตือนเครือข่าย)');
+                alert('บันทึกข้อมูลสำเร็จ (ปิดการแจ้งเตือน CORS)');
+                fetchLastUpdate();
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
