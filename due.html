@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUE Center - รพ.สวี</title>
+    <!-- Favicon รูประดาษ -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +13,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- เพิ่ม DataLabels Plugin เพื่อให้แสดงตัวเลขบน Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <style>
@@ -39,8 +41,10 @@
             box-shadow: inset 1px 1px 4px rgba(0,0,0,0.05); transition: all 0.2s;
         }
         .editable-input:focus { outline: none; border-color: #3b82f6; box-shadow: inset 1px 1px 4px rgba(59,130,246,0.3); background: #f0f9ff;}
+        /* Read-only styles when doctor logs in */
         .editable-input[readonly], .editable-input:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; box-shadow: none; }
         
+        /* ฟ้า น้ำเงิน gradient แบบวาบช้าๆ */
         .gradient-text-flash {
             background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 50%, #1e3a8a 100%);
             background-size: 200% auto;
@@ -80,7 +84,21 @@
         .doctor-row-hover:hover { background-color: #f1f5f9; cursor: pointer; }
     </style>
 </head>
-<body class="min-h-screen py-4 px-2 sm:px-4 text-sm">
+<body class="min-h-screen py-4 px-2 sm:px-4 text-sm relative">
+
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-80 text-center transform transition-all">
+            <div class="text-5xl mb-4">🔐</div>
+            <h2 class="text-2xl font-bold mb-2 text-gray-800">เข้าสู่ระบบ</h2>
+            <p class="text-xs text-gray-500 mb-6 font-medium">กรุณาระบุรหัสในการเข้าใช้ครั้งแรกให้ถูกต้อง</p>
+            <input type="password" id="passcodeInput" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4 text-center text-xl tracking-widest focus:outline-none focus:border-blue-500 font-bold" placeholder="••••" onkeypress="if(event.key === 'Enter') verifyLogin()">
+            <button onclick="verifyLogin()" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
+                ยืนยันรหัสผ่าน
+            </button>
+            <p id="loginError" class="text-red-500 text-xs mt-3 font-bold hidden bg-red-50 py-1 rounded">รหัสผ่านไม่ถูกต้อง!</p>
+        </div>
+    </div>
 
     <div class="max-w-6xl mx-auto paper-layout p-4 sm:p-6 rounded-2xl relative">
         
@@ -91,6 +109,9 @@
                 </h1>
                 <button onclick="toggleDoctorPage()" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-xs px-4 py-1.5 rounded-full shadow-md hover:shadow-lg transition font-bold">
                     สรุปข้อมูลสำหรับแพทย์
+                </button>
+                <button onclick="togglePharmaPage()" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs px-4 py-1.5 rounded-full shadow-md hover:shadow-lg transition font-bold">
+                    หน้าเภสัชกร
                 </button>
             </div>
             
@@ -521,6 +542,68 @@
             </div>
         </div>
 
+        <div id="pharmaPage" class="hidden">
+            <div class="floating-card p-6 rounded-xl border border-gray-100">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-2xl font-bold text-emerald-800">สรุปข้อมูลสำหรับเภสัชกร</h2>
+                    <button onclick="hidePharmaPage()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold transition">
+                        กลับไปหน้าลงข้อมูล
+                    </button>
+                </div>
+                
+                <div class="mb-6 flex gap-4 items-center bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                    <label class="font-bold text-emerald-800 mb-0">เลือกเภสัชกร:</label>
+                    <select id="pharmaSelector" onchange="renderPharmaSummary()" class="editable-input flex-1 font-bold text-lg text-emerald-900 border-emerald-300">
+                        <option value="">-- กรุณาเลือก --</option>
+                    </select>
+                </div>
+
+                <!-- Pharma Summary Cards -->
+                <div id="pharmaStatsCards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
+                        <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics (ATB)</div>
+                        <div class="flex justify-between items-end">
+                            <div class="text-xs text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-anti" class="text-xl font-extrabold text-blue-800">0 / 0</div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 shadow-sm">
+                        <div class="text-orange-600 font-bold text-sm mb-1">Oseltamivir (OSL)</div>
+                        <div class="flex justify-between items-end">
+                            <div class="text-xs text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-osel" class="text-xl font-extrabold text-orange-800">0 / 0</div>
+                        </div>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 shadow-sm">
+                        <div class="text-purple-600 font-bold text-sm mb-1">Atorvastatin (ATV)</div>
+                        <div class="flex justify-between items-end">
+                            <div class="text-xs text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-ator" class="text-xl font-extrabold text-purple-800">0 / 0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pharma Patient List -->
+                <div id="pharmaPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                    <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อเปิดประเมิน)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800">
+                                    <th class="p-2 font-semibold">DUE Type</th>
+                                    <th class="p-2 font-semibold">วันที่สั่งยา</th>
+                                    <th class="p-2 font-semibold">HN / ชื่อผู้ป่วย</th>
+                                    <th class="p-2 font-semibold">สถานะประเมิน</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pharmaPatientTbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -577,17 +660,55 @@
             setTimeout(() => spinner.classList.remove('active'), 10000);
         }, 60000);
 
+        // Security and Page Initialization
         document.addEventListener('DOMContentLoaded', () => {
             Chart.defaults.font.family = "'Sarabun', sans-serif";
-            
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('page') === 'doctor') {
+            const isDoctor = urlParams.get('page') === 'doctor';
+            const isLoggedIn = localStorage.getItem('due_logged_in') === 'true';
+
+            if (!isDoctor && !isLoggedIn) {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            } else {
+                initializeApp(isDoctor);
+            }
+        });
+
+        function initializeApp(isDoctor) {
+            if (isDoctor) {
                 toggleDoctorPage();
             } else {
                 fetchPharmacists();
                 switchTab('Antibiotics');
             }
-        });
+        }
+
+        async function verifyLogin() {
+            const pass = document.getElementById('passcodeInput').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('loginError');
+            
+            btn.innerHTML = '<span class="spinner"></span> กำลังตรวจสอบ...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+            
+            try {
+                const res = await fetch(`${GAS_URL}?action=verifyPasscode&passcode=${pass}`);
+                const json = await res.json();
+                if(json.status === 'success') {
+                    localStorage.setItem('due_logged_in', 'true');
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    initializeApp(false);
+                } else {
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch(e) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            } finally {
+                btn.innerHTML = 'ยืนยันรหัสผ่าน';
+                btn.disabled = false;
+            }
+        }
 
         // Toggle Dashboard visibility
         function toggleDashboard() {
@@ -782,12 +903,10 @@
             });
         }
 
-        // ==========================================
-        // DOCTOR PAGE LOGIC
-        // ==========================================
         function toggleDoctorPage() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('mainTabs').classList.add('hidden');
+            document.getElementById('pharmaPage').classList.add('hidden');
             document.getElementById('doctorPage').classList.remove('hidden');
             fetchDoctorSummary();
         }
@@ -953,7 +1072,6 @@
                             const index = elements[0].index;
                             const clickedLicense = docSummaryChartObj.data.datasets[elements[0].datasetIndex].doctorLicenses[index];
                             revealedLicense = clickedLicense;
-                            // Do NOT set typed license value here to enforce anonymity unless actually searched
                             renderDocSummaryChart();
                         }
                     },
@@ -985,9 +1103,6 @@
             });
         }
 
-        // ==========================================
-        // DOCTOR EDIT SYSTEM
-        // ==========================================
         function renderDoctorPatientList(lic) {
             const tbody = document.getElementById('doctorPatientTbody');
             tbody.innerHTML = '';
@@ -1002,7 +1117,7 @@
             }
 
             patients.forEach(p => {
-                if(!p.hn) return; // Skip aggregated empty records if any
+                if(!p.hn) return; 
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-indigo-50 doctor-row-hover';
                 tr.onclick = () => openDoctorEditForm(p.sheet, p.hn);
@@ -1069,10 +1184,103 @@
             }
         }
 
+        let globalPharmaData = [];
 
-        // ==========================================
-        // OTHER LOGICS
-        // ==========================================
+        function togglePharmaPage() {
+            document.getElementById('mainPage').classList.add('hidden');
+            document.getElementById('mainTabs').classList.add('hidden');
+            document.getElementById('doctorPage').classList.add('hidden');
+            document.getElementById('pharmaPage').classList.remove('hidden');
+            fetchPharmaSummary();
+        }
+
+        function hidePharmaPage() {
+            document.getElementById('pharmaPage').classList.add('hidden');
+            document.getElementById('mainPage').classList.remove('hidden');
+            document.getElementById('mainTabs').classList.remove('hidden');
+            if(activeTab) switchTab(activeTab);
+        }
+
+        async function fetchPharmaSummary() {
+            try {
+                const res = await fetch(`${GAS_URL}?action=getPharmacistSummary`);
+                const json = await res.json();
+                if(json.status === 'success') {
+                    globalPharmaData = json.data;
+                    
+                    const staffs = [...new Set(globalPharmaData.map(d => d.staff))].sort();
+                    const sel = document.getElementById('pharmaSelector');
+                    const currentValue = sel.value; 
+                    
+                    sel.innerHTML = '<option value="">-- กรุณาเลือก --</option>';
+                    staffs.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s; opt.textContent = s;
+                        sel.appendChild(opt);
+                    });
+                    
+                    if (currentValue && staffs.includes(currentValue)) {
+                        sel.value = currentValue;
+                        renderPharmaSummary();
+                    }
+                }
+            } catch(e) { console.error("Error fetching pharma summary"); }
+        }
+
+        function renderPharmaSummary() {
+            const staffName = document.getElementById('pharmaSelector').value;
+            if(!staffName) {
+                document.getElementById('pharmaStatsCards').classList.add('hidden');
+                document.getElementById('pharmaPatientList').classList.add('hidden');
+                return;
+            }
+
+            const patients = globalPharmaData.filter(d => d.staff === staffName);
+            
+            let stats = {
+                'Antibiotics': { pending: 0, eval: 0 },
+                'Oseltamivir': { pending: 0, eval: 0 },
+                'Atorvastatin': { pending: 0, eval: 0 }
+            };
+
+            patients.forEach(p => {
+                if(stats[p.sheet]) {
+                    if(p.evaluated === 'รอประเมิน') stats[p.sheet].pending++;
+                    else stats[p.sheet].eval++;
+                }
+            });
+
+            document.getElementById('pharma-stat-anti').textContent = `${stats['Antibiotics'].pending} / ${stats['Antibiotics'].eval}`;
+            document.getElementById('pharma-stat-osel').textContent = `${stats['Oseltamivir'].pending} / ${stats['Oseltamivir'].eval}`;
+            document.getElementById('pharma-stat-ator').textContent = `${stats['Atorvastatin'].pending} / ${stats['Atorvastatin'].eval}`;
+            
+            document.getElementById('pharmaStatsCards').classList.remove('hidden');
+
+            const tbody = document.getElementById('pharmaPatientTbody');
+            tbody.innerHTML = '';
+            patients.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-emerald-50 doctor-row-hover cursor-pointer';
+                tr.onclick = () => {
+                    hidePharmaPage();
+                    switchTab(p.sheet);
+                    document.getElementById('searchHN').value = p.hn;
+                    searchPatient(null);
+                };
+                
+                let badgeColor = p.evaluated === 'รอประเมิน' ? 'bg-yellow-100 text-yellow-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-emerald-700">${p.sheet}</td>
+                    <td class="p-3 text-gray-500">${p.date}</td>
+                    <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
+                    <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${p.evaluated}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('pharmaPatientList').classList.remove('hidden');
+        }
+
         function handleIndication(prefix) {
             const inputs = document.getElementsByName(`${prefix}_indication`);
             const otherBox = document.getElementById(`${prefix}_other_box`);
@@ -1414,7 +1622,13 @@
             
             if(tab === 'Antibiotics') {
                 const drugEl = document.getElementById('anti_Drug_name');
-                if(drugEl) { drugEl.value = data.Drug_name || ''; renderAntibioticIndications(); }
+                if(drugEl) { 
+                    let dName = data.Drug_name || '';
+                    if(dName.toLowerCase().includes('meropenem')) drugEl.value = 'Meropenem 1 gm';
+                    else if(dName.toLowerCase().includes('tazocin') || dName.toLowerCase().includes('piperacillin')) drugEl.value = 'Tazocin 4.5g. inj';
+                    else drugEl.value = dName;
+                    renderAntibioticIndications(); 
+                }
             }
 
             Object.keys(data).forEach(key => {
