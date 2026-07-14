@@ -141,7 +141,6 @@
                 </div>
             </div>
             
-            <!-- Dashboard Charts Area (Hidden by default) -->
             <div id="dashboardArea" class="hidden mb-4 space-y-4">
                 <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner">
                     <h3 class="text-xs text-gray-500 mb-2 font-bold text-center">แนวโน้มการประเมินรายเดือน (คลิกที่แท่งกราฟเพื่อเจาะจงข้อมูล)</h3>
@@ -168,7 +167,6 @@
                 </div>
             </div>
 
-            <!-- Search Bar -->
             <div class="floating-card p-3 mb-4 rounded-xl flex flex-col sm:flex-row gap-2 bg-gradient-to-r from-blue-50 to-white border border-blue-100">
                 <input type="text" id="searchHN" placeholder="สแกน HN ค้นหาผู้ป่วย..." class="flex-1 bg-white border border-blue-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-base shadow-inner font-bold" onkeypress="if(event.key === 'Enter') searchPatient(null)">
                 <button onclick="searchPatient(null)" id="searchBtn" class="bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-6 py-2 transition-all shadow-md flex items-center justify-center gap-2 min-w-[100px] font-bold">
@@ -193,9 +191,6 @@
             <datalist id="list-drug"></datalist>
             <datalist id="list-doctor"></datalist>
 
-            <!-- ---------------------------------------------------- -->
-            <!-- ---------------- FORM: ANTIBIOTICS ----------------- -->
-            <!-- ---------------------------------------------------- -->
             <form id="form-Antibiotics" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Antibiotics')">
                 <input type="hidden" id="anti_rowIndex">
                 
@@ -330,9 +325,6 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
-            <!-- ---------------------------------------------------- -->
-            <!-- ---------------- FORM: OSELTAMIVIR ----------------- -->
-            <!-- ---------------------------------------------------- -->
             <form id="form-Oseltamivir" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Oseltamivir')">
                 <input type="hidden" id="osel_rowIndex">
                 
@@ -354,9 +346,15 @@
                         <div class="md:col-span-2"><label>การวินิจฉัย (Diagnosis)</label><input type="text" list="list-diagnosis" id="osel_Diagnosis" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100 relative">
-                        <div class="md:col-span-1"><label class="text-blue-700">ชื่อยา (Drug Name)</label><input type="text" list="list-drug" id="osel_Drug_name" class="editable-input font-bold text-blue-800 transition-colors" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-1"><label class="text-blue-700">ชื่อยา (Drug Name)</label><input type="text" list="list-drug" id="osel_Drug_name" class="editable-input font-bold text-blue-800 transition-colors" oninput="validateOseltamivir(); calcOselValue();"></div>
                         <div class="md:col-span-2"><label class="text-blue-700">วิธีใช้ (Drug Usage)</label><input type="text" id="osel_Drug_usage" class="editable-input transition-colors" oninput="validateOseltamivir()"></div>
-                        <div class="md:col-span-1"><label class="text-blue-700">จำนวนที่สั่ง (Total Qty)</label><input type="number" id="osel_Total_Qty" class="editable-input text-center font-bold"></div>
+                        <div class="md:col-span-1">
+                            <label class="text-blue-700">จำนวนที่สั่ง (Total Qty)</label>
+                            <div class="flex items-center gap-2 bg-white rounded-lg pr-2 border border-blue-200 shadow-inner">
+                                <input type="number" id="osel_Total_Qty" class="editable-input border-none shadow-none text-center font-bold" style="width:80px;" oninput="calcOselValue()">
+                                <span id="osel_Value_Display" class="text-red-600 font-bold text-xs whitespace-nowrap"></span>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="osel_recommendation" class="hidden bg-red-100 border-l-4 border-red-500 text-red-900 rounded-r-lg p-3 mt-2 text-xs shadow-inner transition-all"></div>
@@ -411,9 +409,6 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
-            <!-- ---------------------------------------------------- -->
-            <!-- --------------- FORM: ATORVASTATIN ----------------- -->
-            <!-- ---------------------------------------------------- -->
             <form id="form-Atorvastatin" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Atorvastatin')">
                 <input type="hidden" id="ator_rowIndex">
                 
@@ -1314,7 +1309,8 @@
         function resetDoctorMode() {
             isDoctorMode = false;
             ['anti', 'osel', 'ator'].forEach(prefix => {
-                document.getElementById(`${prefix}_mode_badge`).classList.add('hidden');
+                const badge = document.getElementById(`${prefix}_mode_badge`);
+                if(badge) badge.classList.add('hidden');
                 document.querySelectorAll(`[id^="${prefix}_"], select[id^="${prefix}_"], textarea[id^="${prefix}_"]`).forEach(el => {
                     el.readOnly = false;
                     el.disabled = false;
@@ -1350,7 +1346,6 @@
                 document.getElementsByName(`anti_Result`).forEach(el => el.disabled = true);
             }
         }
-
 
         // ==========================================
         // PHARMACIST PAGE LOGIC
@@ -1549,11 +1544,24 @@
             const drug = document.getElementById('anti_Drug_name').value;
             const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
             let val = 0;
-            const drugLow = drug.toLowerCase();
-            if (drugLow.includes('meropenem')) val = dose * 100;
-            else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) val = dose * 130;
+            const drugLow = drug ? drug.toLowerCase() : '';
+            if (drugLow.includes('meropenem')) val = dose * 130;
+            else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) val = dose * 100;
             
             const el = document.getElementById('anti_Value_Display');
+            if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
+        }
+
+        function calcOselValue() {
+            const drug = document.getElementById('osel_Drug_name').value;
+            const dose = parseFloat(document.getElementById('osel_Total_Qty').value) || 0;
+            let val = 0;
+            const drugLow = drug ? drug.toLowerCase() : '';
+            if (drugLow.includes('30')) val = dose * 15;
+            else if (drugLow.includes('45')) val = dose * 20;
+            else if (drugLow.includes('75') || drugLow.includes('tamiflu')) val = dose * 31;
+            
+            const el = document.getElementById('osel_Value_Display');
             if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
         }
 
@@ -1758,7 +1766,6 @@
             }
         }
 
-        // ... existing API calls and form populations remain same ...
         async function fetchPharmacists() {
             try {
                 const response = await fetch(`${GAS_URL}?action=getPharmacists`);
@@ -1813,7 +1820,8 @@
                 }
                 msgBox.classList.remove('hidden');
             } catch (error) {
-                msgText.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย"; 
+                console.error("Search Patient Error:", error);
+                msgText.textContent = "พบความผิดปกติในการแสดงผลข้อมูลของ HN นี้ (แต่ยังสามารถแก้ไขและบันทึกทับได้)"; 
                 msgBox.classList.remove('hidden');
             } finally {
                 btn.innerHTML = 'ค้นหา'; btn.disabled = false;
@@ -1835,7 +1843,7 @@
             
             if(activeTab === 'Antibiotics') { renderAntibioticIndications(); calcAntiValue(); }
             handleIndication(prefix);
-            if(activeTab === 'Oseltamivir') validateOseltamivir();
+            if(activeTab === 'Oseltamivir') { validateOseltamivir(); calcOselValue(); }
 
             const msgBox = document.getElementById('searchMessage');
             msgBox.className = 'bg-blue-100 text-blue-800 border-l-4 border-blue-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
@@ -1844,7 +1852,45 @@
             document.getElementById(formId).classList.remove('hidden');
         }
 
-        // populateForm and submitDUE remain the same
+        function setRadios(name, value, prefix) {
+            const radios = document.getElementsByName(name);
+            const otherInput = document.getElementById(`${prefix}_indication_other`);
+            const specificInput = document.getElementById(`${prefix}_indication_specific`);
+            radios.forEach(r => r.checked = false);
+            
+            if (value !== undefined && value !== null) {
+                const valStr = String(value);
+                const isCheckbox = radios.length > 0 && radios[0].type === 'checkbox';
+                let valArray = isCheckbox ? valStr.split(',').map(s => s.trim()) : [valStr.trim()];
+                
+                valArray.forEach(v => {
+                    let matched = false;
+                    radios.forEach(r => { 
+                        if (r.value === v && r.value !== 'อื่นๆ' && r.value !== 'Specific (ระบุเชื้อ)') { 
+                            r.checked = true; matched = true; 
+                        } 
+                    });
+                    
+                    if(!matched && (v.includes('เชื้อ') || v.includes('Specific'))) {
+                         const spRadio = document.getElementById(`${prefix}_radio_specific`);
+                         if(spRadio) { spRadio.checked = true; matched = true; if(specificInput) specificInput.value = v; }
+                    }
+
+                    if (!matched && name.includes('indication') && v !== '') {
+                        const otRadio = document.getElementById(`${prefix}_radio_other`);
+                        if(otRadio) { 
+                            otRadio.checked = true; 
+                            if(otherInput) {
+                                let curr = otherInput.value;
+                                otherInput.value = curr ? curr + ', ' + v : v; 
+                            }
+                        }
+                    }
+                });
+            }
+            handleIndication(prefix);
+        }
+
         function populateForm(data, tab) {
             let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
             document.getElementById(`${prefix}_rowIndex`).value = data.rowIndex || '';
@@ -1852,7 +1898,7 @@
             if(tab === 'Antibiotics') {
                 const drugEl = document.getElementById('anti_Drug_name');
                 if(drugEl) { 
-                    let dName = data.Drug_name || '';
+                    let dName = data.Drug_name ? String(data.Drug_name) : '';
                     if(dName.toLowerCase().includes('meropenem')) drugEl.value = 'Meropenem 1 gm';
                     else if(dName.toLowerCase().includes('tazocin') || dName.toLowerCase().includes('piperacillin')) drugEl.value = 'Tazocin 4.5g. inj';
                     else drugEl.value = dName;
@@ -1861,34 +1907,45 @@
             }
 
             Object.keys(data).forEach(key => {
-                const el = document.getElementById(`${prefix}_${key}`);
-                if (el && el.type !== 'radio' && el.type !== 'checkbox') {
-                    if (tab === 'Antibiotics' && key === 'Drug_name') return;
-                    
-                    if(el.type === 'datetime-local') {
-                        el.value = toDatetimeLocal(data[key]);
-                    } else if (el.type === 'date') {
-                        el.value = data[key].slice(0, 10);
-                    } else {
-                        el.value = data[key] || '';
+                try {
+                    const el = document.getElementById(`${prefix}_${key}`);
+                    if (el && el.type !== 'radio' && el.type !== 'checkbox') {
+                        if (tab === 'Antibiotics' && key === 'Drug_name') return;
+                        
+                        if(el.type === 'datetime-local') {
+                            el.value = toDatetimeLocal(data[key]);
+                        } else if (el.type === 'date') {
+                            el.value = data[key] ? String(data[key]).slice(0, 10) : '';
+                        } else {
+                            el.value = data[key] || '';
+                        }
                     }
-                }
+                } catch (e) { console.error("Field population error:", key, e); }
             });
 
-            setRadios(`${prefix}_indication`, data.Indication, prefix);
-            setRadios(`${prefix}_evaluation`, data.Evaluated, prefix);
+            try {
+                setRadios(`${prefix}_indication`, data.Indication, prefix);
+                setRadios(`${prefix}_evaluation`, data.Evaluated, prefix);
+            } catch (e) { console.error("Radios error:", e); }
             
             if(tab === 'Antibiotics') {
-                setRadios('anti_Pharmacist_action', data.Pharmacist_action, prefix);
-                setRadios('anti_Result', data.Result, prefix);
-                calcAntiValue();
-                validateAntibiotics();
+                try {
+                    setRadios('anti_Pharmacist_action', data.Pharmacist_action, prefix);
+                    setRadios('anti_Result', data.Result, prefix);
+                    calcAntiValue();
+                    validateAntibiotics();
+                } catch (e) { console.error("Anti logic error:", e); }
             }
 
             const pharmaEl = document.getElementById(`${prefix}_pharmacist`);
             if(pharmaEl) pharmaEl.value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
             
-            if (tab === 'Oseltamivir') validateOseltamivir();
+            if (tab === 'Oseltamivir') {
+                try {
+                    validateOseltamivir();
+                    calcOselValue();
+                } catch (e) { console.error("Osel logic error:", e); }
+            }
         }
 
         async function submitDUE(e, tab) {
