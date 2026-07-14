@@ -13,7 +13,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- เพิ่ม DataLabels Plugin เพื่อให้แสดงตัวเลขบน Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <style>
@@ -41,10 +40,8 @@
             box-shadow: inset 1px 1px 4px rgba(0,0,0,0.05); transition: all 0.2s;
         }
         .editable-input:focus { outline: none; border-color: #3b82f6; box-shadow: inset 1px 1px 4px rgba(59,130,246,0.3); background: #f0f9ff;}
-        /* Read-only styles when doctor logs in */
         .editable-input[readonly], .editable-input:disabled { background: #f8fafc; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; box-shadow: none; }
         
-        /* ฟ้า น้ำเงิน gradient แบบวาบช้าๆ */
         .gradient-text-flash {
             background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 50%, #1e3a8a 100%);
             background-size: 200% auto;
@@ -81,7 +78,9 @@
         .chart-container { position: relative; width: 100%; height: 250px; }
         .pie-container { position: relative; width: 100%; height: 200px; }
         
-        .doctor-row-hover:hover { background-color: #f1f5f9; cursor: pointer; }
+        .doctor-row-hover:hover { background-color: #eef2ff; cursor: pointer; }
+        
+        th.sortable:hover { background-color: #e2e8f0; cursor: pointer; }
     </style>
 </head>
 <body class="min-h-screen py-4 px-2 sm:px-4 text-sm relative">
@@ -103,8 +102,8 @@
     <div class="max-w-6xl mx-auto paper-layout p-4 sm:p-6 rounded-2xl relative">
         
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl flex items-center tracking-tight gradient-text-flash">
+            <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-3xl flex items-center tracking-tight gradient-text-flash mb-2 md:mb-0">
                     DUE Center : รพ.สวี
                 </h1>
                 <button onclick="toggleDoctorPage()" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-xs px-4 py-1.5 rounded-full shadow-md hover:shadow-lg transition font-bold">
@@ -145,10 +144,15 @@
             <!-- Dashboard Charts Area (Hidden by default) -->
             <div id="dashboardArea" class="hidden mb-4 space-y-4">
                 <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner">
-                    <h3 class="text-xs text-gray-500 mb-2 font-bold text-center">แนวโน้มการประเมินรายเดือน</h3>
+                    <h3 class="text-xs text-gray-500 mb-2 font-bold text-center">แนวโน้มการประเมินรายเดือน (คลิกที่แท่งกราฟเพื่อเจาะจงข้อมูล)</h3>
                     <div class="chart-container"><canvas id="timeSeriesChart"></canvas></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+                    <!-- Overlay loading state when cross-filtering -->
+                    <div id="dashboardSubChartOverlay" class="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 hidden flex items-center justify-center rounded-xl">
+                        <span class="spinner w-8 h-8"></span>
+                    </div>
+
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner">
                         <h3 class="text-xs text-gray-500 mb-2 font-bold text-center">สัดส่วนเหตุผลการใช้ยา</h3>
                         <div class="pie-container flex justify-center"><canvas id="indicationChart"></canvas></div>
@@ -216,7 +220,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100 relative">
                         <div class="md:col-span-1">
                             <label class="text-blue-700">ยาที่สั่ง (Drug Name)</label>
-                            <select id="anti_Drug_name" class="editable-input font-bold text-blue-800" onchange="renderAntibioticIndications(); validateAntibiotics()">
+                            <select id="anti_Drug_name" class="editable-input font-bold text-blue-800" onchange="renderAntibioticIndications(); validateAntibiotics(); calcAntiValue();">
                                 <option value="">-- เลือกยา --</option>
                                 <option value="Tazocin 4.5g. inj">Tazocin 4.5g. inj</option>
                                 <option value="Meropenem 1 gm">Meropenem 1 gm</option>
@@ -225,7 +229,6 @@
                         <div class="md:col-span-2"><label class="text-blue-700">วิธีใช้ (Drug Usage)</label><input type="text" id="anti_Drug_usage" class="editable-input" oninput="validateAntibiotics()"></div>
                     </div>
 
-                    <!-- กล่องแนะนำขนาดยา Antibiotics -->
                     <div id="anti_recommendation" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded-r-lg p-3 mt-2 text-xs shadow-inner transition-all"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -259,10 +262,16 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3 mt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2 items-end">
                         <div><label>Date Started</label><input type="datetime-local" id="anti_Date_started" class="editable-input text-xs"></div>
                         <div><label>Date End</label><input type="datetime-local" id="anti_Date_end" class="editable-input text-xs"></div>
-                        <div><label>Total Dose</label><input type="number" id="anti_Total_dose" class="editable-input text-center"></div>
+                        <div>
+                            <label>Total Dose</label>
+                            <div class="flex items-center gap-2 bg-white rounded-lg pr-2 border border-gray-300">
+                                <input type="number" id="anti_Total_dose" class="editable-input border-none shadow-none text-center" style="width:80px;" oninput="calcAntiValue()">
+                                <span id="anti_Value_Display" class="text-red-600 font-bold text-xs whitespace-nowrap"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="inner-card p-3 mt-3 border border-yellow-300 bg-gradient-to-br from-yellow-50 to-white shadow-sm">
@@ -468,6 +477,7 @@
             </form>
         </div>
 
+        <!-- ======================= DOCTOR PAGE ======================= -->
         <div id="doctorPage" class="hidden">
             <div class="floating-card p-6 rounded-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -520,21 +530,40 @@
                 
                 <p class="text-center text-xs text-gray-400 mt-4">* ข้อมูลแพทย์ถูกแปลงเป็นสัญลักษณ์เพื่อความเป็นส่วนตัว หากต้องการดูข้อมูลของท่าน กรุณาพิมพ์เลข ว. ในช่องค้นหา</p>
                 
-                <!-- Doctor Patient List Table -->
+                <!-- Doctor Patient List Table with Filters -->
                 <div id="doctorPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                     <h3 class="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อประเมิน Part 2)</h3>
+                    
+                    <!-- Filters -->
+                    <div class="flex flex-wrap gap-2 mb-3 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
+                        <select id="docListFilterDrug" class="editable-input w-auto text-xs border-indigo-200" onchange="renderDoctorPatientList(revealedLicense)">
+                            <option value="all">ทุกยา</option>
+                            <option value="Antibiotics">Antibiotics</option>
+                            <option value="Oseltamivir">Oseltamivir</option>
+                            <option value="Atorvastatin">Atorvastatin</option>
+                        </select>
+                        <select id="docListFilterMonth" class="editable-input w-auto text-xs border-indigo-200" onchange="renderDoctorPatientList(revealedLicense)">
+                            <option value="current">เดือนปัจจุบัน</option>
+                            <option value="all">ทุกเดือน</option>
+                        </select>
+                        <select id="docListFilterStatus" class="editable-input w-auto text-xs border-indigo-200" onchange="renderDoctorPatientList(revealedLicense)">
+                            <option value="all">ทุกสถานะ</option>
+                            <option value="pending">ยังไม่ประเมิน</option>
+                            <option value="evaluated">ประเมินแล้ว</option>
+                        </select>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-indigo-50 border-b border-indigo-100 text-indigo-800">
-                                    <th class="p-2 font-semibold">DUE Type</th>
-                                    <th class="p-2 font-semibold">วันที่สั่งยา</th>
-                                    <th class="p-2 font-semibold">HN / ชื่อผู้ป่วย</th>
-                                    <th class="p-2 font-semibold">สถานะประเมิน</th>
+                                <tr class="bg-indigo-50 border-b border-indigo-100 text-indigo-800 select-none">
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('sheet')">DUE Type ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('month')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('hn')">HN / ชื่อผู้ป่วย ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
                             </thead>
                             <tbody id="doctorPatientTbody">
-                                <!-- Populated by JS -->
                             </tbody>
                         </table>
                     </div>
@@ -542,6 +571,7 @@
             </div>
         </div>
 
+        <!-- ======================= PHARMACIST PAGE ======================= -->
         <div id="pharmaPage" class="hidden">
             <div class="floating-card p-6 rounded-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -586,14 +616,34 @@
                 <!-- Pharma Patient List -->
                 <div id="pharmaPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
                     <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อเปิดประเมิน)</h3>
+                    
+                    <!-- Filters -->
+                    <div class="flex flex-wrap gap-2 mb-3 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
+                        <select id="pharmaListFilterDrug" class="editable-input w-auto text-xs border-emerald-200" onchange="renderPharmaPatientList()">
+                            <option value="all">ทุกยา</option>
+                            <option value="Antibiotics">Antibiotics</option>
+                            <option value="Oseltamivir">Oseltamivir</option>
+                            <option value="Atorvastatin">Atorvastatin</option>
+                        </select>
+                        <select id="pharmaListFilterMonth" class="editable-input w-auto text-xs border-emerald-200" onchange="renderPharmaPatientList()">
+                            <option value="current">เดือนปัจจุบัน</option>
+                            <option value="all">ทุกเดือน</option>
+                        </select>
+                        <select id="pharmaListFilterStatus" class="editable-input w-auto text-xs border-emerald-200" onchange="renderPharmaPatientList()">
+                            <option value="all">ทุกสถานะ</option>
+                            <option value="pending">ยังไม่ประเมิน</option>
+                            <option value="evaluated">ประเมินแล้ว</option>
+                        </select>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800">
-                                    <th class="p-2 font-semibold">DUE Type</th>
-                                    <th class="p-2 font-semibold">วันที่สั่งยา</th>
-                                    <th class="p-2 font-semibold">HN / ชื่อผู้ป่วย</th>
-                                    <th class="p-2 font-semibold">สถานะประเมิน</th>
+                                <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800 select-none">
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('sheet')">DUE Type ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('date')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('hn')">HN / ชื่อผู้ป่วย ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
                             </thead>
                             <tbody id="pharmaPatientTbody">
@@ -611,11 +661,21 @@
         let activeTab = 'Antibiotics'; 
         let isDoctorMode = false;
         
+        // Chart Objects
         let timeChart = null;
         let indChart = null;
         let docChart = null;
         let staffChart = null;
         let docSummaryChartObj = null;
+
+        // Interactive Dashboard State
+        let currentDashRawData = [];
+        let activeDashMonth = null;
+        let timeValues = {}; // For holding value amounts for the red text
+
+        // Lists sorting state
+        let docSortCol = 'month', docSortAsc = false;
+        let pharmaSortCol = 'date', pharmaSortAsc = false;
 
         // Emoji list for doctors
         const emojiList = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🐣','🦇','🦉','🦅','🦆','🦋'];
@@ -624,6 +684,41 @@
         let globalDocsMap = {};
         let revealedLicense = null;
 
+        let globalPharmaData = [];
+
+        // --- Custom Plugin for Red Text on Top of Antibiotics Time Chart ---
+        const topValuePlugin = {
+            id: 'topValuePlugin',
+            afterDatasetsDraw(chart, args, options) {
+                if (activeTab !== 'Antibiotics') return;
+                const { ctx, data, scales: { x, y } } = chart;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.font = 'bold 12px Sarabun';
+                ctx.fillStyle = '#ef4444'; 
+
+                data.labels.forEach((label, index) => {
+                    let totalVal = timeValues[label] || 0;
+                    if (totalVal > 0) {
+                        let topY = y.bottom;
+                        chart.data.datasets.forEach((dataset, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            if (!meta.hidden && meta.data[index]) {
+                                const barY = meta.data[index].y;
+                                if (barY < topY) topY = barY;
+                            }
+                        });
+                        const xPos = x.getPixelForTick(index);
+                        ctx.fillText(`มูลค่า: ${totalVal.toLocaleString()} บ.`, xPos, topY - 5);
+                    }
+                });
+                ctx.restore();
+            }
+        };
+        Chart.register(topValuePlugin);
+
+        // --- Utility Functions ---
         function toDatetimeLocal(dateStr) {
             if (!dateStr || dateStr === '-' || dateStr === 'ไม่มีข้อมูล') return '';
             const d = new Date(dateStr);
@@ -638,6 +733,12 @@
             if (isNaN(d)) return dateStr;
             const pad = (n) => n.toString().padStart(2, '0');
             return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function formatMonthDisplay(yyyyMM) {
+            if(!yyyyMM || !yyyyMM.includes('-')) return yyyyMM;
+            const parts = yyyyMM.split('-');
+            return `${parts[1]}/${parts[0]}`;
         }
         
         function updateDatalist(id, items) {
@@ -660,7 +761,7 @@
             setTimeout(() => spinner.classList.remove('active'), 10000);
         }, 60000);
 
-        // Security and Page Initialization
+        // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             Chart.defaults.font.family = "'Sarabun', sans-serif";
             const urlParams = new URLSearchParams(window.location.search);
@@ -710,7 +811,7 @@
             }
         }
 
-        // Toggle Dashboard visibility
+        // --- Core UI & Tabs ---
         function toggleDashboard() {
             const dash = document.getElementById('dashboardArea');
             dash.classList.toggle('hidden');
@@ -726,8 +827,6 @@
             document.getElementById('currentTabLabel').textContent = tabName;
             document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
             document.getElementById('searchMessage').classList.add('hidden');
-            
-            // Hide dashboard when switching tabs to keep it clean
             document.getElementById('dashboardArea').classList.add('hidden');
             
             document.getElementById('bar-evaluated').style.width = '0%';
@@ -737,6 +836,7 @@
             fetchLastUpdate();
         }
 
+        // --- Fetch & Render Main Dashboard ---
         async function fetchLastUpdate() {
             const txt = document.getElementById('lastUpdateText');
             txt.textContent = 'กำลังโหลด...';
@@ -784,47 +884,39 @@
         }
 
         function renderDashboard(rawData) {
+            currentDashRawData = rawData;
+            activeDashMonth = null; 
+            
             const timeData = {};
-            const docData = {};
-            const indData = {};
-            const staffData = {};
+            timeValues = {}; // Reset value mapping
             
             rawData.forEach(item => {
-                // Time Series
-                if(!timeData[item.month]) timeData[item.month] = { 'Appropriate': 0, 'Inappropriate': 0, 'ไม่มีข้อมูล': 0 };
+                if(!timeData[item.month]) { 
+                    timeData[item.month] = { 'Appropriate': 0, 'Inappropriate': 0, 'ไม่มีข้อมูล': 0 }; 
+                    timeValues[item.month] = 0; 
+                }
                 if(item.evaluated.includes('Appropriate')) timeData[item.month]['Appropriate']++;
                 else if(item.evaluated.includes('Inapp')) timeData[item.month]['Inappropriate']++;
                 else timeData[item.month]['ไม่มีข้อมูล']++;
                 
-                // Doctor Insight
-                if(!docData[item.doctor]) docData[item.doctor] = { 'Appropriate': 0, 'Inappropriate': 0, 'ไม่มีข้อมูล': 0 };
-                if(item.evaluated.includes('Appropriate')) docData[item.doctor]['Appropriate']++;
-                else if(item.evaluated.includes('Inapp')) docData[item.doctor]['Inappropriate']++;
-                else docData[item.doctor]['ไม่มีข้อมูล']++;
-                
-                // Indication Insight
-                indData[item.indication] = (indData[item.indication] || 0) + 1;
-
-                // Staff Insight (Filter out '-')
-                if(item.staff !== 'ไม่ระบุ' && item.staff !== '-') {
-                    staffData[item.staff] = (staffData[item.staff] || 0) + 1;
-                }
+                timeValues[item.month] += (item.value || 0);
             });
 
-            Chart.register(ChartDataLabels);
-
-            // 1. Time Chart
-            const labelsTime = Object.keys(timeData).sort();
-            const timeDsAppr = labelsTime.map(m => timeData[m]['Appropriate']);
-            const timeDsInapp = labelsTime.map(m => timeData[m]['Inappropriate']);
-            const timeDsNone = labelsTime.map(m => timeData[m]['ไม่มีข้อมูล']);
+            // Format labels to MM/YYYY for display on X axis
+            const rawLabelsTime = Object.keys(timeData).sort();
+            const displayLabelsTime = rawLabelsTime.map(formatMonthDisplay);
+            
+            const timeDsAppr = rawLabelsTime.map(m => timeData[m]['Appropriate']);
+            const timeDsInapp = rawLabelsTime.map(m => timeData[m]['Inappropriate']);
+            const timeDsNone = rawLabelsTime.map(m => timeData[m]['ไม่มีข้อมูล']);
 
             const ctxTime = document.getElementById('timeSeriesChart').getContext('2d');
             if(timeChart) timeChart.destroy();
+            
             timeChart = new Chart(ctxTime, {
                 type: 'bar',
                 data: {
-                    labels: labelsTime,
+                    labels: displayLabelsTime,
                     datasets: [
                         { label: 'Appropriate', data: timeDsAppr, backgroundColor: '#22c55e' },
                         { label: 'Inappropriate', data: timeDsInapp, backgroundColor: '#ef4444' },
@@ -838,71 +930,113 @@
                     plugins: { 
                         legend: { position: 'top', labels: { boxWidth: 12 } },
                         datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' }
-                    } 
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const idx = elements[0].index;
+                            const clickedMonthRaw = rawLabelsTime[idx];
+                            if (activeDashMonth === clickedMonthRaw) {
+                                activeDashMonth = null; // deselect
+                            } else {
+                                activeDashMonth = clickedMonthRaw;
+                            }
+                            updateDashboardSubCharts();
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    }
                 }
             });
 
-            // 2. Indication Chart
-            const ctxInd = document.getElementById('indicationChart').getContext('2d');
-            if(indChart) indChart.destroy();
-            indChart = new Chart(ctxInd, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(indData),
-                    datasets: [{ data: Object.values(indData), backgroundColor: ['#3b82f6', '#8b5cf6', '#6366f1', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#64748b'] }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } 
-                }
-            });
-
-            // 3. Staff Chart
-            const ctxStaff = document.getElementById('staffChart').getContext('2d');
-            if(staffChart) staffChart.destroy();
-            staffChart = new Chart(ctxStaff, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(staffData),
-                    datasets: [{ data: Object.values(staffData), backgroundColor: ['#14b8a6', '#0ea5e9', '#3b82f6', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'] }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } 
-                }
-            });
-
-            // 4. Doctor Chart
-            const labelsDoc = Object.keys(docData).sort((a, b) => {
-                const totalA = docData[a]['Appropriate'] + docData[a]['Inappropriate'] + docData[a]['ไม่มีข้อมูล'];
-                const totalB = docData[b]['Appropriate'] + docData[b]['Inappropriate'] + docData[b]['ไม่มีข้อมูล'];
-                return totalB - totalA; 
-            }).slice(0, 10);
-            
-            const docDsAppr = labelsDoc.map(d => docData[d]['Appropriate']);
-            const docDsInapp = labelsDoc.map(d => docData[d]['Inappropriate']);
-            const docDsNone = labelsDoc.map(d => docData[d]['ไม่มีข้อมูล']);
-
-            const ctxDoc = document.getElementById('doctorChart').getContext('2d');
-            if(docChart) docChart.destroy();
-            docChart = new Chart(ctxDoc, {
-                type: 'bar',
-                data: {
-                    labels: labelsDoc,
-                    datasets: [
-                        { label: 'Appr.', data: docDsAppr, backgroundColor: '#22c55e' },
-                        { label: 'Inapp.', data: docDsInapp, backgroundColor: '#ef4444' },
-                        { label: 'None', data: docDsNone, backgroundColor: '#cbd5e1' }
-                    ]
-                },
-                options: { 
-                    indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
-                    scales: { x: { stacked: true }, y: { stacked: true, ticks: { font: { size: 10 } } } }, 
-                    plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } 
-                }
-            });
+            // Initial render of sub-charts (all data)
+            updateDashboardSubCharts(true);
         }
 
+        // --- Cross-filter Sub Charts ---
+        function updateDashboardSubCharts(isInitial = false) {
+            const overlay = document.getElementById('dashboardSubChartOverlay');
+            if(!isInitial && overlay) overlay.classList.remove('hidden');
+
+            setTimeout(() => {
+                let filteredData = currentDashRawData;
+                if (activeDashMonth) {
+                    filteredData = currentDashRawData.filter(d => d.month === activeDashMonth);
+                }
+
+                const docData = {};
+                const indData = {};
+                const staffData = {};
+
+                filteredData.forEach(item => {
+                    if(!docData[item.doctor]) docData[item.doctor] = { 'Appropriate': 0, 'Inappropriate': 0, 'ไม่มีข้อมูล': 0 };
+                    if(item.evaluated.includes('Appropriate')) docData[item.doctor]['Appropriate']++;
+                    else if(item.evaluated.includes('Inapp')) docData[item.doctor]['Inappropriate']++;
+                    else docData[item.doctor]['ไม่มีข้อมูล']++;
+                    
+                    indData[item.indication] = (indData[item.indication] || 0) + 1;
+                    if(item.staff !== 'ไม่ระบุ' && item.staff !== '-') {
+                        staffData[item.staff] = (staffData[item.staff] || 0) + 1;
+                    }
+                });
+
+                // Update Indication Chart
+                const ctxInd = document.getElementById('indicationChart').getContext('2d');
+                if(indChart) indChart.destroy();
+                indChart = new Chart(ctxInd, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(indData),
+                        datasets: [{ data: Object.values(indData), backgroundColor: ['#3b82f6', '#8b5cf6', '#6366f1', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#64748b'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
+                });
+
+                // Update Staff Chart
+                const ctxStaff = document.getElementById('staffChart').getContext('2d');
+                if(staffChart) staffChart.destroy();
+                staffChart = new Chart(ctxStaff, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(staffData),
+                        datasets: [{ data: Object.values(staffData), backgroundColor: ['#14b8a6', '#0ea5e9', '#3b82f6', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
+                });
+
+                // Update Doctor Chart
+                const labelsDoc = Object.keys(docData).sort((a, b) => {
+                    const totalA = docData[a]['Appropriate'] + docData[a]['Inappropriate'] + docData[a]['ไม่มีข้อมูล'];
+                    const totalB = docData[b]['Appropriate'] + docData[b]['Inappropriate'] + docData[b]['ไม่มีข้อมูล'];
+                    return totalB - totalA; 
+                }).slice(0, 10);
+                
+                const docDsAppr = labelsDoc.map(d => docData[d]['Appropriate']);
+                const docDsInapp = labelsDoc.map(d => docData[d]['Inappropriate']);
+                const docDsNone = labelsDoc.map(d => docData[d]['ไม่มีข้อมูล']);
+
+                const ctxDoc = document.getElementById('doctorChart').getContext('2d');
+                if(docChart) docChart.destroy();
+                docChart = new Chart(ctxDoc, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsDoc,
+                        datasets: [
+                            { label: 'Appr.', data: docDsAppr, backgroundColor: '#22c55e' },
+                            { label: 'Inapp.', data: docDsInapp, backgroundColor: '#ef4444' },
+                            { label: 'None', data: docDsNone, backgroundColor: '#cbd5e1' }
+                        ]
+                    },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { font: { size: 10 } } } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
+                });
+
+                if(!isInitial && overlay) overlay.classList.add('hidden');
+            }, 50); // slight delay to allow UI to show loader
+        }
+
+        // ==========================================
+        // DOCTOR PAGE LOGIC
+        // ==========================================
         function toggleDoctorPage() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('mainTabs').classList.add('hidden');
@@ -918,7 +1052,6 @@
             revealedLicense = null;
             document.getElementById('searchLicense').value = '';
             document.getElementById('doctorPatientList').classList.add('hidden');
-            
             if(activeTab) switchTab(activeTab);
         }
 
@@ -930,25 +1063,33 @@
                     globalDocData = json.data;
                     globalDocsMap = json.docsMap;
                     
-                    // Assign Emojis
                     let eIdx = 0;
                     Object.keys(globalDocsMap).forEach(lic => {
                         emojiMap[lic] = emojiList[eIdx % emojiList.length];
                         eIdx++;
                     });
 
-                    // Build Month Dropdown
                     const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m).sort().reverse();
-                    const sel = document.getElementById('docMonthSelector');
-                    sel.innerHTML = '<option value="all">ทุกช่วงเวลา</option>';
+                    
+                    // Setup Dropdowns
+                    const selMonth = document.getElementById('docMonthSelector');
+                    const filterMonth = document.getElementById('docListFilterMonth');
+                    
+                    selMonth.innerHTML = '<option value="all">ทุกช่วงเวลา</option>';
+                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
+                    
                     months.forEach(m => {
+                        const mDisplay = formatMonthDisplay(m);
                         const opt = document.createElement('option');
-                        opt.value = m; opt.textContent = m;
-                        sel.appendChild(opt);
+                        opt.value = m; opt.textContent = mDisplay;
+                        selMonth.appendChild(opt);
+                        
+                        const opt2 = document.createElement('option');
+                        opt2.value = m; opt2.textContent = mDisplay;
+                        filterMonth.appendChild(opt2);
                     });
                     
-                    // Set default to current month
-                    if(months.length > 0) sel.value = months[0];
+                    if(months.length > 0) selMonth.value = months[0]; // Set to latest month default
 
                     renderDocSummaryChart();
                 }
@@ -974,14 +1115,12 @@
         }
 
         function renderDocSummaryChart() {
-            Chart.register(ChartDataLabels);
             const month = document.getElementById('docMonthSelector').value;
             let filtered = globalDocData;
             if(month !== 'all') {
                 filtered = globalDocData.filter(d => d.month === month);
             }
 
-            // Calculate Cards Stats
             let stats = {
                 'Antibiotics': { total: 0, eval: 0 },
                 'Oseltamivir': { total: 0, eval: 0 },
@@ -1014,13 +1153,11 @@
                 }
             });
 
-            // Update Cards
             const calcPct = (e, t) => t > 0 ? Math.round((e/t)*100) : 0;
             document.getElementById('stat-anti').textContent = `${stats['Antibiotics'].total} / ${stats['Antibiotics'].eval} (${calcPct(stats['Antibiotics'].eval, stats['Antibiotics'].total)}%)`;
             document.getElementById('stat-osel').textContent = `${stats['Oseltamivir'].total} / ${stats['Oseltamivir'].eval} (${calcPct(stats['Oseltamivir'].eval, stats['Oseltamivir'].total)}%)`;
             document.getElementById('stat-ator').textContent = `${stats['Atorvastatin'].total} / ${stats['Atorvastatin'].eval} (${calcPct(stats['Atorvastatin'].eval, stats['Atorvastatin'].total)}%)`;
 
-            // Filter out doctors with 0 total in this month
             let activeLicenses = licenses.filter(lic => {
                 let total = 0;
                 ['Antibiotics', 'Oseltamivir', 'Atorvastatin'].forEach(drug => {
@@ -1029,7 +1166,6 @@
                 return total > 0;
             });
             
-            // STRICT Doctor Isolation check: Only reveal name if it exactly matches the typed input
             const typedLicense = document.getElementById('searchLicense').value.trim();
             if (revealedLicense && activeLicenses.includes(revealedLicense)) {
                 activeLicenses = [revealedLicense];
@@ -1065,20 +1201,19 @@
                 type: 'bar',
                 data: { labels: labels, datasets: datasets },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                    responsive: true, maintainAspectRatio: false, 
                     onClick: (e, elements) => {
                         if (elements.length > 0 && !revealedLicense) {
                             const index = elements[0].index;
                             const clickedLicense = docSummaryChartObj.data.datasets[elements[0].datasetIndex].doctorLicenses[index];
                             revealedLicense = clickedLicense;
+                            // Only set search box if user clicked, to reveal name.
+                            document.getElementById('searchLicense').value = clickedLicense;
                             renderDocSummaryChart();
+                            renderDoctorPatientList(clickedLicense);
                         }
                     },
-                    scales: { 
-                        x: { stacked: true, ticks: { font: { size: 14, weight: 'bold' } } }, 
-                        y: { stacked: true, beginAtZero: true } 
-                    },
+                    scales: { x: { stacked: true, ticks: { font: { size: 14, weight: 'bold' } } }, y: { stacked: true, beginAtZero: true } },
                     plugins: {
                         datalabels: {
                             color: (context) => {
@@ -1095,44 +1230,76 @@
                                 return prefix + value;
                             }
                         },
-                        tooltip: {
-                            callbacks: { title: function(context) { return context[0].label; } }
-                        }
+                        tooltip: { callbacks: { title: function(context) { return context[0].label; } } }
                     }
                 }
             });
+        }
+
+        // Sort handlers
+        function sortDocList(col) {
+            if(docSortCol === col) docSortAsc = !docSortAsc;
+            else { docSortCol = col; docSortAsc = true; }
+            renderDoctorPatientList(revealedLicense);
         }
 
         function renderDoctorPatientList(lic) {
             const tbody = document.getElementById('doctorPatientTbody');
             tbody.innerHTML = '';
             
-            const month = document.getElementById('docMonthSelector').value;
             let patients = globalDocData.filter(d => d.license === lic);
-            if(month !== 'all') patients = patients.filter(d => d.month === month);
+            
+            // Apply Filters
+            const fDrug = document.getElementById('docListFilterDrug').value;
+            const fMonth = document.getElementById('docListFilterMonth').value;
+            const fStatus = document.getElementById('docListFilterStatus').value;
 
-            if(patients.length === 0) {
-                document.getElementById('doctorPatientList').classList.add('hidden');
-                return;
+            if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
+            
+            if (fMonth === 'current') {
+                const maxMonth = globalDocData.reduce((max, d) => d.month > max ? d.month : max, "0000-00");
+                patients = patients.filter(d => d.month === maxMonth);
+            } else if (fMonth !== 'all') {
+                patients = patients.filter(d => d.month === fMonth);
             }
 
-            patients.forEach(p => {
-                if(!p.hn) return; 
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-indigo-50 doctor-row-hover';
-                tr.onclick = () => openDoctorEditForm(p.sheet, p.hn);
-                
-                let badgeColor = p.evaluated === 'ไม่ได้ส่งใบDUE' ? 'bg-gray-200 text-gray-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
-                
-                tr.innerHTML = `
-                    <td class="p-3 font-bold text-indigo-700">${p.sheet}</td>
-                    <td class="p-3 text-gray-500">${p.month}</td>
-                    <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
-                    <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${p.evaluated}</span></td>
-                `;
-                tbody.appendChild(tr);
+            if (fStatus === 'pending') {
+                patients = patients.filter(d => !d.evaluated || d.evaluated === 'ไม่ได้ส่งใบDUE' || d.evaluated === 'รอประเมิน');
+            } else if (fStatus === 'evaluated') {
+                patients = patients.filter(d => d.evaluated && d.evaluated !== 'ไม่ได้ส่งใบDUE' && d.evaluated !== 'รอประเมิน');
+            }
+
+            // Apply Sort
+            patients.sort((a, b) => {
+                let vA = a[docSortCol] || '';
+                let vB = b[docSortCol] || '';
+                if(vA < vB) return docSortAsc ? -1 : 1;
+                if(vA > vB) return docSortAsc ? 1 : -1;
+                return 0;
             });
 
+            if(patients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</td></tr>';
+            } else {
+                patients.forEach(p => {
+                    if(!p.hn) return; 
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-indigo-50 doctor-row-hover';
+                    tr.onclick = () => openDoctorEditForm(p.sheet, p.hn);
+                    
+                    let isPending = (!p.evaluated || p.evaluated === 'ไม่ได้ส่งใบDUE' || p.evaluated === 'รอประเมิน');
+                    let displayStatus = isPending ? 'ยังไม่ประเมิน' : p.evaluated;
+                    let badgeColor = isPending ? 'bg-gray-200 text-gray-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+                    
+                    tr.innerHTML = `
+                        <td class="p-3 font-bold text-indigo-700">${p.sheet}</td>
+                        <td class="p-3 text-gray-500">${formatMonthDisplay(p.month)}</td>
+                        <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
             document.getElementById('doctorPatientList').classList.remove('hidden');
         }
 
@@ -1184,8 +1351,10 @@
             }
         }
 
-        let globalPharmaData = [];
 
+        // ==========================================
+        // PHARMACIST PAGE LOGIC
+        // ==========================================
         function togglePharmaPage() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('mainTabs').classList.add('hidden');
@@ -1218,6 +1387,22 @@
                         opt.value = s; opt.textContent = s;
                         sel.appendChild(opt);
                     });
+
+                    // Build Month Filter
+                    const months = [...new Set(globalPharmaData.map(d => {
+                        if(d.date === '-' || !d.date) return null;
+                        const parts = d.date.split('/');
+                        if(parts.length >= 3) return `${parts[2].split(' ')[0]}-${parts[1]}`; // approx yyyy-MM
+                        return null;
+                    }))].filter(m => m).sort().reverse();
+                    
+                    const filterMonth = document.getElementById('pharmaListFilterMonth');
+                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
+                    months.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m; opt.textContent = formatMonthDisplay(m);
+                        filterMonth.appendChild(opt);
+                    });
                     
                     if (currentValue && staffs.includes(currentValue)) {
                         sel.value = currentValue;
@@ -1245,7 +1430,7 @@
 
             patients.forEach(p => {
                 if(stats[p.sheet]) {
-                    if(p.evaluated === 'รอประเมิน') stats[p.sheet].pending++;
+                    if(p.evaluated === 'รอประเมิน' || p.evaluated === '') stats[p.sheet].pending++;
                     else stats[p.sheet].eval++;
                 }
             });
@@ -1255,54 +1440,143 @@
             document.getElementById('pharma-stat-ator').textContent = `${stats['Atorvastatin'].pending} / ${stats['Atorvastatin'].eval}`;
             
             document.getElementById('pharmaStatsCards').classList.remove('hidden');
+            renderPharmaPatientList();
+        }
+
+        function sortPharmaList(col) {
+            if(pharmaSortCol === col) pharmaSortAsc = !pharmaSortAsc;
+            else { pharmaSortCol = col; pharmaSortAsc = true; }
+            renderPharmaPatientList();
+        }
+
+        function renderPharmaPatientList() {
+            const staffName = document.getElementById('pharmaSelector').value;
+            if(!staffName) return;
 
             const tbody = document.getElementById('pharmaPatientTbody');
             tbody.innerHTML = '';
-            patients.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-emerald-50 doctor-row-hover cursor-pointer';
-                tr.onclick = () => {
-                    hidePharmaPage();
-                    switchTab(p.sheet);
-                    document.getElementById('searchHN').value = p.hn;
-                    searchPatient(null);
-                };
+            
+            let patients = globalPharmaData.filter(d => d.staff === staffName);
+
+            // Apply Filters
+            const fDrug = document.getElementById('pharmaListFilterDrug').value;
+            const fMonth = document.getElementById('pharmaListFilterMonth').value;
+            const fStatus = document.getElementById('pharmaListFilterStatus').value;
+
+            if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
+            
+            if (fMonth !== 'all') {
+                let targetMonth = fMonth;
+                if(fMonth === 'current') {
+                    // Extract latest month
+                    targetMonth = patients.reduce((max, p) => {
+                        if(!p.date || p.date === '-') return max;
+                        const parts = p.date.split('/');
+                        if(parts.length >= 3) {
+                            const m = `${parts[2].split(' ')[0]}-${parts[1]}`;
+                            return m > max ? m : max;
+                        }
+                        return max;
+                    }, "0000-00");
+                }
+
+                patients = patients.filter(p => {
+                    if(!p.date || p.date === '-') return false;
+                    const parts = p.date.split('/');
+                    if(parts.length >= 3) {
+                        return `${parts[2].split(' ')[0]}-${parts[1]}` === targetMonth;
+                    }
+                    return false;
+                });
+            }
+
+            if (fStatus === 'pending') {
+                patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน');
+            } else if (fStatus === 'evaluated') {
+                patients = patients.filter(d => d.evaluated && d.evaluated !== 'รอประเมิน');
+            }
+
+            // Apply Sort
+            patients.sort((a, b) => {
+                let vA = a[pharmaSortCol] || '';
+                let vB = b[pharmaSortCol] || '';
                 
-                let badgeColor = p.evaluated === 'รอประเมิน' ? 'bg-yellow-100 text-yellow-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
-                
-                tr.innerHTML = `
-                    <td class="p-3 font-bold text-emerald-700">${p.sheet}</td>
-                    <td class="p-3 text-gray-500">${p.date}</td>
-                    <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
-                    <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${p.evaluated}</span></td>
-                `;
-                tbody.appendChild(tr);
+                // For date sort, convert DD/MM/YYYY back to parsable string
+                if(pharmaSortCol === 'date') {
+                    const pa = vA.split('/'); const pb = vB.split('/');
+                    if(pa.length>=3) vA = `${pa[2]}-${pa[1]}-${pa[0]}`;
+                    if(pb.length>=3) vB = `${pb[2]}-${pb[1]}-${pb[0]}`;
+                }
+
+                if(vA < vB) return pharmaSortAsc ? -1 : 1;
+                if(vA > vB) return pharmaSortAsc ? 1 : -1;
+                return 0;
             });
+
+            if(patients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</td></tr>';
+            } else {
+                patients.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-emerald-50 doctor-row-hover cursor-pointer';
+                    tr.onclick = () => {
+                        hidePharmaPage();
+                        switchTab(p.sheet);
+                        document.getElementById('searchHN').value = p.hn;
+                        searchPatient(null);
+                    };
+                    
+                    let isPending = (!p.evaluated || p.evaluated === 'รอประเมิน');
+                    let displayStatus = isPending ? 'ยังไม่ประเมิน' : p.evaluated;
+                    let badgeColor = isPending ? 'bg-yellow-100 text-yellow-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+                    
+                    tr.innerHTML = `
+                        <td class="p-3 font-bold text-emerald-700">${p.sheet}</td>
+                        <td class="p-3 text-gray-500">${p.date}</td>
+                        <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
             document.getElementById('pharmaPatientList').classList.remove('hidden');
         }
 
-        function handleIndication(prefix) {
-            const inputs = document.getElementsByName(`${prefix}_indication`);
-            const otherBox = document.getElementById(`${prefix}_other_box`);
-            const otherInput = document.getElementById(`${prefix}_indication_other`);
-            const specificBox = document.getElementById(`${prefix}_specific_box`);
-            const specificInput = document.getElementById(`${prefix}_indication_specific`);
+        // ==========================================
+        // OTHER LOGICS
+        // ==========================================
+        function calcAntiValue() {
+            const drug = document.getElementById('anti_Drug_name').value;
+            const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
+            let val = 0;
+            const drugLow = drug.toLowerCase();
+            if (drugLow.includes('meropenem')) val = dose * 100;
+            else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) val = dose * 130;
             
+            const el = document.getElementById('anti_Value_Display');
+            if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
+        }
+
+        function handleIndication(prefix) {
+            const radios = document.getElementsByName(`${prefix}_indication`);
             let isOther = false;
             let isSpecific = false;
-
-            inputs.forEach(r => {
+            radios.forEach(r => {
                 if(r.checked) {
                     if(r.value === 'อื่นๆ') isOther = true;
                     if(r.value === 'Specific (ระบุเชื้อ)') isSpecific = true;
                 }
             });
 
+            const otherBox = document.getElementById(`${prefix}_other_box`);
+            const otherInput = document.getElementById(`${prefix}_indication_other`);
             if(otherBox && otherInput) {
                 if(isOther) { otherBox.classList.remove('hidden'); otherInput.required = true; }
                 else { otherBox.classList.add('hidden'); otherInput.required = false; otherInput.value = ''; }
             }
 
+            const specificBox = document.getElementById(`${prefix}_specific_box`);
+            const specificInput = document.getElementById(`${prefix}_indication_specific`);
             if(specificBox && specificInput) {
                 if(isSpecific) { specificBox.classList.remove('hidden'); specificInput.required = true; }
                 else { specificBox.classList.add('hidden'); specificInput.required = false; specificInput.value = ''; }
@@ -1335,6 +1609,65 @@
                 html = `<div class="text-slate-500 text-center py-2">กรุณาเลือกชื่อยาด้านบน เพื่อโหลดเหตุผล</div>`;
             }
             container.innerHTML = html;
+        }
+
+        function validateAntibiotics() {
+            if (activeTab !== 'Antibiotics') return;
+            
+            const clcrStr = document.getElementById('anti_Lastest_ClCr').value;
+            const clcr = parseFloat(clcrStr); 
+            const drugName = document.getElementById('anti_Drug_name').value;
+            
+            const recBox = document.getElementById('anti_recommendation');
+            recBox.innerHTML = '';
+            recBox.classList.add('hidden');
+            
+            let showRec = false;
+            let recText = '';
+            
+            if (drugName === 'Meropenem 1 gm') {
+                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Meropenem (Max 6 gm/day):</div>
+                           <ul class="list-disc pl-5 space-y-1 mb-2">
+                             <li><b>เด็ก < 3 เดือน:</b> 20 mg/kg q 12 hr</li>
+                             <li><b>เด็ก 3 เดือน - 12 ปี:</b> 10-20 mg/kg q 8 hr (Meningitis 40 mg/kg q 8 hr)</li>
+                             <li><b>ผู้ใหญ่:</b> 1 g IV drip q 8 hr (Meningitis 2 g IV drip 8 hr)</li>
+                           </ul>`;
+                if (!isNaN(clcr) && clcr <= 50) {
+                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 1g x 24hr):</div>
+                                <ul class="list-disc pl-5 space-y-1 text-red-700">
+                                  <li><b>CrCl 26-50:</b> 1 g q 12 hr (Meningitis 2 g q 12 hr)</li>
+                                  <li><b>CrCl 10-25:</b> 500 mg q 12 hr (Meningitis 1 g q 12 hr)</li>
+                                  <li><b>CrCl <10:</b> 500 mg q 24 hr (Meningitis 1 g q 24 hr)</li>
+                                </ul>`;
+                    document.getElementById('anti_Lastest_ClCr').classList.add('error-blink');
+                } else {
+                    document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
+                }
+                showRec = true;
+            } else if (drugName === 'Tazocin 4.5g. inj') {
+                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Tazocin:</div>
+                           <ul class="list-disc pl-5 space-y-1 mb-2">
+                             <li><b>เด็ก >6 ด.-12 ปี (BW < 40 kg):</b> 300-400 mg/kg/day divided q 6-8 hr</li>
+                             <li><b>เด็ก >6 ด.-12 ปี (BW > 40 kg):</b> 4.5 g IV q 8 hr</li>
+                             <li><b>ผู้ใหญ่:</b> 4.5 g IV q 6-8 hr</li>
+                           </ul>`;
+                if (!isNaN(clcr) && clcr <= 40) {
+                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 4.5g x 24hr):</div>
+                                <ul class="list-disc pl-5 space-y-1 text-red-700">
+                                  <li><b>CrCl 20-40:</b> 3.375 g IV q 6hr หรือ 4.5 g IV q 8 hr</li>
+                                  <li><b>CrCl <20:</b> 2.25 g IV q 6hr</li>
+                                </ul>`;
+                    document.getElementById('anti_Lastest_ClCr').classList.add('error-blink');
+                } else {
+                    document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
+                }
+                showRec = true;
+            }
+            
+            if (showRec) {
+                recBox.innerHTML = recText;
+                recBox.classList.remove('hidden');
+            }
         }
 
         function validateOseltamivir() {
@@ -1424,68 +1757,8 @@
                 recBox.classList.remove('hidden');
             }
         }
-        
-        function validateAntibiotics() {
-            if (activeTab !== 'Antibiotics') return;
-            
-            const age = parseFloat(document.getElementById('anti_Age').value);
-            const weight = parseFloat(document.getElementById('anti_Body_weight').value) || 0;
-            const clcrStr = document.getElementById('anti_Lastest_ClCr').value;
-            const clcr = parseFloat(clcrStr); 
-            const drugName = document.getElementById('anti_Drug_name').value;
-            
-            const recBox = document.getElementById('anti_recommendation');
-            recBox.innerHTML = '';
-            recBox.classList.add('hidden');
-            
-            let showRec = false;
-            let recText = '';
-            
-            if (drugName === 'Meropenem 1 gm') {
-                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Meropenem (Max 6 gm/day):</div>
-                           <ul class="list-disc pl-5 space-y-1 mb-2">
-                             <li><b>เด็ก < 3 เดือน:</b> 20 mg/kg q 12 hr</li>
-                             <li><b>เด็ก 3 เดือน - 12 ปี:</b> 10-20 mg/kg q 8 hr (Meningitis 40 mg/kg q 8 hr)</li>
-                             <li><b>ผู้ใหญ่:</b> 1 g IV drip q 8 hr (Meningitis 2 g IV drip 8 hr)</li>
-                           </ul>`;
-                if (!isNaN(clcr) && clcr <= 50) {
-                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 1g x 24hr):</div>
-                                <ul class="list-disc pl-5 space-y-1 text-red-700">
-                                  <li><b>CrCl 26-50:</b> 1 g q 12 hr (Meningitis 2 g q 12 hr)</li>
-                                  <li><b>CrCl 10-25:</b> 500 mg q 12 hr (Meningitis 1 g q 12 hr)</li>
-                                  <li><b>CrCl <10:</b> 500 mg q 24 hr (Meningitis 1 g q 24 hr)</li>
-                                </ul>`;
-                    document.getElementById('anti_Lastest_ClCr').classList.add('error-blink');
-                } else {
-                    document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
-                }
-                showRec = true;
-            } else if (drugName === 'Tazocin 4.5g. inj') {
-                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Tazocin:</div>
-                           <ul class="list-disc pl-5 space-y-1 mb-2">
-                             <li><b>เด็ก >6 ด.-12 ปี (BW < 40 kg):</b> 300-400 mg/kg/day divided q 6-8 hr</li>
-                             <li><b>เด็ก >6 ด.-12 ปี (BW > 40 kg):</b> 4.5 g IV q 8 hr</li>
-                             <li><b>ผู้ใหญ่:</b> 4.5 g IV q 6-8 hr</li>
-                           </ul>`;
-                if (!isNaN(clcr) && clcr <= 40) {
-                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 4.5g x 24hr):</div>
-                                <ul class="list-disc pl-5 space-y-1 text-red-700">
-                                  <li><b>CrCl 20-40:</b> 3.375 g IV q 6hr หรือ 4.5 g IV q 8 hr</li>
-                                  <li><b>CrCl <20:</b> 2.25 g IV q 6hr</li>
-                                </ul>`;
-                    document.getElementById('anti_Lastest_ClCr').classList.add('error-blink');
-                } else {
-                    document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
-                }
-                showRec = true;
-            }
-            
-            if (showRec) {
-                recBox.innerHTML = recText;
-                recBox.classList.remove('hidden');
-            }
-        }
 
+        // ... existing API calls and form populations remain same ...
         async function fetchPharmacists() {
             try {
                 const response = await fetch(`${GAS_URL}?action=getPharmacists`);
@@ -1512,7 +1785,7 @@
             const msgText = document.getElementById('searchMessageText');
             const btn = document.getElementById('searchBtn');
 
-            if (!hnFromDoctor) resetDoctorMode(); // Reset if normal search
+            if (!hnFromDoctor) resetDoctorMode(); 
 
             if (!hn) return;
 
@@ -1527,7 +1800,7 @@
                 if (res.status === 'success' && res.data) {
                     populateForm(res.data, activeTab);
                     if(isDoctorMode) {
-                        msgText.innerHTML = `พบข้อมูล HN: ${hn} <b>(โหมดบันทึกแพทย์: ล็อคข้อมูล Part 1 และ 3)</b>`;
+                        msgText.innerHTML = `พบข้อมูล HN: ${hn} <b>(โหมดบันทึกแพทย์: แก้ไขได้เฉพาะ Part 2)</b>`;
                         applyDoctorMode(activeTab);
                     } else {
                         msgText.textContent = `พบข้อมูล HN: ${hn} (แก้ไขและบันทึกได้เลย)`;
@@ -1560,7 +1833,7 @@
             const nowStr = toDatetimeLocal(new Date().toISOString());
             document.getElementById(`${prefix}_Order_DateTime`).value = nowStr;
             
-            if(activeTab === 'Antibiotics') renderAntibioticIndications();
+            if(activeTab === 'Antibiotics') { renderAntibioticIndications(); calcAntiValue(); }
             handleIndication(prefix);
             if(activeTab === 'Oseltamivir') validateOseltamivir();
 
@@ -1571,51 +1844,7 @@
             document.getElementById(formId).classList.remove('hidden');
         }
 
-        function setRadios(name, value, prefix) {
-            const inputs = document.getElementsByName(name);
-            const otherInput = document.getElementById(`${prefix}_indication_other`);
-            const specificInput = document.getElementById(`${prefix}_indication_specific`);
-            
-            if (inputs.length > 0 && inputs[0].type === 'checkbox') {
-                const values = value ? value.split(',').map(v => v.trim()) : [];
-                inputs.forEach(r => r.checked = false);
-                let hasOther = false;
-                let otherVals = [];
-                values.forEach(v => {
-                    let matched = false;
-                    inputs.forEach(r => {
-                        if (r.value === v && r.value !== 'อื่นๆ') {
-                            r.checked = true; matched = true;
-                        }
-                    });
-                    if(!matched && v) { hasOther = true; otherVals.push(v); }
-                });
-                const otRadio = document.getElementById(`${prefix}_radio_other`);
-                if(otRadio && hasOther) { otRadio.checked = true; if(otherInput) otherInput.value = otherVals.join(', '); }
-            } else {
-                inputs.forEach(r => r.checked = false);
-                if (value) {
-                    let matched = false;
-                    inputs.forEach(r => { 
-                        if (r.value === value && r.value !== 'อื่นๆ' && r.value !== 'Specific (ระบุเชื้อ)') { 
-                            r.checked = true; matched = true; 
-                        } 
-                    });
-                    
-                    if(!matched && (value.includes('เชื้อ') || value.includes('Specific'))) {
-                         const spRadio = document.getElementById(`${prefix}_radio_specific`);
-                         if(spRadio) { spRadio.checked = true; matched = true; if(specificInput) specificInput.value = value; }
-                    }
-
-                    if (!matched && name.includes('indication')) {
-                        const otRadio = document.getElementById(`${prefix}_radio_other`);
-                        if(otRadio) { otRadio.checked = true; if(otherInput) otherInput.value = value; }
-                    }
-                }
-            }
-            handleIndication(prefix);
-        }
-
+        // populateForm and submitDUE remain the same
         function populateForm(data, tab) {
             let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
             document.getElementById(`${prefix}_rowIndex`).value = data.rowIndex || '';
@@ -1652,13 +1881,14 @@
             if(tab === 'Antibiotics') {
                 setRadios('anti_Pharmacist_action', data.Pharmacist_action, prefix);
                 setRadios('anti_Result', data.Result, prefix);
+                calcAntiValue();
+                validateAntibiotics();
             }
 
             const pharmaEl = document.getElementById(`${prefix}_pharmacist`);
             if(pharmaEl) pharmaEl.value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
             
             if (tab === 'Oseltamivir') validateOseltamivir();
-            if (tab === 'Antibiotics') validateAntibiotics();
         }
 
         async function submitDUE(e, tab) {
@@ -1671,7 +1901,6 @@
             let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
             let rowIndex = document.getElementById(`${prefix}_rowIndex`).value;
             
-            // Gather Indication
             let indication = '';
             let isCheckbox = false;
             let indicationArr = [];
