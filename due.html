@@ -133,8 +133,14 @@
                         <div id="phantomSpinner" class="phantom-loader text-blue-500 gap-1"><span class="spinner"></span></div>
                     </div>
                 </div>
+                
+                <div class="flex justify-between text-[10px] font-bold mt-2 px-1">
+                    <span class="text-green-600">ประเมินแล้ว: <span id="count-eval">0</span></span>
+                    <span class="text-yellow-600" id="count-lab-wrap">รอผล Lab: <span id="count-lab">0</span></span>
+                    <span class="text-red-600">รอประเมิน: <span id="count-pend">0</span></span>
+                </div>
                 <!-- แถบสถานะบางๆ -->
-                <div class="w-full bg-gray-100 rounded-full h-1.5 shadow-inner flex overflow-hidden relative">
+                <div class="w-full bg-gray-100 rounded-full h-1.5 shadow-inner flex overflow-hidden relative mt-1">
                     <div id="bar-evaluated" class="h-full bg-green-500 transition-all duration-1000" style="width: 0%;"></div>
                     <div id="bar-waiting" class="h-full bg-yellow-400 transition-all duration-1000" style="width: 0%;"></div>
                     <div id="bar-pending" class="h-full bg-red-400 transition-all duration-1000" style="width: 0%;"></div>
@@ -182,14 +188,16 @@
             </div>
 
             <!-- Datalists -->
-            <datalist id="list-patient-type"><option value="OPD"><option value="IPD"></datalist>
-            <datalist id="list-gender"><option value="ชาย"><option value="หญิง"></datalist>
+            <datalist id="list-patient-type"></datalist>
+            <datalist id="list-gender"></datalist>
+            <datalist id="list-age"></datalist>
             <datalist id="list-source"><option value="Hospital Acquired"><option value="Community Acquired"></datalist>
             <datalist id="list-site"><option value="Lung"><option value="Urinary tract"><option value="Skin and soft tissue"><option value="Join"><option value="CNS"><option value="Intra-abdominal"><option value="Pus"><option value="Sputum"><option value="Hemoculture"><option value="Respiratory tract"><option value="Other"></datalist>
             <datalist id="list-ward"></datalist>
             <datalist id="list-diagnosis"></datalist>
             <datalist id="list-drug"></datalist>
             <datalist id="list-doctor"></datalist>
+            <datalist id="list-staff-approve"><option value="มี"><option value="ไม่มี"></datalist>
 
             <form id="form-Antibiotics" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Antibiotics')">
                 <input type="hidden" id="anti_rowIndex">
@@ -203,7 +211,7 @@
                         <div class="md:col-span-1"><label>HN</label><input type="text" id="anti_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="anti_Patient_Name" class="editable-input font-bold"></div>
                         <div class="md:col-span-1"><label>เพศ</label><input type="text" list="list-gender" id="anti_Gender" class="editable-input text-center"></div>
-                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" id="anti_Age" class="editable-input text-center"></div>
+                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" list="list-age" id="anti_Age" class="editable-input text-center"></div>
                         <div class="md:col-span-1"><label>ประเภท</label><input type="text" list="list-patient-type" id="anti_Patient_Type" class="editable-input text-center"></div>
                     </div>
                     
@@ -215,11 +223,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100 relative">
                         <div class="md:col-span-1">
                             <label class="text-blue-700">ยาที่สั่ง (Drug Name)</label>
-                            <select id="anti_Drug_name" class="editable-input font-bold text-blue-800" onchange="renderAntibioticIndications(); validateAntibiotics(); calcAntiValue();">
-                                <option value="">-- เลือกยา --</option>
-                                <option value="Tazocin 4.5g. inj">Tazocin 4.5g. inj</option>
-                                <option value="Meropenem 1 gm">Meropenem 1 gm</option>
-                            </select>
+                            <input type="text" list="list-drug" id="anti_Drug_name" class="editable-input font-bold text-blue-800" oninput="renderAntibioticIndications(); validateAntibiotics(); calcAntiValue();">
                         </div>
                         <div class="md:col-span-2"><label class="text-blue-700">วิธีใช้ (Drug Usage)</label><input type="text" id="anti_Drug_usage" class="editable-input" oninput="validateAntibiotics()"></div>
                     </div>
@@ -230,7 +234,7 @@
                         <div class="md:col-span-1"><label>วันเวลาที่สั่ง</label><input type="datetime-local" id="anti_Order_DateTime" class="editable-input bg-gray-50 text-xs"></div>
                         <div class="md:col-span-1"><label>แพทย์ผู้สั่ง</label><input type="text" list="list-doctor" id="anti_Doctor_Name" class="editable-input"></div>
                         <div class="md:col-span-1"><label>ใบประกอบวิชาชีพ</label><input type="text" id="anti_License_No" class="editable-input"></div>
-                        <div class="md:col-span-1"><label class="text-indigo-700">หลักฐานอนุมัติ (Staff)</label><input type="text" id="anti_Staff_approve" class="editable-input bg-indigo-50 border-indigo-200"></div>
+                        <div class="md:col-span-1"><label class="text-indigo-700">หลักฐานอนุมัติ (Staff)</label><input type="text" list="list-staff-approve" id="anti_Staff_approve" class="editable-input bg-indigo-50 border-indigo-200"></div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100">
@@ -337,7 +341,7 @@
                         <div class="md:col-span-1"><label>HN</label><input type="text" id="osel_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="osel_Patient_Name" class="editable-input font-bold"></div>
                         <div class="md:col-span-1"><label>เพศ</label><input type="text" list="list-gender" id="osel_Gender" class="editable-input text-center"></div>
-                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" step="0.1" id="osel_Age" class="editable-input text-center" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" list="list-age" step="0.1" id="osel_Age" class="editable-input text-center" oninput="validateOseltamivir()"></div>
                         <div class="md:col-span-1"><label>น้ำหนัก (kg)</label><input type="number" step="0.1" id="osel_Weight_kg" class="editable-input text-center" oninput="validateOseltamivir()"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -421,7 +425,7 @@
                         <div class="md:col-span-1"><label>HN</label><input type="text" id="ator_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="ator_Patient_Name" class="editable-input font-bold"></div>
                         <div class="md:col-span-1"><label>เพศ</label><input type="text" list="list-gender" id="ator_Gender" class="editable-input text-center"></div>
-                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" id="ator_Age" class="editable-input text-center"></div>
+                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" list="list-age" id="ator_Age" class="editable-input text-center"></div>
                         <div class="md:col-span-1"><label>สิทธิ์</label><input type="text" id="ator_Patient_Right" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -853,10 +857,16 @@
                         document.getElementById('bar-evaluated').style.width = `${(ev/t)*100}%`;
                         document.getElementById('bar-pending').style.width = `${(pd/t)*100}%`;
 
+                        document.getElementById('count-eval').textContent = ev;
+                        document.getElementById('count-pend').textContent = pd;
+
                         if (activeTab === 'Antibiotics') {
                             document.getElementById('bar-waiting').style.width = `${(wl/t)*100}%`;
+                            document.getElementById('count-lab-wrap').classList.remove('hidden');
+                            document.getElementById('count-lab').textContent = wl;
                         } else {
                             document.getElementById('bar-waiting').style.width = '0%';
+                            document.getElementById('count-lab-wrap').classList.add('hidden');
                         }
                     }
                     
@@ -865,6 +875,9 @@
                         updateDatalist('list-diagnosis', json.options.diagnoses);
                         updateDatalist('list-drug', json.options.drugs);
                         updateDatalist('list-doctor', json.options.doctors);
+                        updateDatalist('list-gender', json.options.genders);
+                        updateDatalist('list-age', json.options.ages);
+                        updateDatalist('list-patient-type', json.options.patientTypes);
                     }
                     
                     if (json.chartData && json.chartData.length > 0) {
@@ -897,8 +910,13 @@
                 timeValues[item.month] += (item.value || 0);
             });
 
+            // Extract all months and sort chronologically
+            const allRawLabelsTime = Object.keys(timeData).sort();
+            
+            // Limit to last 12 months
+            const rawLabelsTime = allRawLabelsTime.slice(-12);
+            
             // Format labels to MM/YYYY for display on X axis
-            const rawLabelsTime = Object.keys(timeData).sort();
             const displayLabelsTime = rawLabelsTime.map(formatMonthDisplay);
             
             const timeDsAppr = rawLabelsTime.map(m => timeData[m]['Appropriate']);
@@ -1199,13 +1217,7 @@
                     responsive: true, maintainAspectRatio: false, 
                     onClick: (e, elements) => {
                         if (elements.length > 0 && !revealedLicense) {
-                            const index = elements[0].index;
-                            const clickedLicense = docSummaryChartObj.data.datasets[elements[0].datasetIndex].doctorLicenses[index];
-                            revealedLicense = clickedLicense;
-                            // Only set search box if user clicked, to reveal name.
-                            document.getElementById('searchLicense').value = clickedLicense;
-                            renderDocSummaryChart();
-                            renderDoctorPatientList(clickedLicense);
+                            alert("ไม่สามารถเปิดเผยข้อมูลได้ กรุณาพิมพ์เลข ว. ของท่านในกล่องค้นหาเพื่อดูข้อมูลรายบุคคล");
                         }
                     },
                     scales: { x: { stacked: true, ticks: { font: { size: 14, weight: 'bold' } } }, y: { stacked: true, beginAtZero: true } },
@@ -1225,7 +1237,16 @@
                                 return prefix + value;
                             }
                         },
-                        tooltip: { callbacks: { title: function(context) { return context[0].label; } } }
+                        tooltip: { 
+                            callbacks: { 
+                                title: function(context) { 
+                                    const idx = context[0].dataIndex;
+                                    const lic = context[0].dataset.doctorLicenses[idx];
+                                    const typedLicense = document.getElementById('searchLicense').value.trim();
+                                    return lic === typedLicense ? globalDocsMap[lic] : emojiMap[lic]; 
+                                } 
+                            } 
+                        }
                     }
                 }
             });
