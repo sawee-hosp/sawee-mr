@@ -85,7 +85,6 @@
 </head>
 <body class="min-h-screen py-4 px-2 sm:px-4 text-sm relative">
 
-    <!-- Login Overlay -->
     <div id="loginOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center hidden">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-80 text-center transform transition-all">
             <div class="text-5xl mb-4">🔐</div>
@@ -698,7 +697,12 @@
                 ctx.fillStyle = '#ef4444'; 
 
                 data.labels.forEach((label, index) => {
-                    let totalVal = timeValues[label] || 0;
+                    // map visual label back to raw label to get value
+                    let rawMonth = null;
+                    const parts = label.split('/'); // MM/YYYY
+                    if(parts.length === 2) rawMonth = `${parts[1]}-${parts[0]}`;
+                    
+                    let totalVal = timeValues[rawMonth] || 0;
                     if (totalVal > 0) {
                         let topY = y.bottom;
                         chart.data.datasets.forEach((dataset, i) => {
@@ -732,6 +736,24 @@
             if (isNaN(d)) return dateStr;
             const pad = (n) => n.toString().padStart(2, '0');
             return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        // Extracts YYYY-MM robustly from various date formats
+        function extractYearMonth(dateStr) {
+            if (!dateStr || dateStr === '-' || dateStr === 'ไม่มีข้อมูล') return null;
+            if (dateStr.includes('/')) {
+                const p = dateStr.split(' ')[0].split('/');
+                if(p.length >= 3) return `${p[2]}-${p[1].padStart(2, '0')}`;
+            }
+            if (dateStr.includes('-')) {
+                const p = dateStr.split(' ')[0].split('-');
+                if(p.length >= 3) return `${p[0]}-${p[1].padStart(2, '0')}`;
+            }
+            const d = new Date(dateStr);
+            if(!isNaN(d)) {
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
+            }
+            return null;
         }
 
         function formatMonthDisplay(yyyyMM) {
@@ -953,6 +975,14 @@
                             } else {
                                 activeDashMonth = clickedMonthRaw;
                             }
+                            
+                            // Visual Feedback: Fade non-active bars
+                            timeChart.data.datasets.forEach((dataset, i) => {
+                                let baseColor = i === 0 ? '#22c55e' : (i === 1 ? '#ef4444' : '#cbd5e1');
+                                let fadedColor = i === 0 ? '#bbf7d0' : (i === 1 ? '#fecaca' : '#f1f5f9');
+                                dataset.backgroundColor = rawLabelsTime.map(m => (activeDashMonth === null || m === activeDashMonth) ? baseColor : fadedColor);
+                            });
+                            timeChart.update();
                             updateDashboardSubCharts();
                         }
                     },
@@ -1082,9 +1112,9 @@
                         eIdx++;
                     });
 
-                    const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m).sort().reverse();
+                    // Build Month Dropdown with robust extractor
+                    const months = [...new Set(globalDocData.map(d => extractYearMonth(d.month)))].filter(m => m).sort().reverse();
                     
-                    // Setup Dropdowns
                     const selMonth = document.getElementById('docMonthSelector');
                     const filterMonth = document.getElementById('docListFilterMonth');
                     
@@ -1131,7 +1161,7 @@
             const month = document.getElementById('docMonthSelector').value;
             let filtered = globalDocData;
             if(month !== 'all') {
-                filtered = globalDocData.filter(d => d.month === month);
+                filtered = globalDocData.filter(d => extractYearMonth(d.month) === month);
             }
 
             let stats = {
@@ -1273,16 +1303,19 @@
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
             
             if (fMonth === 'current') {
-                const maxMonth = globalDocData.reduce((max, d) => d.month > max ? d.month : max, "0000-00");
-                patients = patients.filter(d => d.month === maxMonth);
+                const maxMonth = globalDocData.reduce((max, d) => {
+                    let yM = extractYearMonth(d.month);
+                    return (yM && yM > max) ? yM : max;
+                }, "0000-00");
+                patients = patients.filter(d => extractYearMonth(d.month) === maxMonth);
             } else if (fMonth !== 'all') {
-                patients = patients.filter(d => d.month === fMonth);
+                patients = patients.filter(d => extractYearMonth(d.month) === fMonth);
             }
 
             if (fStatus === 'pending') {
-                patients = patients.filter(d => !d.evaluated || d.evaluated === 'ไม่ได้ส่งใบDUE' || d.evaluated === 'รอประเมิน');
+                patients = patients.filter(d => !d.evaluated || d.evaluated === 'ไม่ได้ส่งใบDUE' || d.evaluated === 'รอประเมิน' || d.evaluated === 'ยังไม่ประเมิน');
             } else if (fStatus === 'evaluated') {
-                patients = patients.filter(d => d.evaluated && d.evaluated !== 'ไม่ได้ส่งใบDUE' && d.evaluated !== 'รอประเมิน');
+                patients = patients.filter(d => d.evaluated && d.evaluated !== 'ไม่ได้ส่งใบDUE' && d.evaluated !== 'รอประเมิน' && d.evaluated !== 'ยังไม่ประเมิน');
             }
 
             // Apply Sort
@@ -1303,13 +1336,13 @@
                     tr.className = 'border-b border-indigo-50 doctor-row-hover';
                     tr.onclick = () => openDoctorEditForm(p.sheet, p.hn);
                     
-                    let isPending = (!p.evaluated || p.evaluated === 'ไม่ได้ส่งใบDUE' || p.evaluated === 'รอประเมิน');
+                    let isPending = (!p.evaluated || p.evaluated === 'ไม่ได้ส่งใบDUE' || p.evaluated === 'รอประเมิน' || p.evaluated === 'ยังไม่ประเมิน');
                     let displayStatus = isPending ? 'ยังไม่ประเมิน' : p.evaluated;
                     let badgeColor = isPending ? 'bg-gray-200 text-gray-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
                     
                     tr.innerHTML = `
                         <td class="p-3 font-bold text-indigo-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${formatMonthDisplay(p.month)}</td>
+                        <td class="p-3 text-gray-500">${formatMonthDisplay(extractYearMonth(p.month))}</td>
                         <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
                     `;
@@ -1404,13 +1437,8 @@
                         sel.appendChild(opt);
                     });
 
-                    // Build Month Filter
-                    const months = [...new Set(globalPharmaData.map(d => {
-                        if(d.date === '-' || !d.date) return null;
-                        const parts = d.date.split('/');
-                        if(parts.length >= 3) return `${parts[2].split(' ')[0]}-${parts[1]}`; // approx yyyy-MM
-                        return null;
-                    }))].filter(m => m).sort().reverse();
+                    // Build Month Filter robustly
+                    const months = [...new Set(globalPharmaData.map(d => extractYearMonth(d.date)))].filter(m => m).sort().reverse();
                     
                     const filterMonth = document.getElementById('pharmaListFilterMonth');
                     filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
@@ -1446,7 +1474,7 @@
 
             patients.forEach(p => {
                 if(stats[p.sheet]) {
-                    if(p.evaluated === 'รอประเมิน' || p.evaluated === '') stats[p.sheet].pending++;
+                    if(p.evaluated === 'รอประเมิน' || p.evaluated === '' || p.evaluated === 'ยังไม่ประเมิน') stats[p.sheet].pending++;
                     else stats[p.sheet].eval++;
                 }
             });
@@ -1484,32 +1512,18 @@
             if (fMonth !== 'all') {
                 let targetMonth = fMonth;
                 if(fMonth === 'current') {
-                    // Extract latest month
                     targetMonth = patients.reduce((max, p) => {
-                        if(!p.date || p.date === '-') return max;
-                        const parts = p.date.split('/');
-                        if(parts.length >= 3) {
-                            const m = `${parts[2].split(' ')[0]}-${parts[1]}`;
-                            return m > max ? m : max;
-                        }
-                        return max;
+                        let yM = extractYearMonth(p.date);
+                        return (yM && yM > max) ? yM : max;
                     }, "0000-00");
                 }
-
-                patients = patients.filter(p => {
-                    if(!p.date || p.date === '-') return false;
-                    const parts = p.date.split('/');
-                    if(parts.length >= 3) {
-                        return `${parts[2].split(' ')[0]}-${parts[1]}` === targetMonth;
-                    }
-                    return false;
-                });
+                patients = patients.filter(p => extractYearMonth(p.date) === targetMonth);
             }
 
             if (fStatus === 'pending') {
-                patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน');
+                patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน' || d.evaluated === 'ยังไม่ประเมิน');
             } else if (fStatus === 'evaluated') {
-                patients = patients.filter(d => d.evaluated && d.evaluated !== 'รอประเมิน');
+                patients = patients.filter(d => d.evaluated && d.evaluated !== 'รอประเมิน' && d.evaluated !== 'ยังไม่ประเมิน');
             }
 
             // Apply Sort
@@ -1519,7 +1533,7 @@
                 
                 // For date sort, convert DD/MM/YYYY back to parsable string
                 if(pharmaSortCol === 'date') {
-                    const pa = vA.split('/'); const pb = vB.split('/');
+                    const pa = vA.split(' ')[0].split('/'); const pb = vB.split(' ')[0].split('/');
                     if(pa.length>=3) vA = `${pa[2]}-${pa[1]}-${pa[0]}`;
                     if(pb.length>=3) vB = `${pb[2]}-${pb[1]}-${pb[0]}`;
                 }
@@ -1542,7 +1556,7 @@
                         searchPatient(null);
                     };
                     
-                    let isPending = (!p.evaluated || p.evaluated === 'รอประเมิน');
+                    let isPending = (!p.evaluated || p.evaluated === 'รอประเมิน' || p.evaluated === 'ยังไม่ประเมิน');
                     let displayStatus = isPending ? 'ยังไม่ประเมิน' : p.evaluated;
                     let badgeColor = isPending ? 'bg-yellow-100 text-yellow-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
                     
@@ -1958,8 +1972,22 @@
                 } catch (e) { console.error("Anti logic error:", e); }
             }
 
+            // Handle Pharmacist Staff Dropdown Logic robustly
             const pharmaEl = document.getElementById(`${prefix}_pharmacist`);
-            if(pharmaEl) pharmaEl.value = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
+            if(pharmaEl) {
+                let staffName = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
+                if (staffName) {
+                    // Check if it exists in the list
+                    let exists = Array.from(pharmaEl.options).some(opt => opt.value === staffName);
+                    if (!exists) {
+                        const opt = document.createElement('option');
+                        opt.value = staffName;
+                        opt.textContent = `${staffName} (ข้อมูลเดิม)`;
+                        pharmaEl.appendChild(opt);
+                    }
+                }
+                pharmaEl.value = staffName;
+            }
             
             if (tab === 'Oseltamivir') {
                 try {
