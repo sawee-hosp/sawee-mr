@@ -550,7 +550,7 @@
                             <thead>
                                 <tr class="bg-indigo-50 border-b border-indigo-100 text-indigo-800 select-none">
                                     <th class="p-2 font-semibold sortable" onclick="sortDocList('sheet')">DUE Type ↕</th>
-                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('month')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('rawDate')">วันที่สั่งยา ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortDocList('hn')">HN / ชื่อผู้ป่วย ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortDocList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
@@ -633,7 +633,7 @@
                             <thead>
                                 <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800 select-none">
                                     <th class="p-2 font-semibold sortable" onclick="sortPharmaList('sheet')">DUE Type ↕</th>
-                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('date')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('rawDate')">วันที่สั่งยา ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortPharmaList('hn')">HN / ชื่อผู้ป่วย ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortPharmaList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
@@ -649,7 +649,7 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwdT2vAYgkS72XtjPqwG51joJbOUfprSAgT_KViRVtiZgo4g4C_NSi2N_IwmnCSTzEz/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyjPGx96q8v-kx2oaT0HZ6r8DJDQdSB1b4Or37x2m94N7IJWBIgvBe13BCsnvIAgU9R9g/exec";
         let activeTab = 'Antibiotics'; 
         let isDoctorMode = false;
         
@@ -663,11 +663,11 @@
         // Interactive Dashboard State
         let currentDashRawData = [];
         let activeDashMonth = null;
-        let timeValues = {}; // For holding value amounts for the red text
+        let timeValues = {};
 
-        // Lists sorting state
-        let docSortCol = 'month', docSortAsc = false;
-        let pharmaSortCol = 'date', pharmaSortAsc = false;
+        // Lists sorting state (ใช้ rawDate เรียงเสมอเพื่อความแม่นยำ)
+        let docSortCol = 'rawDate', docSortAsc = false;
+        let pharmaSortCol = 'rawDate', pharmaSortAsc = false;
 
         // Emoji list for doctors
         const emojiList = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🐣','🦇','🦉','🦅','🦆','🦋'];
@@ -1082,14 +1082,14 @@
                         eIdx++;
                     });
 
-                    // Build Month Dropdown
+                    // Build Month Dropdown from accurate month format "YYYY-MM"
                     const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
                     
                     const selMonth = document.getElementById('docMonthSelector');
                     const filterMonth = document.getElementById('docListFilterMonth');
                     
                     selMonth.innerHTML = '<option value="all">ทุกช่วงเวลา</option>';
-                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
+                    filterMonth.innerHTML = '<option value="all">ทุกเดือน</option>';
                     
                     months.forEach(m => {
                         const mDisplay = formatMonthDisplay(m);
@@ -1102,15 +1102,16 @@
                         filterMonth.appendChild(opt2);
                     });
                     
-                    // Set default to Current Month if available
+                    // ตั้งค่า Default เดือน
                     const now = new Date();
                     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                     
                     if (months.includes(currentMonthStr)) {
                         selMonth.value = currentMonthStr;
-                        filterMonth.value = currentMonthStr; // Update filter to match
+                        filterMonth.value = currentMonthStr;
                     } else if (months.length > 0) {
                         selMonth.value = months[0];
+                        filterMonth.value = months[0];
                     }
 
                     renderDocSummaryChart();
@@ -1280,14 +1281,7 @@
             const fStatus = document.getElementById('docListFilterStatus').value;
 
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
-            
-            if (fMonth === 'current') {
-                const now = new Date();
-                const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                patients = patients.filter(d => d.month === currentMonthStr);
-            } else if (fMonth !== 'all') {
-                patients = patients.filter(d => d.month === fMonth);
-            }
+            if (fMonth !== 'all') patients = patients.filter(d => d.month === fMonth);
 
             if (fStatus === 'pending') {
                 patients = patients.filter(d => !d.hasIndication || (!d.evaluated.includes('Appr') && !d.evaluated.includes('Inapp')));
@@ -1295,6 +1289,7 @@
                 patients = patients.filter(d => d.hasIndication && (d.evaluated.includes('Appr') || d.evaluated.includes('Inapp')));
             }
 
+            // เรียงลำดับข้อมูล
             patients.sort((a, b) => {
                 let vA = a[docSortCol] || '';
                 let vB = b[docSortCol] || '';
@@ -1323,7 +1318,7 @@
                     
                     tr.innerHTML = `
                         <td class="p-3 font-bold text-indigo-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${formatMonthDisplay(p.month)}</td>
+                        <td class="p-3 text-gray-500">${p.displayDate}</td>
                         <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
                     `;
@@ -1420,12 +1415,20 @@
                     const months = [...new Set(globalPharmaData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
                     
                     const filterMonth = document.getElementById('pharmaListFilterMonth');
-                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
+                    filterMonth.innerHTML = '<option value="all">ทุกเดือน</option>';
                     months.forEach(m => {
                         const opt = document.createElement('option');
                         opt.value = m; opt.textContent = formatMonthDisplay(m);
                         filterMonth.appendChild(opt);
                     });
+                    
+                    const now = new Date();
+                    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    if (months.includes(currentMonthStr)) {
+                        filterMonth.value = currentMonthStr;
+                    } else if (months.length > 0) {
+                        filterMonth.value = months[0];
+                    }
                     
                     if (currentValue && staffs.includes(currentValue)) {
                         sel.value = currentValue;
@@ -1486,15 +1489,7 @@
             const fStatus = document.getElementById('pharmaListFilterStatus').value;
 
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
-            
-            if (fMonth !== 'all') {
-                let targetMonth = fMonth;
-                if(fMonth === 'current') {
-                    const now = new Date();
-                    targetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                }
-                patients = patients.filter(p => p.month === targetMonth);
-            }
+            if (fMonth !== 'all') patients = patients.filter(p => p.month === fMonth);
 
             if (fStatus === 'pending') {
                 patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน' || d.evaluated === 'ยังไม่ประเมิน');
@@ -1505,13 +1500,6 @@
             patients.sort((a, b) => {
                 let vA = a[pharmaSortCol] || '';
                 let vB = b[pharmaSortCol] || '';
-                
-                if(pharmaSortCol === 'date') {
-                    const pa = vA.split(' ')[0].split('/'); const pb = vB.split(' ')[0].split('/');
-                    if(pa.length>=3) vA = `${pa[2]}-${pa[1]}-${pa[0]}`;
-                    if(pb.length>=3) vB = `${pb[2]}-${pb[1]}-${pb[0]}`;
-                }
-
                 if(vA < vB) return pharmaSortAsc ? -1 : 1;
                 if(vA > vB) return pharmaSortAsc ? 1 : -1;
                 return 0;
@@ -1536,7 +1524,7 @@
                     
                     tr.innerHTML = `
                         <td class="p-3 font-bold text-emerald-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${p.date}</td>
+                        <td class="p-3 text-gray-500">${p.displayDate}</td>
                         <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
                     `;
