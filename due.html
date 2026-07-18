@@ -522,6 +522,34 @@
                 
                 <p class="text-center text-xs text-gray-400 mt-4">* ข้อมูลแพทย์ถูกแปลงเป็นสัญลักษณ์เพื่อความเป็นส่วนตัว หากต้องการดูข้อมูลของท่าน กรุณาพิมพ์เลข ว. ในช่องค้นหา</p>
                 
+                <!-- Quality Indicators (New Section) -->
+                <div class="mt-6 bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm transition-all">
+                    <h3 class="text-lg font-bold text-rose-800 mb-3 flex items-center gap-2">🚨 ตัวชี้วัดคุณภาพใบ DUE (จุดที่ควรระวัง/ปรับปรุง)</h3>
+                    <p class="text-xs text-rose-600 mb-3 font-medium">สรุปข้อมูลข้อบกพร่อง จากผลงานของแพทย์ที่แสดงผลอยู่ ณ ปัจจุบัน</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
+                            <div class="font-bold text-orange-700 mb-2 border-b border-rose-100 pb-1">Oseltamivir</div>
+                            <ul class="text-[13px] text-gray-700 space-y-2">
+                                <li class="flex justify-between"><span>• ไม่ได้เลือก Indication ที่เหมาะสม:</span> <span class="font-bold text-red-600"><span id="q-osel-ind">0</span> ราย</span></li>
+                                <li class="flex justify-between"><span>• ไม่ได้ระบุ Onset หรือ > 48hr:</span> <span class="font-bold text-red-600"><span id="q-osel-onset">0</span> ราย</span></li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
+                            <div class="font-bold text-purple-700 mb-2 border-b border-rose-100 pb-1">Atorvastatin</div>
+                            <ul class="text-[13px] text-gray-700 space-y-2">
+                                <li class="flex justify-between"><span>• ไม่ได้เลือก Indication ที่เหมาะสม:</span> <span class="font-bold text-red-600"><span id="q-ator-ind">0</span> ราย</span></li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
+                            <div class="font-bold text-blue-700 mb-2 border-b border-rose-100 pb-1">Antibiotics (Mero/Tazo)</div>
+                            <ul class="text-[13px] text-gray-700 space-y-2">
+                                <li class="flex justify-between"><span>• ไม่มีหลักฐานอนุมัติโดย Staff:</span> <span class="font-bold text-red-600"><span id="q-anti-staff">0</span> ราย</span></li>
+                                <li class="flex justify-between"><span>• ไม่ได้เลือก Indication ที่เหมาะสม:</span> <span class="font-bold text-red-600"><span id="q-anti-ind">0</span> ราย</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Doctor Patient List Table with Filters -->
                 <div id="doctorPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                     <h3 class="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อประเมิน Part 2)</h3>
@@ -1197,6 +1225,37 @@
             if (revealedLicense && activeLicenses.includes(revealedLicense)) {
                 activeLicenses = [revealedLicense];
             }
+
+            // --- คำนวณ Quality Indicators (ตัวชี้วัดคุณภาพ) ---
+            let qOselInd = 0, qOselOnset = 0;
+            let qAtorInd = 0;
+            let qAntiStaff = 0, qAntiInd = 0;
+
+            filtered.forEach(d => {
+                // คำนวณเฉพาะผลงานของแพทย์ที่กำลังแสดงบนกราฟ
+                if (!activeLicenses.includes(d.license)) return;
+
+                if (d.sheet === 'Oseltamivir') {
+                    if (!d.hasIndication || d.evaluated.includes('Indication')) qOselInd++;
+                    let onsetNum = parseInt(d.onset);
+                    if (!d.onset || d.onset === '-' || isNaN(onsetNum) || onsetNum > 48) qOselOnset++;
+                } 
+                else if (d.sheet === 'Atorvastatin') {
+                    if (!d.hasIndication || d.evaluated.includes('Indication')) qAtorInd++;
+                }
+                else if (d.sheet === 'Antibiotics') {
+                    let sa = (d.staffApprove || '').toLowerCase();
+                    if (!sa || sa === '-' || sa === 'ไม่มี' || sa === 'no') qAntiStaff++;
+                    if (!d.hasIndication || d.evaluated.includes('Indication')) qAntiInd++;
+                }
+            });
+
+            // อัปเดตตัวเลขขึ้นบนหน้าจอ
+            document.getElementById('q-osel-ind').textContent = qOselInd;
+            document.getElementById('q-osel-onset').textContent = qOselOnset;
+            document.getElementById('q-ator-ind').textContent = qAtorInd;
+            document.getElementById('q-anti-staff').textContent = qAntiStaff;
+            document.getElementById('q-anti-ind').textContent = qAntiInd;
 
             const labels = activeLicenses.map(lic => lic === typedLicense ? globalDocsMap[lic] : emojiMap[lic]);
             const datasets = [];
