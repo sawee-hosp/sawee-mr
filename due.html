@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -650,7 +649,7 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzCZ2Nd9WUWf5rf2O-8Asv5tMrD4kxBq6pcFGtRavRReV85PdGgmttvtdqKiydiN_l1rA/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwdT2vAYgkS72XtjPqwG51joJbOUfprSAgT_KViRVtiZgo4g4C_NSi2N_IwmnCSTzEz/exec";
         let activeTab = 'Antibiotics'; 
         let isDoctorMode = false;
         
@@ -683,7 +682,7 @@
         const topValuePlugin = {
             id: 'topValuePlugin',
             afterDatasetsDraw(chart, args, options) {
-                if (activeTab !== 'Antibiotics') return;
+                if (activeTab !== 'Antibiotics' && activeTab !== 'Oseltamivir') return;
                 const { ctx, data, scales: { x, y } } = chart;
                 ctx.save();
                 ctx.textAlign = 'center';
@@ -1083,7 +1082,7 @@
                         eIdx++;
                     });
 
-                    // Build Month Dropdown from accurate month format "YYYY-MM"
+                    // Build Month Dropdown
                     const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
                     
                     const selMonth = document.getElementById('docMonthSelector');
@@ -1103,7 +1102,16 @@
                         filterMonth.appendChild(opt2);
                     });
                     
-                    if(months.length > 0) selMonth.value = months[0]; // Set to latest month default
+                    // Set default to Current Month if available
+                    const now = new Date();
+                    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (months.includes(currentMonthStr)) {
+                        selMonth.value = currentMonthStr;
+                        filterMonth.value = currentMonthStr; // Update filter to match
+                    } else if (months.length > 0) {
+                        selMonth.value = months[0];
+                    }
 
                     renderDocSummaryChart();
                 }
@@ -1274,11 +1282,9 @@
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
             
             if (fMonth === 'current') {
-                const maxMonth = globalDocData.reduce((max, d) => {
-                    let yM = d.month;
-                    return (yM && yM > max && yM !== 'ไม่มีข้อมูล') ? yM : max;
-                }, "0000-00");
-                patients = patients.filter(d => d.month === maxMonth);
+                const now = new Date();
+                const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                patients = patients.filter(d => d.month === currentMonthStr);
             } else if (fMonth !== 'all') {
                 patients = patients.filter(d => d.month === fMonth);
             }
@@ -1484,10 +1490,8 @@
             if (fMonth !== 'all') {
                 let targetMonth = fMonth;
                 if(fMonth === 'current') {
-                    targetMonth = patients.reduce((max, p) => {
-                        let yM = p.month;
-                        return (yM && yM > max && yM !== 'ไม่มีข้อมูล') ? yM : max;
-                    }, "0000-00");
+                    const now = new Date();
+                    targetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                 }
                 patients = patients.filter(p => p.month === targetMonth);
             }
