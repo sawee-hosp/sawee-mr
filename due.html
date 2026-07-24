@@ -76,7 +76,7 @@
         .pie-container { position: relative; width: 100%; height: 200px; }
         
         .doctor-row-hover:hover { background-color: #eef2ff; cursor: pointer; }
-        th.sortable:hover { background-color: #e2e8f0; cursor: pointer; }
+        .th-sortable:hover { background-color: #e2e8f0; cursor: pointer; }
 
         /* Guideline Box */
         .guideline-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
@@ -103,7 +103,6 @@
                         </tr>
                     </thead>
                     <tbody id="visitSelectionTbody">
-                        <!-- รายการจะถูกแทรกที่นี่ -->
                     </tbody>
                 </table>
             </div>
@@ -118,7 +117,6 @@
             </div>
             <input type="text" id="doctorSearchInput" placeholder="พิมพ์ชื่อ หรือ เลข ว. เพื่อค้นหา..." class="w-full bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-inner mb-3 font-semibold" onkeyup="filterDoctorList()">
             <div id="doctorListContainer" class="flex-1 overflow-y-auto border border-gray-100 bg-gray-50 rounded-xl p-1 space-y-1 shadow-inner">
-                <!-- รายชื่อจะถูก Render ตรงนี้ -->
             </div>
         </div>
     </div>
@@ -802,7 +800,18 @@
     </div>
 
     <script>
+        // แก้ไข: ใส่ URL Web App ของคุณที่นี่ (ที่เพิ่ง Deploy ใหม่แบบ Anyone)
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwdT2vAYgkS72XtjPqwG51joJbOUfprSAgT_KViRVtiZgo4g4C_NSi2N_IwmnCSTzEz/exec";
+        
+        // ฟังก์ชันช่วยสำหรับการยิง GET request ไปที่ GAS (แก้ปัญหา CORS เบื้องต้น)
+        async function fetchGasGet(urlParams) {
+            const url = `${GAS_URL}?${urlParams}`;
+            // สำคัญมาก: redirect: 'follow' อนุญาตให้เบราว์เซอร์ตามลิงก์ Redirect แบบ 302 ของ Google ได้
+            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        }
+
         let activeTab = 'Antibiotics'; 
         let isDoctorMode = false;
         
@@ -938,8 +947,8 @@
 
         async function prefetchDoctors() {
             try {
-                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
-                const json = await res.json();
+                // แก้การใช้งานเป็น fetchGasGet function
+                const json = await fetchGasGet(`action=getDoctorSummary`);
                 if(json.status === 'success' && json.docsMap) {
                     cachedDocsList = Object.keys(json.docsMap).map(lic => ({
                         license: lic,
@@ -968,8 +977,8 @@
             errorMsg.classList.add('hidden');
             
             try {
-                const res = await fetch(`${GAS_URL}?action=verifyPasscode&passcode=${pass}`);
-                const json = await res.json();
+                // แก้การใช้งานเป็น fetchGasGet function
+                const json = await fetchGasGet(`action=verifyPasscode&passcode=${pass}`);
                 if(json.status === 'success') {
                     localStorage.setItem('due_logged_in', 'true');
                     document.getElementById('loginOverlay').classList.add('hidden');
@@ -1017,8 +1026,8 @@
             document.getElementById('phantomSpinner').classList.add('active');
             
             try {
-                const res = await fetch(`${GAS_URL}?action=getLastUpdate&sheet=${activeTab}`);
-                const json = await res.json();
+                // แก้การใช้งานเป็น fetchGasGet function
+                const json = await fetchGasGet(`action=getLastUpdate&sheet=${activeTab}`);
                 
                 if(json.status === 'success') {
                     txt.textContent = formatDisplayDate(json.data);
@@ -1247,8 +1256,8 @@
 
         async function fetchDoctorSummary() {
             try {
-                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
-                const json = await res.json();
+                // แก้การใช้งานเป็น fetchGasGet function
+                const json = await fetchGasGet(`action=getDoctorSummary`);
                 if(json.status === 'success') {
                     globalDocData = json.data;
                     globalDocsMap = json.docsMap;
@@ -1587,7 +1596,9 @@
             
             if (cachedDocsList.length === 0) {
                 document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-gray-500"><span class="spinner"></span> กำลังดึงฐานข้อมูลแพทย์...</div>';
-                fetch(`${GAS_URL}?action=getDoctorSummary`).then(r=>r.json()).then(json=>{
+                
+                // แก้การใช้งานเป็น fetchGasGet function
+                fetchGasGet(`action=getDoctorSummary`).then(json=>{
                     if(json.docsMap) {
                         cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] }));
                         renderDoctorList('');
@@ -1657,8 +1668,8 @@
 
         async function fetchPharmaSummary() {
             try {
-                const res = await fetch(`${GAS_URL}?action=getPharmacistSummary`);
-                const json = await res.json();
+                // แก้การใช้งานเป็น fetchGasGet function
+                const json = await fetchGasGet(`action=getPharmacistSummary`);
                 if(json.status === 'success') {
                     globalPharmaData = json.data;
                     
@@ -2033,79 +2044,8 @@
             }
         }
 
-        async function fetchPharmacists() {
-            try {
-                const response = await fetch(`${GAS_URL}?action=getPharmacists`);
-                const data = await response.json();
-                ['ator', 'osel', 'anti'].forEach(prefix => {
-                    const select = document.getElementById(`${prefix}_pharmacist`);
-                    if(select) {
-                        select.innerHTML = '<option value="" disabled selected>-- เลือกเภสัชกร --</option>';
-                        if (data.status === 'success' && data.data) {
-                            data.data.forEach(pharma => {
-                                const option = document.createElement('option');
-                                option.value = pharma.name; option.textContent = `${pharma.id} - ${pharma.name}`;
-                                select.appendChild(option);
-                            });
-                        }
-                    }
-                });
-            } catch (error) { console.error("Pharmacist load failed."); }
-        }
-
-        async function searchPatient(hnFromDoctor = null) {
-            const hn = hnFromDoctor || document.getElementById('searchHN').value.trim();
-            const msgBox = document.getElementById('searchMessage');
-            const msgText = document.getElementById('searchMessageText');
-            const btn = document.getElementById('searchBtn');
-
-            if (!hnFromDoctor) resetDoctorMode(); 
-
-            if (!hn) return;
-
-            document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
-            msgBox.classList.add('hidden');
-            btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
-
-            try {
-                const response = await fetch(`${GAS_URL}?action=search&sheet=${activeTab}&hn=${hn}`);
-                const res = await response.json();
-
-                if (res.status === 'success' && res.data) {
-                    // เปลี่ยนมารองรับ Array เพราะแก้ระบบเป็นคืนค่าทุก Visit
-                    if(Array.isArray(res.data) && res.data.length > 1) {
-                        showVisitSelectionModal(res.data);
-                        msgText.textContent = `พบประวัติการสั่งยามากกว่า 1 ครั้ง กรุณาเลือกรายการที่ต้องการจัดการในหน้าต่าง Pop-up`;
-                        msgBox.className = 'bg-blue-100 text-blue-800 border-l-4 border-blue-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
-                    } else {
-                        // ถ้ามีอันเดียว หรือยังใช้ระบบคืน Object เดี่ยวๆ
-                        const singleData = Array.isArray(res.data) ? res.data[0] : res.data;
-                        loadFormWithData(singleData);
-                        
-                        if(isDoctorMode) {
-                            msgText.innerHTML = `พบข้อมูล HN: ${hn} <b>(โหมดบันทึกแพทย์: แก้ไขได้เฉพาะ Part 2)</b>`;
-                            applyDoctorMode(activeTab);
-                        } else {
-                            msgText.textContent = `พบข้อมูล HN: ${hn} (แก้ไขและบันทึกได้เลย)`;
-                        }
-                        msgBox.className = 'bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
-                    }
-                } else {
-                    msgText.textContent = `ไม่พบประวัติ HN: ${hn} ในระบบ กดปุ่ม "+ เพิ่มใหม่" เพื่อสร้างข้อมูล`;
-                    msgBox.className = 'bg-orange-100 text-orange-800 border-l-4 border-orange-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
-                }
-                msgBox.classList.remove('hidden');
-            } catch (error) {
-                console.error("Search Patient Error:", error);
-                msgText.textContent = "พบความผิดปกติในการแสดงผลข้อมูลของ HN นี้ (แต่ยังสามารถแก้ไขและบันทึกทับได้)"; 
-                msgBox.classList.remove('hidden');
-            } finally {
-                btn.innerHTML = 'ค้นหา'; btn.disabled = false;
-            }
-        }
-
         // ==========================================
-        // VISIT SELECTION & DELETE (ใหม่!)
+        // VISIT SELECTION & DELETE
         // ==========================================
         function showVisitSelectionModal(visitsData) {
             const tbody = document.getElementById('visitSelectionTbody');
@@ -2142,7 +2082,6 @@
             document.getElementById('visitSelectionModal').classList.remove('hidden');
         }
 
-        // ฟังก์ชันแยกเพื่อให้เรียกจาก string HTML ได้
         window.selectVisit = function(rowIndex, dataStr) {
             const data = JSON.parse(decodeURIComponent(dataStr));
             loadFormWithData(data);
@@ -2165,7 +2104,7 @@
                     if(json.status === 'success') {
                         alert('ลบข้อมูลที่ซ้ำสำเร็จแล้ว!');
                         closeVisitSelection();
-                        searchPatient(null); // โหลดใหม่
+                        searchPatient(null); 
                     } else {
                         alert('เกิดข้อผิดพลาดในการลบ: ' + json.message);
                     }
@@ -2384,6 +2323,7 @@
             let payload = { action: 'saveFullData', sheetName: tab, rowIndex: rowIndex, updateData: updateData };
 
             try {
+                // สำหรับ POST ส่ง text/plain ช่วยเลี่ยง Preflight CORS ได้
                 await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
                 
                 const msgBox = document.getElementById('searchMessage');
