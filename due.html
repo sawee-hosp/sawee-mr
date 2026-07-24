@@ -76,7 +76,7 @@
         .pie-container { position: relative; width: 100%; height: 200px; }
         
         .doctor-row-hover:hover { background-color: #eef2ff; cursor: pointer; }
-        .th-sortable:hover { background-color: #e2e8f0; cursor: pointer; }
+        th.sortable:hover { background-color: #e2e8f0; cursor: pointer; }
 
         /* Guideline Box */
         .guideline-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
@@ -156,7 +156,6 @@
         </header>
 
         <div id="mainPage">
-            <!-- Dashboard Trigger -->
             <div class="floating-card p-3 mb-4 rounded-xl border border-gray-100 cursor-pointer hover:shadow-md transition-shadow group" onclick="toggleDashboard()">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-1.5">
                     <span class="text-gray-600 font-semibold text-lg">ฐานข้อมูล: <span id="currentTabLabel" class="text-blue-800 font-bold text-xl">Antibiotics</span> 
@@ -229,7 +228,6 @@
             <datalist id="list-doctor"></datalist>
             <datalist id="list-staff-approve"><option value="มี"><option value="ไม่มี"></option></datalist>
 
-            <!-- ===================== FORM: ANTIBIOTICS ===================== -->
             <form id="form-Antibiotics" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Antibiotics')">
                 <input type="hidden" id="anti_rowIndex">
                 <input type="hidden" id="anti_Visit_ID">
@@ -387,7 +385,6 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
-            <!-- ===================== FORM: OSELTAMIVIR ===================== -->
             <form id="form-Oseltamivir" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Oseltamivir')">
                 <input type="hidden" id="osel_rowIndex">
                 <input type="hidden" id="osel_Visit_ID">
@@ -500,7 +497,6 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
-            <!-- ===================== FORM: ATORVASTATIN ===================== -->
             <form id="form-Atorvastatin" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Atorvastatin')">
                 <input type="hidden" id="ator_rowIndex">
                 <input type="hidden" id="ator_Visit_ID">
@@ -2044,6 +2040,75 @@
             }
         }
 
+        async function fetchPharmacists() {
+            try {
+                // แก้ไขปัญหา CORS ด้วย fetchGasGet
+                const data = await fetchGasGet(`action=getPharmacists`);
+                ['ator', 'osel', 'anti'].forEach(prefix => {
+                    const select = document.getElementById(`${prefix}_pharmacist`);
+                    if(select) {
+                        select.innerHTML = '<option value="" disabled selected>-- เลือกเภสัชกร --</option>';
+                        if (data.status === 'success' && data.data) {
+                            data.data.forEach(pharma => {
+                                const option = document.createElement('option');
+                                option.value = pharma.name; option.textContent = `${pharma.id} - ${pharma.name}`;
+                                select.appendChild(option);
+                            });
+                        }
+                    }
+                });
+            } catch (error) { console.error("Pharmacist load failed."); }
+        }
+
+        async function searchPatient(hnFromDoctor = null) {
+            const hn = hnFromDoctor || document.getElementById('searchHN').value.trim();
+            const msgBox = document.getElementById('searchMessage');
+            const msgText = document.getElementById('searchMessageText');
+            const btn = document.getElementById('searchBtn');
+
+            if (!hnFromDoctor) resetDoctorMode(); 
+
+            if (!hn) return;
+
+            document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
+            msgBox.classList.add('hidden');
+            btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+
+            try {
+                // แก้ไขปัญหา CORS ด้วย fetchGasGet
+                const res = await fetchGasGet(`action=search&sheet=${activeTab}&hn=${hn}`);
+
+                if (res.status === 'success' && res.data) {
+                    if(Array.isArray(res.data) && res.data.length > 1) {
+                        showVisitSelectionModal(res.data);
+                        msgText.textContent = `พบประวัติการสั่งยามากกว่า 1 ครั้ง กรุณาเลือกรายการที่ต้องการจัดการในหน้าต่าง Pop-up`;
+                        msgBox.className = 'bg-blue-100 text-blue-800 border-l-4 border-blue-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
+                    } else {
+                        const singleData = Array.isArray(res.data) ? res.data[0] : res.data;
+                        loadFormWithData(singleData);
+                        
+                        if(isDoctorMode) {
+                            msgText.innerHTML = `พบข้อมูล HN: ${hn} <b>(โหมดบันทึกแพทย์: แก้ไขได้เฉพาะ Part 2)</b>`;
+                            applyDoctorMode(activeTab);
+                        } else {
+                            msgText.textContent = `พบข้อมูล HN: ${hn} (แก้ไขและบันทึกได้เลย)`;
+                        }
+                        msgBox.className = 'bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
+                    }
+                } else {
+                    msgText.textContent = `ไม่พบประวัติ HN: ${hn} ในระบบ กดปุ่ม "+ เพิ่มใหม่" เพื่อสร้างข้อมูล`;
+                    msgBox.className = 'bg-orange-100 text-orange-800 border-l-4 border-orange-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
+                }
+                msgBox.classList.remove('hidden');
+            } catch (error) {
+                console.error("Search Patient Error:", error);
+                msgText.textContent = "พบความผิดปกติในการแสดงผลข้อมูลของ HN นี้ (แต่ยังสามารถแก้ไขและบันทึกทับได้)"; 
+                msgBox.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = 'ค้นหา'; btn.disabled = false;
+            }
+        }
+
         // ==========================================
         // VISIT SELECTION & DELETE
         // ==========================================
@@ -2082,6 +2147,7 @@
             document.getElementById('visitSelectionModal').classList.remove('hidden');
         }
 
+        // ฟังก์ชันแยกเพื่อให้เรียกจาก string HTML ได้
         window.selectVisit = function(rowIndex, dataStr) {
             const data = JSON.parse(decodeURIComponent(dataStr));
             loadFormWithData(data);
@@ -2098,6 +2164,7 @@
 
                 try {
                     const payload = { action: 'deleteRow', sheetName: sheetName, rowIndex: rowIndex };
+                    // สำหรับคำสั่ง DELETE แบบ POST เราไม่ต้องใช้ fetchGasGet ปล่อยให้มันส่งด้วย text/plain อย่างเดิม
                     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
                     const json = await res.json();
                     
