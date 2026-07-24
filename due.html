@@ -83,6 +83,20 @@
 </head>
 <body class="min-h-screen py-4 px-2 sm:px-4 text-sm relative">
 
+    <!-- Doctor Search Modal (เพิ่มใหม่) -->
+    <div id="doctorSearchModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[60] flex items-center justify-center hidden backdrop-blur-sm transition-all">
+        <div class="bg-white p-5 rounded-2xl shadow-2xl w-96 flex flex-col max-h-[85vh] border border-indigo-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-indigo-800 flex items-center gap-2">🔍 ฐานข้อมูลแพทย์ (ประวัติ)</h3>
+                <button onclick="closeDoctorSearch()" class="text-gray-400 hover:text-red-500 transition-colors bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center">✖</button>
+            </div>
+            <input type="text" id="doctorSearchInput" placeholder="พิมพ์ชื่อ หรือ เลข ว. เพื่อค้นหา..." class="w-full bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-inner mb-3 font-semibold" onkeyup="filterDoctorList()">
+            <div id="doctorListContainer" class="flex-1 overflow-y-auto border border-gray-100 bg-gray-50 rounded-xl p-1 space-y-1 shadow-inner">
+                <!-- รายชื่อจะถูก Render ตรงนี้ -->
+            </div>
+        </div>
+    </div>
+
     <div id="loginOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center hidden">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-80 text-center transform transition-all">
             <div class="text-5xl mb-4">🔐</div>
@@ -200,11 +214,12 @@
                         <h2 class="text-sm text-blue-800 font-bold">Part 1: ข้อมูลการสั่งใช้ยา</h2>
                         <span id="anti_mode_badge" class="hidden bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold border border-purple-200">โหมดแพทย์แก้ไข</span>
                     </div>
+                    <!-- Added required and red asterisks to mandatory fields -->
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        <div class="md:col-span-1"><label>HN</label><input type="text" id="anti_HN" class="editable-input font-bold text-center" required></div>
+                        <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="anti_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="anti_Patient_Name" class="editable-input font-bold"></div>
-                        <div class="md:col-span-1"><label>เพศ</label><input type="text" list="list-gender" id="anti_Gender" class="editable-input text-center"></div>
-                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" list="list-age" id="anti_Age" class="editable-input text-center"></div>
+                        <div class="md:col-span-1"><label>เพศ <span class="text-red-500">*</span></label><input type="text" list="list-gender" id="anti_Gender" class="editable-input text-center" required></div>
+                        <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" id="anti_Age" class="editable-input text-center" required></div>
                         <div class="md:col-span-1"><label>ประเภท</label><input type="text" list="list-patient-type" id="anti_Patient_Type" class="editable-input text-center"></div>
                     </div>
                     
@@ -215,8 +230,8 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100 relative">
                         <div class="md:col-span-1">
-                            <label class="text-blue-700">ยาที่สั่ง (Drug Name)</label>
-                            <input type="text" list="list-drug" id="anti_Drug_name" class="editable-input font-bold text-blue-800" oninput="renderAntibioticIndications(); validateAntibiotics(); calcAntiValue();">
+                            <label class="text-blue-700">ยาที่สั่ง (Drug Name) <span class="text-red-500">*</span></label>
+                            <input type="text" list="list-drug" id="anti_Drug_name" class="editable-input font-bold text-blue-800" required oninput="renderAntibioticIndications(); validateAntibiotics(); calcAntiValue();">
                         </div>
                         <div class="md:col-span-2"><label class="text-blue-700">วิธีใช้ (Drug Usage)</label><input type="text" id="anti_Drug_usage" class="editable-input" oninput="validateAntibiotics()"></div>
                     </div>
@@ -224,9 +239,15 @@
                     <div id="anti_recommendation" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded-r-lg p-3 mt-2 text-xs shadow-inner transition-all"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
-                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง</label><input type="datetime-local" id="anti_Order_DateTime" class="editable-input bg-gray-50 text-xs"></div>
-                        <div class="md:col-span-1"><label>แพทย์ผู้สั่ง</label><input type="text" list="list-doctor" id="anti_Doctor_Name" class="editable-input"></div>
-                        <div class="md:col-span-1"><label>ใบประกอบวิชาชีพ</label><input type="text" id="anti_License_No" class="editable-input"></div>
+                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง <span class="text-red-500">*</span></label><input type="datetime-local" id="anti_Order_DateTime" class="editable-input bg-gray-50 text-xs" required></div>
+                        <div class="md:col-span-1">
+                            <label>แพทย์ผู้สั่ง <span class="text-red-500">*</span></label>
+                            <div class="flex gap-1">
+                                <input type="text" id="anti_Doctor_Name" class="editable-input flex-1" required>
+                                <button type="button" onclick="openDoctorSearch('anti')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 rounded border border-indigo-200 transition-colors" title="ค้นหาประวัติแพทย์">🔍</button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-1"><label>ใบประกอบฯ <span class="text-red-500">*</span></label><input type="text" id="anti_License_No" class="editable-input" required></div>
                         <div class="md:col-span-1"><label class="text-indigo-700">หลักฐานอนุมัติ (Staff)</label><input type="text" list="list-staff-approve" id="anti_Staff_approve" class="editable-input bg-indigo-50 border-indigo-200"></div>
                     </div>
 
@@ -331,10 +352,10 @@
                         <span id="osel_mode_badge" class="hidden bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold border border-purple-200">โหมดแพทย์แก้ไข</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        <div class="md:col-span-1"><label>HN</label><input type="text" id="osel_HN" class="editable-input font-bold text-center" required></div>
+                        <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="osel_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="osel_Patient_Name" class="editable-input font-bold"></div>
-                        <div class="md:col-span-1"><label>เพศ</label><input type="text" list="list-gender" id="osel_Gender" class="editable-input text-center"></div>
-                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" list="list-age" step="0.1" id="osel_Age" class="editable-input text-center" oninput="validateOseltamivir()"></div>
+                        <div class="md:col-span-1"><label>เพศ <span class="text-red-500">*</span></label><input type="text" list="list-gender" id="osel_Gender" class="editable-input text-center" required></div>
+                        <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" step="0.1" id="osel_Age" class="editable-input text-center" required oninput="validateOseltamivir()"></div>
                         <div class="md:col-span-1"><label>น้ำหนัก (kg)</label><input type="number" step="0.1" id="osel_Weight_kg" class="editable-input text-center" oninput="validateOseltamivir()"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -343,7 +364,7 @@
                         <div class="md:col-span-2"><label>การวินิจฉัย (Diagnosis)</label><input type="text" list="list-diagnosis" id="osel_Diagnosis" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100 relative">
-                        <div class="md:col-span-1"><label class="text-blue-700">ชื่อยา (Drug Name)</label><input type="text" list="list-drug" id="osel_Drug_name" class="editable-input font-bold text-blue-800 transition-colors" oninput="validateOseltamivir(); calcOselValue();"></div>
+                        <div class="md:col-span-1"><label class="text-blue-700">ชื่อยา (Drug Name) <span class="text-red-500">*</span></label><input type="text" list="list-drug" id="osel_Drug_name" class="editable-input font-bold text-blue-800 transition-colors" required oninput="validateOseltamivir(); calcOselValue();"></div>
                         <div class="md:col-span-2"><label class="text-blue-700">วิธีใช้ (Drug Usage)</label><input type="text" id="osel_Drug_usage" class="editable-input transition-colors" oninput="validateOseltamivir()"></div>
                         <div class="md:col-span-1">
                             <label class="text-blue-700">จำนวนที่สั่ง (Total Qty)</label>
@@ -357,9 +378,15 @@
                     <div id="osel_recommendation" class="hidden bg-red-100 border-l-4 border-red-500 text-red-900 rounded-r-lg p-3 mt-2 text-xs shadow-inner transition-all"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-2 border-t border-gray-100">
-                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง</label><input type="datetime-local" id="osel_Order_DateTime" class="editable-input bg-gray-50 text-xs"></div>
-                        <div class="md:col-span-1"><label>แพทย์ผู้สั่ง</label><input type="text" list="list-doctor" id="osel_Doctor_Name" class="editable-input"></div>
-                        <div class="md:col-span-1"><label>ใบประกอบฯ</label><input type="text" id="osel_License_No" class="editable-input"></div>
+                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง <span class="text-red-500">*</span></label><input type="datetime-local" id="osel_Order_DateTime" class="editable-input bg-gray-50 text-xs" required></div>
+                        <div class="md:col-span-1">
+                            <label>แพทย์ผู้สั่ง <span class="text-red-500">*</span></label>
+                            <div class="flex gap-1">
+                                <input type="text" id="osel_Doctor_Name" class="editable-input flex-1" required>
+                                <button type="button" onclick="openDoctorSearch('osel')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 rounded border border-indigo-200 transition-colors" title="ค้นหาประวัติแพทย์">🔍</button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-1"><label>ใบประกอบฯ <span class="text-red-500">*</span></label><input type="text" id="osel_License_No" class="editable-input" required></div>
                     </div>
                 </div>
 
@@ -415,10 +442,10 @@
                         <span id="ator_mode_badge" class="hidden bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold border border-purple-200">โหมดแพทย์แก้ไข</span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                        <div class="md:col-span-1"><label>HN</label><input type="text" id="ator_HN" class="editable-input font-bold text-center" required></div>
+                        <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="ator_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="ator_Patient_Name" class="editable-input font-bold"></div>
-                        <div class="md:col-span-1"><label>เพศ</label><input type="text" list="list-gender" id="ator_Gender" class="editable-input text-center"></div>
-                        <div class="md:col-span-1"><label>อายุ (ปี)</label><input type="number" list="list-age" id="ator_Age" class="editable-input text-center"></div>
+                        <div class="md:col-span-1"><label>เพศ <span class="text-red-500">*</span></label><input type="text" list="list-gender" id="ator_Gender" class="editable-input text-center" required></div>
+                        <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" id="ator_Age" class="editable-input text-center" required></div>
                         <div class="md:col-span-1"><label>สิทธิ์</label><input type="text" id="ator_Patient_Right" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -426,13 +453,19 @@
                         <div class="md:col-span-3"><label>การวินิจฉัย (Diagnosis)</label><input type="text" list="list-diagnosis" id="ator_Diagnosis" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100">
-                        <div class="md:col-span-1"><label class="text-blue-700">ยาที่สั่ง (Drug Name)</label><input type="text" list="list-drug" id="ator_Drug_name" class="editable-input font-bold text-blue-800"></div>
+                        <div class="md:col-span-1"><label class="text-blue-700">ยาที่สั่ง (Drug Name) <span class="text-red-500">*</span></label><input type="text" list="list-drug" id="ator_Drug_name" class="editable-input font-bold text-blue-800" required></div>
                         <div class="md:col-span-2"><label class="text-blue-700">วิธีใช้ (Drug Usage)</label><input type="text" id="ator_Drug_usage" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง</label><input type="datetime-local" id="ator_Order_DateTime" class="editable-input bg-gray-50 text-xs"></div>
-                        <div class="md:col-span-1"><label>แพทย์ผู้สั่ง</label><input type="text" list="list-doctor" id="ator_Doctor_Name" class="editable-input"></div>
-                        <div class="md:col-span-1"><label>ใบประกอบฯ</label><input type="text" id="ator_License_No" class="editable-input"></div>
+                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง <span class="text-red-500">*</span></label><input type="datetime-local" id="ator_Order_DateTime" class="editable-input bg-gray-50 text-xs" required></div>
+                        <div class="md:col-span-1">
+                            <label>แพทย์ผู้สั่ง <span class="text-red-500">*</span></label>
+                            <div class="flex gap-1">
+                                <input type="text" id="ator_Doctor_Name" class="editable-input flex-1" required>
+                                <button type="button" onclick="openDoctorSearch('ator')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 rounded border border-indigo-200 transition-colors" title="ค้นหาประวัติแพทย์">🔍</button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-1"><label>ใบประกอบฯ <span class="text-red-500">*</span></label><input type="text" id="ator_License_No" class="editable-input" required></div>
                     </div>
                     <div class="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100">
                         <div class="inner-card p-2 border border-red-200"><label class="text-center text-red-700">LDL ล่าสุด</label><input type="text" id="ator_Latest_LDL" class="w-full bg-transparent text-center text-red-700 outline-none"></div>
@@ -578,7 +611,7 @@
                             <thead>
                                 <tr class="bg-indigo-50 border-b border-indigo-100 text-indigo-800 select-none">
                                     <th class="p-2 font-semibold sortable" onclick="sortDocList('sheet')">DUE Type ↕</th>
-                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('rawDate')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('month')">วันที่สั่งยา ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortDocList('hn')">HN / ชื่อผู้ป่วย ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortDocList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
@@ -661,7 +694,7 @@
                             <thead>
                                 <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800 select-none">
                                     <th class="p-2 font-semibold sortable" onclick="sortPharmaList('sheet')">DUE Type ↕</th>
-                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('rawDate')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('date')">วันที่สั่งยา ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortPharmaList('hn')">HN / ชื่อผู้ป่วย ↕</th>
                                     <th class="p-2 font-semibold sortable" onclick="sortPharmaList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
@@ -693,9 +726,9 @@
         let activeDashMonth = null;
         let timeValues = {};
 
-        // Lists sorting state (ใช้ rawDate เรียงเสมอเพื่อความแม่นยำ)
-        let docSortCol = 'rawDate', docSortAsc = false;
-        let pharmaSortCol = 'rawDate', pharmaSortAsc = false;
+        // Lists sorting state
+        let docSortCol = 'month', docSortAsc = false;
+        let pharmaSortCol = 'date', pharmaSortAsc = false;
 
         // Emoji list for doctors
         const emojiList = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🐣','🦇','🦉','🦅','🦆','🦋'];
@@ -705,12 +738,16 @@
         let revealedLicense = null;
 
         let globalPharmaData = [];
+        
+        // Doctor Search state
+        let cachedDocsList = []; // Array of {license, name}
+        let currentDocSearchPrefix = '';
 
         // --- Custom Plugin for Red Text on Top of Antibiotics Time Chart ---
         const topValuePlugin = {
             id: 'topValuePlugin',
             afterDatasetsDraw(chart, args, options) {
-                if (activeTab !== 'Antibiotics' && activeTab !== 'Oseltamivir') return;
+                if (activeTab !== 'Antibiotics') return;
                 const { ctx, data, scales: { x, y } } = chart;
                 ctx.save();
                 ctx.textAlign = 'center';
@@ -719,9 +756,8 @@
                 ctx.fillStyle = '#ef4444'; 
 
                 data.labels.forEach((label, index) => {
-                    // map visual label back to raw label to get value
                     let rawMonth = null;
-                    const parts = label.split('/'); // MM/YYYY
+                    const parts = label.split('/'); 
                     if(parts.length === 2) rawMonth = `${parts[1]}-${parts[0]}`;
                     
                     let totalVal = timeValues[rawMonth] || 0;
@@ -798,7 +834,24 @@
             } else {
                 initializeApp(isDoctor);
             }
+            
+            // แอบโหลดรายชื่อแพทย์เบื้องหลัง เพื่อใช้ในช่องค้นหาแพทย์
+            prefetchDoctors();
         });
+
+        // โหลดรายชื่อแพทย์เก็บไว้เบื้องหลัง (Background Fetch)
+        async function prefetchDoctors() {
+            try {
+                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
+                const json = await res.json();
+                if(json.status === 'success' && json.docsMap) {
+                    cachedDocsList = Object.keys(json.docsMap).map(lic => ({
+                        license: lic,
+                        name: json.docsMap[lic]
+                    }));
+                }
+            } catch(e) { console.warn("Prefetch doctors silently failed"); }
+        }
 
         function initializeApp(isDoctor) {
             if (isDoctor) {
@@ -900,7 +953,8 @@
                         updateDatalist('list-ward', json.options.wards);
                         updateDatalist('list-diagnosis', json.options.diagnoses);
                         updateDatalist('list-drug', json.options.drugs);
-                        updateDatalist('list-doctor', json.options.doctors);
+                        // ไม่ใช้ list-doctor ธรรมดาแล้ว เพราะมีปุ่มค้นหาแทน แต่ทิ้งเผื่อไว้ก็ไม่เสียหาย
+                        updateDatalist('list-doctor', json.options.doctors); 
                         updateDatalist('list-gender', json.options.genders);
                         updateDatalist('list-age', json.options.ages);
                         updateDatalist('list-patient-type', json.options.patientTypes);
@@ -1117,7 +1171,7 @@
                     const filterMonth = document.getElementById('docListFilterMonth');
                     
                     selMonth.innerHTML = '<option value="all">ทุกช่วงเวลา</option>';
-                    filterMonth.innerHTML = '<option value="all">ทุกเดือน</option>';
+                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
                     
                     months.forEach(m => {
                         const mDisplay = formatMonthDisplay(m);
@@ -1130,17 +1184,7 @@
                         filterMonth.appendChild(opt2);
                     });
                     
-                    // ตั้งค่า Default เดือน
-                    const now = new Date();
-                    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                    
-                    if (months.includes(currentMonthStr)) {
-                        selMonth.value = currentMonthStr;
-                        filterMonth.value = currentMonthStr;
-                    } else if (months.length > 0) {
-                        selMonth.value = months[0];
-                        filterMonth.value = months[0];
-                    }
+                    if(months.length > 0) selMonth.value = months[0]; // Set to latest month default
 
                     renderDocSummaryChart();
                 }
@@ -1226,37 +1270,6 @@
                 activeLicenses = [revealedLicense];
             }
 
-            // --- คำนวณ Quality Indicators (ตัวชี้วัดคุณภาพ) ---
-            let qOselInd = 0, qOselOnset = 0;
-            let qAtorInd = 0;
-            let qAntiStaff = 0, qAntiInd = 0;
-
-            filtered.forEach(d => {
-                // คำนวณเฉพาะผลงานของแพทย์ที่กำลังแสดงบนกราฟ
-                if (!activeLicenses.includes(d.license)) return;
-
-                if (d.sheet === 'Oseltamivir') {
-                    if (!d.hasIndication || d.evaluated.includes('Indication')) qOselInd++;
-                    let onsetNum = parseInt(d.onset);
-                    if (!d.onset || d.onset === '-' || isNaN(onsetNum) || onsetNum > 48) qOselOnset++;
-                } 
-                else if (d.sheet === 'Atorvastatin') {
-                    if (!d.hasIndication || d.evaluated.includes('Indication')) qAtorInd++;
-                }
-                else if (d.sheet === 'Antibiotics') {
-                    let sa = (d.staffApprove || '').toLowerCase();
-                    if (!sa || sa === '-' || sa === 'ไม่มี' || sa === 'no') qAntiStaff++;
-                    if (!d.hasIndication || d.evaluated.includes('Indication')) qAntiInd++;
-                }
-            });
-
-            // อัปเดตตัวเลขขึ้นบนหน้าจอ
-            document.getElementById('q-osel-ind').textContent = qOselInd;
-            document.getElementById('q-osel-onset').textContent = qOselOnset;
-            document.getElementById('q-ator-ind').textContent = qAtorInd;
-            document.getElementById('q-anti-staff').textContent = qAntiStaff;
-            document.getElementById('q-anti-ind').textContent = qAntiInd;
-
             const labels = activeLicenses.map(lic => lic === typedLicense ? globalDocsMap[lic] : emojiMap[lic]);
             const datasets = [];
             const colors = {
@@ -1340,7 +1353,16 @@
             const fStatus = document.getElementById('docListFilterStatus').value;
 
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
-            if (fMonth !== 'all') patients = patients.filter(d => d.month === fMonth);
+            
+            if (fMonth === 'current') {
+                const maxMonth = globalDocData.reduce((max, d) => {
+                    let yM = d.month;
+                    return (yM && yM > max && yM !== 'ไม่มีข้อมูล') ? yM : max;
+                }, "0000-00");
+                patients = patients.filter(d => d.month === maxMonth);
+            } else if (fMonth !== 'all') {
+                patients = patients.filter(d => d.month === fMonth);
+            }
 
             if (fStatus === 'pending') {
                 patients = patients.filter(d => !d.hasIndication || (!d.evaluated.includes('Appr') && !d.evaluated.includes('Inapp')));
@@ -1348,7 +1370,6 @@
                 patients = patients.filter(d => d.hasIndication && (d.evaluated.includes('Appr') || d.evaluated.includes('Inapp')));
             }
 
-            // เรียงลำดับข้อมูล
             patients.sort((a, b) => {
                 let vA = a[docSortCol] || '';
                 let vB = b[docSortCol] || '';
@@ -1377,7 +1398,7 @@
                     
                     tr.innerHTML = `
                         <td class="p-3 font-bold text-indigo-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${p.displayDate}</td>
+                        <td class="p-3 text-gray-500">${formatMonthDisplay(p.month)}</td>
                         <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
                     `;
@@ -1436,6 +1457,66 @@
         }
 
         // ==========================================
+        // DOCTOR SEARCH MODAL (ใหม่!)
+        // ==========================================
+        function openDoctorSearch(prefix) {
+            currentDocSearchPrefix = prefix;
+            document.getElementById('doctorSearchModal').classList.remove('hidden');
+            document.getElementById('doctorSearchInput').value = '';
+            
+            if (cachedDocsList.length === 0) {
+                document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-gray-500"><span class="spinner"></span> กำลังดึงฐานข้อมูลแพทย์...</div>';
+                fetch(`${GAS_URL}?action=getDoctorSummary`).then(r=>r.json()).then(json=>{
+                    if(json.docsMap) {
+                        cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] }));
+                        renderDoctorList('');
+                    }
+                }).catch(() => {
+                    document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-red-500">ดึงข้อมูลล้มเหลว กรุณาพิมพ์เอง</div>';
+                });
+            } else {
+                renderDoctorList('');
+            }
+            setTimeout(() => document.getElementById('doctorSearchInput').focus(), 100);
+        }
+
+        function closeDoctorSearch() {
+            document.getElementById('doctorSearchModal').classList.add('hidden');
+        }
+
+        function renderDoctorList(filter) {
+            const container = document.getElementById('doctorListContainer');
+            container.innerHTML = '';
+            const lowerFilter = filter.toLowerCase();
+            
+            const filtered = cachedDocsList.filter(d => 
+                d.name.toLowerCase().includes(lowerFilter) || 
+                d.license.toLowerCase().includes(lowerFilter)
+            );
+
+            if(filtered.length === 0) {
+                container.innerHTML = '<div class="text-center p-4 text-gray-500 text-xs">ไม่พบข้อมูล (หากเป็นแพทย์ใหม่ ให้พิมพ์กรอกเองได้เลย)</div>';
+                return;
+            }
+
+            filtered.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'p-3 hover:bg-indigo-100 cursor-pointer rounded-lg border-b border-gray-100 flex justify-between items-center text-sm transition-colors';
+                div.innerHTML = `<span class="font-bold text-gray-700">${d.name}</span> <span class="text-indigo-600 text-xs font-bold bg-indigo-100 px-2 py-1 rounded-md border border-indigo-200">ว.${d.license}</span>`;
+                div.onclick = () => {
+                    document.getElementById(`${currentDocSearchPrefix}_Doctor_Name`).value = d.name;
+                    document.getElementById(`${currentDocSearchPrefix}_License_No`).value = d.license;
+                    closeDoctorSearch();
+                };
+                container.appendChild(div);
+            });
+        }
+
+        function filterDoctorList() {
+            renderDoctorList(document.getElementById('doctorSearchInput').value);
+        }
+
+        // ==========================================
         // PHARMACIST PAGE LOGIC
         // ==========================================
         function togglePharmaPage() {
@@ -1474,20 +1555,12 @@
                     const months = [...new Set(globalPharmaData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
                     
                     const filterMonth = document.getElementById('pharmaListFilterMonth');
-                    filterMonth.innerHTML = '<option value="all">ทุกเดือน</option>';
+                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
                     months.forEach(m => {
                         const opt = document.createElement('option');
                         opt.value = m; opt.textContent = formatMonthDisplay(m);
                         filterMonth.appendChild(opt);
                     });
-                    
-                    const now = new Date();
-                    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                    if (months.includes(currentMonthStr)) {
-                        filterMonth.value = currentMonthStr;
-                    } else if (months.length > 0) {
-                        filterMonth.value = months[0];
-                    }
                     
                     if (currentValue && staffs.includes(currentValue)) {
                         sel.value = currentValue;
@@ -1548,7 +1621,17 @@
             const fStatus = document.getElementById('pharmaListFilterStatus').value;
 
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
-            if (fMonth !== 'all') patients = patients.filter(p => p.month === fMonth);
+            
+            if (fMonth !== 'all') {
+                let targetMonth = fMonth;
+                if(fMonth === 'current') {
+                    targetMonth = patients.reduce((max, p) => {
+                        let yM = p.month;
+                        return (yM && yM > max && yM !== 'ไม่มีข้อมูล') ? yM : max;
+                    }, "0000-00");
+                }
+                patients = patients.filter(p => p.month === targetMonth);
+            }
 
             if (fStatus === 'pending') {
                 patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน' || d.evaluated === 'ยังไม่ประเมิน');
@@ -1559,6 +1642,13 @@
             patients.sort((a, b) => {
                 let vA = a[pharmaSortCol] || '';
                 let vB = b[pharmaSortCol] || '';
+                
+                if(pharmaSortCol === 'date') {
+                    const pa = vA.split(' ')[0].split('/'); const pb = vB.split(' ')[0].split('/');
+                    if(pa.length>=3) vA = `${pa[2]}-${pa[1]}-${pa[0]}`;
+                    if(pb.length>=3) vB = `${pb[2]}-${pb[1]}-${pb[0]}`;
+                }
+
                 if(vA < vB) return pharmaSortAsc ? -1 : 1;
                 if(vA > vB) return pharmaSortAsc ? 1 : -1;
                 return 0;
@@ -1583,7 +1673,7 @@
                     
                     tr.innerHTML = `
                         <td class="p-3 font-bold text-emerald-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${p.displayDate}</td>
+                        <td class="p-3 text-gray-500">${p.date}</td>
                         <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
                         <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
                     `;
@@ -1893,6 +1983,9 @@
             document.getElementById(formId).reset();
             document.getElementById(`${prefix}_rowIndex`).value = '';
             document.getElementById(`${prefix}_HN`).value = hn;
+            
+            // --- ตั้งชื่อ Default ให้เป็น xxxxx เพื่อความสะดวกในการเพิ่มใหม่ ---
+            document.getElementById(`${prefix}_Patient_Name`).value = 'xxxxx';
             
             const nowStr = toDatetimeLocal(new Date().toISOString());
             document.getElementById(`${prefix}_Order_DateTime`).value = nowStr;
