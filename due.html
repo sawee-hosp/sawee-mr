@@ -156,6 +156,7 @@
         </header>
 
         <div id="mainPage">
+            <!-- Dashboard Trigger -->
             <div class="floating-card p-3 mb-4 rounded-xl border border-gray-100 cursor-pointer hover:shadow-md transition-shadow group" onclick="toggleDashboard()">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-1.5">
                     <span class="text-gray-600 font-semibold text-lg">ฐานข้อมูล: <span id="currentTabLabel" class="text-blue-800 font-bold text-xl">Antibiotics</span> 
@@ -228,6 +229,7 @@
             <datalist id="list-doctor"></datalist>
             <datalist id="list-staff-approve"><option value="มี"><option value="ไม่มี"></option></datalist>
 
+            <!-- ===================== FORM: ANTIBIOTICS ===================== -->
             <form id="form-Antibiotics" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Antibiotics')">
                 <input type="hidden" id="anti_rowIndex">
                 <input type="hidden" id="anti_Visit_ID">
@@ -385,6 +387,7 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
+            <!-- ===================== FORM: OSELTAMIVIR ===================== -->
             <form id="form-Oseltamivir" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Oseltamivir')">
                 <input type="hidden" id="osel_rowIndex">
                 <input type="hidden" id="osel_Visit_ID">
@@ -497,6 +500,7 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
+            <!-- ===================== FORM: ATORVASTATIN ===================== -->
             <form id="form-Atorvastatin" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Atorvastatin')">
                 <input type="hidden" id="ator_rowIndex">
                 <input type="hidden" id="ator_Visit_ID">
@@ -796,16 +800,30 @@
     </div>
 
     <script>
-        // แก้ไข: ใส่ URL Web App ของคุณที่นี่ (ที่เพิ่ง Deploy ใหม่แบบ Anyone)
+        // ใส่ URL Web App ของคุณที่นี่
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwdT2vAYgkS72XtjPqwG51joJbOUfprSAgT_KViRVtiZgo4g4C_NSi2N_IwmnCSTzEz/exec";
         
-        // ฟังก์ชันช่วยสำหรับการยิง GET request ไปที่ GAS (แก้ปัญหา CORS เบื้องต้น)
-        async function fetchGasGet(urlParams) {
-            const url = `${GAS_URL}?${urlParams}`;
-            // สำคัญมาก: redirect: 'follow' อนุญาตให้เบราว์เซอร์ตามลิงก์ Redirect แบบ 302 ของ Google ได้
-            const response = await fetch(url, { method: 'GET', redirect: 'follow' });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
+        // ฟังก์ชันช่วยยิง POST โดยระบุ text/plain และ follow redirect
+        async function fetchGas(payload) {
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error("Fetch GAS Error:", error);
+                throw error;
+            }
         }
 
         let activeTab = 'Antibiotics'; 
@@ -937,14 +955,14 @@
                 initializeApp(isDoctor);
             }
             
-            // แอบโหลดรายชื่อแพทย์เบื้องหลัง เพื่อใช้ในช่องค้นหาแพทย์
+            // แอบโหลดรายชื่อแพทย์เบื้องหลัง
             prefetchDoctors();
         });
 
         async function prefetchDoctors() {
             try {
-                // แก้การใช้งานเป็น fetchGasGet function
-                const json = await fetchGasGet(`action=getDoctorSummary`);
+                // เปลี่ยนเป็นยิง POST ไปถามแบบแนบ payload
+                const json = await fetchGas({ action: 'getDoctorSummary' });
                 if(json.status === 'success' && json.docsMap) {
                     cachedDocsList = Object.keys(json.docsMap).map(lic => ({
                         license: lic,
@@ -973,8 +991,8 @@
             errorMsg.classList.add('hidden');
             
             try {
-                // แก้การใช้งานเป็น fetchGasGet function
-                const json = await fetchGasGet(`action=verifyPasscode&passcode=${pass}`);
+                // เปลี่ยนเป็นยิง POST
+                const json = await fetchGas({ action: 'verifyPasscode', passcode: pass });
                 if(json.status === 'success') {
                     localStorage.setItem('due_logged_in', 'true');
                     document.getElementById('loginOverlay').classList.add('hidden');
@@ -1022,8 +1040,8 @@
             document.getElementById('phantomSpinner').classList.add('active');
             
             try {
-                // แก้การใช้งานเป็น fetchGasGet function
-                const json = await fetchGasGet(`action=getLastUpdate&sheet=${activeTab}`);
+                // เปลี่ยนเป็นยิง POST
+                const json = await fetchGas({ action: 'getLastUpdate', sheet: activeTab });
                 
                 if(json.status === 'success') {
                     txt.textContent = formatDisplayDate(json.data);
@@ -1252,8 +1270,8 @@
 
         async function fetchDoctorSummary() {
             try {
-                // แก้การใช้งานเป็น fetchGasGet function
-                const json = await fetchGasGet(`action=getDoctorSummary`);
+                // เปลี่ยนเป็นยิง POST
+                const json = await fetchGas({ action: 'getDoctorSummary' });
                 if(json.status === 'success') {
                     globalDocData = json.data;
                     globalDocsMap = json.docsMap;
@@ -1593,8 +1611,8 @@
             if (cachedDocsList.length === 0) {
                 document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-gray-500"><span class="spinner"></span> กำลังดึงฐานข้อมูลแพทย์...</div>';
                 
-                // แก้การใช้งานเป็น fetchGasGet function
-                fetchGasGet(`action=getDoctorSummary`).then(json=>{
+                // เปลี่ยนเป็นยิง POST
+                fetchGas({ action: 'getDoctorSummary' }).then(json=>{
                     if(json.docsMap) {
                         cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] }));
                         renderDoctorList('');
@@ -1664,8 +1682,8 @@
 
         async function fetchPharmaSummary() {
             try {
-                // แก้การใช้งานเป็น fetchGasGet function
-                const json = await fetchGasGet(`action=getPharmacistSummary`);
+                // เปลี่ยนเป็นยิง POST
+                const json = await fetchGas({ action: 'getPharmacistSummary' });
                 if(json.status === 'success') {
                     globalPharmaData = json.data;
                     
@@ -2042,8 +2060,8 @@
 
         async function fetchPharmacists() {
             try {
-                // แก้ไขปัญหา CORS ด้วย fetchGasGet
-                const data = await fetchGasGet(`action=getPharmacists`);
+                // เปลี่ยนเป็นยิง POST
+                const data = await fetchGas({ action: 'getPharmacists' });
                 ['ator', 'osel', 'anti'].forEach(prefix => {
                     const select = document.getElementById(`${prefix}_pharmacist`);
                     if(select) {
@@ -2075,8 +2093,8 @@
             btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
 
             try {
-                // แก้ไขปัญหา CORS ด้วย fetchGasGet
-                const res = await fetchGasGet(`action=search&sheet=${activeTab}&hn=${hn}`);
+                // เปลี่ยนเป็นยิง POST
+                const res = await fetchGas({ action: 'search', sheet: activeTab, hn: hn });
 
                 if (res.status === 'success' && res.data) {
                     if(Array.isArray(res.data) && res.data.length > 1) {
@@ -2110,7 +2128,7 @@
         }
 
         // ==========================================
-        // VISIT SELECTION & DELETE
+        // VISIT SELECTION & DELETE (ใหม่!)
         // ==========================================
         function showVisitSelectionModal(visitsData) {
             const tbody = document.getElementById('visitSelectionTbody');
@@ -2147,7 +2165,6 @@
             document.getElementById('visitSelectionModal').classList.remove('hidden');
         }
 
-        // ฟังก์ชันแยกเพื่อให้เรียกจาก string HTML ได้
         window.selectVisit = function(rowIndex, dataStr) {
             const data = JSON.parse(decodeURIComponent(dataStr));
             loadFormWithData(data);
@@ -2163,10 +2180,9 @@
                 btn.disabled = true;
 
                 try {
+                    // เปลี่ยนเป็นยิง POST
                     const payload = { action: 'deleteRow', sheetName: sheetName, rowIndex: rowIndex };
-                    // สำหรับคำสั่ง DELETE แบบ POST เราไม่ต้องใช้ fetchGasGet ปล่อยให้มันส่งด้วย text/plain อย่างเดิม
-                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-                    const json = await res.json();
+                    const json = await fetchGas(payload);
                     
                     if(json.status === 'success') {
                         alert('ลบข้อมูลที่ซ้ำสำเร็จแล้ว!');
@@ -2390,8 +2406,8 @@
             let payload = { action: 'saveFullData', sheetName: tab, rowIndex: rowIndex, updateData: updateData };
 
             try {
-                // สำหรับ POST ส่ง text/plain ช่วยเลี่ยง Preflight CORS ได้
-                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+                // เปลี่ยนเป็นยิง POST
+                await fetchGas(payload);
                 
                 const msgBox = document.getElementById('searchMessage');
                 msgBox.className = 'bg-emerald-100 text-emerald-800 border-l-4 border-emerald-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
