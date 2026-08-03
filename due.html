@@ -159,6 +159,7 @@
                 <button onclick="switchTab('Antibiotics')" id="tab-Antibiotics" class="tab-btn tab-active px-6 py-2 rounded-xl transition-all whitespace-nowrap">Antibiotics</button>
                 <button onclick="switchTab('Oseltamivir')" id="tab-Oseltamivir" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap">Oseltamivir</button>
                 <button onclick="switchTab('Atorvastatin')" id="tab-Atorvastatin" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap">Atorvastatin</button>
+                <button onclick="switchTab('Covids')" id="tab-Covids" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap text-blue-700">Covids</button>
             </div>
         </header>
 
@@ -225,8 +226,6 @@
                 <span id="searchMessageText"></span>
             </div>
 
-            <datalist id="list-patient-type"></datalist>
-            <datalist id="list-gender"></datalist>
             <datalist id="list-age"></datalist>
             <datalist id="list-source"><option value="Hospital Acquired"><option value="Community Acquired"></datalist>
             <datalist id="list-site"><option value="Lung"><option value="Urinary tract"><option value="Skin and soft tissue"><option value="Join"><option value="CNS"><option value="Intra-abdominal"><option value="Pus"><option value="Sputum"><option value="Hemoculture"><option value="Respiratory tract"><option value="Other"></datalist>
@@ -236,6 +235,7 @@
             <datalist id="list-doctor"></datalist>
             <datalist id="list-staff-approve"><option value="มี"><option value="ไม่มี"></option></datalist>
 
+            <!-- ===================== FORM: ANTIBIOTICS ===================== -->
             <form id="form-Antibiotics" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Antibiotics')">
                 <input type="hidden" id="anti_rowIndex">
                 <input type="hidden" id="anti_Visit_ID">
@@ -248,9 +248,22 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
                         <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="anti_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="anti_Patient_Name" class="editable-input font-bold"></div>
-                        <div class="md:col-span-1"><label>เพศ <span class="text-red-500">*</span></label><input type="text" list="list-gender" id="anti_Gender" class="editable-input text-center" required></div>
+                        <div class="md:col-span-1">
+                            <label>เพศ <span class="text-red-500">*</span></label>
+                            <select id="anti_Gender" class="editable-input text-center" required>
+                                <option value="" disabled selected>-</option>
+                                <option value="ชาย">ชาย</option>
+                                <option value="หญิง">หญิง</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" id="anti_Age" class="editable-input text-center" required></div>
-                        <div class="md:col-span-1"><label>ประเภท</label><input type="text" list="list-patient-type" id="anti_Patient_Type" class="editable-input text-center"></div>
+                        <div class="md:col-span-1">
+                            <label>ประเภท</label>
+                            <select id="anti_Patient_Type" class="editable-input text-center">
+                                <option value="OPD">OPD</option>
+                                <option value="IPD">IPD</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
@@ -393,6 +406,7 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
+            <!-- ===================== FORM: OSELTAMIVIR ===================== -->
             <form id="form-Oseltamivir" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Oseltamivir')">
                 <input type="hidden" id="osel_rowIndex">
                 <input type="hidden" id="osel_Visit_ID">
@@ -405,12 +419,25 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
                         <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="osel_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="osel_Patient_Name" class="editable-input font-bold"></div>
-                        <div class="md:col-span-1"><label>เพศ <span class="text-red-500">*</span></label><input type="text" list="list-gender" id="osel_Gender" class="editable-input text-center" required></div>
+                        <div class="md:col-span-1">
+                            <label>เพศ <span class="text-red-500">*</span></label>
+                            <select id="osel_Gender" class="editable-input text-center" required>
+                                <option value="" disabled selected>-</option>
+                                <option value="ชาย">ชาย</option>
+                                <option value="หญิง">หญิง</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" step="0.1" id="osel_Age" class="editable-input text-center" required oninput="validateOseltamivir()"></div>
                         <div class="md:col-span-1"><label>น้ำหนัก (kg)</label><input type="number" step="0.1" id="osel_Weight_kg" class="editable-input text-center" oninput="validateOseltamivir()"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
-                        <div class="md:col-span-1"><label>ประเภท</label><input type="text" list="list-patient-type" id="osel_Patient_Type" class="editable-input text-center"></div>
+                        <div class="md:col-span-1">
+                            <label>ประเภท</label>
+                            <select id="osel_Patient_Type" class="editable-input text-center">
+                                <option value="OPD">OPD</option>
+                                <option value="IPD">IPD</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-1"><label>Latest ClCr</label><input type="text" id="osel_Latest_ClCr" class="editable-input text-blue-700 bg-blue-50/50 font-bold text-center" oninput="validateOseltamivir()"></div>
                         <div class="md:col-span-2"><label>การวินิจฉัย (Diagnosis)</label><input type="text" list="list-diagnosis" id="osel_Diagnosis" class="editable-input"></div>
                     </div>
@@ -505,6 +532,7 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
+            <!-- ===================== FORM: ATORVASTATIN ===================== -->
             <form id="form-Atorvastatin" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Atorvastatin')">
                 <input type="hidden" id="ator_rowIndex">
                 <input type="hidden" id="ator_Visit_ID">
@@ -517,12 +545,25 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
                         <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="ator_HN" class="editable-input font-bold text-center" required></div>
                         <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="ator_Patient_Name" class="editable-input font-bold"></div>
-                        <div class="md:col-span-1"><label>เพศ <span class="text-red-500">*</span></label><input type="text" list="list-gender" id="ator_Gender" class="editable-input text-center" required></div>
+                        <div class="md:col-span-1">
+                            <label>เพศ <span class="text-red-500">*</span></label>
+                            <select id="ator_Gender" class="editable-input text-center" required>
+                                <option value="" disabled selected>-</option>
+                                <option value="ชาย">ชาย</option>
+                                <option value="หญิง">หญิง</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" id="ator_Age" class="editable-input text-center" required></div>
                         <div class="md:col-span-1"><label>สิทธิ์</label><input type="text" id="ator_Patient_Right" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
-                        <div class="md:col-span-1"><label>ประเภท</label><input type="text" list="list-patient-type" id="ator_Patient_Type" class="editable-input text-center"></div>
+                        <div class="md:col-span-1">
+                            <label>ประเภท</label>
+                            <select id="ator_Patient_Type" class="editable-input text-center">
+                                <option value="OPD">OPD</option>
+                                <option value="IPD">IPD</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-3"><label>การวินิจฉัย (Diagnosis)</label><input type="text" list="list-diagnosis" id="ator_Diagnosis" class="editable-input"></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100">
@@ -594,6 +635,110 @@
                 </div>
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
+
+            <!-- ===================== FORM: COVIDS (NEW) ===================== -->
+            <form id="form-Covids" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Covids')">
+                <input type="hidden" id="covd_rowIndex">
+                <input type="hidden" id="covd_Visit_ID">
+                
+                <div class="floating-card p-4 rounded-xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-3 border-b border-blue-100 pb-1">
+                        <h2 class="text-sm text-blue-800 font-bold">Part 1: ข้อมูลการสั่งใช้ยา (Covids)</h2>
+                        <span id="covd_mode_badge" class="hidden bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold border border-purple-200">โหมดแพทย์แก้ไข</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                        <div class="md:col-span-1"><label>HN <span class="text-red-500">*</span></label><input type="text" id="covd_HN" class="editable-input font-bold text-center" required></div>
+                        <div class="md:col-span-2"><label>ชื่อผู้ป่วย</label><input type="text" id="covd_Patient_Name" class="editable-input font-bold"></div>
+                        <div class="md:col-span-1">
+                            <label>เพศ <span class="text-red-500">*</span></label>
+                            <select id="covd_Gender" class="editable-input text-center" required>
+                                <option value="" disabled selected>-</option>
+                                <option value="ชาย">ชาย</option>
+                                <option value="หญิง">หญิง</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1"><label>อายุ (ปี) <span class="text-red-500">*</span></label><input type="number" list="list-age" step="0.1" id="covd_Age" class="editable-input text-center" required oninput="validateCovids()"></div>
+                        <div class="md:col-span-1"><label>น้ำหนัก (kg)</label><input type="number" step="0.1" id="covd_Weight_kg" class="editable-input text-center" oninput="validateCovids()"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2">
+                        <div class="md:col-span-1">
+                            <label>ประเภท</label>
+                            <select id="covd_Patient_Type" class="editable-input text-center">
+                                <option value="OPD">OPD</option>
+                                <option value="IPD">IPD</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1"><label>Latest ClCr</label><input type="text" id="covd_Latest_ClCr" class="editable-input font-bold text-center" oninput="validateCovids()"></div>
+                        <div class="md:col-span-2"><label>การวินิจฉัย (Diagnosis)</label><input type="text" list="list-diagnosis" id="covd_Diagnosis" class="editable-input"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100 relative">
+                        <div class="md:col-span-1">
+                            <label class="text-blue-700 font-bold">ชื่อยา (Drug Name) <span class="text-red-500">*</span></label>
+                            <select id="covd_Drug_name" class="editable-input font-bold text-blue-800 transition-colors" required onchange="renderCovidIndications(); validateCovids();">
+                                <option value="" disabled selected>-- เลือกยา --</option>
+                                <option value="Favipiravir">Favipiravir</option>
+                                <option value="Molnupiravir">Molnupiravir</option>
+                                <option value="Paxlovid">Paxlovid</option>
+                                <option value="Remdesivir">Remdesivir</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2"><label class="text-blue-700 font-bold">วิธีใช้ (Drug Usage)</label><input type="text" id="covd_Drug_usage" class="editable-input transition-colors"></div>
+                        <div class="md:col-span-1">
+                            <label class="text-blue-700 font-bold">จำนวน (Total Qty)</label>
+                            <input type="number" id="covd_Total_Qty" class="editable-input text-center font-bold">
+                        </div>
+                    </div>
+                    
+                    <div id="covd_recommendation" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded-r-lg p-3 mt-2 text-xs shadow-inner transition-all"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-2 border-t border-gray-100">
+                        <div class="md:col-span-1"><label>วันเวลาที่สั่ง <span class="text-red-500">*</span></label><input type="datetime-local" id="covd_Order_DateTime" class="editable-input bg-gray-50 text-xs" required></div>
+                        <div class="md:col-span-1">
+                            <label>แพทย์ผู้สั่ง <span class="text-red-500">*</span></label>
+                            <div class="flex gap-1">
+                                <input type="text" id="covd_Doctor_Name" class="editable-input flex-1" required>
+                                <button type="button" onclick="openDoctorSearch('covd')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 rounded border border-indigo-200 transition-colors" title="ค้นหาประวัติแพทย์">🔍</button>
+                            </div>
+                        </div>
+                        <div class="md:col-span-1"><label>ใบประกอบฯ <span class="text-red-500">*</span></label><input type="text" id="covd_License_No" class="editable-input" required></div>
+                    </div>
+                </div>
+
+                <div class="floating-card p-4 rounded-xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-2 border-b border-blue-100 pb-1">
+                        <h2 class="text-sm text-blue-800 font-bold">Part 2: เหตุผลการสั่งใช้ยา (Indication) <span class="text-xs font-normal text-gray-500">(สามารถเลือกได้มากกว่า 1 ข้อ)</span></h2>
+                    </div>
+                    
+                    <div id="covd_indication_container" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                        <div class="text-slate-500 text-center py-4 md:col-span-2 font-medium bg-slate-50 rounded-lg border border-slate-200">กรุณาเลือกชื่อยาใน Part 1 ก่อน (รองรับ Favipiravir, Molnupiravir, Paxlovid, Remdesivir) เพื่อแสดงเงื่อนไขที่ตรงกับแนวทางเวชปฏิบัติ</div>
+                    </div>
+                    <div id="covd_other_box" class="hidden mt-2"><input type="text" id="covd_indication_other" placeholder="พิมพ์ระบุเหตุผลอื่นๆ หรือความจำเป็น..." class="editable-input border-blue-300"></div>
+                </div>
+
+                <div class="floating-card p-4 rounded-xl border-2 border-slate-300 bg-slate-100/50">
+                    <div class="flex justify-between items-center mb-2 border-b border-slate-300 pb-1">
+                        <h2 class="text-sm text-slate-800 font-bold">Part 3: สำหรับเภสัชกร (Pharmacist's Evaluation)</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] font-bold">
+                        <label class="relative cursor-pointer md:col-span-2"><input type="radio" name="covd_evaluation" value="Appropriate" required class="peer sr-only radio-color-green"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">✅ ผ่าน DUE</div></label>
+                        <label class="relative cursor-pointer md:col-span-2"><input type="radio" name="covd_evaluation" value="Appropriate (มีข้อยกเว้น)" class="peer sr-only radio-color-yellowgreen"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">✅ ผ่าน (มีข้อยกเว้น)</div></label>
+                        
+                        <label class="relative cursor-pointer md:col-span-2"><input type="radio" name="covd_evaluation" value="Inapp (Indication)" class="peer sr-only radio-color-red"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">❌ ไม่ผ่าน: ไม่มีข้อบ่งใช้</div></label>
+                        <label class="relative cursor-pointer md:col-span-2"><input type="radio" name="covd_evaluation" value="Inapp (Dose)" class="peer sr-only radio-color-orange"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">❌ ไม่ผ่าน: ขนาดยาตามเกณฑ์</div></label>
+                        
+                        <label class="relative cursor-pointer"><input type="radio" name="covd_evaluation" value="Inapp (Timing)" class="peer sr-only radio-color-pink"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">❌ ไม่ผ่าน: เริ่มยาช้าไป</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="covd_evaluation" value="Inapp (Duration)" class="peer sr-only radio-color-yellow"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">❌ ไม่ผ่าน: ระยะเวลาผิด</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="covd_evaluation" value="Inapp (Safety)" class="peer sr-only radio-color-darkred"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">❌ ไม่ผ่าน: ข้อห้าม/DDI</div></label>
+                        <label class="relative cursor-pointer"><input type="radio" name="covd_evaluation" value="ประเมินไม่ได้ เนื่องจากข้อมูลไม่ครบ" class="peer sr-only radio-color-gray"><div class="p-2 border border-slate-200 rounded-lg text-center bg-white flex items-center justify-center h-full">⚪ ประเมินไม่ได้ (ข้อมูลไม่ครบ)</div></label>
+                    </div>
+                    <div class="mt-3">
+                        <label class="text-slate-700 font-bold">เภสัชกรผู้ประเมิน <span class="text-red-500">*</span></label>
+                        <select id="covd_pharmacist" required class="editable-input bg-white"><option value="" disabled selected>-- โหลดรายชื่อเภสัชกร... --</option></select>
+                    </div>
+                </div>
+                <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
+            </form>
         </div>
 
         <!-- ======================= DOCTOR PAGE ======================= -->
@@ -607,26 +752,33 @@
                 </div>
 
                 <!-- Summary Cards for Doctors -->
-                <div id="doctorStatsCards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div id="doctorStatsCards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
-                        <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics (ATB)</div>
+                        <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics</div>
                         <div class="flex justify-between items-end">
-                            <div class="text-xs text-gray-500">ทั้งหมด / ส่งใบDUE</div>
-                            <div id="stat-anti" class="text-xl font-extrabold text-blue-800">0 / 0 (0%)</div>
+                            <div class="text-[10px] text-gray-500">ทั้งหมด / ส่งใบDUE</div>
+                            <div id="stat-anti" class="text-lg font-extrabold text-blue-800">0 / 0 (0%)</div>
                         </div>
                     </div>
                     <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 shadow-sm">
-                        <div class="text-orange-600 font-bold text-sm mb-1">Oseltamivir (OSL)</div>
+                        <div class="text-orange-600 font-bold text-sm mb-1">Oseltamivir</div>
                         <div class="flex justify-between items-end">
-                            <div class="text-xs text-gray-500">ทั้งหมด / ส่งใบDUE</div>
-                            <div id="stat-osel" class="text-xl font-extrabold text-orange-800">0 / 0 (0%)</div>
+                            <div class="text-[10px] text-gray-500">ทั้งหมด / ส่งใบDUE</div>
+                            <div id="stat-osel" class="text-lg font-extrabold text-orange-800">0 / 0 (0%)</div>
                         </div>
                     </div>
                     <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 shadow-sm">
-                        <div class="text-purple-600 font-bold text-sm mb-1">Atorvastatin (ATV)</div>
+                        <div class="text-purple-600 font-bold text-sm mb-1">Atorvastatin</div>
                         <div class="flex justify-between items-end">
-                            <div class="text-xs text-gray-500">ทั้งหมด / ส่งใบDUE</div>
-                            <div id="stat-ator" class="text-xl font-extrabold text-purple-800">0 / 0 (0%)</div>
+                            <div class="text-[10px] text-gray-500">ทั้งหมด / ส่งใบDUE</div>
+                            <div id="stat-ator" class="text-lg font-extrabold text-purple-800">0 / 0 (0%)</div>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
+                        <div class="text-blue-600 font-bold text-sm mb-1">Covids</div>
+                        <div class="flex justify-between items-end">
+                            <div class="text-[10px] text-gray-500">ทั้งหมด / ส่งใบDUE</div>
+                            <div id="stat-covd" class="text-lg font-extrabold text-blue-800">0 / 0 (0%)</div>
                         </div>
                     </div>
                 </div>
@@ -649,16 +801,15 @@
                 
                 <p class="text-center text-xs text-gray-400 mt-4">* ข้อมูลแพทย์ถูกแปลงเป็นสัญลักษณ์เพื่อความเป็นส่วนตัว หากต้องการดูข้อมูลของท่าน กรุณาพิมพ์เลข ว. ในช่องค้นหา</p>
                 
-                <!-- Quality Indicators (New Section) -->
+                <!-- Quality Indicators -->
                 <div class="mt-6 bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm transition-all">
                     <h3 class="text-lg font-bold text-rose-800 mb-3 flex items-center gap-2">🚨 ตัวชี้วัดคุณภาพใบ DUE (จุดที่ควรระวัง/ปรับปรุง)</h3>
                     <p class="text-xs text-rose-600 mb-3 font-medium">สรุปข้อมูลข้อบกพร่อง จากผลงานของแพทย์ที่แสดงผลอยู่ ณ ปัจจุบัน</p>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
-                            <div class="font-bold text-orange-700 mb-2 border-b border-rose-100 pb-1">Oseltamivir</div>
+                            <div class="font-bold text-orange-700 mb-2 border-b border-rose-100 pb-1">Oseltamivir & Covids</div>
                             <ul class="text-[13px] text-gray-700 space-y-2">
                                 <li class="flex justify-between"><span>• ไม่ได้เลือก Indication ที่เหมาะสม:</span> <span class="font-bold text-red-600"><span id="q-osel-ind">0</span> ราย</span></li>
-                                <li class="flex justify-between"><span>• ไม่ได้ระบุ Onset หรือ > 48hr:</span> <span class="font-bold text-red-600"><span id="q-osel-onset">0</span> ราย</span></li>
                             </ul>
                         </div>
                         <div class="bg-white p-3 rounded-xl border border-rose-100 shadow-sm">
@@ -681,13 +832,13 @@
                 <div id="doctorPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                     <h3 class="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อประเมิน Part 2)</h3>
                     
-                    <!-- Filters -->
                     <div class="flex flex-wrap gap-2 mb-3 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
                         <select id="docListFilterDrug" class="editable-input w-auto text-xs border-indigo-200" onchange="renderDoctorPatientList(revealedLicense)">
                             <option value="all">ทุกยา</option>
                             <option value="Antibiotics">Antibiotics</option>
                             <option value="Oseltamivir">Oseltamivir</option>
                             <option value="Atorvastatin">Atorvastatin</option>
+                            <option value="Covids">Covids</option>
                         </select>
                         <select id="docListFilterMonth" class="editable-input w-auto text-xs border-indigo-200" onchange="renderDoctorPatientList(revealedLicense)">
                             <option value="current">เดือนปัจจุบัน</option>
@@ -736,26 +887,33 @@
                 </div>
 
                 <!-- Pharma Summary Cards -->
-                <div id="pharmaStatsCards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 hidden">
+                <div id="pharmaStatsCards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 hidden">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
-                        <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics (ATB)</div>
+                        <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics</div>
                         <div class="flex justify-between items-end">
-                            <div class="text-xs text-gray-500">รอประเมิน / ประเมินแล้ว</div>
-                            <div id="pharma-stat-anti" class="text-xl font-extrabold text-blue-800">0 / 0</div>
+                            <div class="text-[10px] text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-anti" class="text-lg font-extrabold text-blue-800">0 / 0</div>
                         </div>
                     </div>
                     <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 shadow-sm">
-                        <div class="text-orange-600 font-bold text-sm mb-1">Oseltamivir (OSL)</div>
+                        <div class="text-orange-600 font-bold text-sm mb-1">Oseltamivir</div>
                         <div class="flex justify-between items-end">
-                            <div class="text-xs text-gray-500">รอประเมิน / ประเมินแล้ว</div>
-                            <div id="pharma-stat-osel" class="text-xl font-extrabold text-orange-800">0 / 0</div>
+                            <div class="text-[10px] text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-osel" class="text-lg font-extrabold text-orange-800">0 / 0</div>
                         </div>
                     </div>
                     <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 shadow-sm">
-                        <div class="text-purple-600 font-bold text-sm mb-1">Atorvastatin (ATV)</div>
+                        <div class="text-purple-600 font-bold text-sm mb-1">Atorvastatin</div>
                         <div class="flex justify-between items-end">
-                            <div class="text-xs text-gray-500">รอประเมิน / ประเมินแล้ว</div>
-                            <div id="pharma-stat-ator" class="text-xl font-extrabold text-purple-800">0 / 0</div>
+                            <div class="text-[10px] text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-ator" class="text-lg font-extrabold text-purple-800">0 / 0</div>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
+                        <div class="text-blue-600 font-bold text-sm mb-1">Covids</div>
+                        <div class="flex justify-between items-end">
+                            <div class="text-[10px] text-gray-500">รอประเมิน / ประเมินแล้ว</div>
+                            <div id="pharma-stat-covd" class="text-lg font-extrabold text-blue-800">0 / 0</div>
                         </div>
                     </div>
                 </div>
@@ -764,13 +922,13 @@
                 <div id="pharmaPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
                     <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อเปิดประเมิน)</h3>
                     
-                    <!-- Filters -->
                     <div class="flex flex-wrap gap-2 mb-3 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
                         <select id="pharmaListFilterDrug" class="editable-input w-auto text-xs border-emerald-200" onchange="renderPharmaPatientList()">
                             <option value="all">ทุกยา</option>
                             <option value="Antibiotics">Antibiotics</option>
                             <option value="Oseltamivir">Oseltamivir</option>
                             <option value="Atorvastatin">Atorvastatin</option>
+                            <option value="Covids">Covids</option>
                         </select>
                         <select id="pharmaListFilterMonth" class="editable-input w-auto text-xs border-emerald-200" onchange="renderPharmaPatientList()">
                             <option value="current">เดือนปัจจุบัน</option>
@@ -806,7 +964,7 @@
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyvH0HptaZiDvg11ZcWGPyZe1A9IbC6uzEiMXzOQbJj1M1ZZHzFIWVy0PK-j_WXzanUxg/exec";
         
-        // ใช้โชว์ข้อความแทน alert()
+        // ใช้โชว์ข้อความแทน alert() สำหรับ Sandbox
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -844,14 +1002,13 @@
         let revealedLicense = null;
 
         let globalPharmaData = [];
-        
         let cachedDocsList = [];
         let currentDocSearchPrefix = '';
 
         const topValuePlugin = {
             id: 'topValuePlugin',
             afterDatasetsDraw(chart, args, options) {
-                if (activeTab !== 'Antibiotics') return;
+                if (activeTab !== 'Antibiotics' && activeTab !== 'Oseltamivir' && activeTab !== 'Covids') return;
                 const { ctx, data, scales: { x, y } } = chart;
                 ctx.save();
                 ctx.textAlign = 'center';
@@ -883,7 +1040,6 @@
         };
         Chart.register(topValuePlugin);
 
-        // --- Utility Functions ---
         function toDatetimeLocal(dateStr) {
             if (!dateStr || dateStr === '-' || dateStr === 'ไม่มีข้อมูล') return '';
             const d = new Date(dateStr);
@@ -931,7 +1087,6 @@
             setTimeout(() => spinner.classList.remove('active'), 10000);
         }, 60000);
 
-        // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             Chart.defaults.font.family = "'Sarabun', sans-serif";
             const urlParams = new URLSearchParams(window.location.search);
@@ -943,13 +1098,12 @@
             } else {
                 initializeApp(isDoctor);
             }
-            
             prefetchDoctors();
         });
 
         async function prefetchDoctors() {
             try {
-                // กลับไปใช้ Native Fetch ปกติ
+                // ใช้ Fetch แบบ Native 100%
                 const response = await fetch(`${GAS_URL}?action=getDoctorSummary`);
                 const json = await response.json();
                 if(json.status === 'success' && json.docsMap) {
@@ -980,7 +1134,6 @@
             errorMsg.classList.add('hidden');
             
             try {
-                // กลับไปใช้ Native Fetch ปกติ
                 const response = await fetch(`${GAS_URL}?action=verifyPasscode&passcode=${pass}`);
                 const json = await response.json();
                 if(json.status === 'success') {
@@ -1005,10 +1158,10 @@
 
         function switchTab(tabName) {
             activeTab = tabName;
-            ['Antibiotics', 'Oseltamivir', 'Atorvastatin'].forEach(name => {
+            ['Antibiotics', 'Oseltamivir', 'Atorvastatin', 'Covids'].forEach(name => {
                 const btn = document.getElementById(`tab-${name}`);
                 if (name === tabName) btn.className = 'tab-btn tab-active px-6 py-2 rounded-xl transition-all whitespace-nowrap font-bold';
-                else btn.className = 'tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap font-bold';
+                else btn.className = `tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap font-bold ${name==='Covids'?'text-blue-700':''}`;
             });
             document.getElementById('currentTabLabel').textContent = tabName;
             document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
@@ -1028,7 +1181,6 @@
             document.getElementById('phantomSpinner').classList.add('active');
             
             try {
-                // กลับไปใช้ Native Fetch ปกติ
                 const response = await fetch(`${GAS_URL}?action=getLastUpdate&sheet=${activeTab}`);
                 const json = await response.json();
                 
@@ -1062,9 +1214,7 @@
                         updateDatalist('list-diagnosis', json.options.diagnoses);
                         updateDatalist('list-drug', json.options.drugs);
                         updateDatalist('list-doctor', json.options.doctors); 
-                        updateDatalist('list-gender', json.options.genders);
                         updateDatalist('list-age', json.options.ages);
-                        updateDatalist('list-patient-type', json.options.patientTypes);
                     }
                     
                     if (json.chartData && json.chartData.length > 0) {
@@ -1099,7 +1249,6 @@
 
             const allRawLabelsTime = Object.keys(timeData).sort();
             const rawLabelsTime = allRawLabelsTime.slice(-12);
-            
             const displayLabelsTime = rawLabelsTime.map(formatMonthDisplay);
             
             const timeDsAppr = rawLabelsTime.map(m => timeData[m]['Appropriate']);
@@ -1120,22 +1269,15 @@
                     ]
                 },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                    responsive: true, maintainAspectRatio: false, 
                     scales: { x: { stacked: true }, y: { stacked: true } }, 
-                    plugins: { 
-                        legend: { position: 'top', labels: { boxWidth: 12 } },
-                        datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' }
-                    },
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 12 } }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } },
                     onClick: (e, elements) => {
                         if (elements.length > 0) {
                             const idx = elements[0].index;
                             const clickedMonthRaw = rawLabelsTime[idx];
-                            if (activeDashMonth === clickedMonthRaw) {
-                                activeDashMonth = null; 
-                            } else {
-                                activeDashMonth = clickedMonthRaw;
-                            }
+                            if (activeDashMonth === clickedMonthRaw) activeDashMonth = null; 
+                            else activeDashMonth = clickedMonthRaw;
                             
                             timeChart.data.datasets.forEach((dataset, i) => {
                                 let baseColor = i === 0 ? '#22c55e' : (i === 1 ? '#ef4444' : '#cbd5e1');
@@ -1146,12 +1288,9 @@
                             updateDashboardSubCharts();
                         }
                     },
-                    onHover: (event, chartElement) => {
-                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-                    }
+                    onHover: (event, chartElement) => { event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default'; }
                 }
             });
-
             updateDashboardSubCharts(true);
         }
 
@@ -1161,13 +1300,9 @@
 
             setTimeout(() => {
                 let filteredData = currentDashRawData;
-                if (activeDashMonth) {
-                    filteredData = currentDashRawData.filter(d => d.month === activeDashMonth);
-                }
+                if (activeDashMonth) filteredData = currentDashRawData.filter(d => d.month === activeDashMonth);
 
-                const docData = {};
-                const indData = {};
-                const staffData = {};
+                const docData = {}; const indData = {}; const staffData = {};
 
                 filteredData.forEach(item => {
                     if(!docData[item.doctor]) docData[item.doctor] = { 'Appropriate': 0, 'Inappropriate': 0, 'ไม่มีข้อมูล': 0 };
@@ -1176,19 +1311,14 @@
                     else docData[item.doctor]['ไม่มีข้อมูล']++;
                     
                     indData[item.indication] = (indData[item.indication] || 0) + 1;
-                    if(item.staff !== 'ไม่ระบุ' && item.staff !== '-') {
-                        staffData[item.staff] = (staffData[item.staff] || 0) + 1;
-                    }
+                    if(item.staff !== 'ไม่ระบุ' && item.staff !== '-') staffData[item.staff] = (staffData[item.staff] || 0) + 1;
                 });
 
                 const ctxInd = document.getElementById('indicationChart').getContext('2d');
                 if(indChart) indChart.destroy();
                 indChart = new Chart(ctxInd, {
                     type: 'doughnut',
-                    data: {
-                        labels: Object.keys(indData),
-                        datasets: [{ data: Object.values(indData), backgroundColor: ['#3b82f6', '#8b5cf6', '#6366f1', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#64748b'] }]
-                    },
+                    data: { labels: Object.keys(indData), datasets: [{ data: Object.values(indData), backgroundColor: ['#3b82f6', '#8b5cf6', '#6366f1', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6'] }] },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
                 });
 
@@ -1196,17 +1326,12 @@
                 if(staffChart) staffChart.destroy();
                 staffChart = new Chart(ctxStaff, {
                     type: 'pie',
-                    data: {
-                        labels: Object.keys(staffData),
-                        datasets: [{ data: Object.values(staffData), backgroundColor: ['#14b8a6', '#0ea5e9', '#3b82f6', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'] }]
-                    },
+                    data: { labels: Object.keys(staffData), datasets: [{ data: Object.values(staffData), backgroundColor: ['#14b8a6', '#0ea5e9', '#3b82f6', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899'] }] },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
                 });
 
                 const labelsDoc = Object.keys(docData).sort((a, b) => {
-                    const totalA = docData[a]['Appropriate'] + docData[a]['Inappropriate'] + docData[a]['ไม่มีข้อมูล'];
-                    const totalB = docData[b]['Appropriate'] + docData[b]['Inappropriate'] + docData[b]['ไม่มีข้อมูล'];
-                    return totalB - totalA; 
+                    return (docData[b]['Appropriate'] + docData[b]['Inappropriate'] + docData[b]['ไม่มีข้อมูล']) - (docData[a]['Appropriate'] + docData[a]['Inappropriate'] + docData[a]['ไม่มีข้อมูล']); 
                 }).slice(0, 10);
                 
                 const docDsAppr = labelsDoc.map(d => docData[d]['Appropriate']);
@@ -1217,14 +1342,7 @@
                 if(docChart) docChart.destroy();
                 docChart = new Chart(ctxDoc, {
                     type: 'bar',
-                    data: {
-                        labels: labelsDoc,
-                        datasets: [
-                            { label: 'Appr.', data: docDsAppr, backgroundColor: '#22c55e' },
-                            { label: 'Inapp.', data: docDsInapp, backgroundColor: '#ef4444' },
-                            { label: 'None', data: docDsNone, backgroundColor: '#cbd5e1' }
-                        ]
-                    },
+                    data: { labels: labelsDoc, datasets: [ { label: 'Appr.', data: docDsAppr, backgroundColor: '#22c55e' }, { label: 'Inapp.', data: docDsInapp, backgroundColor: '#ef4444' }, { label: 'None', data: docDsNone, backgroundColor: '#cbd5e1' } ] },
                     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { font: { size: 10 } } } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
                 });
 
@@ -1232,6 +1350,9 @@
             }, 50);
         }
 
+        // ==========================================
+        // DOCTOR PAGE LOGIC
+        // ==========================================
         function toggleDoctorPage() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('mainTabs').classList.add('hidden');
@@ -1252,22 +1373,18 @@
 
         async function fetchDoctorSummary() {
             try {
-                // กลับไปใช้ Native Fetch ปกติ
                 const response = await fetch(`${GAS_URL}?action=getDoctorSummary`);
                 const json = await response.json();
-                
                 if(json.status === 'success') {
                     globalDocData = json.data;
                     globalDocsMap = json.docsMap;
                     
                     let eIdx = 0;
                     Object.keys(globalDocsMap).forEach(lic => {
-                        emojiMap[lic] = emojiList[eIdx % emojiList.length];
-                        eIdx++;
+                        emojiMap[lic] = emojiList[eIdx % emojiList.length]; eIdx++;
                     });
 
                     const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
-                    
                     const selMonth = document.getElementById('docMonthSelector');
                     const filterMonth = document.getElementById('docListFilterMonth');
                     
@@ -1276,25 +1393,15 @@
                     
                     months.forEach(m => {
                         const mDisplay = formatMonthDisplay(m);
-                        const opt = document.createElement('option');
-                        opt.value = m; opt.textContent = mDisplay;
-                        selMonth.appendChild(opt);
-                        
-                        const opt2 = document.createElement('option');
-                        opt2.value = m; opt2.textContent = mDisplay;
-                        filterMonth.appendChild(opt2);
+                        selMonth.appendChild(new Option(mDisplay, m));
+                        filterMonth.appendChild(new Option(mDisplay, m));
                     });
                     
                     const now = new Date();
                     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                     
-                    if (months.includes(currentMonthStr)) {
-                        selMonth.value = currentMonthStr;
-                        filterMonth.value = currentMonthStr;
-                    } else if (months.length > 0) {
-                        selMonth.value = months[0];
-                        filterMonth.value = months[0];
-                    }
+                    if (months.includes(currentMonthStr)) { selMonth.value = currentMonthStr; filterMonth.value = currentMonthStr; } 
+                    else if (months.length > 0) { selMonth.value = months[0]; filterMonth.value = months[0]; }
 
                     renderDocSummaryChart();
                 }
@@ -1303,31 +1410,24 @@
 
         function searchDoctor() {
             const val = document.getElementById('searchLicense').value.trim();
-            if(globalDocsMap[val]) {
-                revealedLicense = val;
-                renderDocSummaryChart();
-                renderDoctorPatientList(val);
-            }
+            if(globalDocsMap[val]) { revealedLicense = val; renderDocSummaryChart(); renderDoctorPatientList(val); }
         }
         
         function clearDoctorZoom() {
-            revealedLicense = null;
-            document.getElementById('searchLicense').value = '';
-            document.getElementById('doctorPatientList').classList.add('hidden');
-            renderDocSummaryChart();
+            revealedLicense = null; document.getElementById('searchLicense').value = '';
+            document.getElementById('doctorPatientList').classList.add('hidden'); renderDocSummaryChart();
         }
 
         function renderDocSummaryChart() {
             const month = document.getElementById('docMonthSelector').value;
             let filtered = globalDocData;
-            if(month !== 'all') {
-                filtered = globalDocData.filter(d => d.month === month);
-            }
+            if(month !== 'all') filtered = globalDocData.filter(d => d.month === month);
 
             let stats = {
                 'Antibiotics': { total: 0, eval: 0 },
                 'Oseltamivir': { total: 0, eval: 0 },
-                'Atorvastatin': { total: 0, eval: 0 }
+                'Atorvastatin': { total: 0, eval: 0 },
+                'Covids': { total: 0, eval: 0 }
             };
 
             const agg = {};
@@ -1336,16 +1436,13 @@
                 agg[lic] = {
                     'Antibiotics': { 'Appropriate':0, 'Inappropriate':0, 'รอประเมิน':0, 'ไม่ได้ส่งใบDUE':0 },
                     'Oseltamivir': { 'Appropriate':0, 'Inappropriate':0, 'รอประเมิน':0, 'ไม่ได้ส่งใบDUE':0 },
-                    'Atorvastatin': { 'Appropriate':0, 'Inappropriate':0, 'รอประเมิน':0, 'ไม่ได้ส่งใบDUE':0 }
+                    'Atorvastatin': { 'Appropriate':0, 'Inappropriate':0, 'รอประเมิน':0, 'ไม่ได้ส่งใบDUE':0 },
+                    'Covids': { 'Appropriate':0, 'Inappropriate':0, 'รอประเมิน':0, 'ไม่ได้ส่งใบDUE':0 }
                 };
             });
 
             filtered.forEach(d => {
-                if(stats[d.sheet]) {
-                    stats[d.sheet].total++;
-                    if(d.hasIndication) stats[d.sheet].eval++; 
-                }
-
+                if(stats[d.sheet]) { stats[d.sheet].total++; if(d.hasIndication) stats[d.sheet].eval++; }
                 if(!agg[d.license]) return;
                 
                 let status = 'ไม่ได้ส่งใบDUE';
@@ -1354,45 +1451,38 @@
                     else if(d.evaluated.includes('Inapp')) status = 'Inappropriate';
                     else status = 'รอประเมิน';
                 }
-                
-                if(agg[d.license][d.sheet] && agg[d.license][d.sheet][status] !== undefined) {
-                    agg[d.license][d.sheet][status]++;
-                }
+                if(agg[d.license][d.sheet] && agg[d.license][d.sheet][status] !== undefined) agg[d.license][d.sheet][status]++;
             });
 
             const calcPct = (e, t) => t > 0 ? Math.round((e/t)*100) : 0;
             document.getElementById('stat-anti').textContent = `${stats['Antibiotics'].total} / ${stats['Antibiotics'].eval} (${calcPct(stats['Antibiotics'].eval, stats['Antibiotics'].total)}%)`;
             document.getElementById('stat-osel').textContent = `${stats['Oseltamivir'].total} / ${stats['Oseltamivir'].eval} (${calcPct(stats['Oseltamivir'].eval, stats['Oseltamivir'].total)}%)`;
             document.getElementById('stat-ator').textContent = `${stats['Atorvastatin'].total} / ${stats['Atorvastatin'].eval} (${calcPct(stats['Atorvastatin'].eval, stats['Atorvastatin'].total)}%)`;
+            document.getElementById('stat-covd').textContent = `${stats['Covids'].total} / ${stats['Covids'].eval} (${calcPct(stats['Covids'].eval, stats['Covids'].total)}%)`;
 
             let activeLicenses = licenses.filter(lic => {
                 let total = 0;
-                ['Antibiotics', 'Oseltamivir', 'Atorvastatin'].forEach(drug => {
+                ['Antibiotics', 'Oseltamivir', 'Atorvastatin', 'Covids'].forEach(drug => {
                     ['Appropriate', 'Inappropriate', 'รอประเมิน', 'ไม่ได้ส่งใบDUE'].forEach(st => total += agg[lic][drug][st]);
                 });
                 return total > 0;
             });
             
             const typedLicense = document.getElementById('searchLicense').value.trim();
-            if (revealedLicense && activeLicenses.includes(revealedLicense)) {
-                activeLicenses = [revealedLicense];
-            }
+            if (revealedLicense && activeLicenses.includes(revealedLicense)) activeLicenses = [revealedLicense];
 
-            let qOselInd = 0, qOselOnset = 0;
-            let qAtorInd = 0;
-            let qAntiStaff = 0, qAntiInd = 0;
+            let qOselInd = 0, qOselOnset = 0, qAtorInd = 0, qAntiStaff = 0, qAntiInd = 0;
 
             filtered.forEach(d => {
                 if (!activeLicenses.includes(d.license)) return;
-
-                if (d.sheet === 'Oseltamivir') {
+                if (d.sheet === 'Oseltamivir' || d.sheet === 'Covids') {
                     if (!d.hasIndication || d.evaluated.includes('Indication')) qOselInd++;
-                    let onsetNum = parseInt(d.onset);
-                    if (!d.onset || d.onset === '-' || isNaN(onsetNum) || onsetNum > 48) qOselOnset++;
+                    if(d.sheet === 'Oseltamivir') {
+                        let onsetNum = parseInt(d.onset);
+                        if (!d.onset || d.onset === '-' || isNaN(onsetNum) || onsetNum > 48) qOselOnset++;
+                    }
                 } 
-                else if (d.sheet === 'Atorvastatin') {
-                    if (!d.hasIndication || d.evaluated.includes('Indication')) qAtorInd++;
-                }
+                else if (d.sheet === 'Atorvastatin') { if (!d.hasIndication || d.evaluated.includes('Indication')) qAtorInd++; }
                 else if (d.sheet === 'Antibiotics') {
                     let sa = (d.staffApprove || '').toLowerCase();
                     if (!sa || sa === '-' || sa === 'ไม่มี' || sa === 'no') qAntiStaff++;
@@ -1401,7 +1491,7 @@
             });
 
             document.getElementById('q-osel-ind').textContent = qOselInd;
-            document.getElementById('q-osel-onset').textContent = qOselOnset;
+            if(document.getElementById('q-osel-onset')) document.getElementById('q-osel-onset').textContent = qOselOnset;
             document.getElementById('q-ator-ind').textContent = qAtorInd;
             document.getElementById('q-anti-staff').textContent = qAntiStaff;
             document.getElementById('q-anti-ind').textContent = qAntiInd;
@@ -1411,21 +1501,15 @@
             const colors = {
                 'Antibiotics': { 'Appropriate': '#4ade80', 'Inappropriate': '#f87171', 'รอประเมิน': '#fde047', 'ไม่ได้ส่งใบDUE': '#d1d5db' },
                 'Oseltamivir': { 'Appropriate': '#2dd4bf', 'Inappropriate': '#fb923c', 'รอประเมิน': '#fef08a', 'ไม่ได้ส่งใบDUE': '#9ca3af' },
-                'Atorvastatin': { 'Appropriate': '#60a5fa', 'Inappropriate': '#c084fc', 'รอประเมิน': '#fef9c3', 'ไม่ได้ส่งใบDUE': '#6b7280' }
+                'Atorvastatin': { 'Appropriate': '#60a5fa', 'Inappropriate': '#c084fc', 'รอประเมิน': '#fef9c3', 'ไม่ได้ส่งใบDUE': '#6b7280' },
+                'Covids': { 'Appropriate': '#c084fc', 'Inappropriate': '#e879f9', 'รอประเมิน': '#f5d0fe', 'ไม่ได้ส่งใบDUE': '#e5e7eb' }
             };
 
-            ['Antibiotics', 'Oseltamivir', 'Atorvastatin'].forEach(drug => {
+            ['Antibiotics', 'Oseltamivir', 'Atorvastatin', 'Covids'].forEach(drug => {
                 ['Appropriate', 'Inappropriate', 'รอประเมิน', 'ไม่ได้ส่งใบDUE'].forEach(status => {
                     const data = activeLicenses.map(lic => agg[lic][drug][status]);
                     if (data.some(v => v > 0)) {
-                        datasets.push({
-                            label: `${drug} - ${status}`,
-                            data: data,
-                            stack: drug,
-                            backgroundColor: colors[drug][status],
-                            maxBarThickness: 50,
-                            doctorLicenses: activeLicenses 
-                        });
+                        datasets.push({ label: `${drug} - ${status}`, data: data, stack: drug, backgroundColor: colors[drug][status], maxBarThickness: 50, doctorLicenses: activeLicenses });
                     }
                 });
             });
@@ -1433,18 +1517,13 @@
             const ctx = document.getElementById('docSummaryChart').getContext('2d');
             if(docSummaryChartObj) docSummaryChartObj.destroy();
             docSummaryChartObj = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: datasets },
+                type: 'bar', data: { labels: labels, datasets: datasets },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    onClick: (e, elements) => { },
                     scales: { x: { stacked: true, ticks: { font: { size: 14, weight: 'bold' } } }, y: { stacked: true, beginAtZero: true } },
                     plugins: {
                         datalabels: {
-                            color: (context) => {
-                                const bg = context.dataset.backgroundColor;
-                                return ['#d1d5db', '#9ca3af', '#6b7280'].includes(bg) ? '#1f2937' : '#ffffff';
-                            },
+                            color: (context) => { const bg = context.dataset.backgroundColor; return ['#d1d5db', '#9ca3af', '#6b7280', '#e5e7eb'].includes(bg) ? '#1f2937' : '#ffffff'; },
                             font: { size: 12, weight: 'bold' },
                             formatter: (value, context) => {
                                 if(value === 0) return '';
@@ -1452,81 +1531,49 @@
                                 if(context.dataset.stack === 'Antibiotics') prefix = 'ATB: ';
                                 if(context.dataset.stack === 'Oseltamivir') prefix = 'OSL: ';
                                 if(context.dataset.stack === 'Atorvastatin') prefix = 'ATV: ';
+                                if(context.dataset.stack === 'Covids') prefix = 'CVD: ';
                                 return prefix + value;
                             }
                         },
-                        tooltip: { 
-                            callbacks: { 
-                                title: function(context) { 
-                                    const idx = context[0].dataIndex;
-                                    const lic = context[0].dataset.doctorLicenses[idx];
-                                    const typedLicense = document.getElementById('searchLicense').value.trim();
-                                    return lic === typedLicense ? globalDocsMap[lic] : emojiMap[lic]; 
-                                } 
-                            } 
-                        }
+                        tooltip: { callbacks: { title: function(context) { const idx = context[0].dataIndex; const lic = context[0].dataset.doctorLicenses[idx]; const typedLicense = document.getElementById('searchLicense').value.trim(); return lic === typedLicense ? globalDocsMap[lic] : emojiMap[lic]; } } }
                     }
                 }
             });
         }
 
         function sortDocList(col) {
-            if(docSortCol === col) docSortAsc = !docSortAsc;
-            else { docSortCol = col; docSortAsc = true; }
+            if(docSortCol === col) docSortAsc = !docSortAsc; else { docSortCol = col; docSortAsc = true; }
             renderDoctorPatientList(revealedLicense);
         }
 
         function renderDoctorPatientList(lic) {
-            const tbody = document.getElementById('doctorPatientTbody');
-            tbody.innerHTML = '';
-            
+            const tbody = document.getElementById('doctorPatientTbody'); tbody.innerHTML = '';
             let patients = globalDocData.filter(d => d.license === lic);
-            
-            const fDrug = document.getElementById('docListFilterDrug').value;
-            const fMonth = document.getElementById('docListFilterMonth').value;
-            const fStatus = document.getElementById('docListFilterStatus').value;
+            const fDrug = document.getElementById('docListFilterDrug').value; const fMonth = document.getElementById('docListFilterMonth').value; const fStatus = document.getElementById('docListFilterStatus').value;
 
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
             if (fMonth !== 'all') patients = patients.filter(d => d.month === fMonth);
-
-            if (fStatus === 'pending') {
-                patients = patients.filter(d => !d.hasIndication || (!d.evaluated.includes('Appr') && !d.evaluated.includes('Inapp')));
-            } else if (fStatus === 'evaluated') {
-                patients = patients.filter(d => d.hasIndication && (d.evaluated.includes('Appr') || d.evaluated.includes('Inapp')));
-            }
+            if (fStatus === 'pending') patients = patients.filter(d => !d.hasIndication || (!d.evaluated.includes('Appr') && !d.evaluated.includes('Inapp')));
+            else if (fStatus === 'evaluated') patients = patients.filter(d => d.hasIndication && (d.evaluated.includes('Appr') || d.evaluated.includes('Inapp')));
 
             patients.sort((a, b) => {
-                let vA = a[docSortCol] || '';
-                let vB = b[docSortCol] || '';
-                if(vA < vB) return docSortAsc ? -1 : 1;
-                if(vA > vB) return docSortAsc ? 1 : -1;
-                return 0;
+                let vA = a[docSortCol] || ''; let vB = b[docSortCol] || '';
+                if(vA < vB) return docSortAsc ? -1 : 1; if(vA > vB) return docSortAsc ? 1 : -1; return 0;
             });
 
-            if(patients.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</td></tr>';
-            } else {
+            if(patients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</td></tr>'; } 
+            else {
                 patients.forEach(p => {
                     if(!p.hn) return; 
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b border-indigo-50 doctor-row-hover cursor-pointer';
-                    tr.onclick = () => openDoctorEditForm(p.sheet, p.hn);
-                    
+                    const tr = document.createElement('tr'); tr.className = 'border-b border-indigo-50 doctor-row-hover cursor-pointer'; tr.onclick = () => openDoctorEditForm(p.sheet, p.hn);
                     let displayStatus = p.hasIndication ? (p.evaluated.includes('Appr') || p.evaluated.includes('Inapp') ? p.evaluated : 'รอประเมิน') : 'ไม่ได้ส่งใบDUE';
-                    
                     let badgeColor = 'bg-gray-200 text-gray-700';
                     if (p.hasIndication) {
                         if (p.evaluated.includes('Appr')) badgeColor = 'bg-green-100 text-green-700';
                         else if (p.evaluated.includes('Inapp')) badgeColor = 'bg-red-100 text-red-700';
                         else badgeColor = 'bg-yellow-100 text-yellow-700';
                     }
-                    
-                    tr.innerHTML = `
-                        <td class="p-3 font-bold text-indigo-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${p.displayDate}</td>
-                        <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
-                    `;
+                    tr.innerHTML = `<td class="p-3 font-bold text-indigo-700">${p.sheet}</td><td class="p-3 text-gray-500">${p.displayDate}</td><td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td><td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>`;
                     tbody.appendChild(tr);
                 });
             }
@@ -1534,272 +1581,139 @@
         }
 
         function openDoctorEditForm(sheet, hn) {
-            isDoctorMode = true;
-            document.getElementById('searchHN').value = hn;
-            hideDoctorPage();
-            switchTab(sheet);
-            searchPatient(hn);
+            isDoctorMode = true; document.getElementById('searchHN').value = hn;
+            hideDoctorPage(); switchTab(sheet); searchPatient(hn);
         }
 
         function resetDoctorMode() {
             isDoctorMode = false;
-            ['anti', 'osel', 'ator'].forEach(prefix => {
-                const badge = document.getElementById(`${prefix}_mode_badge`);
-                if(badge) badge.classList.add('hidden');
-                document.querySelectorAll(`[id^="${prefix}_"], select[id^="${prefix}_"], textarea[id^="${prefix}_"]`).forEach(el => {
-                    el.readOnly = false;
-                    el.disabled = false;
-                });
+            ['anti', 'osel', 'ator', 'covd'].forEach(prefix => {
+                const badge = document.getElementById(`${prefix}_mode_badge`); if(badge) badge.classList.add('hidden');
+                document.querySelectorAll(`[id^="${prefix}_"], select[id^="${prefix}_"], textarea[id^="${prefix}_"]`).forEach(el => { el.readOnly = false; el.disabled = false; });
                 document.getElementsByName(`${prefix}_indication`).forEach(el => el.disabled = false);
                 document.getElementsByName(`${prefix}_evaluation`).forEach(el => el.disabled = false);
-                if(prefix === 'anti') {
-                    document.getElementsByName(`anti_Pharmacist_action`).forEach(el => el.disabled = false);
-                    document.getElementsByName(`anti_Result`).forEach(el => el.disabled = false);
-                }
+                if(prefix === 'anti') { document.getElementsByName(`anti_Pharmacist_action`).forEach(el => el.disabled = false); document.getElementsByName(`anti_Result`).forEach(el => el.disabled = false); }
             });
         }
 
         function applyDoctorMode(tab) {
             if(!isDoctorMode) return;
-            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
+            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : (tab === 'Covids' ? 'covd' : 'anti'));
             document.getElementById(`${prefix}_mode_badge`).classList.remove('hidden');
             
             document.querySelectorAll(`[id^="${prefix}_"], select[id^="${prefix}_"], textarea[id^="${prefix}_"]`).forEach(el => {
                 if(!el.id.includes('indication') && !el.id.includes('Onset') && el.id !== `${prefix}_rowIndex` && el.id !== `${prefix}_Visit_ID`) {
-                    el.readOnly = true;
-                    if(el.tagName === 'SELECT') el.disabled = true;
+                    el.readOnly = true; if(el.tagName === 'SELECT') el.disabled = true;
                 }
             });
-            
             document.getElementsByName(`${prefix}_evaluation`).forEach(el => el.disabled = true);
-            const pharma = document.getElementById(`${prefix}_pharmacist`);
-            if(pharma) pharma.disabled = true;
-
-            if(tab === 'Antibiotics') {
-                document.getElementsByName(`anti_Pharmacist_action`).forEach(el => el.disabled = true);
-                document.getElementsByName(`anti_Result`).forEach(el => el.disabled = true);
-            }
+            const pharma = document.getElementById(`${prefix}_pharmacist`); if(pharma) pharma.disabled = true;
+            if(tab === 'Antibiotics') { document.getElementsByName(`anti_Pharmacist_action`).forEach(el => el.disabled = true); document.getElementsByName(`anti_Result`).forEach(el => el.disabled = true); }
         }
 
         function openDoctorSearch(prefix) {
-            currentDocSearchPrefix = prefix;
-            document.getElementById('doctorSearchModal').classList.remove('hidden');
-            document.getElementById('doctorSearchInput').value = '';
-            
+            currentDocSearchPrefix = prefix; document.getElementById('doctorSearchModal').classList.remove('hidden'); document.getElementById('doctorSearchInput').value = '';
             if (cachedDocsList.length === 0) {
                 document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-gray-500"><span class="spinner"></span> กำลังดึงฐานข้อมูลแพทย์...</div>';
-                
-                // กลับไปใช้ Native Fetch ปกติ
                 fetch(`${GAS_URL}?action=getDoctorSummary`).then(r=>r.json()).then(json=>{
-                    if(json.docsMap) {
-                        cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] }));
-                        renderDoctorList('');
-                    }
-                }).catch(() => {
-                    document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-red-500">ดึงข้อมูลล้มเหลว กรุณาพิมพ์เอง</div>';
-                });
-            } else {
-                renderDoctorList('');
-            }
+                    if(json.docsMap) { cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] })); renderDoctorList(''); }
+                }).catch(() => { document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-red-500">ดึงข้อมูลล้มเหลว กรุณาพิมพ์เอง</div>'; });
+            } else { renderDoctorList(''); }
             setTimeout(() => document.getElementById('doctorSearchInput').focus(), 100);
         }
 
-        function closeDoctorSearch() {
-            document.getElementById('doctorSearchModal').classList.add('hidden');
-        }
+        function closeDoctorSearch() { document.getElementById('doctorSearchModal').classList.add('hidden'); }
 
         function renderDoctorList(filter) {
-            const container = document.getElementById('doctorListContainer');
-            container.innerHTML = '';
-            const lowerFilter = filter.toLowerCase();
-            
-            const filtered = cachedDocsList.filter(d => 
-                d.name.toLowerCase().includes(lowerFilter) || 
-                d.license.toLowerCase().includes(lowerFilter)
-            );
-
-            if(filtered.length === 0) {
-                container.innerHTML = '<div class="text-center p-4 text-gray-500 text-xs">ไม่พบข้อมูล (หากเป็นแพทย์ใหม่ ให้พิมพ์กรอกเองได้เลย)</div>';
-                return;
-            }
-
+            const container = document.getElementById('doctorListContainer'); container.innerHTML = ''; const lowerFilter = filter.toLowerCase();
+            const filtered = cachedDocsList.filter(d => d.name.toLowerCase().includes(lowerFilter) || d.license.toLowerCase().includes(lowerFilter));
+            if(filtered.length === 0) { container.innerHTML = '<div class="text-center p-4 text-gray-500 text-xs">ไม่พบข้อมูล (หากเป็นแพทย์ใหม่ ให้พิมพ์กรอกเองได้เลย)</div>'; return; }
             filtered.forEach(d => {
-                const div = document.createElement('div');
-                div.className = 'p-3 hover:bg-indigo-100 cursor-pointer rounded-lg border-b border-gray-100 flex justify-between items-center text-sm transition-colors';
+                const div = document.createElement('div'); div.className = 'p-3 hover:bg-indigo-100 cursor-pointer rounded-lg border-b border-gray-100 flex justify-between items-center text-sm transition-colors';
                 div.innerHTML = `<span class="font-bold text-gray-700">${d.name}</span> <span class="text-indigo-600 text-xs font-bold bg-indigo-100 px-2 py-1 rounded-md border border-indigo-200">ว.${d.license}</span>`;
-                div.onclick = () => {
-                    document.getElementById(`${currentDocSearchPrefix}_Doctor_Name`).value = d.name;
-                    document.getElementById(`${currentDocSearchPrefix}_License_No`).value = d.license;
-                    closeDoctorSearch();
-                };
+                div.onclick = () => { document.getElementById(`${currentDocSearchPrefix}_Doctor_Name`).value = d.name; document.getElementById(`${currentDocSearchPrefix}_License_No`).value = d.license; closeDoctorSearch(); };
                 container.appendChild(div);
             });
         }
 
-        function filterDoctorList() {
-            renderDoctorList(document.getElementById('doctorSearchInput').value);
-        }
+        function filterDoctorList() { renderDoctorList(document.getElementById('doctorSearchInput').value); }
 
         function togglePharmaPage() {
-            document.getElementById('mainPage').classList.add('hidden');
-            document.getElementById('mainTabs').classList.add('hidden');
-            document.getElementById('doctorPage').classList.add('hidden');
-            document.getElementById('pharmaPage').classList.remove('hidden');
+            document.getElementById('mainPage').classList.add('hidden'); document.getElementById('mainTabs').classList.add('hidden');
+            document.getElementById('doctorPage').classList.add('hidden'); document.getElementById('pharmaPage').classList.remove('hidden');
             fetchPharmaSummary();
         }
 
         function hidePharmaPage() {
-            document.getElementById('pharmaPage').classList.add('hidden');
-            document.getElementById('mainPage').classList.remove('hidden');
+            document.getElementById('pharmaPage').classList.add('hidden'); document.getElementById('mainPage').classList.remove('hidden');
             document.getElementById('mainTabs').classList.remove('hidden');
             if(activeTab) switchTab(activeTab);
         }
 
         async function fetchPharmaSummary() {
             try {
-                // กลับไปใช้ Native Fetch ปกติ
-                const response = await fetch(`${GAS_URL}?action=getPharmacistSummary`);
-                const json = await response.json();
-                
+                const response = await fetch(`${GAS_URL}?action=getPharmacistSummary`); const json = await response.json();
                 if(json.status === 'success') {
                     globalPharmaData = json.data;
-                    
-                    const staffs = [...new Set(globalPharmaData.map(d => d.staff))].sort();
-                    const sel = document.getElementById('pharmaSelector');
-                    const currentValue = sel.value; 
-                    
-                    sel.innerHTML = '<option value="">-- กรุณาเลือก --</option>';
-                    staffs.forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s; opt.textContent = s;
-                        sel.appendChild(opt);
-                    });
-
+                    const staffs = [...new Set(globalPharmaData.map(d => d.staff))].sort(); const sel = document.getElementById('pharmaSelector'); const currentValue = sel.value; 
+                    sel.innerHTML = '<option value="">-- กรุณาเลือก --</option>'; staffs.forEach(s => { sel.appendChild(new Option(s, s)); });
                     const months = [...new Set(globalPharmaData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
-                    
-                    const filterMonth = document.getElementById('pharmaListFilterMonth');
-                    filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
-                    months.forEach(m => {
-                        const opt = document.createElement('option');
-                        opt.value = m; opt.textContent = formatMonthDisplay(m);
-                        filterMonth.appendChild(opt);
-                    });
-                    
-                    if (currentValue && staffs.includes(currentValue)) {
-                        sel.value = currentValue;
-                        renderPharmaSummary();
-                    }
+                    const filterMonth = document.getElementById('pharmaListFilterMonth'); filterMonth.innerHTML = '<option value="current">เดือนปัจจุบัน</option><option value="all">ทุกเดือน</option>';
+                    months.forEach(m => { filterMonth.appendChild(new Option(formatMonthDisplay(m), m)); });
+                    if (currentValue && staffs.includes(currentValue)) { sel.value = currentValue; renderPharmaSummary(); }
                 }
             } catch(e) { console.error("Error fetching pharma summary"); }
         }
 
         function renderPharmaSummary() {
             const staffName = document.getElementById('pharmaSelector').value;
-            if(!staffName) {
-                document.getElementById('pharmaStatsCards').classList.add('hidden');
-                document.getElementById('pharmaPatientList').classList.add('hidden');
-                return;
-            }
-
+            if(!staffName) { document.getElementById('pharmaStatsCards').classList.add('hidden'); document.getElementById('pharmaPatientList').classList.add('hidden'); return; }
             const patients = globalPharmaData.filter(d => d.staff === staffName);
-            
-            let stats = {
-                'Antibiotics': { pending: 0, eval: 0 },
-                'Oseltamivir': { pending: 0, eval: 0 },
-                'Atorvastatin': { pending: 0, eval: 0 }
-            };
-
-            patients.forEach(p => {
-                if(stats[p.sheet]) {
-                    if(p.evaluated === 'รอประเมิน' || p.evaluated === '' || p.evaluated === 'ยังไม่ประเมิน') stats[p.sheet].pending++;
-                    else stats[p.sheet].eval++;
-                }
-            });
-
+            let stats = { 'Antibiotics': { pending: 0, eval: 0 }, 'Oseltamivir': { pending: 0, eval: 0 }, 'Atorvastatin': { pending: 0, eval: 0 }, 'Covids': { pending: 0, eval: 0 } };
+            patients.forEach(p => { if(stats[p.sheet]) { if(p.evaluated === 'รอประเมิน' || p.evaluated === '' || p.evaluated === 'ยังไม่ประเมิน') stats[p.sheet].pending++; else stats[p.sheet].eval++; } });
             document.getElementById('pharma-stat-anti').textContent = `${stats['Antibiotics'].pending} / ${stats['Antibiotics'].eval}`;
             document.getElementById('pharma-stat-osel').textContent = `${stats['Oseltamivir'].pending} / ${stats['Oseltamivir'].eval}`;
             document.getElementById('pharma-stat-ator').textContent = `${stats['Atorvastatin'].pending} / ${stats['Atorvastatin'].eval}`;
-            
-            document.getElementById('pharmaStatsCards').classList.remove('hidden');
-            renderPharmaPatientList();
+            document.getElementById('pharma-stat-covd').textContent = `${stats['Covids'].pending} / ${stats['Covids'].eval}`;
+            document.getElementById('pharmaStatsCards').classList.remove('hidden'); renderPharmaPatientList();
         }
 
         function sortPharmaList(col) {
-            if(pharmaSortCol === col) pharmaSortAsc = !pharmaSortAsc;
-            else { pharmaSortCol = col; pharmaSortAsc = true; }
+            if(pharmaSortCol === col) pharmaSortAsc = !pharmaSortAsc; else { pharmaSortCol = col; pharmaSortAsc = true; }
             renderPharmaPatientList();
         }
 
         function renderPharmaPatientList() {
-            const staffName = document.getElementById('pharmaSelector').value;
-            if(!staffName) return;
-
-            const tbody = document.getElementById('pharmaPatientTbody');
-            tbody.innerHTML = '';
-            
+            const staffName = document.getElementById('pharmaSelector').value; if(!staffName) return;
+            const tbody = document.getElementById('pharmaPatientTbody'); tbody.innerHTML = '';
             let patients = globalPharmaData.filter(d => d.staff === staffName);
-
-            const fDrug = document.getElementById('pharmaListFilterDrug').value;
-            const fMonth = document.getElementById('pharmaListFilterMonth').value;
-            const fStatus = document.getElementById('pharmaListFilterStatus').value;
-
+            const fDrug = document.getElementById('pharmaListFilterDrug').value; const fMonth = document.getElementById('pharmaListFilterMonth').value; const fStatus = document.getElementById('pharmaListFilterStatus').value;
             if (fDrug !== 'all') patients = patients.filter(d => d.sheet === fDrug);
-            
             if (fMonth !== 'all') {
                 let targetMonth = fMonth;
-                if(fMonth === 'current') {
-                    targetMonth = patients.reduce((max, p) => {
-                        let yM = p.month;
-                        return (yM && yM > max && yM !== 'ไม่มีข้อมูล') ? yM : max;
-                    }, "0000-00");
-                }
+                if(fMonth === 'current') targetMonth = patients.reduce((max, p) => (p.month && p.month > max && p.month !== 'ไม่มีข้อมูล') ? p.month : max, "0000-00");
                 patients = patients.filter(p => p.month === targetMonth);
             }
-
-            if (fStatus === 'pending') {
-                patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน' || d.evaluated === 'ยังไม่ประเมิน');
-            } else if (fStatus === 'evaluated') {
-                patients = patients.filter(d => d.evaluated && d.evaluated !== 'รอประเมิน' && d.evaluated !== 'ยังไม่ประเมิน');
-            }
+            if (fStatus === 'pending') patients = patients.filter(d => !d.evaluated || d.evaluated === 'รอประเมิน' || d.evaluated === 'ยังไม่ประเมิน');
+            else if (fStatus === 'evaluated') patients = patients.filter(d => d.evaluated && d.evaluated !== 'รอประเมิน' && d.evaluated !== 'ยังไม่ประเมิน');
 
             patients.sort((a, b) => {
-                let vA = a[pharmaSortCol] || '';
-                let vB = b[pharmaSortCol] || '';
-                
+                let vA = a[pharmaSortCol] || ''; let vB = b[pharmaSortCol] || '';
                 if(pharmaSortCol === 'date') {
                     const pa = vA.split(' ')[0].split('/'); const pb = vB.split(' ')[0].split('/');
-                    if(pa.length>=3) vA = `${pa[2]}-${pa[1]}-${pa[0]}`;
-                    if(pb.length>=3) vB = `${pb[2]}-${pb[1]}-${pb[0]}`;
+                    if(pa.length>=3) vA = `${pa[2]}-${pa[1]}-${pa[0]}`; if(pb.length>=3) vB = `${pb[2]}-${pb[1]}-${pb[0]}`;
                 }
-
-                if(vA < vB) return pharmaSortAsc ? -1 : 1;
-                if(vA > vB) return pharmaSortAsc ? 1 : -1;
-                return 0;
+                if(vA < vB) return pharmaSortAsc ? -1 : 1; if(vA > vB) return pharmaSortAsc ? 1 : -1; return 0;
             });
 
-            if(patients.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</td></tr>';
-            } else {
+            if(patients.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">ไม่มีข้อมูลที่ตรงกับเงื่อนไขการค้นหา</td></tr>'; } 
+            else {
                 patients.forEach(p => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b border-emerald-50 doctor-row-hover cursor-pointer';
-                    tr.onclick = () => {
-                        hidePharmaPage();
-                        switchTab(p.sheet);
-                        document.getElementById('searchHN').value = p.hn;
-                        searchPatient(null);
-                    };
-                    
-                    let isPending = (!p.evaluated || p.evaluated === 'รอประเมิน' || p.evaluated === 'ยังไม่ประเมิน');
-                    let displayStatus = isPending ? 'ยังไม่ประเมิน' : p.evaluated;
+                    const tr = document.createElement('tr'); tr.className = 'border-b border-emerald-50 doctor-row-hover cursor-pointer';
+                    tr.onclick = () => { hidePharmaPage(); switchTab(p.sheet); document.getElementById('searchHN').value = p.hn; searchPatient(null); };
+                    let isPending = (!p.evaluated || p.evaluated === 'รอประเมิน' || p.evaluated === 'ยังไม่ประเมิน'); let displayStatus = isPending ? 'ยังไม่ประเมิน' : p.evaluated;
                     let badgeColor = isPending ? 'bg-yellow-100 text-yellow-700' : (p.evaluated.includes('Appr') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
-                    
-                    tr.innerHTML = `
-                        <td class="p-3 font-bold text-emerald-700">${p.sheet}</td>
-                        <td class="p-3 text-gray-500">${p.displayDate}</td>
-                        <td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>
-                    `;
+                    tr.innerHTML = `<td class="p-3 font-bold text-emerald-700">${p.sheet}</td><td class="p-3 text-gray-500">${p.displayDate}</td><td class="p-3"><b>${p.hn}</b> <br> <span class="text-xs text-gray-500">${p.ptName}</span></td><td class="p-3"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${displayStatus}</span></td>`;
                     tbody.appendChild(tr);
                 });
             }
@@ -1807,248 +1721,190 @@
         }
 
         function calcAntiValue() {
-            const drug = document.getElementById('anti_Drug_name').value;
-            const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
-            let val = 0;
-            const drugLow = drug ? drug.toLowerCase() : '';
-            if (drugLow.includes('meropenem')) val = dose * 130;
-            else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) val = dose * 100;
-            
-            const el = document.getElementById('anti_Value_Display');
-            if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
+            const drug = document.getElementById('anti_Drug_name').value; const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
+            let val = 0; const drugLow = drug ? drug.toLowerCase() : '';
+            if (drugLow.includes('meropenem')) val = dose * 130; else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) val = dose * 100;
+            const el = document.getElementById('anti_Value_Display'); if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
         }
 
         function calcOselValue() {
-            const drug = document.getElementById('osel_Drug_name').value;
-            const dose = parseFloat(document.getElementById('osel_Total_Qty').value) || 0;
-            let val = 0;
-            const drugLow = drug ? drug.toLowerCase() : '';
-            if (drugLow.includes('30')) val = dose * 15;
-            else if (drugLow.includes('45')) val = dose * 20;
-            else if (drugLow.includes('75') || drugLow.includes('tamiflu')) val = dose * 31;
-            
-            const el = document.getElementById('osel_Value_Display');
-            if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
+            const drug = document.getElementById('osel_Drug_name').value; const dose = parseFloat(document.getElementById('osel_Total_Qty').value) || 0;
+            let val = 0; const drugLow = drug ? drug.toLowerCase() : '';
+            if (drugLow.includes('30')) val = dose * 15; else if (drugLow.includes('45')) val = dose * 20; else if (drugLow.includes('75') || drugLow.includes('tamiflu')) val = dose * 31;
+            const el = document.getElementById('osel_Value_Display'); if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
         }
 
         function handleIndication(prefix) {
             const radios = document.getElementsByName(`${prefix}_indication`);
-            let isOther = false;
-            let isSpecific = false;
-            radios.forEach(r => {
-                if(r.checked) {
-                    if(r.value === 'อื่นๆ') isOther = true;
-                    if(r.value === 'Specific (ระบุเชื้อ)') isSpecific = true;
-                }
-            });
+            let isOther = false; let isSpecific = false;
+            radios.forEach(r => { if(r.checked) { if(r.value === 'อื่นๆ') isOther = true; if(r.value === 'Specific (ระบุเชื้อ)') isSpecific = true; } });
 
-            const otherBox = document.getElementById(`${prefix}_other_box`);
-            const otherInput = document.getElementById(`${prefix}_indication_other`);
-            if(otherBox && otherInput) {
-                if(isOther) { otherBox.classList.remove('hidden'); otherInput.required = true; }
-                else { otherBox.classList.add('hidden'); otherInput.required = false; otherInput.value = ''; }
-            }
+            const otherBox = document.getElementById(`${prefix}_other_box`); const otherInput = document.getElementById(`${prefix}_indication_other`);
+            if(otherBox && otherInput) { if(isOther) { otherBox.classList.remove('hidden'); otherInput.required = true; } else { otherBox.classList.add('hidden'); otherInput.required = false; otherInput.value = ''; } }
 
-            const specificBox = document.getElementById(`${prefix}_specific_box`);
-            const specificInput = document.getElementById(`${prefix}_indication_specific`);
-            if(specificBox && specificInput) {
-                if(isSpecific) { specificBox.classList.remove('hidden'); specificInput.required = true; }
-                else { specificBox.classList.add('hidden'); specificInput.required = false; specificInput.value = ''; }
-            }
+            const specificBox = document.getElementById(`${prefix}_specific_box`); const specificInput = document.getElementById(`${prefix}_indication_specific`);
+            if(specificBox && specificInput) { if(isSpecific) { specificBox.classList.remove('hidden'); specificInput.required = true; } else { specificBox.classList.add('hidden'); specificInput.required = false; specificInput.value = ''; } }
         }
 
         function renderAntibioticIndications() {
-            const drugInput = document.getElementById('anti_Drug_name');
-            if(!drugInput) return;
-            const drugName = drugInput.value;
-            const container = document.getElementById('anti_indication_container');
-            
+            const drugInput = document.getElementById('anti_Drug_name'); if(!drugInput) return; const drugName = drugInput.value; const container = document.getElementById('anti_indication_container');
             let html = '';
             if (drugName === 'Meropenem 1 gm') {
-                html = `
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่สงสัย nosocomial infection from multidrug resistance gram negative bacteria" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis สงสัย nosocomial infection from MDR</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่ี่เคยได้ยาในกลุ่ม 3rd generation cephalosporin มาก่อนภายใน 3 เดือน" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis เคยได้ 3rd gen cephalosporin ใน 3 เดือน</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>
-                `;
+                html = `<label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่สงสัย nosocomial infection from multidrug resistance gram negative bacteria" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis สงสัย nosocomial infection from MDR</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่ี่เคยได้ยาในกลุ่ม 3rd generation cephalosporin มาก่อนภายใน 3 เดือน" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis เคยได้ 3rd gen cephalosporin ใน 3 เดือน</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>`;
             } else if (drugName === 'Tazocin 4.5g. inj') {
+                html = `<label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative infection in febrile neutropenia" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg infection in febrile neutropenia</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative failed with 3rd cephalosporins" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg failed with 3rd cephalosporins</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected serious nosocomial infection" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected serious nosocomial infection</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label><label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>`;
+            } else { html = `<div class="text-slate-500 text-center py-2">กรุณาเลือกชื่อยาด้านบน เพื่อโหลดเหตุผล</div>`; }
+            container.innerHTML = html;
+        }
+
+        function renderCovidIndications() {
+            const drugInput = document.getElementById('covd_Drug_name'); if(!drugInput) return;
+            const drugName = drugInput.value.toLowerCase();
+            const container = document.getElementById('covd_indication_container');
+            
+            let html = '';
+            if (drugName.includes('favipiravir')) {
                 html = `
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative infection in febrile neutropenia" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg infection in febrile neutropenia</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative failed with 3rd cephalosporins" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg failed with 3rd cephalosporins</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected serious nosocomial infection" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected serious nosocomial infection</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="1. อาการไม่รุนแรง ไม่มีปอดอักเสบ ไม่มีปัจจัยเสี่ยง (ให้ยาภายใน 5 วัน)" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">1. อาการไม่รุนแรง ไม่มีปอดอักเสบ ไม่มีปัจจัยเสี่ยง (เริ่มยาภายใน 5 วัน)</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="2. อาการไม่รุนแรง มีปัจจัยเสี่ยงต่อโรครุนแรง (อายุ>60, อ้วน>90kg, เบาหวาน, ตับแข็ง, ไต, โรคหัวใจ/สมอง, COPD, ภูมิคุ้มกันต่ำ)" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">2. อาการไม่รุนแรง แต่มีปัจจัยเสี่ยง (อายุ>60, อ้วน, เบาหวาน, ตับแข็ง, ไต, หัวใจ/สมอง, COPD, HIV)</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="3. ไม่มีปัจจัยเสี่ยงแต่มีปอดอักเสบเล็กน้อยถึงปานกลาง ยังไม่ต้องให้ Oxygen" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">3. ไม่มีปัจจัยเสี่ยง แต่มีปอดอักเสบเล็กน้อย-ปานกลาง (ยังไม่ต้องให้ Oxygen)</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="อื่นๆ" id="covd_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">4. ไม่ตรงเกณฑ์ (ระบุความจำเป็น)</div></label>
+                `;
+            } else if (drugName.includes('molnupiravir')) {
+                html = `
+                    <div class="col-span-1 md:col-span-2 text-[11px] text-blue-700 font-bold mb-1">เลือกข้อที่ผู้ป่วยตรงตามเงื่อนไข (เลือกได้หลายข้อ) :</div>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="อายุมากกว่า 60 ปี" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">อายุมากกว่า 60 ปี ขึ้นไป</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: โรคปอดอุดกั้นเรื้อรัง (COPD) / ปอดเรื้อรัง" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">มี COPD / ปอดเรื้อรัง</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: โรคไตเรื้อรัง (CKD stage 3 ขึ้นไป)" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">CKD Stage 3 ขึ้นไป</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: โรคหัวใจและหลอดเลือด / สโตรก" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">โรคหัวใจ / สโตรก</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: เบาหวานที่ควบคุมไม่ได้" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">เบาหวานที่ควบคุมไม่ได้</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: ภาวะอ้วน (นน.>90 หรือ BMI>30)" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">ภาวะอ้วน (นน.>90 หรือ BMI>30)</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: ตับแข็ง (Child-Pugh B+)" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">ตับแข็ง (Child-Pugh B+)</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ปัจจัยเสี่ยง: ภูมิคุ้มกันต่ำ / HIV / Lymphocyte ต่ำ" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">ภูมิคุ้มกันต่ำ / HIV CD4<200</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ยังไม่ได้รับวัคซีน หรือได้น้อยกว่า 2 เข็ม" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all text-orange-600">ยังไม่ได้รับวัคซีน หรือ < 2 เข็ม</div></label>
+                    <label class="relative cursor-pointer"><input type="checkbox" name="covd_indication" value="ไม่มีข้อห้าม (ไม่ใช่สตรีมีครรภ์/ให้นมบุตร, eGFR>30, ไม่มี Severe neutropenia, Platelet>100k)" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all text-blue-700">ไม่มีข้อห้ามใช้ (eGFR>30, ไม่ท้อง)</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="อื่นๆ" id="covd_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">อื่นๆ (ระบุความจำเป็น)</div></label>
+                `;
+            } else if (drugName.includes('paxlovid') || drugName.includes('nirmatrelvir')) {
+                html = `
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="ผู้ป่วยที่มีปัจจัยเสี่ยงต่อโรครุนแรง" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">ผู้ป่วยที่มีปัจจัยเสี่ยงต่อโรครุนแรง</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="อื่นๆ" id="covd_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">อื่นๆ (ระบุ)</div></label>
+                `;
+            } else if (drugName.includes('remdesivir')) {
+                html = `
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="ปอดอักเสบต้องให้ออกซิเจน" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">ปอดอักเสบต้องให้ออกซิเจน</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="มีข้อห้ามบริหารยาทางปาก หรือมีปัญหาการดูดซึม" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">มีข้อห้ามบริหารยาทางปาก / มีปัญหาการดูดซึม</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="หญิงตั้งครรภ์" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">หญิงตั้งครรภ์</div></label>
+                    <label class="relative cursor-pointer md:col-span-2"><input type="checkbox" name="covd_indication" value="อื่นๆ" id="covd_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('covd')"><div class="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[11px] font-medium transition-all">อื่นๆ (ระบุ)</div></label>
                 `;
             } else {
-                html = `<div class="text-slate-500 text-center py-2">กรุณาเลือกชื่อยาด้านบน เพื่อโหลดเหตุผล</div>`;
+                html = `<div class="text-slate-500 text-center py-4 md:col-span-2 font-medium bg-slate-50 rounded-lg border border-slate-200">กรุณาเลือกชื่อยาใน Part 1 ก่อน (รองรับ Favipiravir, Molnupiravir, Paxlovid, Remdesivir) เพื่อแสดงเงื่อนไขที่ตรงกับแนวทางเวชปฏิบัติ</div>`;
             }
             container.innerHTML = html;
         }
 
+        function validateCovids() {
+            if (activeTab !== 'Covids') return;
+            const drugInput = document.getElementById('covd_Drug_name');
+            const recBox = document.getElementById('covd_recommendation');
+            const weight = parseFloat(document.getElementById('covd_Weight_kg').value) || 0;
+            let drugName = drugInput.value.toLowerCase();
+            
+            recBox.innerHTML = ''; recBox.classList.add('hidden');
+            let showRec = false; let recText = '';
+
+            if (drugName.includes('favipiravir')) {
+                recText = `<div class="font-bold mb-1">⚠️ แนวทางขนาดยา Favipiravir (200 มก./เม็ด):</div>`;
+                if (weight > 90) {
+                    recText += `<ul class="list-disc pl-5 space-y-1"><li><b>นน.ตัว > 90 กก.:</b><br>วันที่ 1: 2,400 มก. (12 เม็ด) วันละ 2 ครั้ง<br>วันต่อมา: 1,000 มก. (5 เม็ด) วันละ 2 ครั้ง</li></ul>`;
+                } else {
+                    recText += `<ul class="list-disc pl-5 space-y-1"><li><b>ผู้ใหญ่ทั่วไป:</b><br>วันที่ 1: 1,800 มก. (9 เม็ด) วันละ 2 ครั้ง<br>วันต่อมา: 800 มก. (4 เม็ด) วันละ 2 ครั้ง</li>
+                                <li><b>เด็ก:</b><br>วันที่ 1: 70 มก./กก./วัน วันละ 2 ครั้ง<br>วันต่อมา: 30 มก./กก./วัน วันละ 2 ครั้ง</li></ul>`;
+                }
+                showRec = true;
+            } else if (drugName.includes('molnupiravir')) {
+                recText = `<div class="font-bold mb-1">⚠️ แนวทางขนาดยา Molnupiravir (200 มก./เม็ด):</div>
+                           <ul class="list-disc pl-5 space-y-1"><li>วันที่ 1 - 5: ครั้งละ 4 เม็ด (800 มก.) วันละ 2 ครั้ง</li></ul>`;
+                showRec = true;
+            } else if (drugName.includes('remdesivir')) {
+                recText = `<div class="font-bold mb-1">⚠️ แนวทางขนาดยา Remdesivir:</div>
+                           <ul class="list-disc pl-5 space-y-1"><li><b>ผู้ใหญ่:</b><br>วันที่ 1: 200 มก. IV วันละครั้ง<br>วันที่ 2-5: 100 มก. IV วันละครั้ง (หากรุนแรงให้ 10 วัน)</li>
+                           <li><b>เด็ก:</b><br>วันที่ 1: 5 มก./กก. IV วันละครั้ง<br>วันต่อมา: 2.5 มก./กก. IV วันละครั้ง</li></ul>`;
+                showRec = true;
+            }
+
+            if (showRec) { recBox.innerHTML = recText; recBox.classList.remove('hidden'); }
+        }
+
         function validateAntibiotics() {
             if (activeTab !== 'Antibiotics') return;
-            
-            const clcrStr = document.getElementById('anti_Lastest_ClCr').value;
-            const clcr = parseFloat(clcrStr); 
+            const clcrStr = document.getElementById('anti_Lastest_ClCr').value; const clcr = parseFloat(clcrStr); 
             const drugName = document.getElementById('anti_Drug_name').value;
-            
-            const recBox = document.getElementById('anti_recommendation');
-            recBox.innerHTML = '';
-            recBox.classList.add('hidden');
-            
-            let showRec = false;
-            let recText = '';
+            const recBox = document.getElementById('anti_recommendation'); recBox.innerHTML = ''; recBox.classList.add('hidden');
+            let showRec = false; let recText = '';
             
             if (drugName === 'Meropenem 1 gm') {
-                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Meropenem (Max 6 gm/day):</div>
-                           <ul class="list-disc pl-5 space-y-1 mb-2">
-                             <li><b>เด็ก < 3 เดือน:</b> 20 mg/kg q 12 hr</li>
-                             <li><b>เด็ก 3 เดือน - 12 ปี:</b> 10-20 mg/kg q 8 hr (Meningitis 40 mg/kg q 8 hr)</li>
-                             <li><b>ผู้ใหญ่:</b> 1 g IV drip q 8 hr (Meningitis 2 g IV drip 8 hr)</li>
-                           </ul>`;
+                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Meropenem (Max 6 gm/day):</div><ul class="list-disc pl-5 space-y-1 mb-2"><li><b>เด็ก < 3 เดือน:</b> 20 mg/kg q 12 hr</li><li><b>เด็ก 3 เดือน - 12 ปี:</b> 10-20 mg/kg q 8 hr (Meningitis 40 mg/kg q 8 hr)</li><li><b>ผู้ใหญ่:</b> 1 g IV drip q 8 hr (Meningitis 2 g IV drip 8 hr)</li></ul>`;
                 if (!isNaN(clcr) && clcr <= 50) {
-                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 1g x 24hr):</div>
-                                <ul class="list-disc pl-5 space-y-1 text-red-700">
-                                  <li><b>CrCl 26-50:</b> 1 g q 12 hr (Meningitis 2 g q 12 hr)</li>
-                                  <li><b>CrCl 10-25:</b> 500 mg q 12 hr (Meningitis 1 g q 12 hr)</li>
-                                  <li><b>CrCl <10:</b> 500 mg q 24 hr (Meningitis 1 g q 24 hr)</li>
-                                </ul>`;
+                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 1g x 24hr):</div><ul class="list-disc pl-5 space-y-1 text-red-700"><li><b>CrCl 26-50:</b> 1 g q 12 hr (Meningitis 2 g q 12 hr)</li><li><b>CrCl 10-25:</b> 500 mg q 12 hr (Meningitis 1 g q 12 hr)</li><li><b>CrCl <10:</b> 500 mg q 24 hr (Meningitis 1 g q 24 hr)</li></ul>`;
                     document.getElementById('anti_Lastest_ClCr').classList.add('error-blink');
-                } else {
-                    document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
-                }
+                } else document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
                 showRec = true;
             } else if (drugName === 'Tazocin 4.5g. inj') {
-                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Tazocin:</div>
-                           <ul class="list-disc pl-5 space-y-1 mb-2">
-                             <li><b>เด็ก >6 ด.-12 ปี (BW < 40 kg):</b> 300-400 mg/kg/day divided q 6-8 hr</li>
-                             <li><b>เด็ก >6 ด.-12 ปี (BW > 40 kg):</b> 4.5 g IV q 8 hr</li>
-                             <li><b>ผู้ใหญ่:</b> 4.5 g IV q 6-8 hr</li>
-                           </ul>`;
+                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำขนาดยา Tazocin:</div><ul class="list-disc pl-5 space-y-1 mb-2"><li><b>เด็ก >6 ด.-12 ปี (BW < 40 kg):</b> 300-400 mg/kg/day divided q 6-8 hr</li><li><b>เด็ก >6 ด.-12 ปี (BW > 40 kg):</b> 4.5 g IV q 8 hr</li><li><b>ผู้ใหญ่:</b> 4.5 g IV q 6-8 hr</li></ul>`;
                 if (!isNaN(clcr) && clcr <= 40) {
-                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 4.5g x 24hr):</div>
-                                <ul class="list-disc pl-5 space-y-1 text-red-700">
-                                  <li><b>CrCl 20-40:</b> 3.375 g IV q 6hr หรือ 4.5 g IV q 8 hr</li>
-                                  <li><b>CrCl <20:</b> 2.25 g IV q 6hr</li>
-                                </ul>`;
+                    recText += `<div class="font-bold text-red-700 mt-2">❗ Renal Dosing (หลัง 4.5g x 24hr):</div><ul class="list-disc pl-5 space-y-1 text-red-700"><li><b>CrCl 20-40:</b> 3.375 g IV q 6hr หรือ 4.5 g IV q 8 hr</li><li><b>CrCl <20:</b> 2.25 g IV q 6hr</li></ul>`;
                     document.getElementById('anti_Lastest_ClCr').classList.add('error-blink');
-                } else {
-                    document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
-                }
+                } else document.getElementById('anti_Lastest_ClCr').classList.remove('error-blink');
                 showRec = true;
             }
-            
-            if (showRec) {
-                recBox.innerHTML = recText;
-                recBox.classList.remove('hidden');
-            }
+            if (showRec) { recBox.innerHTML = recText; recBox.classList.remove('hidden'); }
         }
 
         function validateOseltamivir() {
             if (activeTab !== 'Oseltamivir') return;
-
             const age = parseFloat(document.getElementById('osel_Age').value);
             const weight = parseFloat(document.getElementById('osel_Weight_kg').value) || 0;
-            const clcrStr = document.getElementById('osel_Latest_ClCr').value;
-            const clcr = parseFloat(clcrStr); 
-            const drugNameInput = document.getElementById('osel_Drug_name');
-            const drugUsageInput = document.getElementById('osel_Drug_usage');
+            const clcrStr = document.getElementById('osel_Latest_ClCr').value; const clcr = parseFloat(clcrStr); 
+            const drugNameInput = document.getElementById('osel_Drug_name'); const drugUsageInput = document.getElementById('osel_Drug_usage');
             const recBox = document.getElementById('osel_recommendation');
 
-            let drugName = drugNameInput.value.trim();
-            let drugUsage = drugUsageInput.value.trim();
+            let drugName = drugNameInput.value.trim(); let drugUsage = drugUsageInput.value.trim();
+            drugNameInput.classList.remove('error-blink'); drugUsageInput.classList.remove('error-blink');
+            recBox.innerHTML = ''; recBox.classList.add('hidden');
 
-            drugNameInput.classList.remove('error-blink');
-            drugUsageInput.classList.remove('error-blink');
-            recBox.innerHTML = '';
-            recBox.classList.add('hidden');
-
-            let expectedName = '';
-            let expectedUsage = '';
-            let showRec = false;
-            let recText = '';
+            let expectedName = ''; let expectedUsage = ''; let showRec = false; let recText = '';
 
             if (!isNaN(clcr) && clcr < 60) {
-                if (clcr >= 30) {
-                    expectedName = 'Tamiflu30 [Oseltamivir]';
-                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
-                } else if (clcr >= 10) {
-                    expectedName = 'Tamiflu30 [Oseltamivir]';
-                    expectedUsage = '11pt (1 เม็ด * 1 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 1 ครั้ง หลังอาหาร เช้า';
-                } else {
-                    showRec = true;
-                    recText = '<div class="font-bold mb-1">⚠️ คำแนะนำ ClCr < 10 หรือ Hemodialysis:</div>เริ่มขนาด 30 มก. ตามด้วย 30 มก. ทุก 2 รอบ hemodialysis ไม่เกิน 5 วัน';
-                }
-            }
-            else if (!isNaN(age) && age <= 1 && document.getElementById('osel_Age').value !== '') { 
-                showRec = true;
-                recText = `<div class="font-bold mb-1">⚠️ คำแนะนำปริมาณยาสำหรับทารก:</div>
-                           <ul class="list-disc pl-5 space-y-1">
-                           <li><b>6-11 เดือน:</b> 25 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li>
-                           <li><b>3-5 เดือน:</b> 20 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li>
-                           <li><b>1-3 เดือน:</b> 12 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li>
-                           <li><b>ทารกแรกเกิด/คลอดก่อนกำหนด:</b> 3 มก./กก. วันละ 2 ครั้ง</li></ul>`;
-            }
-            else if (weight > 0) {
-                if (weight > 40) {
-                    expectedName = 'Tamiflu75 [Oseltamivir]';
-                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
-                } else if (weight > 23) {
-                    expectedName = 'Tamiflu30 [Oseltamivir]';
-                    expectedUsage = '22pt (2 เม็ด * 2 PC)รับประทาน ครั้งละ 2 เม็ด วันละ 2 ครั้ง หลังอาหารเช้า-เย็น';
-                } else if (weight > 15) {
-                    expectedName = 'Tamiflu45 [Oseltamivir]';
-                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
-                } else { 
-                    expectedName = 'Tamiflu30 [Oseltamivir]';
-                    expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น';
-                }
+                if (clcr >= 30) { expectedName = 'Tamiflu30 [Oseltamivir]'; expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น'; } 
+                else if (clcr >= 10) { expectedName = 'Tamiflu30 [Oseltamivir]'; expectedUsage = '11pt (1 เม็ด * 1 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 1 ครั้ง หลังอาหาร เช้า'; } 
+                else { showRec = true; recText = '<div class="font-bold mb-1">⚠️ คำแนะนำ ClCr < 10 หรือ Hemodialysis:</div>เริ่มขนาด 30 มก. ตามด้วย 30 มก. ทุก 2 รอบ hemodialysis ไม่เกิน 5 วัน'; }
+            } else if (!isNaN(age) && age <= 1 && document.getElementById('osel_Age').value !== '') { 
+                showRec = true; recText = `<div class="font-bold mb-1">⚠️ คำแนะนำปริมาณยาสำหรับทารก:</div><ul class="list-disc pl-5 space-y-1"><li><b>6-11 เดือน:</b> 25 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li><li><b>3-5 เดือน:</b> 20 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li><li><b>1-3 เดือน:</b> 12 มก. หรือ 3 มก./กก./ครั้ง วันละ 2 ครั้ง</li><li><b>ทารกแรกเกิด/คลอดก่อนกำหนด:</b> 3 มก./กก. วันละ 2 ครั้ง</li></ul>`;
+            } else if (weight > 0) {
+                if (weight > 40) { expectedName = 'Tamiflu75 [Oseltamivir]'; expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น'; } 
+                else if (weight > 23) { expectedName = 'Tamiflu30 [Oseltamivir]'; expectedUsage = '22pt (2 เม็ด * 2 PC)รับประทาน ครั้งละ 2 เม็ด วันละ 2 ครั้ง หลังอาหารเช้า-เย็น'; } 
+                else if (weight > 15) { expectedName = 'Tamiflu45 [Oseltamivir]'; expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น'; } 
+                else { expectedName = 'Tamiflu30 [Oseltamivir]'; expectedUsage = '12pt (1 เม็ด * 2 PC)รับประทาน ครั้งละ 1 เม็ดวันละ 2 ครั้ง หลังอาหาร เช้า-เย็น'; }
             }
 
             if (expectedName && expectedUsage && drugName && drugUsage) {
-                let isError = false;
-                const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
-
-                if (normalize(drugName) !== normalize(expectedName)) {
-                    drugNameInput.classList.add('error-blink');
-                    isError = true;
-                }
-                if (normalize(drugUsage) !== normalize(expectedUsage)) {
-                    drugUsageInput.classList.add('error-blink');
-                    isError = true;
-                }
-                
-                if (isError) {
-                    showRec = true;
-                    recText += `<div class="font-bold mb-1">⚠️ ข้อผิดพลาด: ไม่ตรงตามเกณฑ์คู่มือ!</div>
-                                ยาที่ควรสั่ง: <span class="bg-white px-1 text-red-700">${expectedName}</span><br>
-                                วิธีใช้: <span class="bg-white px-1 text-red-700">${expectedUsage}</span>`;
-                }
+                let isError = false; const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
+                if (normalize(drugName) !== normalize(expectedName)) { drugNameInput.classList.add('error-blink'); isError = true; }
+                if (normalize(drugUsage) !== normalize(expectedUsage)) { drugUsageInput.classList.add('error-blink'); isError = true; }
+                if (isError) { showRec = true; recText += `<div class="font-bold mb-1">⚠️ ข้อผิดพลาด: ไม่ตรงตามเกณฑ์คู่มือ!</div>ยาที่ควรสั่ง: <span class="bg-white px-1 text-red-700">${expectedName}</span><br>วิธีใช้: <span class="bg-white px-1 text-red-700">${expectedUsage}</span>`; }
             }
-
-            if (showRec) {
-                recBox.innerHTML = recText;
-                recBox.classList.remove('hidden');
-            }
+            if (showRec) { recBox.innerHTML = recText; recBox.classList.remove('hidden'); }
         }
 
         async function fetchPharmacists() {
             try {
-                // กลับไปใช้ Native Fetch ปกติ
-                const response = await fetch(`${GAS_URL}?action=getPharmacists`);
-                const data = await response.json();
-                
-                ['ator', 'osel', 'anti'].forEach(prefix => {
+                const response = await fetch(`${GAS_URL}?action=getPharmacists`); const data = await response.json();
+                ['ator', 'osel', 'anti', 'covd'].forEach(prefix => {
                     const select = document.getElementById(`${prefix}_pharmacist`);
                     if(select) {
                         select.innerHTML = '<option value="" disabled selected>-- เลือกเภสัชกร --</option>';
-                        if (data.status === 'success' && data.data) {
-                            data.data.forEach(pharma => {
-                                const option = document.createElement('option');
-                                option.value = pharma.name; option.textContent = `${pharma.id} - ${pharma.name}`;
-                                select.appendChild(option);
-                            });
-                        }
+                        if (data.status === 'success' && data.data) { data.data.forEach(pharma => { select.appendChild(new Option(`${pharma.id} - ${pharma.name}`, pharma.name)); }); }
                     }
                 });
             } catch (error) { console.error("Pharmacist load failed."); }
@@ -2056,20 +1912,15 @@
 
         async function searchPatient(hnFromDoctor = null) {
             const hn = hnFromDoctor || document.getElementById('searchHN').value.trim();
-            const msgBox = document.getElementById('searchMessage');
-            const msgText = document.getElementById('searchMessageText');
-            const btn = document.getElementById('searchBtn');
+            const msgBox = document.getElementById('searchMessage'); const msgText = document.getElementById('searchMessageText'); const btn = document.getElementById('searchBtn');
 
             if (!hnFromDoctor) resetDoctorMode(); 
-
             if (!hn) return;
 
             document.querySelectorAll('.due-form').forEach(f => f.classList.add('hidden'));
-            msgBox.classList.add('hidden');
-            btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
+            msgBox.classList.add('hidden'); btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
 
             try {
-                // กลับไปใช้ Native Fetch ปกติ
                 const response = await fetch(`${GAS_URL}?action=search&sheet=${activeTab}&hn=${hn}`);
                 const res = await response.json();
 
@@ -2081,13 +1932,8 @@
                     } else {
                         const singleData = Array.isArray(res.data) ? res.data[0] : res.data;
                         loadFormWithData(singleData);
-                        
-                        if(isDoctorMode) {
-                            msgText.innerHTML = `พบข้อมูล HN: ${hn} <b>(โหมดบันทึกแพทย์: แก้ไขได้เฉพาะ Part 2)</b>`;
-                            applyDoctorMode(activeTab);
-                        } else {
-                            msgText.textContent = `พบข้อมูล HN: ${hn} (แก้ไขและบันทึกได้เลย)`;
-                        }
+                        if(isDoctorMode) { msgText.innerHTML = `พบข้อมูล HN: ${hn} <b>(โหมดบันทึกแพทย์: แก้ไขได้เฉพาะ Part 2)</b>`; applyDoctorMode(activeTab); } 
+                        else { msgText.textContent = `พบข้อมูล HN: ${hn} (แก้ไขและบันทึกได้เลย)`; }
                         msgBox.className = 'bg-green-100 text-green-800 border-l-4 border-green-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
                     }
                 } else {
@@ -2096,207 +1942,114 @@
                 }
                 msgBox.classList.remove('hidden');
             } catch (error) {
-                console.error("Search Patient Error:", error);
-                msgText.textContent = "พบความผิดปกติในการดึงข้อมูล (CORS Error)"; 
-                msgBox.classList.remove('hidden');
-            } finally {
-                btn.innerHTML = 'ค้นหา'; btn.disabled = false;
-            }
+                console.error("Search Patient Error:", error); msgText.textContent = "พบความผิดปกติในการดึงข้อมูล"; msgBox.classList.remove('hidden');
+            } finally { btn.innerHTML = 'ค้นหา'; btn.disabled = false; }
         }
 
         function showVisitSelectionModal(visitsData) {
-            const tbody = document.getElementById('visitSelectionTbody');
-            tbody.innerHTML = '';
-            
+            const tbody = document.getElementById('visitSelectionTbody'); tbody.innerHTML = '';
             visitsData.forEach(v => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-gray-100 transition-colors';
-                
-                let dateDisplay = '';
-                let rawDate = v.Order_DateTime || v.Date_started || '';
+                const tr = document.createElement('tr'); tr.className = 'border-b border-gray-100 transition-colors';
+                let dateDisplay = ''; let rawDate = v.Order_DateTime || v.Date_started || '';
                 if(rawDate) {
                     const d = new Date(rawDate);
-                    if(!isNaN(d)) {
-                        const pad = (n) => String(n).padStart(2, '0');
-                        dateDisplay = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-                    } else {
-                        dateDisplay = rawDate;
-                    }
+                    if(!isNaN(d)) { const pad = (n) => String(n).padStart(2, '0'); dateDisplay = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; } 
+                    else dateDisplay = rawDate;
                 }
-
-                tr.innerHTML = `
-                    <td class="p-3 font-semibold text-gray-700">${dateDisplay}</td>
-                    <td class="p-3 text-blue-700 font-bold">${v.Drug_name || activeTab}</td>
-                    <td class="p-3 text-gray-600">${v.Doctor_Name || '-'}</td>
-                    <td class="p-3 text-center flex justify-center gap-2">
-                        <button onclick="selectVisit(${v.rowIndex}, '${encodeURIComponent(JSON.stringify(v))}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-sm transition">เลือกเปิด</button>
-                        <button onclick="deleteDuplicateRecord('${activeTab}', ${v.rowIndex})" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1" title="ลบข้อมูลนี้ทิ้ง">🗑️ ลบซ้ำ</button>
-                    </td>
-                `;
+                tr.innerHTML = `<td class="p-3 font-semibold text-gray-700">${dateDisplay}</td><td class="p-3 text-blue-700 font-bold">${v.Drug_name || activeTab}</td><td class="p-3 text-gray-600">${v.Doctor_Name || '-'}</td><td class="p-3 text-center flex justify-center gap-2"><button onclick="selectVisit(${v.rowIndex}, '${encodeURIComponent(JSON.stringify(v))}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-sm transition">เลือกเปิด</button><button onclick="deleteDuplicateRecord('${activeTab}', ${v.rowIndex})" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1" title="ลบข้อมูลนี้ทิ้ง">🗑️ ลบซ้ำ</button></td>`;
                 tbody.appendChild(tr);
             });
-            
             document.getElementById('visitSelectionModal').classList.remove('hidden');
         }
 
         window.selectVisit = function(rowIndex, dataStr) {
-            const data = JSON.parse(decodeURIComponent(dataStr));
-            loadFormWithData(data);
-            closeVisitSelection();
+            const data = JSON.parse(decodeURIComponent(dataStr)); loadFormWithData(data); closeVisitSelection();
             if(isDoctorMode) applyDoctorMode(activeTab);
         };
 
-        // ลบข้อมูลแบบแสดง Toast สวยๆ แทนการใช้ Confirm() เพื่อเลี่ยงการโดนแบนใน Sandbox
         window.deleteDuplicateRecord = async function(sheetName, rowIndex) {
             showToast('กำลังส่งคำสั่งลบข้อมูล...', 'info');
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner"></span>';
-            btn.disabled = true;
-
+            const btn = event.target; const originalText = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
             try {
                 const payload = { action: 'deleteRow', sheetName: sheetName, rowIndex: rowIndex };
-                
-                // ใช้การส่ง POST แบบปกติ ที่เคยใช้งานได้ดี
-                const response = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload), 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-                });
+                const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
                 const json = await response.json();
-                
-                if(json.status === 'success') {
-                    showToast('ลบข้อมูลที่ซ้ำสำเร็จแล้ว!', 'success');
-                    closeVisitSelection();
-                    searchPatient(null); 
-                } else {
-                    showToast('เกิดข้อผิดพลาดในการลบ: ' + json.message, 'error');
-                }
-            } catch(e) {
-                showToast('การส่งคำสั่งลบเสร็จสิ้น', 'success');
-                closeVisitSelection();
-                setTimeout(() => searchPatient(null), 1000);
-            }
+                if(json.status === 'success') { showToast('ลบข้อมูลที่ซ้ำสำเร็จแล้ว!', 'success'); closeVisitSelection(); searchPatient(null); } 
+                else { showToast('เกิดข้อผิดพลาดในการลบ: ' + json.message, 'error'); }
+            } catch(e) { showToast('การส่งคำสั่งลบเสร็จสิ้น', 'success'); closeVisitSelection(); setTimeout(() => searchPatient(null), 1000); }
         };
 
-        function closeVisitSelection() {
-            document.getElementById('visitSelectionModal').classList.add('hidden');
-        }
+        function closeVisitSelection() { document.getElementById('visitSelectionModal').classList.add('hidden'); }
 
-        function loadFormWithData(data) {
-            populateForm(data, activeTab);
-            document.getElementById(`form-${activeTab}`).classList.remove('hidden');
-        }
+        function loadFormWithData(data) { populateForm(data, activeTab); document.getElementById(`form-${activeTab}`).classList.remove('hidden'); }
 
         function prepareNewRecord() {
             resetDoctorMode();
-            const hn = document.getElementById('searchHN').value.trim();
-            const formId = `form-${activeTab}`;
-            let prefix = activeTab === 'Atorvastatin' ? 'ator' : (activeTab === 'Oseltamivir' ? 'osel' : 'anti');
+            const hn = document.getElementById('searchHN').value.trim(); const formId = `form-${activeTab}`;
+            let prefix = activeTab === 'Atorvastatin' ? 'ator' : (activeTab === 'Oseltamivir' ? 'osel' : (activeTab === 'Covids' ? 'covd' : 'anti'));
             
-            document.getElementById(formId).reset();
-            document.getElementById(`${prefix}_rowIndex`).value = '';
-            document.getElementById(`${prefix}_HN`).value = hn;
-            
+            document.getElementById(formId).reset(); document.getElementById(`${prefix}_rowIndex`).value = ''; document.getElementById(`${prefix}_HN`).value = hn;
             document.getElementById(`${prefix}_Patient_Name`).value = 'xxxxx';
-            
-            const nowStr = toDatetimeLocal(new Date().toISOString());
-            document.getElementById(`${prefix}_Order_DateTime`).value = nowStr;
+            document.getElementById(`${prefix}_Order_DateTime`).value = toDatetimeLocal(new Date().toISOString());
             
             if(activeTab === 'Antibiotics') { renderAntibioticIndications(); calcAntiValue(); }
+            if(activeTab === 'Covids') { renderCovidIndications(); validateCovids(); }
             handleIndication(prefix);
             if(activeTab === 'Oseltamivir') { validateOseltamivir(); calcOselValue(); }
 
             const msgBox = document.getElementById('searchMessage');
             msgBox.className = 'bg-blue-100 text-blue-800 border-l-4 border-blue-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
             document.getElementById('searchMessageText').textContent = "โหมดเพิ่มข้อมูลใหม่ (กรุณากรอกข้อมูลให้ครบถ้วน)";
-            msgBox.classList.remove('hidden');
-            document.getElementById(formId).classList.remove('hidden');
+            msgBox.classList.remove('hidden'); document.getElementById(formId).classList.remove('hidden');
         }
 
         function setRadios(name, value, prefix) {
-            const radios = document.getElementsByName(name);
-            const otherInput = document.getElementById(`${prefix}_indication_other`);
-            const specificInput = document.getElementById(`${prefix}_indication_specific`);
+            const radios = document.getElementsByName(name); const otherInput = document.getElementById(`${prefix}_indication_other`); const specificInput = document.getElementById(`${prefix}_indication_specific`);
             radios.forEach(r => r.checked = false);
-            
             if (value !== undefined && value !== null) {
-                const valStr = String(value);
-                const isCheckbox = radios.length > 0 && radios[0].type === 'checkbox';
+                const valStr = String(value); const isCheckbox = radios.length > 0 && radios[0].type === 'checkbox';
                 let valArray = isCheckbox ? valStr.split(',').map(s => s.trim()) : [valStr.trim()];
-                
                 valArray.forEach(v => {
                     let matched = false;
-                    radios.forEach(r => { 
-                        if (r.value === v && r.value !== 'อื่นๆ' && r.value !== 'Specific (ระบุเชื้อ)') { 
-                            r.checked = true; matched = true; 
-                        } 
-                    });
-                    
-                    if(!matched && (v.includes('เชื้อ') || v.includes('Specific'))) {
-                         const spRadio = document.getElementById(`${prefix}_radio_specific`);
-                         if(spRadio) { spRadio.checked = true; matched = true; if(specificInput) specificInput.value = v; }
-                    }
-
-                    if (!matched && name.includes('indication') && v !== '') {
-                        const otRadio = document.getElementById(`${prefix}_radio_other`);
-                        if(otRadio) { 
-                            otRadio.checked = true; 
-                            if(otherInput) {
-                                let curr = otherInput.value;
-                                otherInput.value = curr ? curr + ', ' + v : v; 
-                            }
-                        }
-                    }
+                    radios.forEach(r => { if (r.value === v && r.value !== 'อื่นๆ' && r.value !== 'Specific (ระบุเชื้อ)') { r.checked = true; matched = true; } });
+                    if(!matched && (v.includes('เชื้อ') || v.includes('Specific'))) { const spRadio = document.getElementById(`${prefix}_radio_specific`); if(spRadio) { spRadio.checked = true; matched = true; if(specificInput) specificInput.value = v; } }
+                    if (!matched && name.includes('indication') && v !== '') { const otRadio = document.getElementById(`${prefix}_radio_other`); if(otRadio) { otRadio.checked = true; if(otherInput) { let curr = otherInput.value; otherInput.value = curr ? curr + ', ' + v : v; } } }
                 });
             }
             handleIndication(prefix);
         }
 
         function populateForm(data, tab) {
-            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
+            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : (tab === 'Covids' ? 'covd' : 'anti'));
             document.getElementById(`${prefix}_rowIndex`).value = data.rowIndex || '';
             
             if(tab === 'Antibiotics') {
                 const drugEl = document.getElementById('anti_Drug_name');
                 if(drugEl) { 
                     let dName = data.Drug_name ? String(data.Drug_name) : '';
-                    if(dName.toLowerCase().includes('meropenem')) drugEl.value = 'Meropenem 1 gm';
-                    else if(dName.toLowerCase().includes('tazocin') || dName.toLowerCase().includes('piperacillin')) drugEl.value = 'Tazocin 4.5g. inj';
-                    else drugEl.value = dName;
+                    if(dName.toLowerCase().includes('meropenem')) drugEl.value = 'Meropenem 1 gm'; else if(dName.toLowerCase().includes('tazocin') || dName.toLowerCase().includes('piperacillin')) drugEl.value = 'Tazocin 4.5g. inj'; else drugEl.value = dName;
                     renderAntibioticIndications(); 
                 }
+            }
+            if(tab === 'Covids') {
+                const drugEl = document.getElementById('covd_Drug_name');
+                if(drugEl && data.Drug_name) { drugEl.value = data.Drug_name; renderCovidIndications(); validateCovids(); }
             }
 
             Object.keys(data).forEach(key => {
                 try {
                     const el = document.getElementById(`${prefix}_${key}`);
                     if (el && el.type !== 'radio' && el.type !== 'checkbox') {
-                        if (tab === 'Antibiotics' && key === 'Drug_name') return;
-                        
-                        if(el.type === 'datetime-local') {
-                            el.value = toDatetimeLocal(data[key]);
-                        } else if (el.type === 'date') {
-                            el.value = data[key] ? String(data[key]).slice(0, 10) : '';
-                        } else {
-                            el.value = data[key] || '';
-                        }
+                        if ((tab === 'Antibiotics' || tab === 'Covids') && key === 'Drug_name') return;
+                        if(el.type === 'datetime-local') el.value = toDatetimeLocal(data[key]); else if (el.type === 'date') el.value = data[key] ? String(data[key]).slice(0, 10) : ''; else el.value = data[key] || '';
                     }
                 } catch (e) { console.error("Field population error:", key, e); }
             });
 
-            try {
-                setRadios(`${prefix}_indication`, data.Indication, prefix);
-                setRadios(`${prefix}_evaluation`, data.Evaluated, prefix);
-            } catch (e) { console.error("Radios error:", e); }
+            try { setRadios(`${prefix}_indication`, data.Indication, prefix); setRadios(`${prefix}_evaluation`, data.Evaluated, prefix); } catch (e) { console.error("Radios error:", e); }
             
             if(tab === 'Antibiotics') {
-                try {
-                    setRadios('anti_Pharmacist_action', data.Pharmacist_action, prefix);
-                    setRadios('anti_Result', data.Result, prefix);
-                    calcAntiValue();
-                    validateAntibiotics();
-                } catch (e) { console.error("Anti logic error:", e); }
+                try { setRadios('anti_Pharmacist_action', data.Pharmacist_action, prefix); setRadios('anti_Result', data.Result, prefix); calcAntiValue(); validateAntibiotics(); } catch (e) { console.error("Anti logic error:", e); }
             }
 
             const pharmaEl = document.getElementById(`${prefix}_pharmacist`);
@@ -2304,61 +2057,34 @@
                 let staffName = (data.Staff_name && data.Staff_name !== '-') ? data.Staff_name : '';
                 if (staffName) {
                     let exists = Array.from(pharmaEl.options).some(opt => opt.value === staffName);
-                    if (!exists) {
-                        const opt = document.createElement('option');
-                        opt.value = staffName;
-                        opt.textContent = `${staffName} (ข้อมูลเดิม)`;
-                        pharmaEl.appendChild(opt);
-                    }
+                    if (!exists) { const opt = document.createElement('option'); opt.value = staffName; opt.textContent = `${staffName} (ข้อมูลเดิม)`; pharmaEl.appendChild(opt); }
                 }
                 pharmaEl.value = staffName;
             }
-            
-            if (tab === 'Oseltamivir') {
-                try {
-                    validateOseltamivir();
-                    calcOselValue();
-                } catch (e) { console.error("Osel logic error:", e); }
-            }
+            if (tab === 'Oseltamivir') { try { validateOseltamivir(); calcOselValue(); } catch (e) { console.error("Osel logic error:", e); } }
         }
 
         async function submitDUE(e, tab) {
-            e.preventDefault();
-            showToast('กำลังทำการซิงก์ข้อมูล...', 'info');
-            const btn = e.target.querySelector('.saveBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="spinner"></span> ซิงก์...';
-            btn.disabled = true;
+            e.preventDefault(); showToast('กำลังทำการซิงก์ข้อมูล...', 'info');
+            const btn = e.target.querySelector('.saveBtn'); const originalText = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span> ซิงก์...'; btn.disabled = true;
 
-            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : 'anti');
+            let prefix = tab === 'Atorvastatin' ? 'ator' : (tab === 'Oseltamivir' ? 'osel' : (tab === 'Covids' ? 'covd' : 'anti'));
             let rowIndex = document.getElementById(`${prefix}_rowIndex`).value;
             
-            let indication = '';
-            let isCheckbox = false;
-            let indicationArr = [];
+            let indication = ''; let isCheckbox = false; let indicationArr = [];
+            document.getElementsByName(`${prefix}_indication`).forEach(r => { if(r.type === 'checkbox') isCheckbox = true; if(r.checked && r.value !== 'อื่นๆ' && r.value !== 'Specific (ระบุเชื้อ)') indicationArr.push(r.value); });
             
-            document.getElementsByName(`${prefix}_indication`).forEach(r => { 
-                if(r.type === 'checkbox') isCheckbox = true;
-                if(r.checked && r.value !== 'อื่นๆ' && r.value !== 'Specific (ระบุเชื้อ)') indicationArr.push(r.value); 
-            });
-            
-            let otherIndication = '';
-            const otherEl = document.getElementById(`${prefix}_indication_other`);
-            if(otherEl && otherEl.value) otherIndication = otherEl.value;
+            let otherIndication = ''; const otherEl = document.getElementById(`${prefix}_indication_other`); if(otherEl && otherEl.value) otherIndication = otherEl.value;
 
             if (isCheckbox) {
-                const otRadio = document.getElementById(`${prefix}_radio_other`);
-                if(otRadio && otRadio.checked && otherIndication) indicationArr.push(otherIndication);
+                const otRadio = document.getElementById(`${prefix}_radio_other`); if(otRadio && otRadio.checked && otherIndication) indicationArr.push(otherIndication);
                 indication = indicationArr.join(', ');
             } else {
                 document.getElementsByName(`${prefix}_indication`).forEach(r => { if(r.checked) indication = r.value; });
-                if (indication === 'อื่นๆ') indication = otherIndication;
-                if (indication === 'Specific (ระบุเชื้อ)') indication = document.getElementById(`${prefix}_indication_specific`).value;
+                if (indication === 'อื่นๆ') indication = otherIndication; if (indication === 'Specific (ระบุเชื้อ)') indication = document.getElementById(`${prefix}_indication_specific`).value;
             }
 
-            let evaluated = '';
-            document.getElementsByName(`${prefix}_evaluation`).forEach(r => { if(r.checked) evaluated = r.value; });
-            
+            let evaluated = ''; document.getElementsByName(`${prefix}_evaluation`).forEach(r => { if(r.checked) evaluated = r.value; });
             let updateData = { Indication: indication, Evaluated: evaluated };
             
             if (!isDoctorMode) {
@@ -2366,8 +2092,7 @@
                 if(tab === 'Antibiotics') {
                     let pAction = ''; document.getElementsByName(`anti_Pharmacist_action`).forEach(r => { if(r.checked) pAction = r.value; });
                     let pResult = ''; document.getElementsByName(`anti_Result`).forEach(r => { if(r.checked) pResult = r.value; });
-                    updateData['Pharmacist_action'] = pAction;
-                    updateData['Result'] = pResult;
+                    updateData['Pharmacist_action'] = pAction; updateData['Result'] = pResult;
                 }
             }
 
@@ -2375,41 +2100,20 @@
             inputs.forEach(inp => {
                 let key = inp.id.replace(`${prefix}_`, '');
                 if(key !== 'rowIndex' && !key.includes('indication') && key !== 'pharmacist' && !key.includes('evaluation') && !key.includes('Pharmacist_action') && !key.includes('Result')) {
-                    if (inp.type === 'datetime-local' && inp.value) {
-                         updateData[key] = inp.value.replace('T', ' ') + ':00';
-                    } else {
-                         updateData[key] = inp.value;
-                    }
+                    if (inp.type === 'datetime-local' && inp.value) updateData[key] = inp.value.replace('T', ' ') + ':00'; else updateData[key] = inp.value;
                 }
             });
 
             let payload = { action: 'saveFullData', sheetName: tab, rowIndex: rowIndex, updateData: updateData };
 
             try {
-                // ใช้การส่ง POST แบบปกติ ที่เคยใช้งานได้ดี
-                await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload), 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-                });
-                
+                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
                 const msgBox = document.getElementById('searchMessage');
                 msgBox.className = 'bg-emerald-100 text-emerald-800 border-l-4 border-emerald-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
-                document.getElementById('searchMessageText').textContent = "บันทึกข้อมูลเรียบร้อยแล้ว!";
-                msgBox.classList.remove('hidden');
-                
-                document.getElementById(`form-${tab}`).classList.add('hidden');
-                document.getElementById('searchHN').value = '';
-                
-                showToast('บันทึกข้อมูลเสร็จสมบูรณ์', 'success');
-                fetchLastUpdate(); 
-            } catch (error) {
-                showToast('ส่งข้อมูลสำเร็จแล้ว', 'success');
-                fetchLastUpdate();
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+                document.getElementById('searchMessageText').textContent = "บันทึกข้อมูลเรียบร้อยแล้ว!"; msgBox.classList.remove('hidden');
+                document.getElementById(`form-${tab}`).classList.add('hidden'); document.getElementById('searchHN').value = '';
+                showToast('บันทึกข้อมูลเสร็จสมบูรณ์', 'success'); fetchLastUpdate(); 
+            } catch (error) { showToast('ส่งข้อมูลสำเร็จแล้ว', 'success'); fetchLastUpdate(); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
     </script>
 </body>
