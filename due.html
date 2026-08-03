@@ -46,9 +46,11 @@
         }
         @keyframes shine { to { background-position: 200% center; } }
 
+        /* Custom Radio & Checkboxes for Evaluation */
         .radio-custom:checked + div { border-color: #475569; background-color: #e2e8f0; font-weight: 600; }
         .radio-custom:disabled + div { opacity: 0.6; cursor: not-allowed; }
         
+        /* New Detailed Evaluation Colors */
         .radio-color-green:checked + div { border-color: #22c55e; background-color: #dcfce7; color: #166534; box-shadow: inset 2px 2px 5px rgba(22,163,74,0.2); font-weight: 600;}
         .radio-color-yellowgreen:checked + div { border-color: #84cc16; background-color: #ecfccb; color: #3f6212; box-shadow: inset 2px 2px 5px rgba(132,204,22,0.2); font-weight: 600;}
         .radio-color-red:checked + div { border-color: #ef4444; background-color: #fee2e2; color: #991b1b; box-shadow: inset 2px 2px 5px rgba(239,68,68,0.2); font-weight: 600;}
@@ -76,9 +78,11 @@
         .doctor-row-hover:hover { background-color: #eef2ff; cursor: pointer; }
         .th-sortable:hover { background-color: #e2e8f0; cursor: pointer; }
 
+        /* Guideline Box */
         .guideline-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .guideline-box.open { max-height: 500px; overflow-y: auto; }
         
+        /* Toast Notifications (Safe for Sandbox) */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast-msg { padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0; transform: translateY(-20px); transition: all 0.3s ease; }
         .toast-show { opacity: 1; transform: translateY(0); }
@@ -159,6 +163,7 @@
         </header>
 
         <div id="mainPage">
+            <!-- Dashboard Trigger -->
             <div class="floating-card p-3 mb-4 rounded-xl border border-gray-100 cursor-pointer hover:shadow-md transition-shadow group" onclick="toggleDashboard()">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-1.5">
                     <span class="text-gray-600 font-semibold text-lg">ฐานข้อมูล: <span id="currentTabLabel" class="text-blue-800 font-bold text-xl">Antibiotics</span> 
@@ -604,6 +609,7 @@
                     </button>
                 </div>
 
+                <!-- Summary Cards for Doctors -->
                 <div id="doctorStatsCards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
                         <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics (ATB)</div>
@@ -646,6 +652,7 @@
                 
                 <p class="text-center text-xs text-gray-400 mt-4">* ข้อมูลแพทย์ถูกแปลงเป็นสัญลักษณ์เพื่อความเป็นส่วนตัว หากต้องการดูข้อมูลของท่าน กรุณาพิมพ์เลข ว. ในช่องค้นหา</p>
                 
+                <!-- Quality Indicators (New Section) -->
                 <div class="mt-6 bg-rose-50 p-4 rounded-xl border border-rose-200 shadow-sm transition-all">
                     <h3 class="text-lg font-bold text-rose-800 mb-3 flex items-center gap-2">🚨 ตัวชี้วัดคุณภาพใบ DUE (จุดที่ควรระวัง/ปรับปรุง)</h3>
                     <p class="text-xs text-rose-600 mb-3 font-medium">สรุปข้อมูลข้อบกพร่อง จากผลงานของแพทย์ที่แสดงผลอยู่ ณ ปัจจุบัน</p>
@@ -673,9 +680,11 @@
                     </div>
                 </div>
 
+                <!-- Doctor Patient List Table with Filters -->
                 <div id="doctorPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                     <h3 class="text-lg font-bold text-indigo-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อประเมิน Part 2)</h3>
                     
+                    <!-- Filters -->
                     <div class="flex flex-wrap gap-2 mb-3 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100">
                         <select id="docListFilterDrug" class="editable-input w-auto text-xs border-indigo-200" onchange="renderDoctorPatientList(revealedLicense)">
                             <option value="all">ทุกยา</option>
@@ -698,10 +707,10 @@
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
                                 <tr class="bg-indigo-50 border-b border-indigo-100 text-indigo-800 select-none">
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortDocList('sheet')">DUE Type ↕</th>
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortDocList('rawDate')">วันที่สั่งยา ↕</th>
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortDocList('hn')">HN / ชื่อผู้ป่วย ↕</th>
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortDocList('evaluated')">สถานะประเมิน ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('sheet')">DUE Type ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('rawDate')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('hn')">HN / ชื่อผู้ป่วย ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortDocList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
                             </thead>
                             <tbody id="doctorPatientTbody">
@@ -729,6 +738,7 @@
                     </select>
                 </div>
 
+                <!-- Pharma Summary Cards -->
                 <div id="pharmaStatsCards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 hidden">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
                         <div class="text-blue-600 font-bold text-sm mb-1">Antibiotics (ATB)</div>
@@ -753,9 +763,11 @@
                     </div>
                 </div>
 
+                <!-- Pharma Patient List -->
                 <div id="pharmaPatientList" class="hidden mt-6 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
                     <h3 class="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">📄 รายการผู้ป่วยของท่าน (คลิกเพื่อเปิดประเมิน)</h3>
                     
+                    <!-- Filters -->
                     <div class="flex flex-wrap gap-2 mb-3 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
                         <select id="pharmaListFilterDrug" class="editable-input w-auto text-xs border-emerald-200" onchange="renderPharmaPatientList()">
                             <option value="all">ทุกยา</option>
@@ -778,10 +790,10 @@
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
                                 <tr class="bg-emerald-50 border-b border-emerald-100 text-emerald-800 select-none">
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortPharmaList('sheet')">DUE Type ↕</th>
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortPharmaList('date')">วันที่สั่งยา ↕</th>
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortPharmaList('hn')">HN / ชื่อผู้ป่วย ↕</th>
-                                    <th class="p-2 font-semibold th-sortable" onclick="sortPharmaList('evaluated')">สถานะประเมิน ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('sheet')">DUE Type ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('date')">วันที่สั่งยา ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('hn')">HN / ชื่อผู้ป่วย ↕</th>
+                                    <th class="p-2 font-semibold sortable" onclick="sortPharmaList('evaluated')">สถานะประเมิน ↕</th>
                                 </tr>
                             </thead>
                             <tbody id="pharmaPatientTbody">
@@ -797,7 +809,7 @@
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwdT2vAYgkS72XtjPqwG51joJbOUfprSAgT_KViRVtiZgo4g4C_NSi2N_IwmnCSTzEz/exec";
         
-        // ฟังก์ชัน Toast สำหรับใช้แทน Alert ป้องกันการบล็อก Sandbox
+        // ฟังก์ชัน Toast สำหรับใช้แทน Alert ป้องกันการบล็อก Sandbox ของเบราว์เซอร์
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -810,38 +822,6 @@
                 toast.classList.remove('toast-show');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
-        }
-
-        // --- แก้ปัญหา CORS 100% ด้วยการแยก GET และ POST (no-cors) ---
-        
-        // 1. ฟังก์ชัน GET สำหรับดึงข้อมูล (ใช้วิธีแนบ Parameter ท้าย URL)
-        async function fetchGasGet(paramsObj) {
-            const url = new URL(GAS_URL);
-            Object.keys(paramsObj).forEach(key => url.searchParams.append(key, paramsObj[key]));
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                redirect: 'follow'
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        }
-
-        // 2. ฟังก์ชัน POST สำหรับส่งข้อมูลบันทึก (ใช้ no-cors ทะลุการบล็อก)
-        async function fetchGasPost(payload) {
-            try {
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    mode: 'no-cors' // แจ้ง Browser ให้ส่งผ่านทันทีโดยไม่ติด CORS
-                });
-                // ใน mode no-cors เราจะไม่ได้ response.json() กลับมา เลยถือว่าส่งผ่าน
-                return { status: 'success' };
-            } catch (error) {
-                console.error("Fetch POST Error:", error);
-                return { status: 'error', message: error.message };
-            }
         }
 
         let activeTab = 'Antibiotics'; 
@@ -973,14 +953,13 @@
                 initializeApp(isDoctor);
             }
             
-            // แอบโหลดรายชื่อแพทย์เบื้องหลัง
             prefetchDoctors();
         });
 
         async function prefetchDoctors() {
             try {
-                // แก้การใช้งานเป็น fetchGasGet แบบ object
-                const json = await fetchGasGet({ action: 'getDoctorSummary' });
+                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
+                const json = await res.json();
                 if(json.status === 'success' && json.docsMap) {
                     cachedDocsList = Object.keys(json.docsMap).map(lic => ({
                         license: lic,
@@ -1009,8 +988,8 @@
             errorMsg.classList.add('hidden');
             
             try {
-                // เปลี่ยนไปใช้ fetchGasGet ที่แก้ปัญหาเรื่อง CORS เรียบร้อย
-                const json = await fetchGasGet({ action: 'verifyPasscode', passcode: pass });
+                const res = await fetch(`${GAS_URL}?action=verifyPasscode&passcode=${pass}`);
+                const json = await res.json();
                 if(json.status === 'success') {
                     localStorage.setItem('due_logged_in', 'true');
                     document.getElementById('loginOverlay').classList.add('hidden');
@@ -1058,7 +1037,8 @@
             document.getElementById('phantomSpinner').classList.add('active');
             
             try {
-                const json = await fetchGasGet({ action: 'getLastUpdate', sheet: activeTab });
+                const res = await fetch(`${GAS_URL}?action=getLastUpdate&sheet=${activeTab}`);
+                const json = await res.json();
                 
                 if(json.status === 'success') {
                     txt.textContent = formatDisplayDate(json.data);
@@ -1287,7 +1267,8 @@
 
         async function fetchDoctorSummary() {
             try {
-                const json = await fetchGasGet({ action: 'getDoctorSummary' });
+                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
+                const json = await res.json();
                 if(json.status === 'success') {
                     globalDocData = json.data;
                     globalDocsMap = json.docsMap;
@@ -1298,7 +1279,7 @@
                         eIdx++;
                     });
 
-                    // Build Month Dropdown
+                    // Build Month Dropdown from accurate month format "YYYY-MM"
                     const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
                     
                     const selMonth = document.getElementById('docMonthSelector');
@@ -1318,6 +1299,7 @@
                         filterMonth.appendChild(opt2);
                     });
                     
+                    // ตั้งค่า Default เดือน
                     const now = new Date();
                     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                     
@@ -1340,8 +1322,6 @@
                 revealedLicense = val;
                 renderDocSummaryChart();
                 renderDoctorPatientList(val);
-            } else {
-                showToast('ไม่พบเลข ว. นี้ในระบบ', 'error');
             }
         }
         
@@ -1378,7 +1358,7 @@
             filtered.forEach(d => {
                 if(stats[d.sheet]) {
                     stats[d.sheet].total++;
-                    if(d.hasIndication) stats[d.sheet].eval++;
+                    if(d.hasIndication) stats[d.sheet].eval++; // ส่งใบ DUE คือต้องมีข้อมูล Indication
                 }
 
                 if(!agg[d.license]) return;
@@ -1413,6 +1393,7 @@
                 activeLicenses = [revealedLicense];
             }
 
+            // --- คำนวณ Quality Indicators ---
             let qOselInd = 0, qOselOnset = 0;
             let qAtorInd = 0;
             let qAntiStaff = 0, qAntiInd = 0;
@@ -1627,7 +1608,7 @@
             if (cachedDocsList.length === 0) {
                 document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-gray-500"><span class="spinner"></span> กำลังดึงฐานข้อมูลแพทย์...</div>';
                 
-                fetchGasGet({ action: 'getDoctorSummary' }).then(json=>{
+                fetch(`${GAS_URL}?action=getDoctorSummary`).then(r=>r.json()).then(json=>{
                     if(json.docsMap) {
                         cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] }));
                         renderDoctorList('');
@@ -1697,7 +1678,8 @@
 
         async function fetchPharmaSummary() {
             try {
-                const json = await fetchGasGet({ action: 'getPharmacistSummary' });
+                const res = await fetch(`${GAS_URL}?action=getPharmacistSummary`);
+                const json = await res.json();
                 if(json.status === 'success') {
                     globalPharmaData = json.data;
                     
@@ -1844,7 +1826,7 @@
         }
 
         // ==========================================
-        // OTHER LOGICS (Calc, Validation, Submit)
+        // OTHER LOGICS
         // ==========================================
         function calcAntiValue() {
             const drug = document.getElementById('anti_Drug_name').value;
@@ -2074,7 +2056,8 @@
 
         async function fetchPharmacists() {
             try {
-                const data = await fetchGasGet({ action: 'getPharmacists' });
+                const response = await fetch(`${GAS_URL}?action=getPharmacists`);
+                const data = await response.json();
                 ['ator', 'osel', 'anti'].forEach(prefix => {
                     const select = document.getElementById(`${prefix}_pharmacist`);
                     if(select) {
@@ -2106,7 +2089,8 @@
             btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
 
             try {
-                const res = await fetchGasGet({ action: 'search', sheet: activeTab, hn: hn });
+                const response = await fetch(`${GAS_URL}?action=search&sheet=${activeTab}&hn=${hn}`);
+                const res = await response.json();
 
                 if (res.status === 'success' && res.data) {
                     if(Array.isArray(res.data) && res.data.length > 1) {
@@ -2168,7 +2152,7 @@
                     <td class="p-3 text-gray-600">${v.Doctor_Name || '-'}</td>
                     <td class="p-3 text-center flex justify-center gap-2">
                         <button onclick="selectVisit(${v.rowIndex}, '${encodeURIComponent(JSON.stringify(v))}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-sm transition">เลือกเปิด</button>
-                        <button onclick="deleteDuplicateRecord('${activeTab}', ${v.rowIndex})" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1" title="ลบข้อมูลนี้ทิ้ง">🗑️ ลบซ้ำ</button>
+                        <button onclick="deleteDuplicateRecord('${activeTab}', ${v.rowIndex}, event)" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1" title="ลบข้อมูลนี้ทิ้ง">🗑️ ลบซ้ำ</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2184,29 +2168,36 @@
             if(isDoctorMode) applyDoctorMode(activeTab);
         };
 
-        window.deleteDuplicateRecord = async function(sheetName, rowIndex) {
-            if(confirm('🚨 คำเตือน: มั่นใจไหมว่าต้องการ "ลบ" ข้อมูลบรรทัดนี้ทิ้งอย่างถาวร เพราะเป็นข้อมูลที่ซ้ำกันจริงๆ? \n(ลบแล้วกู้คืนไม่ได้)')) {
-                const btn = event.target;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner"></span>';
-                btn.disabled = true;
+        window.deleteDuplicateRecord = async function(sheetName, rowIndex, event) {
+            // ไม่ใช้ confirm() เพื่อป้องกันการโดนบล็อกใน Sandbox ของ Github Pages
+            showToast('กำลังส่งคำสั่งลบข้อมูล...', 'info');
+            const btn = event ? event.target : document.activeElement;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span>';
+            btn.disabled = true;
 
-                try {
-                    const payload = { action: 'deleteRow', sheetName: sheetName, rowIndex: rowIndex };
-                    const res = await fetchGasPost(payload);
-                    
-                    if(res.status === 'success') {
-                        showToast('ลบข้อมูลที่ซ้ำสำเร็จแล้ว!', 'success');
-                        closeVisitSelection();
-                        searchPatient(null); 
-                    } else {
-                        showToast('เกิดข้อผิดพลาดในการลบ', 'error');
-                    }
-                } catch(e) {
-                    showToast('ส่งคำสั่งลบสำเร็จ', 'success');
+            try {
+                const payload = { action: 'deleteRow', sheetName: sheetName, rowIndex: rowIndex };
+                const res = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload), 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+                });
+                const json = await res.json();
+                
+                if(json.status === 'success') {
+                    showToast('ลบข้อมูลสำเร็จ!', 'success');
                     closeVisitSelection();
-                    setTimeout(() => searchPatient(null), 1000);
+                    searchPatient(null); 
+                } else {
+                    showToast('เกิดข้อผิดพลาดในการลบ: ' + json.message, 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
+            } catch(e) {
+                showToast('เชื่อมต่อล้มเหลว', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         };
 
@@ -2355,6 +2346,7 @@
 
         async function submitDUE(e, tab) {
             e.preventDefault();
+            showToast('กำลังซิงก์ข้อมูล...', 'info');
             const btn = e.target.querySelector('.saveBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<span class="spinner"></span> ซิงก์...';
@@ -2416,8 +2408,12 @@
             let payload = { action: 'saveFullData', sheetName: tab, rowIndex: rowIndex, updateData: updateData };
 
             try {
-                // เรียกใช้ฟังก์ชันที่ส่ง POST ไปแล้วข้าม CORS
-                await fetchGasPost(payload);
+                // สำหรับ POST ให้ส่ง headers text/plain หลีกเลี่ยง Preflight Options CORS 
+                await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload), 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+                });
                 
                 const msgBox = document.getElementById('searchMessage');
                 msgBox.className = 'bg-emerald-100 text-emerald-800 border-l-4 border-emerald-500 rounded-r-lg p-3 mb-4 text-sm font-semibold flex justify-between items-center shadow-sm';
@@ -2430,7 +2426,7 @@
                 showToast('บันทึกข้อมูลสำเร็จ!', 'success');
                 fetchLastUpdate(); 
             } catch (error) {
-                showToast('ส่งคำสั่งสำเร็จ', 'success');
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
                 fetchLastUpdate();
             } finally {
                 btn.innerHTML = originalText;
