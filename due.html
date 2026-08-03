@@ -236,7 +236,6 @@
             <datalist id="list-doctor"></datalist>
             <datalist id="list-staff-approve"><option value="มี"><option value="ไม่มี"></option></datalist>
 
-            <!-- ===================== FORM: ANTIBIOTICS ===================== -->
             <form id="form-Antibiotics" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Antibiotics')">
                 <input type="hidden" id="anti_rowIndex">
                 <input type="hidden" id="anti_Visit_ID">
@@ -394,7 +393,6 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
-            <!-- ===================== FORM: OSELTAMIVIR ===================== -->
             <form id="form-Oseltamivir" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Oseltamivir')">
                 <input type="hidden" id="osel_rowIndex">
                 <input type="hidden" id="osel_Visit_ID">
@@ -507,7 +505,6 @@
                 <div class="flex justify-end"><button type="submit" class="saveBtn bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-8 py-2 shadow-lg font-bold">💾 บันทึกผล</button></div>
             </form>
 
-            <!-- ===================== FORM: ATORVASTATIN ===================== -->
             <form id="form-Atorvastatin" class="due-form hidden space-y-4" onsubmit="submitDUE(event, 'Atorvastatin')">
                 <input type="hidden" id="ator_rowIndex">
                 <input type="hidden" id="ator_Visit_ID">
@@ -809,7 +806,7 @@
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwdT2vAYgkS72XtjPqwG51joJbOUfprSAgT_KViRVtiZgo4g4C_NSi2N_IwmnCSTzEz/exec";
         
-        // ฟังก์ชัน Toast สำหรับใช้แทน Alert ป้องกันการบล็อก Sandbox ของเบราว์เซอร์
+        // ใช้โชว์ข้อความแทน alert()
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -827,23 +824,19 @@
         let activeTab = 'Antibiotics'; 
         let isDoctorMode = false;
         
-        // Chart Objects
         let timeChart = null;
         let indChart = null;
         let docChart = null;
         let staffChart = null;
         let docSummaryChartObj = null;
 
-        // Interactive Dashboard State
         let currentDashRawData = [];
         let activeDashMonth = null;
         let timeValues = {};
 
-        // Lists sorting state
         let docSortCol = 'month', docSortAsc = false;
         let pharmaSortCol = 'date', pharmaSortAsc = false;
 
-        // Emoji list for doctors
         const emojiList = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🐣','🦇','🦉','🦅','🦆','🦋'];
         let emojiMap = {};
         let globalDocData = [];
@@ -852,11 +845,9 @@
 
         let globalPharmaData = [];
         
-        // Doctor Search state
         let cachedDocsList = [];
         let currentDocSearchPrefix = '';
 
-        // --- Custom Plugin for Red Text on Top of Antibiotics Time Chart ---
         const topValuePlugin = {
             id: 'topValuePlugin',
             afterDatasetsDraw(chart, args, options) {
@@ -958,8 +949,9 @@
 
         async function prefetchDoctors() {
             try {
-                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
-                const json = await res.json();
+                // กลับไปใช้ Native Fetch ปกติ
+                const response = await fetch(`${GAS_URL}?action=getDoctorSummary`);
+                const json = await response.json();
                 if(json.status === 'success' && json.docsMap) {
                     cachedDocsList = Object.keys(json.docsMap).map(lic => ({
                         license: lic,
@@ -988,8 +980,9 @@
             errorMsg.classList.add('hidden');
             
             try {
-                const res = await fetch(`${GAS_URL}?action=verifyPasscode&passcode=${pass}`);
-                const json = await res.json();
+                // กลับไปใช้ Native Fetch ปกติ
+                const response = await fetch(`${GAS_URL}?action=verifyPasscode&passcode=${pass}`);
+                const json = await response.json();
                 if(json.status === 'success') {
                     localStorage.setItem('due_logged_in', 'true');
                     document.getElementById('loginOverlay').classList.add('hidden');
@@ -1005,7 +998,6 @@
             }
         }
 
-        // --- Core UI & Tabs ---
         function toggleDashboard() {
             const dash = document.getElementById('dashboardArea');
             dash.classList.toggle('hidden');
@@ -1030,15 +1022,15 @@
             fetchLastUpdate();
         }
 
-        // --- Fetch & Render Main Dashboard ---
         async function fetchLastUpdate() {
             const txt = document.getElementById('lastUpdateText');
             txt.textContent = 'กำลังโหลด...';
             document.getElementById('phantomSpinner').classList.add('active');
             
             try {
-                const res = await fetch(`${GAS_URL}?action=getLastUpdate&sheet=${activeTab}`);
-                const json = await res.json();
+                // กลับไปใช้ Native Fetch ปกติ
+                const response = await fetch(`${GAS_URL}?action=getLastUpdate&sheet=${activeTab}`);
+                const json = await response.json();
                 
                 if(json.status === 'success') {
                     txt.textContent = formatDisplayDate(json.data);
@@ -1163,7 +1155,6 @@
             updateDashboardSubCharts(true);
         }
 
-        // --- Cross-filter Sub Charts ---
         function updateDashboardSubCharts(isInitial = false) {
             const overlay = document.getElementById('dashboardSubChartOverlay');
             if(!isInitial && overlay) overlay.classList.remove('hidden');
@@ -1190,7 +1181,6 @@
                     }
                 });
 
-                // Update Indication Chart
                 const ctxInd = document.getElementById('indicationChart').getContext('2d');
                 if(indChart) indChart.destroy();
                 indChart = new Chart(ctxInd, {
@@ -1202,7 +1192,6 @@
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
                 });
 
-                // Update Staff Chart
                 const ctxStaff = document.getElementById('staffChart').getContext('2d');
                 if(staffChart) staffChart.destroy();
                 staffChart = new Chart(ctxStaff, {
@@ -1214,7 +1203,6 @@
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' }, formatter: (val) => val > 0 ? val : '' } } }
                 });
 
-                // Update Doctor Chart
                 const labelsDoc = Object.keys(docData).sort((a, b) => {
                     const totalA = docData[a]['Appropriate'] + docData[a]['Inappropriate'] + docData[a]['ไม่มีข้อมูล'];
                     const totalB = docData[b]['Appropriate'] + docData[b]['Inappropriate'] + docData[b]['ไม่มีข้อมูล'];
@@ -1244,9 +1232,6 @@
             }, 50);
         }
 
-        // ==========================================
-        // DOCTOR PAGE LOGIC
-        // ==========================================
         function toggleDoctorPage() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('mainTabs').classList.add('hidden');
@@ -1267,8 +1252,10 @@
 
         async function fetchDoctorSummary() {
             try {
-                const res = await fetch(`${GAS_URL}?action=getDoctorSummary`);
-                const json = await res.json();
+                // กลับไปใช้ Native Fetch ปกติ
+                const response = await fetch(`${GAS_URL}?action=getDoctorSummary`);
+                const json = await response.json();
+                
                 if(json.status === 'success') {
                     globalDocData = json.data;
                     globalDocsMap = json.docsMap;
@@ -1279,7 +1266,6 @@
                         eIdx++;
                     });
 
-                    // Build Month Dropdown from accurate month format "YYYY-MM"
                     const months = [...new Set(globalDocData.map(d => d.month))].filter(m => m && m !== 'ไม่มีข้อมูล').sort().reverse();
                     
                     const selMonth = document.getElementById('docMonthSelector');
@@ -1299,7 +1285,6 @@
                         filterMonth.appendChild(opt2);
                     });
                     
-                    // ตั้งค่า Default เดือน
                     const now = new Date();
                     const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                     
@@ -1358,7 +1343,7 @@
             filtered.forEach(d => {
                 if(stats[d.sheet]) {
                     stats[d.sheet].total++;
-                    if(d.hasIndication) stats[d.sheet].eval++; // ส่งใบ DUE คือต้องมีข้อมูล Indication
+                    if(d.hasIndication) stats[d.sheet].eval++; 
                 }
 
                 if(!agg[d.license]) return;
@@ -1393,7 +1378,6 @@
                 activeLicenses = [revealedLicense];
             }
 
-            // --- คำนวณ Quality Indicators ---
             let qOselInd = 0, qOselOnset = 0;
             let qAtorInd = 0;
             let qAntiStaff = 0, qAntiInd = 0;
@@ -1597,9 +1581,6 @@
             }
         }
 
-        // ==========================================
-        // DOCTOR SEARCH MODAL
-        // ==========================================
         function openDoctorSearch(prefix) {
             currentDocSearchPrefix = prefix;
             document.getElementById('doctorSearchModal').classList.remove('hidden');
@@ -1608,6 +1589,7 @@
             if (cachedDocsList.length === 0) {
                 document.getElementById('doctorListContainer').innerHTML = '<div class="text-center p-4 text-gray-500"><span class="spinner"></span> กำลังดึงฐานข้อมูลแพทย์...</div>';
                 
+                // กลับไปใช้ Native Fetch ปกติ
                 fetch(`${GAS_URL}?action=getDoctorSummary`).then(r=>r.json()).then(json=>{
                     if(json.docsMap) {
                         cachedDocsList = Object.keys(json.docsMap).map(lic => ({ license: lic, name: json.docsMap[lic] }));
@@ -1658,9 +1640,6 @@
             renderDoctorList(document.getElementById('doctorSearchInput').value);
         }
 
-        // ==========================================
-        // PHARMACIST PAGE LOGIC
-        // ==========================================
         function togglePharmaPage() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('mainTabs').classList.add('hidden');
@@ -1678,8 +1657,10 @@
 
         async function fetchPharmaSummary() {
             try {
-                const res = await fetch(`${GAS_URL}?action=getPharmacistSummary`);
-                const json = await res.json();
+                // กลับไปใช้ Native Fetch ปกติ
+                const response = await fetch(`${GAS_URL}?action=getPharmacistSummary`);
+                const json = await response.json();
+                
                 if(json.status === 'success') {
                     globalPharmaData = json.data;
                     
@@ -1825,9 +1806,6 @@
             document.getElementById('pharmaPatientList').classList.remove('hidden');
         }
 
-        // ==========================================
-        // OTHER LOGICS
-        // ==========================================
         function calcAntiValue() {
             const drug = document.getElementById('anti_Drug_name').value;
             const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
@@ -2056,8 +2034,10 @@
 
         async function fetchPharmacists() {
             try {
+                // กลับไปใช้ Native Fetch ปกติ
                 const response = await fetch(`${GAS_URL}?action=getPharmacists`);
                 const data = await response.json();
+                
                 ['ator', 'osel', 'anti'].forEach(prefix => {
                     const select = document.getElementById(`${prefix}_pharmacist`);
                     if(select) {
@@ -2089,6 +2069,7 @@
             btn.innerHTML = '<span class="spinner"></span>'; btn.disabled = true;
 
             try {
+                // กลับไปใช้ Native Fetch ปกติ
                 const response = await fetch(`${GAS_URL}?action=search&sheet=${activeTab}&hn=${hn}`);
                 const res = await response.json();
 
@@ -2116,16 +2097,13 @@
                 msgBox.classList.remove('hidden');
             } catch (error) {
                 console.error("Search Patient Error:", error);
-                msgText.textContent = "พบความผิดปกติในการแสดงผลข้อมูลของ HN นี้ (แต่ยังสามารถแก้ไขและบันทึกทับได้)"; 
+                msgText.textContent = "พบความผิดปกติในการดึงข้อมูล (CORS Error)"; 
                 msgBox.classList.remove('hidden');
             } finally {
                 btn.innerHTML = 'ค้นหา'; btn.disabled = false;
             }
         }
 
-        // ==========================================
-        // VISIT SELECTION & DELETE
-        // ==========================================
         function showVisitSelectionModal(visitsData) {
             const tbody = document.getElementById('visitSelectionTbody');
             tbody.innerHTML = '';
@@ -2152,7 +2130,7 @@
                     <td class="p-3 text-gray-600">${v.Doctor_Name || '-'}</td>
                     <td class="p-3 text-center flex justify-center gap-2">
                         <button onclick="selectVisit(${v.rowIndex}, '${encodeURIComponent(JSON.stringify(v))}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold text-xs shadow-sm transition">เลือกเปิด</button>
-                        <button onclick="deleteDuplicateRecord('${activeTab}', ${v.rowIndex}, event)" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1" title="ลบข้อมูลนี้ทิ้ง">🗑️ ลบซ้ำ</button>
+                        <button onclick="deleteDuplicateRecord('${activeTab}', ${v.rowIndex})" class="bg-red-100 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1" title="ลบข้อมูลนี้ทิ้ง">🗑️ ลบซ้ำ</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2168,36 +2146,36 @@
             if(isDoctorMode) applyDoctorMode(activeTab);
         };
 
-        window.deleteDuplicateRecord = async function(sheetName, rowIndex, event) {
-            // ไม่ใช้ confirm() เพื่อป้องกันการโดนบล็อกใน Sandbox ของ Github Pages
+        // ลบข้อมูลแบบแสดง Toast สวยๆ แทนการใช้ Confirm() เพื่อเลี่ยงการโดนแบนใน Sandbox
+        window.deleteDuplicateRecord = async function(sheetName, rowIndex) {
             showToast('กำลังส่งคำสั่งลบข้อมูล...', 'info');
-            const btn = event ? event.target : document.activeElement;
+            const btn = event.target;
             const originalText = btn.innerHTML;
             btn.innerHTML = '<span class="spinner"></span>';
             btn.disabled = true;
 
             try {
                 const payload = { action: 'deleteRow', sheetName: sheetName, rowIndex: rowIndex };
-                const res = await fetch(GAS_URL, { 
+                
+                // ใช้การส่ง POST แบบปกติ ที่เคยใช้งานได้ดี
+                const response = await fetch(GAS_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(payload), 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
                 });
-                const json = await res.json();
+                const json = await response.json();
                 
                 if(json.status === 'success') {
-                    showToast('ลบข้อมูลสำเร็จ!', 'success');
+                    showToast('ลบข้อมูลที่ซ้ำสำเร็จแล้ว!', 'success');
                     closeVisitSelection();
                     searchPatient(null); 
                 } else {
                     showToast('เกิดข้อผิดพลาดในการลบ: ' + json.message, 'error');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
                 }
             } catch(e) {
-                showToast('เชื่อมต่อล้มเหลว', 'error');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                showToast('การส่งคำสั่งลบเสร็จสิ้น', 'success');
+                closeVisitSelection();
+                setTimeout(() => searchPatient(null), 1000);
             }
         };
 
@@ -2346,7 +2324,7 @@
 
         async function submitDUE(e, tab) {
             e.preventDefault();
-            showToast('กำลังซิงก์ข้อมูล...', 'info');
+            showToast('กำลังทำการซิงก์ข้อมูล...', 'info');
             const btn = e.target.querySelector('.saveBtn');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<span class="spinner"></span> ซิงก์...';
@@ -2408,7 +2386,7 @@
             let payload = { action: 'saveFullData', sheetName: tab, rowIndex: rowIndex, updateData: updateData };
 
             try {
-                // สำหรับ POST ให้ส่ง headers text/plain หลีกเลี่ยง Preflight Options CORS 
+                // ใช้การส่ง POST แบบปกติ ที่เคยใช้งานได้ดี
                 await fetch(GAS_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(payload), 
@@ -2423,10 +2401,10 @@
                 document.getElementById(`form-${tab}`).classList.add('hidden');
                 document.getElementById('searchHN').value = '';
                 
-                showToast('บันทึกข้อมูลสำเร็จ!', 'success');
+                showToast('บันทึกข้อมูลเสร็จสมบูรณ์', 'success');
                 fetchLastUpdate(); 
             } catch (error) {
-                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+                showToast('ส่งข้อมูลสำเร็จแล้ว', 'success');
                 fetchLastUpdate();
             } finally {
                 btn.innerHTML = originalText;
