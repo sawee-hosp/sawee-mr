@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -5,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="referrer" content="no-referrer">
   <title>Sawee Rxfill 2.0</title>
-  <!-- เพิ่ม Favicon รูปกล่องยา -->
   <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📦</text></svg>'>
   
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
@@ -43,14 +43,20 @@
         z-index: 100; border-radius: 15px;
     }
 
+    /* ปรับแต่งหน้า Login ให้เลื่อนได้สำหรับหน้าจอเล็กและมี Padding พอดี */
     #login-overlay { 
         position: fixed; inset: 0; background: var(--primary); 
         z-index: 3000; 
         display: flex; align-items: center; justify-content: center; flex-direction: column; 
+        overflow-y: auto; padding: 20px;
     }
     .login-box { 
-        background: white; border-radius: 16px; padding: 30px 25px; width: 90%; max-width: 350px; 
+        background: white; border-radius: 16px; padding: 30px 25px; width: 100%; max-width: 350px; 
         border: none; border-top: 8px solid var(--secondary); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        flex-shrink: 0;
+    }
+    .public-dash-container {
+        width: 100%; max-width: 350px; flex-shrink: 0; margin-bottom: 20px;
     }
     
     .app-nav { 
@@ -106,7 +112,6 @@
     .shelf-item:active { transform: scale(0.95); }
     .shelf-item img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; margin-bottom: 5px; background: #eee; border: 1px solid #eee; }
     
-    /* ขยับ Badge วันหมดอายุลงมาซ้อนบนรูปยาขวาบนพอดี ไม่ล้นขอบจอ */
     .exp-badge-stock { 
         position: absolute; top: 5px; right: 5px; font-size: 10px; padding: 2px 6px; 
         border-radius: 10px; color: white; font-weight: bold; z-index: 20; 
@@ -170,12 +175,11 @@
     .nav-item i { font-size: 1.5rem; display: block; margin-bottom: 2px; }
     .nav-item.active { color: white; font-weight: 700; transform: translateY(-2px); }
     
-    /* ปรับปรุงโครงสร้าง QR Code Wrapper & Circle ให้อยู่บนเมนูด้านล่างพอดี ไม่ลอยพ้นเกะกะ */
     .scan-btn-wrapper { width: 20%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
     .scan-btn-circle {
-        width: 50px; height: 50px; background: var(--secondary); color: white;
+        width: 55px; height: 55px; background: var(--secondary); color: white;
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-size: 1.5rem; 
+        font-size: 1.6rem; position: absolute; bottom: 0px; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 4px solid var(--primary);
         transition: transform 0.2s; z-index: 1001;
     }
@@ -198,15 +202,26 @@
 </head>
 <body>
 
+  <!-- หน้า Login พร้อม Dashboard แจ้งเตือนสาธารณะ -->
   <div id="login-overlay">
-      <div class="login-box text-center fade-in">
-          <div style="font-size:4rem;color:var(--primary);margin-bottom:10px">💊</div>
-          <h4 class="fw-bold mb-3" style="color:var(--primary)">Sawee Rxfill 2.0</h4>
-          <div class="mb-3">
-              <label class="form-label small text-muted text-start w-100">Username</label>
-              <input id="login-user" class="form-control form-control-lg text-center" placeholder="ระบุ Username" style="border: 2px solid #eee;">
+      <div class="w-100 max-w-md p-3 pb-20 fade-in h-100 overflow-auto">
+          <div class="text-center mb-4 mt-4">
+              <div style="font-size:3.5rem;color:white;margin-bottom:5px">💊</div>
+              <h3 class="fw-bold text-white">Sawee Rxfill 2.0</h3>
           </div>
-          <button onclick="doLogin()" id="btnLogin" class="btn btn-lg w-100 fw-bold shadow-sm btn-711-primary">เข้าสู่ระบบ</button>
+
+          <!-- Dashboard ก่อนเข้าสู่ระบบ -->
+          <div id="public-dashboard" class="mb-4 space-y-3 public-dash-container mx-auto">
+              <div class="text-center text-white small animate-pulse">กำลังโหลดข้อมูลคลังยา...</div>
+          </div>
+
+          <div class="login-box mx-auto">
+              <div class="mb-3">
+                  <label class="form-label small text-muted text-start w-100">ลงชื่อเข้าใช้ (Username)</label>
+                  <input id="login-user" class="form-control form-control-lg text-center fw-bold" placeholder="ระบุ Username" style="border: 2px solid #eee;">
+              </div>
+              <button onclick="doLogin()" id="btnLogin" class="btn btn-lg w-100 fw-bold shadow-sm btn-711-primary">เข้าสู่ระบบ</button>
+          </div>
       </div>
   </div>
 
@@ -272,7 +287,6 @@
         <div id="fab-print-stock" class="fab-print-stock hidden" onclick="generateStockCheckPdf()">📋 ใบเช็คสต็อก</div>
         <div id="fab-edit" class="fab-edit-lg hidden" onclick="openBoxEditor()"><i class="fas fa-edit"></i> แก้ไข</div>
         
-        <!-- ปุ่มดูการใช้งาน (แสดงเฉพาะตอนอยู่หน้าหลักเลือกกล่อง) -->
         <div id="fab-global-stats" class="fab-global-stats" onclick="openGlobalStats()"><i class="fas fa-chart-pie"></i> ดูการใช้งาน</div>
       </div>
 
@@ -404,7 +418,7 @@
   <div class="modal fade" id="mdlShelfLabel">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header text-white" style="background:var(--accent)"><h6 class="fw-bold m-0">Shelf Label Pool (ป้ายติดล็อกยา)</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-header text-white" style="background:var(--accent)"><h6 class="fw-bold m-0">Shelf Label Pool (ป้ายติดล็อกยา)</h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
           <ul class="nav nav-pills nav-fill mb-3">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#shelf-cart" style="color:var(--accent)">รายการพิมพ์</a></li>
@@ -453,7 +467,7 @@
         <div class="modal-body">
           <input type="hidden" id="mst-isnew">
           <div class="mb-2"><label class="small">Item ID <span class="text-muted">(กรุณาพิมพ์รหัสตัวเลขให้เหมือนใน hosxp)</span></label><input id="mst-id" class="form-control fw-bold"></div>
-          <div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:transparent"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div>
+          <div class="mb-2 text-center"><img id="mst-img-preview" src="" referrerpolicy="no-referrer" style="height:100px;border-radius:8px;background:transparent;object-fit:cover;"><input type="file" class="form-control mt-2" accept="image/*" onchange="uploadMasterImg(this)"><input type="hidden" id="mst-img-path"></div>
           <div class="mb-2"><label class="small">ชื่อยา</label><input id="mst-name" class="form-control"></div>
           <div class="row g-2 mb-2"><div class="col-6"><label class="small">Unit <span class="text-muted">(จำนวนต่อหน่วย)</span></label><input id="mst-unit" class="form-control"></div><div class="col-6"><label class="small">Price</label><input id="mst-price" type="number" class="form-control"></div></div>
           <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="mst-ha"><label class="form-check-label text-danger fw-bold">High Alert</label></div>
@@ -546,7 +560,6 @@
     </div>
   </div>
 
-  <!-- Modal สำหรับดูการใช้งานแบบรวม -->
   <div class="modal fade" id="mdlGlobalStats" tabindex="-1" style="z-index: 2200;">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content border-0 shadow">
@@ -745,14 +758,64 @@
       
       initCvsLabel(); initCvsCheck();
       initPdfMakeFonts();
+      
+      loadPublicDashboard();
 
       setInterval(() => {
           if(currentUser.username) {
               if(!document.getElementById('tab-hist').classList.contains('hidden')) loadHist(true, true);
               loadExpiredItems(true); 
+          } else {
+              loadPublicDashboard();
           }
       }, REFRESH_RATE);
   };
+
+  async function loadPublicDashboard() {
+      const res = await callApi('getPublicDashboard', {}, true);
+      if (res.status) {
+          let html = '';
+          
+          if (res.pending && res.pending.length > 0) {
+              html += `<div class="bg-white rounded-3 p-3 shadow-sm border-start border-4 border-warning mb-3 text-start">
+                          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-bell text-warning"></i> มีรายการรอจัดยา (${res.pending.length})</h6>
+                          <div style="max-height:120px;overflow-y:auto" class="small">`;
+              res.pending.forEach(p => {
+                  html += `<div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                              <span class="text-truncate text-secondary"><i class="fas fa-box"></i> ${p.box}</span>
+                              <span class="text-muted" style="font-size:10px">${p.time}</span>
+                           </div>`;
+              });
+              html += `</div></div>`;
+          }
+
+          if (res.expired && res.expired.length > 0) {
+              let expMap = {};
+              res.expired.forEach(e => {
+                  expMap[e.box] = (expMap[e.box] || 0) + 1;
+              });
+              html += `<div class="bg-white rounded-3 p-3 shadow-sm border-start border-4 border-danger text-start">
+                          <h6 class="fw-bold text-danger mb-2"><i class="fas fa-exclamation-triangle"></i> พบยาหมดอายุ (${res.expired.length} รายการ)</h6>
+                          <div style="max-height:120px;overflow-y:auto" class="small">`;
+              for(let box in expMap) {
+                  html += `<div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                              <span class="text-truncate text-secondary"><i class="fas fa-box"></i> ${box}</span>
+                              <span class="badge bg-danger rounded-pill">${expMap[box]} รายการ</span>
+                           </div>`;
+              }
+              html += `</div></div>`;
+          }
+
+          if (html === '') {
+              html = `<div class="bg-white/10 rounded-3 p-3 text-center text-white border border-white/20">
+                          <i class="fas fa-check-circle text-success mb-2" style="font-size:2rem"></i>
+                          <div class="small">ไม่มีรายการค้างจัด และไม่พบยาหมดอายุ</div>
+                      </div>`;
+          }
+
+          document.getElementById('public-dashboard').innerHTML = html;
+      }
+  }
 
   async function doLogin() {
       const user = document.getElementById('login-user').value.trim();
@@ -976,7 +1039,6 @@
       }, 500); 
   }
 
-  // --- ปรับแต่ง UI และระบบเชื่อมโยงอุณหภูมิวิกฤตของกล่องยาคลังยาย่อยอย่างถูกต้อง ---
   async function renderStockGroupsGrid(filterKw = '') {
       const groups = [...new Set(allBoxes.map(b => b.group || 'อื่น ๆ'))].sort();
       document.getElementById('group-datalist').innerHTML = groups.map(g => `<option value="${g}">`).join('');
@@ -1499,7 +1561,6 @@
       }
   }
 
-  // --- ปรับปรุงพารามิเตอร์ขนาดตัวอักษรของใบเช็คสต็อก PDF (+2pt) และตรวจสอบยาใกล้หมดอายุ (<30 วันเป็นสีแดง) ---
   async function generateStockCheckPdf() {
       if (!curBoxStock) return;
       if (!pdfMakeReady) return Swal.fire('รอสักครู่', 'ระบบกำลังโหลดฟอนต์ภาษาไทย', 'warning');
@@ -1546,25 +1607,12 @@
               if (item.keepCool) remarks.push('Keep 2-8°C');
               if (item.highAlert) remarks.push('High Alert');
 
-              // เปลี่ยนสีตัวอักษรทั้งแถวเมื่อใกล้หมดอายุ < 30 วัน
               let rowColor = '#000000';
               if (item.expire && item.expire !== '-') {
-                  let expDate;
-                  if (item.expire.includes('/')) {
-                      const parts = item.expire.split('/');
-                      expDate = new Date(parts[2], parts[1] - 1, parts[0]);
-                  } else {
-                      expDate = new Date(item.expire);
-                  }
-                  
-                  if (!isNaN(expDate.getTime())) {
-                      const today = new Date();
-                      today.setHours(0,0,0,0);
-                      const diffTime = expDate - today;
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      if (diffDays < 30) {
-                          rowColor = '#d32f2f'; // สีแดงพนักงาน
-                      }
+                  const expD = new Date(item.expire);
+                  if (!isNaN(expD)) {
+                      const diffDays = (expD - new Date()) / (1000 * 3600 * 24);
+                      if (diffDays < 30) rowColor = '#d32f2f';
                   }
               }
 
@@ -1576,11 +1624,10 @@
                   { text: item.expire || '-', alignment: 'center', color: rowColor },
                   { text: price.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right', color: rowColor },
                   { text: value.toLocaleString(undefined, {minimumFractionDigits: 2}), alignment: 'right', color: rowColor },
-                  { text: remarks.join(', '), fontSize: 12, color: rowColor === '#d32f2f' ? '#d32f2f' : 'red' }
+                  { text: remarks.join(', '), fontSize: 10, color: 'red' }
               ]);
           });
 
-          // ขยายขนาดตัวอักษรทั้งหมดขึ้นอีก +2pt และหัวข้อแบบน้ำหนักเบา
           const docDef = {
               pageSize: 'A4',
               pageMargins: [20, 30, 20, 30],
@@ -1656,12 +1703,25 @@
   }
   
   function uploadBoxImg(i) { const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ document.getElementById('preview-box-img').src=e.target.result; callApi('uploadImage',{base64:e.target.result,folderType:'BOX',name:f.name}).then(x=>{if(x.status)document.getElementById('edit-box-img').value=x.path})}; r.readAsDataURL(f); }
+  
   async function saveBoxInfo() { 
       if(confirm('บันทึกข้อมูลกล่อง?')) {
-          const res = await callApi('updateBoxInfo',{oldName:curBoxStock,newName:document.getElementById('edit-box-name').value,newImage:document.getElementById('edit-box-img').value});
-          if(res.status) location.reload(); 
+          const newName = document.getElementById('edit-box-name').value;
+          const res = await callApi('updateBoxInfo',{
+              oldName:curBoxStock,
+              newName:newName,
+              newImage:document.getElementById('edit-box-img').value,
+              user: currentUser.name 
+          });
+          if(res.status) {
+             mdlBoxEdit.hide();
+             curBoxStock = newName;
+             await startApp(); 
+             openBoxForce(curBoxStock, document.getElementById('edit-box-img').value);
+          }
       }
   }
+
   async function addItemToBox(id) { 
       const a=prompt('จำนวนที่ต้องการเพิ่ม'); 
       if(a) {
@@ -1691,22 +1751,22 @@
       }, 600);
   }
 
-  // --- Logic สำหรับดึงและแสดงสถิติการใช้งาน ---
+  function openGlobalStats() {
+      Swal.showLoading();
+      callApi('getGlobalStats').then(res => {
+          Swal.close();
+          if(res.status) {
+              globalStatsData = res.data;
+              renderGlobalStats('box');
+              new bootstrap.Modal(document.getElementById('mdlGlobalStats')).show();
+          } else {
+              Swal.fire('Error', res.message, 'error');
+          }
+      });
+  }
+
   let globalStatsData = { byBox: [], byDrug: [] };
   let curStatsType = 'box';
-
-  async function openGlobalStats() {
-      Swal.showLoading();
-      const res = await callApi('getGlobalStats');
-      Swal.close();
-      if(res.status) {
-          globalStatsData = res.data;
-          renderGlobalStats('box');
-          new bootstrap.Modal(document.getElementById('mdlGlobalStats')).show();
-      } else {
-          Swal.fire('Error', res.message, 'error');
-      }
-  }
 
   function sortGlobalStats(sortMode) {
       renderGlobalStats(curStatsType, sortMode);
@@ -1717,7 +1777,6 @@
       const listEl = document.getElementById('global-stats-list');
       const dataList = [...globalStatsData[type === 'box' ? 'byBox' : 'byDrug']];
       
-      // การจัดเรียง
       if(sortMode === 'desc') dataList.sort((a,b) => b.count - a.count);
       else if(sortMode === 'asc') dataList.sort((a,b) => a.count - b.count);
       else if(sortMode === 'alpha') dataList.sort((a,b) => a.name.localeCompare(b.name, 'th'));
