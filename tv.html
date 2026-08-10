@@ -12,21 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
-        body {
-            font-family: 'Noto Sans Thai', sans-serif !important;
-            margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;
-            background-color: #0f172a; color: #1e293b;
-            background-size: 200% 200%;
-            animation: gradientMove 15s ease infinite;
-            transition: background-image 1s ease;
-        }
-
-        @keyframes gradientMove { 
-            0% { background-position: 0% 50%; } 
-            50% { background-position: 100% 50%; } 
-            100% { background-position: 0% 50%; } 
-        }
-
+        body { font-family: 'Noto Sans Thai', sans-serif !important; margin: 0; padding: 0; overflow: hidden; box-sizing: border-box; background-color: #0f172a; color: #1e293b; background-size: 200% 200%; animation: gradientMove 15s ease infinite; transition: background-image 1s ease; }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .bg-sun { background-image: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
         .bg-mon { background-image: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
         .bg-tue { background-image: linear-gradient(135deg, #ff007f 0%, #ff758c 100%); }
@@ -34,70 +21,35 @@
         .bg-thu { background-image: linear-gradient(135deg, #ff7e00 0%, #ff5100 100%); } 
         .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
         .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
-
         .cloud-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; z-index: 0; pointer-events: none; }
         .cloud { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.6; animation: floatCloud 20s infinite alternate ease-in-out; }
         .cloud-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%); top: -10%; left: -10%; }
         .cloud-2 { width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%); bottom: -20%; right: -10%; animation-delay: -5s; }
         .cloud-3 { width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); top: 40%; left: 30%; animation-delay: -10s; }
-        
         @keyframes floatCloud { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 10%) scale(1.1); } }
-
-        .glass-panel { 
-            background: rgba(255, 255, 255, 0.25); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
-            border-top: 1px solid rgba(255, 255, 255, 0.6); border-left: 1px solid rgba(255, 255, 255, 0.6); 
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05); border-right: 1px solid rgba(0, 0, 0, 0.05); 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border-radius: 1rem; transition: background-color 0.5s; 
-        }
-        
-        .card-3d { 
-            background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85)); 
-            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05), 1px 2px 3px rgba(0,0,0,0.15); 
-            border: 1px solid rgba(255,255,255,0.9); border-radius: 0.5rem; transition: all 0.3s ease;
-        }
-
+        .glass-panel { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-top: 1px solid rgba(255, 255, 255, 0.6); border-left: 1px solid rgba(255, 255, 255, 0.6); border-bottom: 1px solid rgba(0, 0, 0, 0.05); border-right: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border-radius: 1rem; transition: background-color 0.5s; }
+        .card-3d { background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85)); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05), 1px 2px 3px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.9); border-radius: 0.5rem; transition: all 0.3s ease; }
         .text-crystal { background: linear-gradient(to right, #ffffff 0%, #cbd5e1 40%, #e2e8f0 60%, #ffffff 100%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 4s linear infinite; text-shadow: 0 0 8px rgba(255,255,255,0.3); }
         .text-rainbow { background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 4s linear infinite; line-height: 0.8; padding-bottom: 2px; }
         @keyframes shine { to { background-position: 200% center; } }
-
         .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
         .staff-inactive { opacity: 0.35; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
         @keyframes soft-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         .staff-ending { animation: soft-pulse 1.5s infinite; }
         .countdown-text { color: #ef4444; font-weight: 900; } 
-
-        @keyframes pulse-bg-red { 0%, 100% { background-color: rgba(254, 226, 226, 0.95); box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.2); } 50% { background-color: rgba(252, 165, 165, 0.95); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.6); } }
-        .temp-alert-card { animation: pulse-bg-red 1s infinite ease-in-out; border: 2px solid #ef4444 !important; }
-        
+        @keyframes pulse-bg-red { 0%, 100% { background-color: rgba(254, 226, 226, 0.95); box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); } 50% { background-color: rgba(252, 165, 165, 0.95); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 1); } }
+        .temp-alert-card { animation: pulse-bg-red 1.5s infinite ease-in-out; border: 2px solid #ef4444 !important; }
         .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; flex-shrink: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .fade-text { transition: opacity 0.5s ease-in-out; }
         .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
-
-        /* IPD Badge Styles */
-        .ipd-badge {
-            position: absolute; left: 0; top: 0; bottom: 0;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            z-index: 2;
-        }
-
-        @keyframes forceMegaBlink {
-            0%, 100% { background-color: rgba(239, 68, 68, 1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); border-color: rgba(252, 165, 165, 0.8); }
-            50% { background-color: rgba(153, 27, 27, 1); box-shadow: 0 0 5px rgba(153, 27, 27, 0.8); border-color: rgba(239, 68, 68, 0.8); }
-        }
+        .ipd-badge { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); border-right: 1px solid rgba(255,255,255,0.1); z-index: 2; }
+        @keyframes forceMegaBlink { 0%, 100% { background-color: rgba(239, 68, 68, 1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); border-color: rgba(252, 165, 165, 0.8); } 50% { background-color: rgba(153, 27, 27, 1); box-shadow: 0 0 5px rgba(153, 27, 27, 0.8); border-color: rgba(239, 68, 68, 0.8); } }
         .alert-danger { animation: forceMegaBlink 1.5s infinite ease-in-out !important; border: 1px solid transparent !important; background-image: none !important; }
-
         .fade-in { animation: fadeIn 0.5s ease-in forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        @keyframes numberPulse {
-            0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); }
-            45% { transform: scale(1.3); } 60% { transform: scale(1); } 100% { transform: scale(1); }
-        }
+        @keyframes numberPulse { 0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.3); } 60% { transform: scale(1); } 100% { transform: scale(1); } }
         .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
     </style>
 </head>
@@ -123,8 +75,6 @@
     </header>
 
     <main class="flex-1 w-full flex justify-between gap-[1.5%] p-3 overflow-hidden z-10 relative">
-        
-        <!-- ================= Column 1: ข้อมูลทั่วไปห้องยา (26%) ================= -->
         <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-staff" style="width: 26%; display: flex;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i>เภสัชกรประจำวัน</h2>
@@ -165,9 +115,9 @@
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
             </div>
-            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col">
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative">
                 <div class="grid grid-cols-4 gap-1.5" id="temp-fridge-grid"><div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div></div>
-                <div id="fridge-alert-msg"></div> 
+                <div id="fridge-alert-msg" class="shrink-0 mt-3 relative z-20"></div> 
             </div>
         </section>
 
@@ -175,9 +125,9 @@
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-wind text-teal-500 mr-2"></i>อุณหภูมิห้องปัจจุบัน</h2>
             </div>
-            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col">
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative">
                 <div class="grid grid-cols-4 gap-1.5" id="temp-room-grid"><div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div></div>
-                <div id="room-alert-msg"></div> 
+                <div id="room-alert-msg" class="shrink-0 mt-3 relative z-20"></div> 
             </div>
         </section>
 
@@ -226,7 +176,6 @@
         <section class="h-full flex flex-col min-h-0 glass-panel p-2" style="width: 47%;">
             <div class="flex justify-between items-center px-1 pb-1 mb-1 border-b-2 border-slate-400/30 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-procedures text-blue-600 mr-2"></i>ผู้ป่วยใน (IPD)</h2>
-                <!-- เวลาอัปเดตมุมขวาบนของตาราง IPD -->
                 <span id="last-update-time" class="text-[10px] font-bold text-slate-700 bg-white/80 px-2 py-0.5 rounded-full shadow-sm border border-white/60 leading-none">
                     <i class="fas fa-sync-alt fa-spin mr-1 text-slate-500"></i>กำลังโหลด...
                 </span>
@@ -246,7 +195,6 @@
             </div>
 
             <footer class="shrink-0 flex flex-col gap-1 z-10 pb-1 mt-1">
-                <!-- แถวที่ 1: สรุป IPD -->
                 <div class="flex justify-between gap-1 w-full h-[45px]">
                     <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
                         <div class="bg-gradient-to-r from-rose-100 to-rose-200 h-4 text-center border-b border-rose-300 flex items-center justify-center"><span class="text-[9px] font-black text-rose-800 uppercase tracking-wide">D/C</span></div>
@@ -270,7 +218,6 @@
                     </div>
                 </div>
                 
-                <!-- แถวที่ 2: สรุป OPD -->
                 <div class="flex justify-between gap-1 w-full h-[45px]">
                     <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
                         <div class="bg-gradient-to-r from-orange-100 to-orange-200 h-4 text-center border-b border-orange-300 flex items-center justify-center"><span class="text-[9px] font-bold text-orange-800 tracking-wide">ผป.นัด</span></div>
@@ -294,7 +241,6 @@
                     </div>
                 </div>
 
-                <!-- แถวที่ 3: Slider (สลับทุก 1 นาที) -->
                 <div class="relative w-full h-[50px] overflow-hidden">
                     <div id="view-flow" class="absolute inset-0 flex justify-between gap-0.5 w-full fade-in"></div>
                     <div id="view-doctors" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
@@ -317,7 +263,6 @@
                         <div id="news-container" class="text-[11px] font-bold text-slate-800 line-clamp-4 leading-tight w-full text-center">กำลังดึงข้อมูล...</div>
                     </div>
                 </div>
-                <!-- weather icon -->
                 <div class="card-3d p-2 flex flex-col items-center justify-center gap-1 min-w-[5.5rem] bg-white/80 shrink-0">
                     <div id="weather-icon" class="text-[36px] leading-[0.8] drop-shadow-md">
                         <i class="fas fa-spinner fa-spin text-slate-400"></i>
@@ -330,20 +275,13 @@
     </main>
 
     <script>
-        // ==========================================
-        // 🔗 ตั้งค่า API URL ทั้งหมด
-        // ==========================================
         const GAS_IPD_API_URL = "https://script.google.com/macros/s/AKfycbw75ELvZom2PKT6XM6hJM0aknVZ9d6622R2aRPaYmVaPfX3TKDisRDcM3v65gjOmEJkag/exec";
         const GAS_SCHEDULE_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
         const GAS_INCIDENT_API_URL = "https://script.google.com/macros/s/AKfycbwdHixtAvFZ_-PvlFAXhmnDkR6-g53ms_NdELsVQ7UcFLP4AHNoA7e4YCoNKwXY1mGY7Q/exec";
         const GAS_DUE_API_URL = "https://script.google.com/macros/s/AKfycbyvH0HptaZiDvg11ZcWGPyZe1A9IbC6uzEiMXzOQbJj1M1ZZHzFIWVy0PK-j_WXzanUxg/exec";
 
-        // ==========================================
-        // 🔑 ตั้งค่า API KEY ของ Gemini สำหรับอ่านออกเสียง
-        // ==========================================
         const GEMINI_API_KEY = "AIzaSyC4pfYiXosY-mlCmZ8lsHuGcRcY52oUCYc";
 
-        // ตัวแปรส่วนกลาง (Global Variables)
         let voiceQueue = [];
         let isPlayingVoice = false;
         let audioUnlocked = false;
@@ -364,6 +302,7 @@
         let globalHolidays = [];
         let mixData = [];
         let currentMixIndex = 0;
+        window.lastTempStatusData = null;
 
         function loadVoices() {
             if (!('speechSynthesis' in window)) return;
@@ -460,7 +399,6 @@
             }
         }
 
-        // 1. แปลงรหัส Base64 จาก Gemini ให้เป็น ArrayBuffer
         function base64ToArrayBuffer(base64) {
             const binaryString = window.atob(base64);
             const bytes = new Uint8Array(binaryString.length);
@@ -476,7 +414,6 @@
             }
         }
 
-        // 2. ห่อหุ้มไฟล์เสียง Raw PCM ด้วยนามสกุล WAV ให้เล่นใน HTML ได้
         function pcmToWav(pcmData, sampleRate) {
             const numChannels = 1;
             const bitsPerSample = 16;
@@ -507,7 +444,6 @@
             return new Blob([view], { type: 'audio/wav' });
         }
 
-        // 3. ฟังก์ชันดึงเสียงจาก Gemini API
         async function fetchGeminiTTS(text) {
             if (!GEMINI_API_KEY) return null;
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_API_KEY}`;
@@ -540,7 +476,6 @@
             return null;
         }
 
-        // 4. อัปเดตฟังก์ชันเล่นเสียงให้ใช้ Gemini เป็นหลัก
         async function playNextVoice() {
             if (voiceQueue.length === 0) {
                 isPlayingVoice = false;
@@ -606,28 +541,23 @@
             const dateEl = document.getElementById('date-display');
             if (dateEl) dateEl.textContent = `วัน${thD[now.getDay()]} ${now.getDate()} ${thM[now.getMonth()]} ${now.getFullYear() + 543}`;
             
-            checkStaffShifts(now); 
             checkSwapCards(now);
         }
 
         function checkSwapCards(now) {
-            const secTotal = (now.getMinutes() * 60) + now.getSeconds();
-            const cycle = Math.floor((secTotal % 240) / 30); 
-            
-            const cols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes'];
-            cols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
-            const lasaCol = document.getElementById('col-lasa');
-            if (lasaCol) lasaCol.style.display = 'none';
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const currentMins = (h * 60) + m;
 
-            if (now.getMinutes() === 0 && now.getSeconds() >= 30 && now.getSeconds() < 40) {
-                if (lasaCol) lasaCol.style.display = 'flex';
-            } else {
-                const showCol = document.getElementById(cols[cycle]);
-                if (showCol) showCol.style.display = 'flex';
+            const shiftTimes = [11*60, 11*60+30, 12*60, 12*60+30, 13*60, 13*60+30, 16*60];
+            let isShiftTransition = false;
+            for(let t of shiftTimes) {
+                if (Math.abs(currentMins - t) <= 2) { 
+                    isShiftTransition = true;
+                    break;
+                }
             }
-        }
 
-        function checkStaffShifts(now) {
             const cM = now.getHours() * 60 + now.getMinutes(), cS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
             const roles = { 'key': [{ start: 8*60, end: 11*60+30 }, { start: 12*60+30, end: 16*60 }], 'ipd': [{ start: 8*60, end: 12*60 }, { start: 13*60, end: 16*60 }], 'check': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'dispense': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'clinic': [{ start: 8*60, end: 12*60 }], 'tech': [{ start: 8*60, end: 11*60 }, { start: 12*60, end: 16*60 }] };
             let active = new Set(); 
@@ -648,6 +578,29 @@
             document.getElementById('active-staff-count').textContent = count + ' คน';
             if (previousActiveCount !== -1 && previousActiveCount !== count) { if(!isSpeaking) playShiftChangeMelody(); else setTimeout(() => { if(!isSpeaking) playShiftChangeMelody(); }, 3000); }
             previousActiveCount = count;
+
+            const secTotal = (now.getMinutes() * 60) + now.getSeconds();
+            
+            const cols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-incident', 'col-due', 'col-boxes'];
+            const cycle = Math.floor((secTotal % 210) / 30);
+            
+            const allCols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes', 'col-lasa'];
+            allCols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
+
+            if (isShiftTransition) {
+                const staffCol = document.getElementById('col-staff');
+                if (staffCol) staffCol.style.display = 'flex';
+            } else if (now.getMinutes() === 0 && now.getSeconds() >= 30 && now.getSeconds() < 40) {
+                const lasaCol = document.getElementById('col-lasa');
+                if (lasaCol) lasaCol.style.display = 'flex';
+            } else {
+                const showCol = document.getElementById(cols[cycle]);
+                if (showCol) showCol.style.display = 'flex';
+                
+                if ((cols[cycle] === 'col-fridge-temp' || cols[cycle] === 'col-room-temp') && window.lastTempStatusData) {
+                    setTimeout(() => renderTempStatus(window.lastTempStatusData), 50);
+                }
+            }
         }
 
         function startSlider() {
@@ -736,7 +689,7 @@
                 let statusBadgeClass = "bg-sky-100 text-sky-800 border-sky-300"; 
                 let statusLabel = "Cont";
 
-                if (statusAdm === 'ADM') { 
+                if (statusAdm === 'ADM' || statusAdm === 'ADMIT') { 
                     bgClass = "bg-emerald-500"; 
                     statusBadgeClass = "bg-green-100 text-green-800 border-green-300"; 
                     statusLabel = "Admit"; 
@@ -754,7 +707,6 @@
                 const rawConfirm = item.confirm_prescription ? String(item.confirm_prescription).trim().toUpperCase() : 'N';
                 let isConfirmed = (rawConfirm === 'Y' || rawConfirm === '1' || rawConfirm === 'TRUE');
                 
-                // ดึงข้อมูลกล่องและยาเพิ่มเติมสำหรับการอ่านเสียง D/C
                 const rawBox = item.rx_box || item.ช่องเก็บยา || ""; 
                 const boxNum = rawBox.replace(/\D/g, ''); 
 
@@ -824,7 +776,7 @@
                 const processVoiceMsg = (item) => {
                     const spokenBedNo = item.bed.split('').join(' ');
                     let say = "";
-                    if (item.status === 'ADM') {
+                    if (item.status === 'ADM' || item.status === 'ADMIT') {
                         say = `มีสแกนผู้ป่วยรายใหม่ เตียง ${spokenBedNo} ค่ะ`;
                     } else if (item.status === 'DC') {
                         say = `มีสแกนผู้ป่วยกลับบ้าน เตียง ${spokenBedNo}`;
@@ -863,7 +815,6 @@
         }
 
         function renderSliderData(data) {
-            // View 1: Flow
             if(data.queue_flow) {
                 const flowMap = {
                     '1. รอซักประวัติ': { name: 'รอซัก', color: 'blue' },
@@ -906,7 +857,6 @@
                 document.getElementById('view-flow').innerHTML = flowHtml;
             }
 
-            // View 2: Doctors
             if(data.doctor_summary) {
                 let docHtml = '';
                 const docs = data.doctor_summary.slice(0, 6);
@@ -930,7 +880,6 @@
                 document.getElementById('view-doctors').innerHTML = docHtml;
             }
 
-            // View 3: Clinics
             if(data.clinic_summary) {
                 let clinicHtml = '';
                 const clinics = data.clinic_summary.slice(0, 6);
@@ -960,39 +909,34 @@
                 const res = await fetch(GAS_IPD_API_URL);
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 
-                const outerData = await res.json();
-                if (outerData.error) throw new Error(outerData.error);
+                const responseData = await res.json();
+                if (responseData.error) throw new Error(responseData.error);
                 
-                const responseData = outerData.data || {};
-                const timestamp = outerData.timestamp || null;
+                const coreData = responseData.data ? responseData.data : responseData;
+                const timestamp = responseData.timestamp || null;
 
-                // 1. วาดรายชื่อ IPD
-                let ipdData = responseData.ipd_list || [];
+                let ipdData = coreData.ipd_list || [];
                 renderData(ipdData);
                 
-                // 2. อัปเดตตัวเลขแถว 1, 2 แบบมี Animation กระพริบ
-                if (responseData.rx_summary) {
-                    updateValueWithAnimation('sum-prepare', responseData.rx_summary.prepare || "0");
-                    updateValueWithAnimation('sum-dispense', responseData.rx_summary.dispense || "0");
+                if (coreData.rx_summary) {
+                    updateValueWithAnimation('sum-prepare', coreData.rx_summary.prepare || "0");
+                    updateValueWithAnimation('sum-dispense', coreData.rx_summary.dispense || "0");
                 }
-                if (responseData.opd_summary) {
-                    updateValueWithAnimation('sum-appointment', responseData.opd_summary.appointment || "0");
-                    updateValueWithAnimation('sum-opd-er', responseData.opd_summary.er_opd || "0");
-                    updateValueWithAnimation('sum-clinic-other', responseData.opd_summary.clinic_other || "0");
+                if (coreData.opd_summary) {
+                    updateValueWithAnimation('sum-appointment', coreData.opd_summary.appointment || "0");
+                    updateValueWithAnimation('sum-opd-er', coreData.opd_summary.er_opd || "0");
+                    updateValueWithAnimation('sum-clinic-other', coreData.opd_summary.clinic_other || "0");
                 }
                 
-                // 3. วาดข้อมูล Slider แถว 3
-                renderSliderData(responseData);
+                renderSliderData(coreData);
 
-                // 4. Appointments Top 8
-                if (responseData.appointments) {
-                    globalAppointments = responseData.appointments;
+                if (coreData.appointments) {
+                    globalAppointments = coreData.appointments;
                 }
 
-                // 5. กล่องยาว่าง
                 const rxBoxStatusEl = document.getElementById('rx-box-status');
-                if (responseData.available_rx_boxes && rxBoxStatusEl) {
-                    const boxes = responseData.available_rx_boxes;
+                if (coreData.available_rx_boxes && rxBoxStatusEl) {
+                    const boxes = coreData.available_rx_boxes;
                     if (boxes.length > 0) {
                         rxBoxStatusEl.innerHTML = `<i class="fas fa-inbox mr-1 opacity-80"></i> ช่องเก็บยาว่าง [${boxes.length}] : ${boxes.join(', ')}`;
                     } else {
@@ -1000,11 +944,9 @@
                     }
                 }
                 
-                // 6. เวลาอัปเดต (แปลงจาก UTC ISO String เป็นเวลาไทย)
                 if(timeEl) {
                     if (timestamp) {
                         let finalTimeStr = timestamp;
-                        // ตรวจจับรูปแบบ 2026-08-07T08:55:14.000Z
                         if (timestamp.includes('T') && timestamp.includes('Z')) {
                             const dateObj = new Date(timestamp);
                             if (!isNaN(dateObj.getTime())) {
@@ -1013,7 +955,6 @@
                                 finalTimeStr = `${hh}:${mm} น.`;
                             }
                         } else {
-                            // เผื่อรูปแบบอื่นๆ ที่มี :
                             const match = String(timestamp).match(/(\d{2}):(\d{2})/);
                             if(match) finalTimeStr = `${match[1]}:${match[2]} น.`;
                         }
@@ -1106,19 +1047,111 @@
             });
         }
 
+        function drawSparkline(canvasId, dataArray, isFridge) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || !dataArray || dataArray.length === 0) return;
+            const ctx = canvas.getContext('2d');
+
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            let minT = Math.min(...dataArray);
+            let maxT = Math.max(...dataArray);
+
+            if (isFridge) {
+                minT = Math.min(minT, 1);
+                maxT = Math.max(maxT, 9);
+            } else {
+                minT = Math.min(minT, 20);
+                maxT = Math.max(maxT, 32);
+            }
+
+            const paddingY = 4 * window.devicePixelRatio;
+            const paddingX = 2 * window.devicePixelRatio;
+            const usableH = h - (paddingY * 2);
+            const range = (maxT - minT) === 0 ? 1 : (maxT - minT);
+            
+            const getY = (val) => h - paddingY - ((val - minT) / range) * usableH;
+            const getX = (index) => paddingX + (index / (dataArray.length - 1 || 1)) * (w - paddingX * 2);
+
+            const clamp = (val) => Math.max(0, Math.min(1, val));
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, h);
+            if (isFridge) {
+                const yHigh = getY(8); 
+                const yLow = getY(2);  
+                const pctHigh = clamp(yHigh / h);
+                const pctLow = clamp(yLow / h);
+
+                gradient.addColorStop(0, '#ef4444'); 
+                gradient.addColorStop(pctHigh, '#ef4444');
+                gradient.addColorStop(clamp(pctHigh + 0.001), '#0ea5e9'); 
+                gradient.addColorStop(clamp(pctLow - 0.001), '#0ea5e9');
+                gradient.addColorStop(pctLow, '#ef4444'); 
+                gradient.addColorStop(1, '#ef4444');
+            } else {
+                const yHigh = getY(30); 
+                const pctHigh = clamp(yHigh / h);
+                
+                gradient.addColorStop(0, '#ef4444'); 
+                gradient.addColorStop(pctHigh, '#ef4444');
+                gradient.addColorStop(clamp(pctHigh + 0.001), '#0ea5e9'); 
+                gradient.addColorStop(1, '#0ea5e9');
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(getX(0), getY(dataArray[0]));
+            for (let i = 1; i < dataArray.length; i++) {
+                ctx.lineTo(getX(i), getY(dataArray[i]));
+            }
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 0.8 * window.devicePixelRatio;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            ctx.lineTo(getX(dataArray.length - 1), h);
+            ctx.lineTo(getX(0), h);
+            ctx.closePath();
+            
+            const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+            fillGrad.addColorStop(0, 'rgba(14, 165, 233, 0.15)');
+            fillGrad.addColorStop(1, 'rgba(14, 165, 233, 0)');
+            ctx.fillStyle = fillGrad;
+            ctx.fill();
+        }
+
         function renderTempStatus(tempStatus) {
+            window.lastTempStatusData = tempStatus; 
             let hasFridgeAlert = false; let hasRoomAlert = false;
-            const createCard = (item, isFridge) => {
+            
+            const createCard = (item, isFridge, idx) => {
                 const isAlert = item.alert; const hasData = item.temp !== '--' && item.temp !== '';
                 if (isAlert && hasData) { if (isFridge) hasFridgeAlert = true; else hasRoomAlert = true; }
+                
                 let cardClass = isAlert ? "temp-alert-card" : "bg-white/95 border-slate-200";
                 let headerClass = isAlert ? "bg-gradient-to-r from-red-600 to-rose-500 text-white" : (isFridge ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white" : "bg-gradient-to-r from-teal-600 to-emerald-500 text-white");
                 let tempColor = isAlert ? "text-red-700" : "text-slate-800";
                 let humColor = isAlert ? "text-red-500" : "text-slate-500";
 
                 if (!hasData) { cardClass = "bg-slate-200 border-slate-300 opacity-70"; headerClass = "bg-slate-400 text-white"; tempColor = "text-slate-400"; humColor = "text-slate-400"; }
-                const alertBadge = isAlert && hasData ? `<div class="absolute top-0 right-0 bg-red-600 text-white text-[6.5px] font-black px-1.5 py-0.5 rounded-bl shadow-sm z-10 leading-none tracking-widest animate-pulse border-b border-l border-red-700">ALERT</div>` : '';
-                return `<div class="card-3d relative overflow-hidden flex flex-col ${cardClass}">${alertBadge}<div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-bold uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center shadow-sm shrink-0">${item.name}</div><div class="flex-1 flex flex-col items-center justify-center py-1 bg-white/45 min-h-0"><span class="text-sm font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span><span class="text-[7.5px] font-bold ${humColor} leading-none mt-0.5 opacity-95">RH: ${item.hum}%</span></div></div>`;
+                
+                const canvasId = `sparkline-${isFridge ? 'f' : 'r'}-${idx}`;
+                
+                return `<div class="card-3d relative overflow-hidden flex flex-col ${cardClass} h-[70px]">
+                    <div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-bold uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center shadow-sm shrink-0 z-10">${item.name}</div>
+                    <div class="flex-1 flex flex-col items-center justify-center bg-white/45 min-h-0 z-10 pt-1 pb-2">
+                        <span class="text-xl font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
+                        <span class="text-[9px] font-bold ${humColor} leading-none mt-1 opacity-95">RH: ${item.hum}%</span>
+                    </div>
+                    ${hasData ? `<canvas id="${canvasId}" class="absolute bottom-0 left-0 w-full h-1/3 z-0 opacity-80 pointer-events-none"></canvas>` : ''}
+                </div>`;
             };
 
             const renderGroup = (data, isFridge) => {
@@ -1126,8 +1159,9 @@
                 let html = '';
                 const renderSection = (title, items) => {
                     if (items.length === 0) return '';
-                    let sectionHtml = `<div class="col-span-4 flex justify-center mt-1.5 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
-                    sectionHtml += items.map(item => createCard(item, isFridge)).join(''); return sectionHtml;
+                    let sectionHtml = `<div class="col-span-4 flex justify-center mt-1 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
+                    sectionHtml += items.map((item, idx) => createCard(item, isFridge, title.length+idx)).join(''); 
+                    return sectionHtml;
                 };
                 html += renderSection('ห้องยา', data.filter(i => i.room === 'ห้องยา'));
                 html += renderSection('คลังยา', data.filter(i => i.room === 'คลังยา'));
@@ -1136,14 +1170,35 @@
             };
 
             const fGrid = document.getElementById('temp-fridge-grid');
-            if(fGrid) fGrid.innerHTML = tempStatus.fridge.length ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
-            const fMsg = document.getElementById('fridge-alert-msg');
-            if(fMsg) fMsg.innerHTML = hasFridgeAlert ? `<div class="mt-auto pt-1 pb-1 bg-red-100 border border-red-500 rounded animate-pulse shadow-sm mx-1"><div class="text-center font-bold text-red-700 text-xs drop-shadow-sm">⚠️ เภสัชกรกรุณาตรวจสอบตู้เย็นด่วน!! ⚠️</div></div>` : '';
-
+            if(fGrid) {
+                fGrid.innerHTML = tempStatus.fridge.length ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
+            }
+            
             const rGrid = document.getElementById('temp-room-grid');
-            if(rGrid) rGrid.innerHTML = tempStatus.room.length ? renderGroup(tempStatus.room, false) : `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
+            if(rGrid) {
+                rGrid.innerHTML = tempStatus.room.length ? renderGroup(tempStatus.room, false) : `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
+            }
+
+            setTimeout(() => {
+                let offset = 0;
+                ['ห้องยา', 'คลังยา', 'หน่วยงานอื่นๆ'].forEach(room => {
+                    const fItems = tempStatus.fridge.filter(i => i.room === room);
+                    fItems.forEach((item, idx) => {
+                        if (item.history && item.history.length > 0) drawSparkline(`sparkline-f-${room.length+idx}`, item.history, true);
+                    });
+                    
+                    const rItems = tempStatus.room.filter(i => i.room === room);
+                    rItems.forEach((item, idx) => {
+                        if (item.history && item.history.length > 0) drawSparkline(`sparkline-r-${room.length+idx}`, item.history, false);
+                    });
+                });
+            }, 50);
+
+            const fMsg = document.getElementById('fridge-alert-msg');
+            if(fMsg) fMsg.innerHTML = hasFridgeAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
+
             const rMsg = document.getElementById('room-alert-msg');
-            if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-auto pt-1 pb-1 bg-red-100 border border-red-500 rounded animate-pulse shadow-sm mx-1"><div class="text-center font-bold text-red-700 text-xs drop-shadow-sm">⚠️ เภสัชกรกรุณาตรวจสอบอุณหภูมิห้องด่วน!! ⚠️</div></div>` : '';
+            if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
 
         function renderLasa(lasaList) {
@@ -1247,24 +1302,6 @@
             container.innerHTML = html;
         }
 
-        async function fetchSchedule() {
-            try {
-                const res = await fetch(GAS_SCHEDULE_API_URL);
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                const data = await res.json();
-                
-                if(data.today) updateStaffUI(data.today);
-                if(data.alerts) renderAlerts(data.alerts);
-                if(data.tempStatus) renderTempStatus(data.tempStatus);
-                if(data.lasa) renderLasa(data.lasa);
-                if(data.today && data.today.doctors) renderDoctors(data.today.doctors);
-                if(data.weekly) renderWeekly(data.weekly);
-                if(data.boxes) renderBoxes(data.boxes);
-                if(data.holidays) globalHolidays = data.holidays;
-
-            } catch(error) { console.error("Error fetching GS Schedule:", error); }
-        }
-
         function renderIncidents(incidents) {
             const container = document.getElementById('incident-container');
             if(!container) return;
@@ -1286,7 +1323,7 @@
                     <span>จำนวนใบสั่งยา: <span class="text-indigo-600">${incidents.er.total}</span></span>
                     <span>Error: <span class="text-emerald-600">0</span> (0.0%)</span>
                 </div>
-                <div class="text-center text-[10px] font-bold text-emerald-500 mt-1 mt-1">ไม่พบ Error ของเมื่อคืน</div>`;
+                <div class="text-center text-[10px] font-bold text-emerald-500 mt-1">ไม่พบ Error ของเมื่อคืน</div>`;
             } else {
                 html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
             }
@@ -1295,8 +1332,11 @@
             html += `<div class="card-3d bg-white/90 p-2">
                 <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยา</h3>`;
             if(incidents.mr && incidents.mr.length > 0) {
-                html += `<ul class="list-disc pl-4 text-[10px] font-bold text-slate-700 space-y-1 mt-1">`;
-                incidents.mr.forEach(err => { html += `<li><span class="text-rose-600">${err.cat}:</span> ${err.detail}</li>`; });
+                html += `<ul class="list-none text-[10px] font-bold text-slate-700 space-y-1.5 mt-1">`;
+                incidents.mr.forEach(err => { 
+                    let badgeText = err.cat || "ไม่ระบุ";
+                    html += `<li class="flex items-start gap-1"><span class="bg-rose-100 text-rose-700 border border-rose-300 px-1.5 py-[1px] rounded text-[8.5px] font-black shadow-sm leading-none shrink-0 mt-[1px]">${badgeText}</span><span class="leading-tight">${err.detail}</span></li>`; 
+                });
                 html += `</ul>`;
             } else {
                 html += `<div class="text-center text-[10px] font-bold text-emerald-600 mt-1">ยังไม่พบความคลาดเคลื่อนวันนี้</div>`;
@@ -1463,6 +1503,24 @@
                 pmEl.textContent = `PM2.5: ${pm25}`;
                 pmEl.className = `text-[10px] font-black leading-none mt-1 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
             } catch (error) {}
+        }
+
+        async function fetchSchedule() {
+            try {
+                const res = await fetch(GAS_SCHEDULE_API_URL);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                
+                if(data.today) updateStaffUI(data.today);
+                if(data.alerts) renderAlerts(data.alerts);
+                if(data.tempStatus) renderTempStatus(data.tempStatus);
+                if(data.lasa) renderLasa(data.lasa);
+                if(data.today && data.today.doctors) renderDoctors(data.today.doctors);
+                if(data.weekly) renderWeekly(data.weekly);
+                if(data.boxes) renderBoxes(data.boxes);
+                if(data.holidays) globalHolidays = data.holidays;
+
+            } catch(error) { console.error("Error fetching GS Schedule:", error); }
         }
 
         window.onload = async function() {
