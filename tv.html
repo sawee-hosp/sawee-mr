@@ -3,32 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard ห้องยา รพ.สวี</title>
+    <title>Dashboard ผู้ป่วยในและห้องยา - รพ.สวี</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- นำเข้า Tone.js สำหรับสร้างเสียงดนตรีสังเคราะห์เตือนสัญญานกะ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
         body {
             font-family: 'Noto Sans Thai', sans-serif !important;
             margin: 0; padding: 0; overflow: hidden; box-sizing: border-box;
-            background-color: #0f172a; /* Fallback Slate 900 */
-            color: #1e293b;
+            background-color: #0f172a; color: #1e293b;
             background-size: 200% 200%;
             animation: gradientMove 15s ease infinite;
             transition: background-image 1s ease;
         }
 
-        /* Gradient สีพื้นหลังประจำวัน หมุนเวียนสดใส */
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes gradientMove { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
         }
+
         .bg-sun { background-image: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
         .bg-mon { background-image: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
         .bg-tue { background-image: linear-gradient(135deg, #ff007f 0%, #ff758c 100%); }
@@ -37,149 +35,82 @@
         .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
         .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
 
-        /* Ambient Clouds */
-        .cloud-container {
-            position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            overflow: hidden; z-index: 0; pointer-events: none;
-        }
-        .cloud {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(70px);
-            opacity: 0.6;
-            animation: floatCloud 20s infinite alternate ease-in-out;
-        }
-        .cloud-1 {
-            width: 50vw; height: 50vw;
-            background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
-            top: -10%; left: -10%;
-        }
-        .cloud-2 {
-            width: 60vw; height: 60vw;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
-            bottom: -20%; right: -10%;
-            animation-delay: -5s;
-        }
-        .cloud-3 {
-            width: 40vw; height: 40vw;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-            top: 40%; left: 30%;
-            animation-delay: -10s;
-        }
-        @keyframes floatCloud {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(5%, 10%) scale(1.1); }
-        }
+        .cloud-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; z-index: 0; pointer-events: none; }
+        .cloud { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.6; animation: floatCloud 20s infinite alternate ease-in-out; }
+        .cloud-1 { width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%); top: -10%; left: -10%; }
+        .cloud-2 { width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%); bottom: -20%; right: -10%; animation-delay: -5s; }
+        .cloud-3 { width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); top: 40%; left: 30%; animation-delay: -10s; }
+        
+        @keyframes floatCloud { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 10%) scale(1.1); } }
 
-        /* Glass Panel */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(255, 255, 255, 0.6);
-            border-left: 1px solid rgba(255, 255, 255, 0.6);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            border-right: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            border-radius: 1rem;
-            transition: background-color 0.5s;
-        }
-
-        /* 3D Card */
-        .card-3d {
-            background: linear-gradient(145deg, rgba(255,255,255,0.85), rgba(255,255,255,0.5));
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.6), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
-            border: 1px solid rgba(255,255,255,0.5);
-            border-radius: 0.5rem;
-        }
-
-        /* 3D Card IPD */
-        .card-3d-ipd {
-            background: linear-gradient(145deg, rgba(255,255,255,0.85), rgba(255,255,255,0.65));
-            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(255,255,255,0.7);
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        /* แถบเตียงแบบแนบขอบซ้าย เต็มความสูง */
-        .ipd-badge {
-            position: absolute; left: 0; top: 0; bottom: 0;
-            width: 48px; 
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 900; font-size: 15px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-            border-right: 1px solid rgba(0,0,0,0.1);
-        }
-
-        /* เอฟเฟกต์กระพริบโดยเปลี่ยน Background */
-        @keyframes pulse-bg-ipd {
-            0%, 100% { background-color: rgba(255, 255, 255, 0.85); }
-            50% { background-color: rgba(167, 243, 208, 0.6); }
-        }
-        .alert-new { animation: pulse-bg-ipd 1.5s infinite ease-in-out; }
-
-        .text-crystal {
-            background: linear-gradient(to right, #ffffff 0%, #cbd5e1 40%, #e2e8f0 60%, #ffffff 100%);
-            background-size: 200% auto;
-            color: transparent;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: shine 4s linear infinite;
-            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
+            border-top: 1px solid rgba(255, 255, 255, 0.6); border-left: 1px solid rgba(255, 255, 255, 0.6); 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05); border-right: 1px solid rgba(0, 0, 0, 0.05); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border-radius: 1rem; transition: background-color 0.5s; 
         }
         
-        /* สีเวลาแบบ Rainbow สว่างคมจัดจ้าน */
-        .text-rainbow {
-            background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30);
-            background-size: 200% auto;
-            color: transparent;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: shine 4s linear infinite;
-            line-height: 0.8; 
-            padding-bottom: 2px;
+        .card-3d { 
+            background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85)); 
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05), 1px 2px 3px rgba(0,0,0,0.15); 
+            border: 1px solid rgba(255,255,255,0.9); border-radius: 0.5rem; transition: all 0.3s ease;
         }
+
+        .text-crystal { background: linear-gradient(to right, #ffffff 0%, #cbd5e1 40%, #e2e8f0 60%, #ffffff 100%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 4s linear infinite; text-shadow: 0 0 8px rgba(255,255,255,0.3); }
+        .text-rainbow { background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 4s linear infinite; line-height: 0.8; padding-bottom: 2px; }
         @keyframes shine { to { background-position: 200% center; } }
 
-        /* สถานะพนักงาน */
         .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
         .staff-inactive { opacity: 0.35; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
-        
-        /* กระพริบ Countdown นุ่มนวล ไม่มีกรอบแดง */
-        @keyframes soft-pulse { 
-            0%, 100% { opacity: 1; } 
-            50% { opacity: 0.6; } 
-        }
+        @keyframes soft-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         .staff-ending { animation: soft-pulse 1.5s infinite; }
         .countdown-text { color: #ef4444; font-weight: 900; } 
 
-        /* Animation กระพริบสีแดงสำหรับ Card อุณหภูมิเกิน */
-        @keyframes pulse-bg-red {
-            0%, 100% { background-color: rgba(254, 226, 226, 0.95); box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.2); }
-            50% { background-color: rgba(252, 165, 165, 0.95); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.6); }
-        }
+        @keyframes pulse-bg-red { 0%, 100% { background-color: rgba(254, 226, 226, 0.95); box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.2); } 50% { background-color: rgba(252, 165, 165, 0.95); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.6); } }
         .temp-alert-card { animation: pulse-bg-red 1s infinite ease-in-out; border: 2px solid #ef4444 !important; }
-        .temp-alert-text { color: #991b1b !important; }
-
-        .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; }
+        
+        .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; flex-shrink: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .fade-text { transition: opacity 0.5s ease-in-out; }
         .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
+
+        /* IPD Badge Styles */
+        .ipd-badge {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            z-index: 2;
+        }
+
+        @keyframes forceMegaBlink {
+            0%, 100% { background-color: rgba(239, 68, 68, 1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); border-color: rgba(252, 165, 165, 0.8); }
+            50% { background-color: rgba(153, 27, 27, 1); box-shadow: 0 0 5px rgba(153, 27, 27, 0.8); border-color: rgba(239, 68, 68, 0.8); }
+        }
+        .alert-danger { animation: forceMegaBlink 1.5s infinite ease-in-out !important; border: 1px solid transparent !important; background-image: none !important; }
+
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        @keyframes numberPulse {
+            0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); }
+            45% { transform: scale(1.3); } 60% { transform: scale(1); } 100% { transform: scale(1); }
+        }
+        .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
     </style>
 </head>
 
 <body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
-    <!-- Ambient Clouds -->
-    <div class="cloud-container">
-        <div class="cloud cloud-1"></div>
-        <div class="cloud cloud-2"></div>
-        <div class="cloud cloud-3"></div>
+    <div id="audio-unlock-banner" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-0 pointer-events-none">
+        <i class="fas fa-volume-mute"></i> แตะหน้าจอเพื่อเปิดเสียงแจ้งเตือน
     </div>
 
-    <!-- Header (บังคับ 1 บรรทัด z-20) -->
+    <div class="cloud-container">
+        <div class="cloud cloud-1"></div><div class="cloud cloud-2"></div><div class="cloud cloud-3"></div>
+    </div>
+
     <header class="w-full px-6 py-2 flex justify-between items-center shrink-0 bg-slate-900/80 backdrop-blur-md relative border-b border-white/10 z-20 whitespace-nowrap flex-nowrap overflow-hidden">
         <div class="flex items-center shrink-0">
             <h1 class="text-3xl font-black tracking-wide text-crystal leading-none">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
@@ -191,193 +122,204 @@
         </div>
     </header>
 
-    <!-- Main Grid (28:34:34) - z-10 ให้อยู่เหนือ Clouds -->
-    <main class="flex-1 w-full flex justify-between gap-[2%] p-4 overflow-hidden z-10 relative">
+    <main class="flex-1 w-full flex justify-between gap-[1.5%] p-3 overflow-hidden z-10 relative">
         
-        <!-- Column 1: เภสัชกรประจำวัน (28%) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-3 transition-opacity duration-300" id="col-staff" style="width: 28%; display: flex;">
+        <!-- ================= Column 1: ข้อมูลทั่วไปห้องยา (26%) ================= -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-staff" style="width: 26%; display: flex;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
-                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i><span id="col-staff-title">เภสัชกรประจำวัน</span></h2>
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i>เภสัชกรประจำวัน</h2>
                 <span class="text-xs font-bold text-white bg-indigo-500 px-2 py-0.5 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
             </div>
             
             <div class="flex-1 flex flex-col justify-around min-h-0 pb-1" id="staff-grid">
-                <!-- Set 1 -->
                 <div class="flex justify-center gap-4">
-                    <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.คีย์</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
-                    <div class="staff-item flex flex-col items-center" data-role="ipd" id="card-ipd" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.ใน</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
-                    <!-- จพ.เช้า มาแสดงถัดจาก ภ.ใน ใน Set 1 -->
-                    <div class="staff-item flex flex-col items-center" data-role="tech" id="card-tech" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">จพ.เช้า</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
+                    <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.คีย์</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
+                    <div class="staff-item flex flex-col items-center" data-role="ipd" id="card-ipd" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.ใน</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
+                    <div class="staff-item flex flex-col items-center" data-role="tech" id="card-tech" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">จพ.เช้า</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
                 </div>
-
                 <div class="divider-gradient"></div>
-
-                <!-- Set 2 -->
                 <div class="flex justify-center gap-4">
-                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check1" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค1</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
-                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check2" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค2</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
-                    <!-- ภ.เช็ค3 ถัดจาก ภ.เช็ค2 -->
-                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check3" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค3</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
+                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check1" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค1</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
+                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check2" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค2</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
+                    <div class="staff-item flex flex-col items-center" data-role="check" id="card-check3" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค3</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
                 </div>
-
                 <div class="divider-gradient"></div>
-
-                <!-- Set 3 -->
                 <div class="flex justify-center gap-4">
-                    <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense1" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย1</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
-                    <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense2" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย2</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
-                    <div class="staff-item flex flex-col items-center" data-role="clinic" id="card-clinic" style="display:none;">
-                        <img src="" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
-                        <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text staff-clinic">ภ.คลินิก</span>
-                        <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
-                    </div>
+                    <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense1" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย1</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
+                    <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense2" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย2</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
+                    <div class="staff-item flex flex-col items-center" data-role="clinic" id="card-clinic" style="display:none;"><img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' "><span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text staff-clinic">ภ.คลินิก</span><span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span></div>
                 </div>
             </div>
-
-            <!-- Afternoon Shift (แค่ชื่อ ไม่มีรูป) -->
             <div class="mt-1 pt-1 border-t-2 border-slate-400/30 shrink-0">
-                <h2 class="text-[14px] font-black text-slate-800 mb-1 drop-shadow-sm"><i class="fas fa-moon text-amber-500 mr-1"></i><span id="col-afternoon-title">เวรบ่าย & On Call</span></h2>
                 <div class="card-3d p-2 py-1.5 flex justify-around items-center bg-white/60">
-                    <div class="flex flex-col text-center" id="card-aft-pharm" style="display:none;">
-                        <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span>
-                        <span class="text-xs font-black text-slate-800 staff-name">--</span>
-                    </div>
+                    <div class="flex flex-col text-center" id="card-aft-pharm" style="display:none;"><span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span><span class="text-xs font-black text-slate-800 staff-name">--</span></div>
                     <div class="w-[2px] h-6 bg-slate-300" id="div-aft-tech1"></div>
-                    <div class="flex flex-col text-center" id="card-aft-tech1" style="display:none;">
-                        <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span>
-                        <span class="text-xs font-black text-slate-800 staff-name">--</span>
-                    </div>
+                    <div class="flex flex-col text-center" id="card-aft-tech1" style="display:none;"><span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span><span class="text-xs font-black text-slate-800 staff-name">--</span></div>
                     <div class="w-[2px] h-6 bg-slate-300" id="div-oncall"></div>
-                    <div class="flex flex-col text-center" id="card-oncall" style="display:none;">
-                        <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span>
-                        <span class="text-xs font-black text-slate-800 staff-name">--</span>
-                    </div>
+                    <div class="flex flex-col text-center" id="card-oncall" style="display:none;"><span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span><span class="text-xs font-black text-slate-800 staff-name">--</span></div>
                 </div>
             </div>
         </section>
 
-        <!-- Column 1.5A: อุณหภูมิตู้เย็นปัจจุบัน (สลับกับเภสัชกร) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-3 transition-opacity duration-300" id="col-fridge-temp" style="width: 28%; display: none;">
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300 relative" id="col-fridge-temp" style="width: 26%; display: none;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
             </div>
-            <div class="flex-1 overflow-y-auto no-scrollbar pt-1">
-                <!-- 4 คอลัมน์ต่อแถว สำหรับ Card เล็ก -->
-                <div class="grid grid-cols-4 gap-1.5" id="temp-fridge-grid">
-                    <div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div>
-                </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col">
+                <div class="grid grid-cols-4 gap-1.5" id="temp-fridge-grid"><div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div></div>
+                <div id="fridge-alert-msg"></div> 
             </div>
         </section>
 
-        <!-- Column 1.5B: อุณหภูมิห้องปัจจุบัน (สลับกับเภสัชกร) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-3 transition-opacity duration-300" id="col-room-temp" style="width: 28%; display: none;">
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300 relative" id="col-room-temp" style="width: 26%; display: none;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-wind text-teal-500 mr-2"></i>อุณหภูมิห้องปัจจุบัน</h2>
             </div>
-            <div class="flex-1 overflow-y-auto no-scrollbar pt-1">
-                <!-- 4 คอลัมน์ต่อแถว สำหรับ Card เล็ก -->
-                <div class="grid grid-cols-4 gap-1.5" id="temp-room-grid">
-                    <div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div>
-                </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col">
+                <div class="grid grid-cols-4 gap-1.5" id="temp-room-grid"><div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div></div>
+                <div id="room-alert-msg"></div> 
             </div>
         </section>
 
-        <!-- Column 2: ผู้ป่วยใน (IPD) (34%) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-3" style="width: 34%;">
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-doctors" style="width: 26%; display: none;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-500 mr-2"></i>ตารางแพทย์</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-1" id="doctors-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-weekly" style="width: 26%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0 px-1">
+                <h2 class="text-[15px] font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-teal-500 mr-2"></i>ตารางเวรสัปดาห์นี้</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar" id="weekly-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-incident" style="width: 26%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-clipboard-list text-rose-500 mr-2"></i>อุบัติการณ์รายวัน</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="incident-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-due" style="width: 26%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-pills text-purple-500 mr-2"></i>รายการยา DUE วันนี้</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="due-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-boxes" style="width: 26%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-box-open text-amber-600 mr-2"></i>กล่องยาที่ใช้ไปวันนี้</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 grid grid-cols-3 gap-2 content-start" id="boxes-container"><div class="text-center text-xs text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300" id="col-lasa" style="width: 26%; display: none;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>TOP 5 LASAs <span class="text-xs text-slate-500 font-bold">(30 วัน)</span></h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="lasa-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2" style="width: 47%;">
+            <div class="flex justify-between items-center px-1 pb-1 mb-1 border-b-2 border-slate-400/30 shrink-0">
                 <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-procedures text-blue-600 mr-2"></i>ผู้ป่วยใน (IPD)</h2>
+                <!-- เวลาอัปเดตมุมขวาบนของตาราง IPD -->
+                <span id="last-update-time" class="text-[10px] font-bold text-slate-700 bg-white/80 px-2 py-0.5 rounded-full shadow-sm border border-white/60 leading-none">
+                    <i class="fas fa-sync-alt fa-spin mr-1 text-slate-500"></i>กำลังโหลด...
+                </span>
             </div>
 
-            <!-- คอนเทนเนอร์สำหรับใส่ข้อมูล IPD ไดนามิก -->
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1" id="ipd-container">
-                <!-- IPD items จะถูกสร้างจาก JS -->
-            </div>
-
-            <!-- สรุปจำนวน เน้นตัวเลขใหญ่ๆ -->
-            <div class="flex justify-between mt-1 pt-1 shrink-0 h-[65px] border-t-2 border-slate-400/30 gap-1.5">
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
-                    <div class="bg-rose-100 h-4 text-center border-b border-rose-300 flex items-center justify-center"><span class="text-[10px] font-black text-rose-800 leading-none">D/C</span></div>
-                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-rose-600 leading-none">6</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
-                    <div class="bg-emerald-100 h-4 text-center border-b border-emerald-300 flex items-center justify-center"><span class="text-[10px] font-black text-emerald-800 leading-none">Admit</span></div>
-                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-emerald-700 leading-none">4</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
-                    <div class="bg-slate-200 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[10px] font-bold text-slate-800 leading-none">IPD ชาย</span></div>
-                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-slate-800 leading-none">28</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
-                    <div class="bg-slate-200 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[10px] font-bold text-slate-800 leading-none">IPD หญิง</span></div>
-                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-slate-800 leading-none">32</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
-                    <div class="bg-blue-100 h-4 text-center border-b border-blue-300 flex items-center justify-center"><span class="text-[10px] font-bold text-blue-800 leading-none">OPD</span></div>
-                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-blue-800 leading-none">15</span></div>
-                </div>
-                <div class="card-3d flex flex-col flex-1 overflow-hidden p-0 border-0 bg-white shadow-md">
-                    <div class="bg-red-100 h-4 text-center border-b border-red-300 flex items-center justify-center"><span class="text-[10px] font-black text-red-800 leading-none">ER</span></div>
-                    <div class="flex-1 flex items-center justify-center bg-white"><span class="text-3xl font-black text-red-600 animate-pulse leading-none">2</span></div>
+            <div class="flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden bg-white/20 rounded-lg p-1.5 border border-white/30">
+                <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1 pb-1 w-full" id="ipd-container">
+                    <div class="flex flex-col items-center justify-center h-full text-slate-600 drop-shadow-md">
+                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i>
+                        <span class="text-sm font-bold">กำลังโหลดข้อมูล IPD...</span>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Column 3: แจ้งเตือน & ข่าว (34%) -->
-        <section class="h-full flex flex-col min-h-0 glass-panel p-3" style="width: 34%;">
-            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
-                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-bell text-rose-500 mr-2"></i>การแจ้งเตือนใหม่</h2>
+            <div class="w-full px-1 z-10 shrink-0 min-h-[16px] overflow-hidden flex items-center mt-1">
+                <p id="rx-box-status" class="text-[10px] text-slate-800 font-bold drop-shadow-md tracking-wide truncate w-full"></p>
             </div>
 
-            <!-- กล่องแสดงแจ้งเตือนแบบไดนามิก -->
-            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1" id="alerts-container">
-                <div class="text-center text-slate-500 text-sm mt-4 font-bold">กำลังตรวจสอบข้อมูล...</div>
-            </div>
-
-            <!-- News & Weather -->
-            <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex items-stretch gap-2 shrink-0 h-[100px]">
-                
-                <!-- News/Gold/Oil Ticker -->
-                <div id="news-card" class="flex-1 overflow-hidden relative card-3d p-3 transition-colors duration-500">
-                    <div id="news-wrapper" class="flex items-center h-full w-full fade-text">
-                        <div id="news-container" class="text-sm font-bold text-slate-800 line-clamp-3 leading-snug w-full">กำลังดึงข้อมูลข่าวสาร...</div>
+            <footer class="shrink-0 flex flex-col gap-1 z-10 pb-1 mt-1">
+                <!-- แถวที่ 1: สรุป IPD -->
+                <div class="flex justify-between gap-1 w-full h-[45px]">
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-rose-100 to-rose-200 h-4 text-center border-b border-rose-300 flex items-center justify-center"><span class="text-[9px] font-black text-rose-800 uppercase tracking-wide">D/C</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-rose-600 drop-shadow-sm" id="sum-dc">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-emerald-100 to-emerald-200 h-4 text-center border-b border-emerald-300 flex items-center justify-center"><span class="text-[9px] font-black text-emerald-800 uppercase tracking-wide">Admit</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-emerald-700 drop-shadow-sm" id="sum-admit">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-slate-200 to-slate-300 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[9px] font-bold text-slate-800 tracking-wide">IPD ชาย</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-slate-800 drop-shadow-sm" id="sum-male">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-slate-200 to-slate-300 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[9px] font-bold text-slate-800 tracking-wide">IPD หญิง</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-slate-800 drop-shadow-sm" id="sum-female">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-purple-100 to-purple-200 h-4 text-center border-b border-purple-300 flex items-center justify-center"><span class="text-[9px] font-bold text-purple-800 uppercase tracking-wide">LR</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-purple-700 drop-shadow-sm" id="sum-lr">-</span></div>
                     </div>
                 </div>
                 
-                <!-- Weather Widget -->
-                <div class="card-3d p-2 flex flex-col items-center justify-center gap-1 min-w-[5.5rem] bg-white/80">
-                    <div id="weather-icon" class="text-4xl">
+                <!-- แถวที่ 2: สรุป OPD -->
+                <div class="flex justify-between gap-1 w-full h-[45px]">
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-orange-100 to-orange-200 h-4 text-center border-b border-orange-300 flex items-center justify-center"><span class="text-[9px] font-bold text-orange-800 tracking-wide">ผป.นัด</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-orange-700 drop-shadow-sm" id="sum-appointment">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-blue-100 to-blue-200 h-4 text-center border-b border-blue-300 flex items-center justify-center"><span class="text-[9px] font-bold text-blue-800 tracking-wide">OPD+ER</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-blue-800 drop-shadow-sm" id="sum-opd-er">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-red-100 to-red-200 h-4 text-center border-b border-red-300 flex items-center justify-center"><span class="text-[9px] font-bold text-red-800 tracking-wide">Clinic+Other</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-red-700 drop-shadow-sm" id="sum-clinic-other">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-teal-100 to-teal-200 h-4 text-center border-b border-teal-300 flex items-center justify-center"><span class="text-[9px] font-bold text-teal-800 tracking-wide">รอจ่าย</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-teal-700 drop-shadow-sm" id="sum-prepare">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-indigo-100 to-indigo-200 h-4 text-center border-b border-indigo-300 flex items-center justify-center"><span class="text-[9px] font-bold text-indigo-800 tracking-wide">จ่ายแล้ว</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-indigo-700 drop-shadow-sm" id="sum-dispense">-</span></div>
+                    </div>
+                </div>
+
+                <!-- แถวที่ 3: Slider (สลับทุก 1 นาที) -->
+                <div class="relative w-full h-[50px] overflow-hidden">
+                    <div id="view-flow" class="absolute inset-0 flex justify-between gap-0.5 w-full fade-in"></div>
+                    <div id="view-doctors" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
+                    <div id="view-clinics" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
+                </div>
+            </footer>
+        </section>
+
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2" style="width: 25.5%;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-bell text-rose-500 mr-2"></i>การแจ้งเตือนใหม่</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1" id="alerts-container">
+                <div class="text-center text-slate-500 text-sm mt-4 font-bold">กำลังตรวจสอบข้อมูล...</div>
+            </div>
+            
+            <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex items-stretch gap-2 shrink-0 h-[100px]">
+                <div id="news-card" class="flex-1 overflow-hidden relative card-3d p-2 transition-colors duration-500 flex items-center justify-center bg-white/80">
+                    <div id="news-wrapper" class="flex items-center h-full w-full fade-text">
+                        <div id="news-container" class="text-[11px] font-bold text-slate-800 line-clamp-4 leading-tight w-full text-center">กำลังดึงข้อมูล...</div>
+                    </div>
+                </div>
+                <!-- weather icon -->
+                <div class="card-3d p-2 flex flex-col items-center justify-center gap-1 min-w-[5.5rem] bg-white/80 shrink-0">
+                    <div id="weather-icon" class="text-[36px] leading-[0.8] drop-shadow-md">
                         <i class="fas fa-spinner fa-spin text-slate-400"></i>
                     </div>
                     <span id="weather-temp" class="text-2xl font-black text-slate-800 leading-none mt-1">--°C</span>
@@ -388,579 +330,1097 @@
     </main>
 
     <script>
-        // API URL
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
-        
-        let staffSchedule = { today: null, tomorrow: null };
-        let isDemoMode = false;
-        let previousActiveCount = -1; 
+        // ==========================================
+        // 🔗 ตั้งค่า API URL ทั้งหมด
+        // ==========================================
+        const GAS_IPD_API_URL = "https://script.google.com/macros/s/AKfycbw75ELvZom2PKT6XM6hJM0aknVZ9d6622R2aRPaYmVaPfX3TKDisRDcM3v65gjOmEJkag/exec";
+        const GAS_SCHEDULE_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
+        const GAS_INCIDENT_API_URL = "https://script.google.com/macros/s/AKfycbwdHixtAvFZ_-PvlFAXhmnDkR6-g53ms_NdELsVQ7UcFLP4AHNoA7e4YCoNKwXY1mGY7Q/exec";
+        const GAS_DUE_API_URL = "https://script.google.com/macros/s/AKfycbyvH0HptaZiDvg11ZcWGPyZe1A9IbC6uzEiMXzOQbJj1M1ZZHzFIWVy0PK-j_WXzanUxg/exec";
 
-        // --- ระบบคิวเสียง ---
-        let spokenAlerts = new Set();
-        let spokenIPDs = new Set();
+        // ==========================================
+        // 🔑 ตั้งค่า API KEY ของ Gemini สำหรับอ่านออกเสียง
+        // ==========================================
+        const GEMINI_API_KEY = "AIzaSyC4pfYiXosY-mlCmZ8lsHuGcRcY52oUCYc";
+
+        // ตัวแปรส่วนกลาง (Global Variables)
         let voiceQueue = [];
+        let isPlayingVoice = false;
+        let audioUnlocked = false;
+        let pendingAlertMessages = [];
+        let spokenItems = new Set(); 
+        let thaiVoice = null; 
+
+        let globalAppointments = []; 
+        const prevValues = {}; 
+        let currentSlide = 0;
+        let sliderInterval = null;
+
+        let spokenAlerts = new Set();
         let isSpeaking = false;
         let ttsEnabled = false;
-        let currentAudio = null;
+        let previousActiveCount = -1;
+        
+        let globalHolidays = [];
+        let mixData = [];
+        let currentMixIndex = 0;
+
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            const voices = window.speechSynthesis.getVoices();
+            thaiVoice = voices.find(v => v.lang === 'th-TH' && v.name.includes('Google')) ||
+                        voices.find(v => v.lang === 'th-TH' || v.lang === 'th') || null;
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices(); 
+        }
 
         async function playShiftChangeMelody() {
-            if (!ttsEnabled) return; 
-            
-            await Tone.start();
-            
-            const synth = new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: "sine" },
-                envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 1 }
-            }).toDestination();
-
-            const now = Tone.now();
-            
-            synth.triggerAttackRelease("C5", "8n", now);
-            synth.triggerAttackRelease("E5", "8n", now + 0.15);
-            synth.triggerAttackRelease("G5", "8n", now + 0.3);
-            synth.triggerAttackRelease("C6", "4n", now + 0.45); 
-            
+            if (!audioUnlocked) return; 
+            try {
+                await Tone.start();
+                const synth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "sine" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 1 } }).toDestination();
+                const now = Tone.now();
+                synth.triggerAttackRelease("C5", "8n", now); 
+                synth.triggerAttackRelease("E5", "8n", now + 0.15); 
+                synth.triggerAttackRelease("G5", "8n", now + 0.3); 
+                synth.triggerAttackRelease("C6", "4n", now + 0.45); 
+            } catch(e) {}
             return new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-        window.addEventListener('click', async () => {
-            if(!ttsEnabled) {
-                ttsEnabled = true;
-                console.log("TTS System Enabled by User Click");
-                
-                const unlockAudio = new Audio();
-                unlockAudio.play().catch(()=>{}); 
-                
-                await playShiftChangeMelody();
-                
-                processVoiceQueue(); 
-            }
-        }, {once: true});
+        function playNotificationSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const audioCtx = new AudioContext();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
 
-        function processVoiceQueue() {
-            if(!ttsEnabled || isSpeaking || voiceQueue.length === 0) return;
-            
-            isSpeaking = true;
-            const text = voiceQueue.shift();
-            console.log("Speaking via Google TTS:", text);
-            
-            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=${encodeURIComponent(text)}`;
-            currentAudio = new Audio(ttsUrl);
-            
-            currentAudio.onended = () => {
-                isSpeaking = false;
-                processVoiceQueue(); 
-            };
-            
-            currentAudio.onerror = () => {
-                console.warn("Audio TTS Error, skipping to next queue");
-                isSpeaking = false;
-                processVoiceQueue();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch (e) {
+                console.error("Audio API not supported", e);
             }
-            
-            currentAudio.play().catch(error => {
-                console.error("ไม่สามารถเล่นเสียงได้ (อาจโดนบล็อกการเล่นอัตโนมัติ):", error);
-                isSpeaking = false;
-                processVoiceQueue();
-            });
         }
 
-        // --- STREAMING_CHUNK: Declaring mock data structure for patient statuses ---
-        let ipdData = [
-            { id: 'ipd-1', bed: 'M21', hn: '123456789', status: 'Admit', time: '14:50', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: true },
-            { id: 'ipd-2', bed: 'F25', hn: '987654321', status: 'D/C', time: '13:25', bg: 'bg-rose-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: true },
-            { id: 'ipd-3', bed: 'M10', hn: '112233445', status: 'Admit', time: '11:40', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-4', bed: 'F12', hn: '223344556', status: 'Admit', time: '10:15', bg: 'bg-emerald-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-5', bed: 'ICU', hn: '334455667', status: 'Admit', time: '09:05', bg: 'bg-emerald-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false },
-            { id: 'ipd-6', bed: 'M05', hn: '445566778', status: 'D/C', time: '08:30', bg: 'bg-rose-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-7', bed: 'F30', hn: '556677889', status: 'D/C', time: '08:15', bg: 'bg-rose-500', icon: 'fas fa-check-circle text-emerald-500', isNew: false },
-            { id: 'ipd-8', bed: 'P5', hn: '667788990', status: 'อื่นๆ', time: '07:45', bg: 'bg-amber-500', icon: 'fas fa-hourglass-half text-amber-500', isNew: false }
-        ];
+        window.addEventListener('click', async function unlockAudio() {
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                ttsEnabled = true;
+                const banner = document.getElementById('audio-unlock-banner');
+                if (banner) {
+                    banner.classList.add('opacity-0');
+                    banner.classList.remove('pointer-events-auto');
+                }
+                
+                if ('speechSynthesis' in window) {
+                    const silentUtterance = new SpeechSynthesisUtterance("");
+                    silentUtterance.volume = 0;
+                    window.speechSynthesis.speak(silentUtterance);
+                }
+                playNotificationSound();
 
-        let isFirstLoadIPD = true; 
+                if (pendingAlertMessages.length > 0) {
+                    pendingAlertMessages.forEach(msg => queueVoice(msg));
+                    pendingAlertMessages = []; 
+                } else if (voiceQueue.length > 0 && !isPlayingVoice) {
+                    playNextVoice();
+                }
+            }
+        });
 
-        function renderIPDList() {
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                document.body.click(); 
+            }
+        });
+
+        function queueVoice(text) {
+            voiceQueue.push(text);
+            if (!isPlayingVoice && audioUnlocked) {
+                playNextVoice();
+            } else if (!audioUnlocked) {
+                const banner = document.getElementById('audio-unlock-banner');
+                if (banner) {
+                    banner.classList.remove('opacity-0', 'pointer-events-none');
+                    banner.classList.add('pointer-events-auto');
+                }
+            }
+        }
+
+        // 1. แปลงรหัส Base64 จาก Gemini ให้เป็น ArrayBuffer
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        // 2. ห่อหุ้มไฟล์เสียง Raw PCM ด้วยนามสกุล WAV ให้เล่นใน HTML ได้
+        function pcmToWav(pcmData, sampleRate) {
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+            const blockAlign = numChannels * (bitsPerSample / 8);
+            const dataSize = pcmData.length * (bitsPerSample / 8);
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitsPerSample, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcmData.length; i++, offset += 2) {
+                view.setInt16(offset, pcmData[i], true);
+            }
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        // 3. ฟังก์ชันดึงเสียงจาก Gemini API
+        async function fetchGeminiTTS(text) {
+            if (!GEMINI_API_KEY) return null;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: text }] }],
+                generationConfig: { 
+                    responseModalities: ["AUDIO"], 
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } } 
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                
+                if (part?.inlineData?.data) {
+                    const mimeType = part.inlineData.mimeType;
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                    
+                    const pcmData = base64ToArrayBuffer(part.inlineData.data);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    return URL.createObjectURL(wavBlob);
+                }
+            } catch(e) { console.error("Gemini TTS Error:", e); }
+            return null;
+        }
+
+        // 4. อัปเดตฟังก์ชันเล่นเสียงให้ใช้ Gemini เป็นหลัก
+        async function playNextVoice() {
+            if (voiceQueue.length === 0) {
+                isPlayingVoice = false;
+                return;
+            }
+            if (!audioUnlocked) return; 
+
+            isPlayingVoice = true;
+            const text = voiceQueue.shift();
+            
+            playNotificationSound();
+
+            if (GEMINI_API_KEY) {
+                const audioUrl = await fetchGeminiTTS(text);
+                if (audioUrl) {
+                    setTimeout(() => {
+                        const audio = new Audio(audioUrl);
+                        audio.onended = () => { setTimeout(playNextVoice, 500); };
+                        audio.onerror = () => { fallbackNativeTTS(text); };
+                        audio.play().catch(() => fallbackNativeTTS(text));
+                    }, 600); 
+                    return;
+                }
+            }
+            
+            fallbackNativeTTS(text);
+        }
+
+        function fallbackNativeTTS(text) {
+            setTimeout(() => {
+                if (!('speechSynthesis' in window)) {
+                    playNextVoice();
+                    return;
+                }
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'th-TH'; 
+                utterance.rate = 0.85; 
+                if (thaiVoice) utterance.voice = thaiVoice; 
+                
+                utterance.onend = () => { setTimeout(playNextVoice, 500); };
+                utterance.onerror = (event) => {
+                    console.error("เกิดข้อผิดพลาดในการเล่นเสียง TTS:", event);
+                    playNextVoice(); 
+                };
+                window.speechSynthesis.speak(utterance);
+            }, 600);
+        }
+
+        function updateBackground() {
+            const body = document.getElementById('main-body');
+            body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
+            const days = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat'];
+            body.classList.add(days[new Date().getDay()]);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('clock-display');
+            if (clockEl) clockEl.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            
+            const thD = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
+            const thM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const dateEl = document.getElementById('date-display');
+            if (dateEl) dateEl.textContent = `วัน${thD[now.getDay()]} ${now.getDate()} ${thM[now.getMonth()]} ${now.getFullYear() + 543}`;
+            
+            checkStaffShifts(now); 
+            checkSwapCards(now);
+        }
+
+        function checkSwapCards(now) {
+            const secTotal = (now.getMinutes() * 60) + now.getSeconds();
+            const cycle = Math.floor((secTotal % 240) / 30); 
+            
+            const cols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes'];
+            cols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
+            const lasaCol = document.getElementById('col-lasa');
+            if (lasaCol) lasaCol.style.display = 'none';
+
+            if (now.getMinutes() === 0 && now.getSeconds() >= 30 && now.getSeconds() < 40) {
+                if (lasaCol) lasaCol.style.display = 'flex';
+            } else {
+                const showCol = document.getElementById(cols[cycle]);
+                if (showCol) showCol.style.display = 'flex';
+            }
+        }
+
+        function checkStaffShifts(now) {
+            const cM = now.getHours() * 60 + now.getMinutes(), cS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const roles = { 'key': [{ start: 8*60, end: 11*60+30 }, { start: 12*60+30, end: 16*60 }], 'ipd': [{ start: 8*60, end: 12*60 }, { start: 13*60, end: 16*60 }], 'check': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'dispense': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'clinic': [{ start: 8*60, end: 12*60 }], 'tech': [{ start: 8*60, end: 11*60 }, { start: 12*60, end: 16*60 }] };
+            let active = new Set(); 
+            document.querySelectorAll('.staff-item').forEach(el => {
+                if (el.style.display === 'none') return; 
+                const shifts = roles[el.dataset.role]; if (!shifts) return;
+                let isAct = false, isEnd = false, remS = 0;
+                for (let s of shifts) { if (cM >= s.start && cM < s.end) { isAct = true; remS = (s.end * 60) - cS; if (remS <= 300) isEnd = true; break; } }
+                el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
+                const rtEl = el.querySelector('.staff-role-text');
+                if (isAct) {
+                    const nm = el.querySelector('.staff-name').textContent.trim(); if (nm && nm !== '--') active.add(nm);
+                    if (isEnd) { el.classList.add('staff-ending'); rtEl.textContent = `${Math.floor(remS / 60).toString().padStart(2, '0')}:${(remS % 60).toString().padStart(2, '0')}`; rtEl.classList.add('countdown-text'); }
+                    else { el.classList.add('staff-active'); rtEl.classList.remove('countdown-text'); }
+                } else { el.classList.add('staff-inactive'); rtEl.classList.remove('countdown-text'); }
+            });
+            const count = active.size;
+            document.getElementById('active-staff-count').textContent = count + ' คน';
+            if (previousActiveCount !== -1 && previousActiveCount !== count) { if(!isSpeaking) playShiftChangeMelody(); else setTimeout(() => { if(!isSpeaking) playShiftChangeMelody(); }, 3000); }
+            previousActiveCount = count;
+        }
+
+        function startSlider() {
+            if(sliderInterval) clearInterval(sliderInterval);
+            sliderInterval = setInterval(() => {
+                const views = ['view-flow', 'view-doctors', 'view-clinics'];
+                currentSlide = (currentSlide + 1) % 3;
+                views.forEach((v, idx) => {
+                    const el = document.getElementById(v);
+                    if(el) {
+                        if(idx === currentSlide) {
+                            el.classList.remove('hidden'); el.classList.add('flex');
+                            el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
+                        } else {
+                            el.classList.add('hidden'); el.classList.remove('flex');
+                        }
+                    }
+                });
+            }, 60000);
+        }
+
+        function formatWaitTime(hhmmss) {
+            if(!hhmmss || hhmmss === '00:00:00') return { text: '00:00', isOver30: false };
+            const parts = hhmmss.split(':');
+            const h = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            const s = parseInt(parts[2], 10);
+            
+            const totalMinutes = (h * 60) + m;
+            const displayMM = String(totalMinutes).padStart(2, '0');
+            const displaySS = String(s).padStart(2, '0');
+            
+            return {
+                text: `${displayMM}:${displaySS}`,
+                isOver30: totalMinutes > 30
+            };
+        }
+
+        function updateValueWithAnimation(id, newVal) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            
+            if(prevValues[id] === undefined) {
+                prevValues[id] = newVal;
+                el.textContent = newVal;
+            } else if(prevValues[id] !== newVal) {
+                prevValues[id] = newVal;
+                el.textContent = newVal;
+                el.classList.remove('animate-update');
+                void el.offsetWidth; 
+                el.classList.add('animate-update');
+            }
+        }
+
+        function renderData(dataList) {
             const container = document.getElementById('ipd-container');
             if(!container) return;
+            
+            if(!dataList || dataList.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-500 drop-shadow-md py-10 font-bold text-sm">ไม่มีรายการสั่งยาผู้ป่วยในในวันนี้</div>`;
+                return;
+            }
+
+            let countDC = 0, countAdm = 0, countMale = 0, countFemale = 0, countLR = 0;
             container.innerHTML = '';
             
-            ipdData.forEach(ipd => {
+            let newUnconfirmedBeds = []; 
+
+            dataList.forEach((item) => {
+                const statusAdm = item.StatusAdm ? item.StatusAdm.toUpperCase() : "CONT";
+                const wardName = item.ward_name ? item.ward_name.trim() : "";
+                
+                if (statusAdm === 'DC') countDC++;
+                if (statusAdm === 'ADM') countAdm++;
+                if (wardName === 'ตึกผู้ป่วยในชาย') countMale++;
+                if (wardName === 'ตึกผู้ป่วยในหญิง') countFemale++;
+                if (wardName === 'ห้องคลอด') countLR++;
+
+                let timeDisplay = "--:--";
+                if (item.scan_datetime) {
+                    const match = item.scan_datetime.match(/(\d{2}):(\d{2}):(\d{2})/);
+                    if (match) timeDisplay = match[1] + ":" + match[2];
+                }
+
+                let bgClass = "bg-sky-500"; 
+                let statusBadgeClass = "bg-sky-100 text-sky-800 border-sky-300"; 
+                let statusLabel = "Cont";
+
+                if (statusAdm === 'ADM') { 
+                    bgClass = "bg-emerald-500"; 
+                    statusBadgeClass = "bg-green-100 text-green-800 border-green-300"; 
+                    statusLabel = "Admit"; 
+                }
+                if (statusAdm === 'DC') { 
+                    bgClass = "bg-rose-500"; 
+                    statusBadgeClass = "bg-rose-100 text-rose-800 border-rose-300"; 
+                    statusLabel = "D/C"; 
+                }
+
+                const bedNo = item.bedno ? item.bedno : "-";
+                const hnNo = item.hn ? item.hn : "-";
+                const uniqueId = item.hn + "_" + item.scan_datetime; 
+
+                const rawConfirm = item.confirm_prescription ? String(item.confirm_prescription).trim().toUpperCase() : 'N';
+                let isConfirmed = (rawConfirm === 'Y' || rawConfirm === '1' || rawConfirm === 'TRUE');
+                
+                // ดึงข้อมูลกล่องและยาเพิ่มเติมสำหรับการอ่านเสียง D/C
+                const rawBox = item.rx_box || item.ช่องเก็บยา || ""; 
+                const boxNum = rawBox.replace(/\D/g, ''); 
+
+                if (!isConfirmed && bedNo !== "-") {
+                    if (!spokenItems.has(uniqueId)) {
+                        newUnconfirmedBeds.push({ 
+                            bed: bedNo, 
+                            status: statusAdm,
+                            box: boxNum,
+                            sy: item.SY,
+                            az: item.AZ
+                        });
+                        spokenItems.add(uniqueId); 
+                    }
+                }
+
+                const textClass = isConfirmed ? "text-slate-800" : "text-white drop-shadow-sm";
+                const timeTextClass = isConfirmed ? "text-slate-600" : "text-white/90 drop-shadow-sm";
+                const cardStyleClass = isConfirmed ? "card-3d" : "alert-danger bg-red-500/80";
+
+                const fullName = item.patient_name || item.pname || ""; 
+
+                let badgesHtml = "";
+                
+                if (statusAdm === 'DC' && boxNum !== "") {
+                    badgesHtml += `<div class="shrink-0 bg-slate-900 text-white rounded border border-slate-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">${boxNum}</div>`;
+                }
+                if (item.AZ === 'Y') {
+                    badgesHtml += `<div class="shrink-0 bg-slate-900 text-white rounded border border-slate-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">AZ</div>`;
+                }
+                if (item.SY === 'Y') {
+                    badgesHtml += `<div class="shrink-0 bg-slate-900 text-white rounded border border-slate-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">SY</div>`;
+                }
+
                 const row = document.createElement('div');
-                row.className = `card-3d-ipd relative flex items-center justify-between ${ipd.isNew ? 'alert-new' : ''} h-[32px] overflow-hidden pl-[48px]`;
+                row.className = `${cardStyleClass} rounded-md relative flex items-center justify-between h-[30px] overflow-hidden pl-[40px] shrink-0`;
+                
                 row.innerHTML = `
-                    <div class="ipd-badge ${ipd.bg}">${ipd.bed}</div>
-                    <div class="flex-1 flex items-center justify-between px-3">
-                        <span class="text-slate-800 font-black text-lg font-mono leading-none ${ipd.isNew ? 'tracking-widest' : ''}">${ipd.hn}</span>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            <span class="text-xs font-bold text-slate-700 bg-white/90 px-2 py-0.5 rounded border border-slate-200 leading-none shadow-sm">${ipd.status}</span>
-                            <span class="text-[11px] font-bold text-slate-500 leading-none">${ipd.time}</span>
+                    <div class="ipd-badge ${bgClass} w-[40px] text-[13px] font-black font-mono tracking-tight shrink-0 flex items-center justify-center absolute left-0 top-0 bottom-0">${bedNo}</div>
+                    
+                    <div class="flex-1 flex items-center justify-between px-3 z-10 w-full min-w-0 h-full">
+                        <div class="flex items-center flex-1 min-w-0 mr-2">
+                            <span class="${textClass} font-black text-[12px] font-mono leading-none tracking-wide shrink-0 mr-1.5">${hnNo}</span>
+                            <span class="${textClass} font-semibold text-[11px] tracking-tight truncate">${fullName}</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-1 shrink-0 h-full py-0.5">
+                            ${badgesHtml}
+                            <span class="text-[8px] font-black px-1 py-0.5 rounded border shadow-sm ${statusBadgeClass} leading-none flex items-center">${statusLabel}</span>
+                            <span class="text-[10px] font-bold ${timeTextClass} w-8 text-right flex items-center justify-end">${timeDisplay}</span>
                         </div>
                     </div>
-                    <div class="w-8 flex justify-center shrink-0"><i class="${ipd.icon} text-lg ${ipd.isNew ? 'drop-shadow-sm' : ''}"></i></div>
                 `;
                 container.appendChild(row);
+            });
 
-                if (!spokenIPDs.has(ipd.id)) {
-                    spokenIPDs.add(ipd.id);
+            if (newUnconfirmedBeds.length > 0) {
+                const uniqueAlerts = [];
+                const seenBeds = new Set();
+                for (const item of newUnconfirmedBeds) {
+                    if (!seenBeds.has(item.bed)) {
+                        seenBeds.add(item.bed);
+                        uniqueAlerts.push(item);
+                    }
+                }
+                
+                const processVoiceMsg = (item) => {
+                    const spokenBedNo = item.bed.split('').join(' ');
+                    let say = "";
+                    if (item.status === 'ADM') {
+                        say = `มีสแกนผู้ป่วยรายใหม่ เตียง ${spokenBedNo} ค่ะ`;
+                    } else if (item.status === 'DC') {
+                        say = `มีสแกนผู้ป่วยกลับบ้าน เตียง ${spokenBedNo}`;
+                        if (item.box && item.box !== "") say += ` เก็บยาเดิมช่อง ${item.box}`;
+                        if (item.sy === 'Y') say += ` มียาน้ำเดิมด้วย`;
+                        if (item.az === 'Y') say += ` มียาฆ่าเชื้อเดิมด้วย`;
+                        say += ` ค่ะ`;
+                    } else {
+                        say = `มีสแกนผู้ป่วยใน เตียง ${spokenBedNo} ค่ะ`;
+                    }
+                    return say;
+                };
+
+                if (!audioUnlocked) {
+                    uniqueAlerts.forEach(item => {
+                        pendingAlertMessages.push(processVoiceMsg(item));
+                    });
                     
-                    if (!isFirstLoadIPD) {
-                        let statusText = "ออร์เดอร์ใหม่";
-                        if(ipd.status === 'Admit' || ipd.status.toLowerCase() === 'admit') statusText = 'แอดมิด';
-                        else if(ipd.status === 'D/C' || ipd.status.toLowerCase() === 'd/c') statusText = 'ดิสชาร์จ';
-                        
-                        voiceQueue.push(`ผู้ป่วยใน เตียง ${ipd.bed} ${statusText} ค่ะ`);
-                        processVoiceQueue();
+                    const banner = document.getElementById('audio-unlock-banner');
+                    if (banner) {
+                        banner.classList.remove('opacity-0', 'pointer-events-none');
+                        banner.classList.add('pointer-events-auto');
+                    }
+                } else {
+                    uniqueAlerts.forEach(item => {
+                        queueVoice(processVoiceMsg(item)); 
+                    });
+                }
+            }
+
+            updateValueWithAnimation('sum-dc', countDC);
+            updateValueWithAnimation('sum-admit', countAdm);
+            updateValueWithAnimation('sum-male', countMale);
+            updateValueWithAnimation('sum-female', countFemale);
+            updateValueWithAnimation('sum-lr', countLR);
+        }
+
+        function renderSliderData(data) {
+            // View 1: Flow
+            if(data.queue_flow) {
+                const flowMap = {
+                    '1. รอซักประวัติ': { name: 'รอซัก', color: 'blue' },
+                    '2. รอพบแพทย์': { name: 'รอแพทย์', color: 'rose' },
+                    '3. รอทำนัด': { name: 'รอนัด', color: 'orange' },
+                    '4. รอรับยา': { name: 'รอยา', color: 'teal' },
+                    '5. รอปิด visit': { name: 'รอปิด', color: 'indigo' },
+                    '6. เสร็จเรียบร้อยแล้ว': { name: 'กลับบ้าน', color: 'emerald' }
+                };
+                
+                let flowHtml = '';
+                const steps = ['1. รอซักประวัติ', '2. รอพบแพทย์', '3. รอทำนัด', '4. รอรับยา', '5. รอปิด visit', '6. เสร็จเรียบร้อยแล้ว'];
+                
+                steps.forEach((stepName, index) => {
+                    const item = data.queue_flow.find(q => q['ขั้นตอนบริการ'] === stepName);
+                    const count = item ? item['จำนวนคน (คน)'] : 0;
+                    const timeStr = item ? item['ระยะเวลารอเฉลี่ย (HH:MM:SS)'] : '00:00:00';
+                    const timeData = formatWaitTime(timeStr);
+                    const config = flowMap[stepName];
+                    
+                    const key = 'flow_' + index;
+                    let animClass = '';
+                    if(prevValues[key] !== undefined && prevValues[key] !== count) { animClass = 'animate-update'; }
+                    prevValues[key] = count;
+
+                    const timeColorClass = timeData.isOver30 ? 'bg-yellow-400 text-yellow-900 font-black' : 'bg-white/60 text-slate-600 font-bold';
+
+                    flowHtml += `
+                        <div class="flex-1 card-3d flex flex-col p-0 overflow-hidden">
+                            <div class="h-3.5 bg-${config.color}-100 text-[8px] font-bold text-center border-b border-${config.color}-200 flex items-center justify-center tracking-tighter">${config.name}</div>
+                            <div class="flex-1 flex items-center justify-center text-lg font-black text-${config.color}-700 leading-none py-0.5"><span class="${animClass}">${count}</span></div>
+                            <div class="h-3 text-[8px] text-center ${timeColorClass} flex items-center justify-center tracking-tighter">${timeData.text}</div>
+                        </div>
+                    `;
+                    
+                    if (index < steps.length - 1) {
+                        flowHtml += `<div class="flex flex-col justify-center items-center px-0.5 text-slate-400 drop-shadow"><i class="fas fa-chevron-right text-[10px] animate-pulse"></i></div>`;
+                    }
+                });
+                document.getElementById('view-flow').innerHTML = flowHtml;
+            }
+
+            // View 2: Doctors
+            if(data.doctor_summary) {
+                let docHtml = '';
+                const docs = data.doctor_summary.slice(0, 6);
+                for(let i=0; i<6; i++) {
+                    const doc = docs[i] || { doctor_name: '-', total_queue: 0 };
+                    let shortName = doc.doctor_name.replace('แพทย์หญิง', 'พญ.').replace('นายแพทย์', 'นพ.');
+                    if(shortName !== '-') shortName = shortName.split(' ')[0];
+
+                    const key = 'doc_' + i;
+                    let animClass = '';
+                    if(prevValues[key] !== undefined && prevValues[key] !== doc.total_queue) { animClass = 'animate-update'; }
+                    prevValues[key] = doc.total_queue;
+
+                    docHtml += `
+                        <div class="flex-1 card-3d flex flex-col p-0 overflow-hidden">
+                            <div class="h-4 bg-purple-100 text-[9px] font-bold text-center border-b border-purple-200 flex items-center justify-center truncate px-0.5 tracking-tighter">${shortName}</div>
+                            <div class="flex-1 flex items-center justify-center text-xl font-black text-purple-700 leading-none"><span class="${animClass}">${doc.total_queue}</span></div>
+                        </div>
+                    `;
+                }
+                document.getElementById('view-doctors').innerHTML = docHtml;
+            }
+
+            // View 3: Clinics
+            if(data.clinic_summary) {
+                let clinicHtml = '';
+                const clinics = data.clinic_summary.slice(0, 6);
+                for(let i=0; i<6; i++) {
+                    const c = clinics[i] || { clinic_name: '-', total_visit: 0 };
+                    const key = 'clinic_' + i;
+                    let animClass = '';
+                    if(prevValues[key] !== undefined && prevValues[key] !== c.total_visit) { animClass = 'animate-update'; }
+                    prevValues[key] = c.total_visit;
+
+                    clinicHtml += `
+                        <div class="flex-1 card-3d flex flex-col p-0 overflow-hidden">
+                            <div class="h-4 bg-fuchsia-100 text-[9px] font-bold text-center border-b border-fuchsia-200 flex items-center justify-center truncate px-0.5 tracking-tighter">${c.clinic_name}</div>
+                            <div class="flex-1 flex items-center justify-center text-xl font-black text-fuchsia-700 leading-none"><span class="${animClass}">${c.total_visit}</span></div>
+                        </div>
+                    `;
+                }
+                document.getElementById('view-clinics').innerHTML = clinicHtml;
+            }
+        }
+
+        async function fetchHospitalData() {
+            const timeEl = document.getElementById('last-update-time');
+            if(timeEl) timeEl.innerHTML = `<i class="fas fa-sync-alt fa-spin mr-1.5 text-slate-500"></i>กำลังโหลด...`;
+
+            try {
+                const res = await fetch(GAS_IPD_API_URL);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                
+                const outerData = await res.json();
+                if (outerData.error) throw new Error(outerData.error);
+                
+                const responseData = outerData.data || {};
+                const timestamp = outerData.timestamp || null;
+
+                // 1. วาดรายชื่อ IPD
+                let ipdData = responseData.ipd_list || [];
+                renderData(ipdData);
+                
+                // 2. อัปเดตตัวเลขแถว 1, 2 แบบมี Animation กระพริบ
+                if (responseData.rx_summary) {
+                    updateValueWithAnimation('sum-prepare', responseData.rx_summary.prepare || "0");
+                    updateValueWithAnimation('sum-dispense', responseData.rx_summary.dispense || "0");
+                }
+                if (responseData.opd_summary) {
+                    updateValueWithAnimation('sum-appointment', responseData.opd_summary.appointment || "0");
+                    updateValueWithAnimation('sum-opd-er', responseData.opd_summary.er_opd || "0");
+                    updateValueWithAnimation('sum-clinic-other', responseData.opd_summary.clinic_other || "0");
+                }
+                
+                // 3. วาดข้อมูล Slider แถว 3
+                renderSliderData(responseData);
+
+                // 4. Appointments Top 8
+                if (responseData.appointments) {
+                    globalAppointments = responseData.appointments;
+                }
+
+                // 5. กล่องยาว่าง
+                const rxBoxStatusEl = document.getElementById('rx-box-status');
+                if (responseData.available_rx_boxes && rxBoxStatusEl) {
+                    const boxes = responseData.available_rx_boxes;
+                    if (boxes.length > 0) {
+                        rxBoxStatusEl.innerHTML = `<i class="fas fa-inbox mr-1 opacity-80"></i> ช่องเก็บยาว่าง [${boxes.length}] : ${boxes.join(', ')}`;
+                    } else {
+                        rxBoxStatusEl.innerHTML = `<i class="fas fa-exclamation-circle mr-1 text-rose-300"></i> ช่องเก็บยาเต็มทั้งหมด (ไม่มีช่อง 1-26 ว่าง)`;
+                    }
+                }
+                
+                // 6. เวลาอัปเดต (แปลงจาก UTC ISO String เป็นเวลาไทย)
+                if(timeEl) {
+                    if (timestamp) {
+                        let finalTimeStr = timestamp;
+                        // ตรวจจับรูปแบบ 2026-08-07T08:55:14.000Z
+                        if (timestamp.includes('T') && timestamp.includes('Z')) {
+                            const dateObj = new Date(timestamp);
+                            if (!isNaN(dateObj.getTime())) {
+                                const hh = String(dateObj.getHours()).padStart(2, '0');
+                                const mm = String(dateObj.getMinutes()).padStart(2, '0');
+                                finalTimeStr = `${hh}:${mm} น.`;
+                            }
+                        } else {
+                            // เผื่อรูปแบบอื่นๆ ที่มี :
+                            const match = String(timestamp).match(/(\d{2}):(\d{2})/);
+                            if(match) finalTimeStr = `${match[1]}:${match[2]} น.`;
+                        }
+                        timeEl.innerHTML = `<i class="fas fa-check-circle mr-1.5 text-emerald-600"></i>อัปเดต ${finalTimeStr}`;
+                    } else {
+                        const now = new Date();
+                        timeEl.innerHTML = `<i class="fas fa-check-circle mr-1.5 text-emerald-600"></i>อัปเดต ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error("Connection Error:", error.message);
+                if(timeEl) timeEl.innerHTML = `<i class="fas fa-times-circle mr-1 text-rose-600"></i> ล้มเหลว`;
+                const container = document.getElementById('ipd-container');
+                if (container && container.innerHTML.includes('กำลังโหลดข้อมูล')) {
+                    let errorMsg = error.message;
+                    let solutionMsg = "โปรดตรวจสอบเครือข่ายของโรงพยาบาล";
+                    if (errorMsg.includes('Failed to fetch')) {
+                        solutionMsg = "ติดสิทธิ์การเข้าถึง (กรุณาตั้งสิทธิ์ GAS เป็น 'ทุกคน/Anyone')";
+                    } else if (errorMsg.includes('404')) {
+                        solutionMsg = "ไม่พบ API (URL ถูกลบหรือเปลี่ยนใหม่ กรุณาอัปเดตลิงก์)";
+                    }
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-slate-600 drop-shadow-md text-center px-4">
+                            <i class="fas fa-exclamation-triangle text-4xl mb-3 text-rose-500"></i>
+                            <span class="text-xl font-black tracking-wide">การเชื่อมต่อขัดข้อง</span>
+                            <span class="text-xs font-bold mt-2 text-rose-600">${errorMsg}</span>
+                            <span class="text-[10px] font-bold mt-1 text-slate-500">${solutionMsg}</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function updateStaffUI(data) {
+            if(!data) return;
+            const mapData = (elId, prop, defRole) => {
+                const el = document.getElementById(elId); if(!el) return;
+                const st = data[prop];
+                if(!st || !st.name || st.name.trim() === "") el.style.display = 'none';
+                else {
+                    el.style.display = 'flex';
+                    let dName = prop !== 'clinic' ? st.name.split('(')[0].trim() : st.name;
+                    const nEl = el.querySelector('.staff-name'); if(nEl) nEl.textContent = dName;
+                    const iEl = el.querySelector('.staff-img');
+                    if(iEl) {
+                        iEl.setAttribute("referrerpolicy", "no-referrer");
+                        if (st.photo) iEl.src = st.photo; else iEl.src = `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(dName.substring(0, 2))}`;
+                    }
+                    const rEl = el.querySelector('.staff-role-text'); if(rEl && !rEl.classList.contains('countdown-text')) rEl.textContent = defRole;
+                    if(prop === 'clinic' && st.clinicLabel) el.querySelector('.staff-clinic').textContent = st.clinicLabel;
+                }
+            };
+            mapData('card-key', 'key', 'ภ.คีย์'); mapData('card-ipd', 'ipd', 'ภ.ใน'); mapData('card-tech', 'tech_morning', 'จพ.เช้า'); mapData('card-check1', 'check1', 'ภ.เช็ค1'); mapData('card-check2', 'check2', 'ภ.เช็ค2'); mapData('card-check3', 'check3', 'ภ.เช็ค3'); mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1'); mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2'); mapData('card-clinic', 'clinic', 'ภ.คลินิก'); mapData('card-aft-pharm', 'afternoon_pharm', ''); mapData('card-aft-tech1', 'afternoon_tech1', ''); mapData('card-oncall', 'oncall', '');
+            document.getElementById('div-aft-tech1').style.display = document.getElementById('card-aft-tech1').style.display !== 'none' ? 'block' : 'none';
+            document.getElementById('div-oncall').style.display = document.getElementById('card-oncall').style.display !== 'none' ? 'block' : 'none';
+        }
+
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            if(!container) return;
+            if(alerts.length === 0) { container.innerHTML = `<div class="card-3d bg-slate-50/90 p-2 flex items-center justify-center h-full"><span class="text-slate-500 font-bold text-sm">ไม่มีการแจ้งเตือนใหม่</span></div>`; return; }
+            container.innerHTML = '';
+            alerts.forEach(a => {
+                let bg, ic, tc, dc, tiC, tT = a.title, dT = a.desc;
+                
+                if (a.type === 'leave') { bg='bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200'; tc='text-amber-900'; dc='text-amber-800 font-bold'; ic='<i class="fas fa-calendar-times text-amber-600 text-xl drop-shadow-sm"></i>'; tiC='text-amber-800 bg-white border-amber-200'; }
+                else if (a.type === 'non_formulary') { bg='bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200'; tc='text-purple-900'; dc='text-purple-800'; ic='<i class="fas fa-file-medical text-purple-600 text-xl drop-shadow-sm"></i>'; tiC='text-purple-800 bg-white border-purple-200'; }
+                else if (a.type === 'requisition') { bg='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'; tc='text-blue-900'; dc='text-blue-800'; ic='<i class="fas fa-box-open text-blue-700 text-xl drop-shadow-sm"></i>'; tiC='text-blue-800 bg-white border-blue-200'; }
+                else if (a.type === 'temperature') { bg='bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 temp-alert-card'; tc='text-orange-900 font-black'; dc='text-red-800 font-extrabold text-[10px]'; ic='<i class="fas fa-temperature-high text-orange-600 text-xl drop-shadow-sm animate-pulse"></i>'; tiC='text-orange-800 bg-white border-orange-200'; }
+                else if (a.type === 'line') { bg='bg-gradient-to-br from-[#f2fcf2] to-[#e6f9e6] border-[#00B900]/30'; tc='text-[#009900]'; dc='text-[#007700]'; ic='<i class="fab fa-line text-[#00B900] text-xl drop-shadow-sm"></i>'; tiC='text-[#009900] bg-white border-[#00B900]/30'; }
+                else if (a.type === 'expiry') { bg='bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200'; tc='text-rose-900'; dc='text-rose-800'; ic='<i class="fas fa-exclamation-triangle text-rose-600 text-xl drop-shadow-sm"></i>'; tiC='text-rose-800 bg-white border-rose-200'; }
+                else if (a.type === 'checked') { bg='bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200'; tc='text-teal-900'; dc='text-teal-800'; ic='<i class="fas fa-box text-teal-600 text-xl drop-shadow-sm"></i>'; tiC='text-teal-800 bg-white border-teal-200'; tT = a.title.replace(/เช็คพร้อมใช้แล้ว|พร้อมใช้:|พร้อมใช้/g, '').trim() + " เช็คพร้อมใช้แล้ว"; dT = a.desc + " | " + a.timeStr; }
+
+                container.innerHTML += `<div class="card-3d ${bg} p-1.5 flex items-center gap-2 transition-all duration-300"><div class="w-7 flex justify-center shrink-0">${ic}</div><div class="flex-1 flex flex-col justify-center overflow-hidden"><div class="flex justify-between items-start mb-0.5"><span class="text-xs font-black ${tc} truncate">${tT}</span><span class="text-[9px] ${tiC} font-black px-1 py-0.5 rounded shadow-sm border shrink-0">${a.timeStr}</span></div><span class="text-[10px] font-bold ${dc} line-clamp-2 leading-tight">${dT}</span></div></div>`;
+
+                if (!spokenAlerts.has(a.id)) {
+                    spokenAlerts.add(a.id);
+                    if (a.type !== 'expiry') {
+                        let say = "";
+                        if (a.type === 'leave') say = `แจ้งเตือนการลาหรือไปราชการ: ${a.desc} ค่ะ`;
+                        else if (a.type === 'non_formulary') say = `มีรายการขอใช้ยานอกบัญชีใหม่ จาก ${a.title.replace(' ขอใช้ยานอก', '').trim()} ค่ะ`;
+                        else if (a.type === 'requisition') say = `มีการเบิกยาใหม่ จาก ${a.title.replace('เบิกยา:', '').trim()} ค่ะ`;
+                        else if (a.type === 'temperature') say = `เตือนอุณหภูมิเกินช่วง ${(a.deviceName || "").replace(/_/g, " ").trim()} ${parseFloat(a.tempValue || "0").toFixed(1)} องศาเซลเซียสค่ะ`;
+                        else if (a.type === 'line') say = `มีการถามยาในไลน์ ${a.title.replace('ถามยา:', '').trim()} ค่ะ`;
+                        else if (a.type === 'checked') say = `${a.title.replace(/เช็คพร้อมใช้แล้ว|พร้อมใช้:|พร้อมใช้/g, '').trim()} เช็คพร้อมใช้แล้วค่ะ`;
+                        if (say) queueVoice(say);
                     }
                 }
             });
-            isFirstLoadIPD = false;
         }
 
-        setTimeout(() => {
-            const now = new Date();
-            const timeStr = ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2);
-            ipdData.unshift({
-                id: 'ipd-demo-new-' + Date.now(),
-                bed: 'M02',
-                hn: '102030405',
-                status: 'Admit',
-                time: timeStr,
-                bg: 'bg-emerald-500',
-                icon: 'fas fa-check-circle text-emerald-500',
-                isNew: true
-            });
-            renderIPDList();
-        }, 10000);
-
-        // --- Fetch GAS Schedule & Alerts ---
-        async function fetchSchedule() {
-            try {
-                const res = await fetch(GAS_API_URL);
-                const data = await res.json();
-                
-                staffSchedule = data;
-                if(!isDemoMode) updateStaffUI(staffSchedule.today);
-                
-                if(data.alerts) renderAlerts(data.alerts);
-                if(data.tempStatus) renderTempStatus(data.tempStatus);
-
-            } catch(error) {
-                console.error("Error fetching GS:", error);
-            }
-        }
-
-        // --- STREAMING_CHUNK: Processing 4-col card layout with 2-line header, small texts, category dividers, and alert badge ---
-        // --- Render Temp Status UI ---
         function renderTempStatus(tempStatus) {
+            let hasFridgeAlert = false; let hasRoomAlert = false;
             const createCard = (item, isFridge) => {
-                const isAlert = item.alert;
-                const cardClass = isAlert ? "temp-alert-card" : "bg-white/95 border-slate-200";
-                
-                let headerClass = "";
-                if (isAlert) {
-                    headerClass = "bg-gradient-to-r from-red-600 to-rose-500 text-white";
-                } else {
-                    headerClass = isFridge 
-                        ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white" 
-                        : "bg-gradient-to-r from-teal-600 to-emerald-500 text-white";
-                }
-                
-                const tempColor = isAlert ? "text-red-700" : "text-slate-800";
-                const humColor = isAlert ? "text-red-500" : "text-slate-500";
-                
-                // Badge วาดไว้มุมขวาบน กระพริบสีแดง
-                const alertBadge = isAlert ? `<div class="absolute top-0 right-0 bg-red-600 text-white text-[6.5px] font-black px-1.5 py-0.5 rounded-bl shadow-sm z-10 leading-none tracking-widest animate-pulse border-b border-l border-red-700">ALERT</div>` : '';
-                
-                // บังคับ Header 2 บรรทัด ตัวอักษรขนาดเล็กลง และจัดกลางกล่องตัวเลขอุณหภูมิให้เล็กลง
-                return `
-                <div class="card-3d relative overflow-hidden flex flex-col ${cardClass}">
-                    ${alertBadge}
-                    <!-- Bar Header (บังคับ 2 บรรทัด ตัวเล็ก) -->
-                    <div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-bold uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center shadow-sm shrink-0">
-                        ${item.name}
-                    </div>
-                    <!-- Temperature Centered (ตัวเล็กลง) -->
-                    <div class="flex-1 flex flex-col items-center justify-center py-1 bg-white/45 min-h-0">
-                        <span class="text-sm font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
-                        <span class="text-[7.5px] font-bold ${humColor} leading-none mt-0.5 opacity-95">RH: ${item.hum}%</span>
-                    </div>
-                </div>`;
+                const isAlert = item.alert; const hasData = item.temp !== '--' && item.temp !== '';
+                if (isAlert && hasData) { if (isFridge) hasFridgeAlert = true; else hasRoomAlert = true; }
+                let cardClass = isAlert ? "temp-alert-card" : "bg-white/95 border-slate-200";
+                let headerClass = isAlert ? "bg-gradient-to-r from-red-600 to-rose-500 text-white" : (isFridge ? "bg-gradient-to-r from-blue-600 to-sky-500 text-white" : "bg-gradient-to-r from-teal-600 to-emerald-500 text-white");
+                let tempColor = isAlert ? "text-red-700" : "text-slate-800";
+                let humColor = isAlert ? "text-red-500" : "text-slate-500";
+
+                if (!hasData) { cardClass = "bg-slate-200 border-slate-300 opacity-70"; headerClass = "bg-slate-400 text-white"; tempColor = "text-slate-400"; humColor = "text-slate-400"; }
+                const alertBadge = isAlert && hasData ? `<div class="absolute top-0 right-0 bg-red-600 text-white text-[6.5px] font-black px-1.5 py-0.5 rounded-bl shadow-sm z-10 leading-none tracking-widest animate-pulse border-b border-l border-red-700">ALERT</div>` : '';
+                return `<div class="card-3d relative overflow-hidden flex flex-col ${cardClass}">${alertBadge}<div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-bold uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center shadow-sm shrink-0">${item.name}</div><div class="flex-1 flex flex-col items-center justify-center py-1 bg-white/45 min-h-0"><span class="text-sm font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span><span class="text-[7.5px] font-bold ${humColor} leading-none mt-0.5 opacity-95">RH: ${item.hum}%</span></div></div>`;
             };
 
             const renderGroup = (data, isFridge) => {
                 if (!data || data.length === 0) return '';
-                
-                // แบ่ง 3 หมวด
-                const groupHongYa = data.filter(item => item.room === 'ห้องยา');
-                const groupKlangYa = data.filter(item => item.room === 'คลังยา');
-                const groupOther = data.filter(item => item.room !== 'ห้องยา' && item.room !== 'คลังยา');
-                
                 let html = '';
-                
-                // ฟังก์ชันวาดเส้นคั่นและป้ายกำกับหมวด
                 const renderSection = (title, items) => {
                     if (items.length === 0) return '';
-                    let sectionHtml = `
-                        <div class="col-span-4 flex justify-center mt-1.5 mb-1 relative">
-                            <div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div>
-                            <span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span>
-                        </div>`;
-                    sectionHtml += items.map(item => createCard(item, isFridge)).join('');
-                    return sectionHtml;
+                    let sectionHtml = `<div class="col-span-4 flex justify-center mt-1.5 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
+                    sectionHtml += items.map(item => createCard(item, isFridge)).join(''); return sectionHtml;
                 };
-
-                html += renderSection('ห้องยา', groupHongYa);
-                html += renderSection('คลังยา', groupKlangYa);
-                html += renderSection('หน่วยงานอื่นๆ', groupOther);
-                
+                html += renderSection('ห้องยา', data.filter(i => i.room === 'ห้องยา'));
+                html += renderSection('คลังยา', data.filter(i => i.room === 'คลังยา'));
+                html += renderSection('หน่วยงานอื่นๆ', data.filter(i => i.room !== 'ห้องยา' && i.room !== 'คลังยา'));
                 return html;
             };
 
-            const fridgeGrid = document.getElementById('temp-fridge-grid');
-            if(fridgeGrid && tempStatus.fridge) {
-                if (tempStatus.fridge.length === 0) {
-                    fridgeGrid.innerHTML = `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
-                } else {
-                    fridgeGrid.innerHTML = renderGroup(tempStatus.fridge, true);
-                }
-            }
+            const fGrid = document.getElementById('temp-fridge-grid');
+            if(fGrid) fGrid.innerHTML = tempStatus.fridge.length ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
+            const fMsg = document.getElementById('fridge-alert-msg');
+            if(fMsg) fMsg.innerHTML = hasFridgeAlert ? `<div class="mt-auto pt-1 pb-1 bg-red-100 border border-red-500 rounded animate-pulse shadow-sm mx-1"><div class="text-center font-bold text-red-700 text-xs drop-shadow-sm">⚠️ เภสัชกรกรุณาตรวจสอบตู้เย็นด่วน!! ⚠️</div></div>` : '';
 
-            const roomGrid = document.getElementById('temp-room-grid');
-            if(roomGrid && tempStatus.room) {
-                if (tempStatus.room.length === 0) {
-                    roomGrid.innerHTML = `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
-                } else {
-                    roomGrid.innerHTML = renderGroup(tempStatus.room, false);
-                }
-            }
+            const rGrid = document.getElementById('temp-room-grid');
+            if(rGrid) rGrid.innerHTML = tempStatus.room.length ? renderGroup(tempStatus.room, false) : `<div class="text-center text-xs text-slate-500 col-span-4 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
+            const rMsg = document.getElementById('room-alert-msg');
+            if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-auto pt-1 pb-1 bg-red-100 border border-red-500 rounded animate-pulse shadow-sm mx-1"><div class="text-center font-bold text-red-700 text-xs drop-shadow-sm">⚠️ เภสัชกรกรุณาตรวจสอบอุณหภูมิห้องด่วน!! ⚠️</div></div>` : '';
         }
 
-        // --- STREAMING_CHUNK: Filtering older alerts and styling non_formulary dynamic notifications ---
-        // --- Render Alerts UI ---
-        function renderAlerts(alerts) {
-            const container = document.getElementById('alerts-container');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(alerts.length === 0) {
-                container.innerHTML = `<div class="card-3d bg-slate-50/90 p-2 flex items-center justify-center h-full"><span class="text-slate-500 font-bold text-sm">ไม่มีการแจ้งเตือนใหม่</span></div>`;
-                return;
-            }
-
-            alerts.forEach(alert => {
-                let bgClass, iconHtml, titleColor, descColor, timeClass;
-
-                // Priority 0: ยานอกบัญชี (สีม่วง Icon เอกสาร)
-                if (alert.type === 'non_formulary') {
-                    bgClass = 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200';
-                    titleColor = 'text-purple-900';
-                    descColor = 'text-purple-800';
-                    iconHtml = '<i class="fas fa-file-medical text-purple-600 text-3xl drop-shadow-sm"></i>';
-                    timeClass = 'text-purple-800 bg-white border-purple-200';
-                } else if (alert.type === 'requisition') { 
-                    bgClass = 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200';
-                    titleColor = 'text-blue-900';
-                    descColor = 'text-blue-800';
-                    iconHtml = '<i class="fas fa-box-open text-blue-700 text-3xl drop-shadow-sm"></i>';
-                    timeClass = 'text-blue-800 bg-white border-blue-200';
-                } else if (alert.type === 'temperature') { 
-                    bgClass = 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 temp-alert-card';
-                    titleColor = 'text-orange-900 font-black';
-                    descColor = 'text-red-800 font-extrabold text-base';
-                    iconHtml = '<i class="fas fa-temperature-high text-orange-600 text-3xl drop-shadow-sm animate-pulse"></i>';
-                    timeClass = 'text-orange-800 bg-white border-orange-200';
-                } else if (alert.type === 'line') { 
-                    bgClass = 'bg-gradient-to-br from-[#f2fcf2] to-[#e6f9e6] border-[#00B900]/30'; 
-                    titleColor = 'text-[#009900]';
-                    descColor = 'text-[#007700]';
-                    iconHtml = '<i class="fab fa-line text-[#00B900] text-3xl drop-shadow-sm"></i>';
-                    timeClass = 'text-[#009900] bg-white border-[#00B900]/30';
-                } else if (alert.type === 'expiry') { 
-                    bgClass = 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200';
-                    titleColor = 'text-rose-900';
-                    descColor = 'text-rose-800';
-                    iconHtml = '<i class="fas fa-exclamation-triangle text-rose-600 text-3xl drop-shadow-sm"></i>';
-                    timeClass = 'text-rose-800 bg-white border-rose-200';
-                } else if (alert.type === 'checked') { 
-                    bgClass = 'bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200';
-                    titleColor = 'text-teal-900';
-                    descColor = 'text-teal-800';
-                    iconHtml = '<i class="fas fa-box text-teal-600 text-3xl drop-shadow-sm"></i>';
-                    timeClass = 'text-teal-800 bg-white border-teal-200';
-                }
-
-                let titleText = alert.title;
-                let descText = alert.desc;
-
-                if (alert.type === 'checked') {
-                    let cleanBoxName = alert.title.replace('เช็คพร้อมใช้แล้ว', '').replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
-                    titleText = cleanBoxName + " เช็คพร้อมใช้แล้ว";
-                    descText = alert.desc + " | " + alert.timeStr;
-                }
-
-                const cardHtml = `
-                <div class="card-3d ${bgClass} p-2.5 flex items-center gap-3 transition-all duration-300">
-                    <div class="w-11 flex justify-center shrink-0">${iconHtml}</div>
-                    <div class="flex-1 flex flex-col justify-center overflow-hidden">
-                        <div class="flex justify-between items-start mb-0.5">
-                            <span class="text-base font-black ${titleColor} truncate">${titleText}</span>
-                            <span class="text-[11px] ${timeClass} font-black px-1.5 py-0.5 rounded shadow-sm border shrink-0">${alert.timeStr}</span>
-                        </div>
-                        <span class="text-sm font-bold ${descColor} line-clamp-2 leading-snug">${descText}</span>
-                    </div>
-                </div>`;
-                container.innerHTML += cardHtml;
-
-                // --- ตรวจจับและจัดคิวเสียงอ่าน ---
-                if (!spokenAlerts.has(alert.id)) {
-                    spokenAlerts.add(alert.id);
-                    
-                    if (alert.type !== 'expiry') {
-                        let textToSpeak = "";
-                        if (alert.type === 'non_formulary') {
-                            textToSpeak = `มีรายการขอใช้ยานอกบัญชีใหม่ จาก ${alert.title.replace(' ขอใช้ยานอก', '').trim()} ค่ะ`;
-                        } else if (alert.type === 'requisition') {
-                            textToSpeak = `มีการเบิกยาใหม่ จาก ${alert.title.replace('เบิกยา:', '').trim()} ค่ะ`;
-                        } else if (alert.type === 'temperature') {
-                            const cleanDeviceName = (alert.deviceName || "").replace(/_/g, " ").trim();
-                            const formattedTemp = parseFloat(alert.tempValue || "0").toFixed(1);
-                            textToSpeak = `เตือนอุณหภูมิเกินช่วง ${cleanDeviceName} ${formattedTemp} องศาเซลเซียสค่ะ`;
-                        } else if (alert.type === 'line') {
-                            textToSpeak = `มีการถามยาในไลน์ ${alert.title.replace('ถามยา:', '').trim()} ค่ะ`;
-                        } else if (alert.type === 'checked') {
-                            let cleanBoxName = alert.title.replace('เช็คพร้อมใช้แล้ว', '').replace('พร้อมใช้:', '').replace('พร้อมใช้', '').trim();
-                            textToSpeak = `${cleanBoxName} เช็คพร้อมใช้แล้วค่ะ`;
-                        }
-                        
-                        if (textToSpeak) {
-                            voiceQueue.push(textToSpeak);
-                            processVoiceQueue();
-                        }
-                    }
-                }
+        function renderLasa(lasaList) {
+            const container = document.getElementById('lasa-container');
+            if (!container) return;
+            if (!lasaList || lasaList.length === 0) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-500 font-bold text-sm text-center"><i class="fas fa-check-circle text-emerald-500 text-3xl mb-2"></i>ไม่พบคู่ LASAs<br>ในช่วง 30 วันที่ผ่านมา</div>`; return; }
+            let html = '';
+            lasaList.forEach((item, index) => {
+                const rColor = ['bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-blue-500', 'bg-slate-500'][index] || 'bg-slate-500';
+                html += `<div class="card-3d bg-white/90 p-1.5 flex items-center gap-2 relative overflow-hidden shrink-0"><div class="absolute left-0 top-0 bottom-0 w-1 ${rColor}"></div><div class="${rColor} text-white font-black text-xs w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-1 shadow-sm">${index + 1}</div><div class="flex-1 flex flex-col min-w-0"><span class="text-[11px] font-black text-slate-800 truncate text-left">${item.d1}</span><span class="text-[11px] font-black text-slate-600 truncate border-t border-dashed border-slate-300 pt-0.5 mt-0.5 text-left">${item.d2}</span></div><div class="flex flex-col items-center justify-center bg-slate-100 px-2 py-1 rounded border border-slate-200 shrink-0"><span class="text-[9px] text-slate-500 font-bold leading-none mb-0.5">ความถี่</span><span class="text-sm font-black text-rose-600 leading-none">${item.count}</span></div></div>`;
             });
+            container.innerHTML = html;
         }
 
-        // --- STREAMING_CHUNK: Processing avatar details for staff schedules ---
-        function updateStaffUI(data) {
-            if(!data) return;
+        function renderDoctors(doctors) {
+            const container = document.getElementById('doctors-container');
+            if (!container) return;
+            if (!doctors || (!doctors.ER.length && !doctors.OPD.length && !doctors.IPD.length)) { container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์วันนี้</div>`; return; }
 
-            const mapData = (elId, prop, defaultRole) => {
-                const el = document.getElementById(elId);
-                if(!el) return;
-                
-                const staff = data[prop];
-                
-                if(!staff || !staff.name || staff.name.trim() === "") {
-                    el.style.display = 'none';
-                } else {
-                    el.style.display = 'flex';
-                    
-                    let displayName = staff.name;
-                    if(prop !== 'clinic') {
-                        displayName = displayName.split('(')[0].trim();
-                    }
-                    const nameEl = el.querySelector('.staff-name');
-                    if(nameEl) nameEl.textContent = displayName;
-                    
-                    const imgEl = el.querySelector('.staff-img');
-                    if(imgEl) {
-                        if (staff.photo) {
-                            imgEl.src = staff.photo;
-                        } else {
-                            let initials = displayName.substring(0, 2);
-                            imgEl.src = `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(initials)}`;
-                        }
-                    }
+            const isDayTime = new Date().getHours() >= 8 && new Date().getHours() < 16;
+            const filterDocs = (list) => list.filter(doc => isDayTime ? !doc.role.includes("นอกเวลา") : doc.role.includes("นอกเวลา"));
 
-                    const roleEl = el.querySelector('.staff-role-text');
-                    if(roleEl && !roleEl.classList.contains('countdown-text')) {
-                        roleEl.textContent = defaultRole;
-                    }
-                    if(prop === 'clinic' && staff.clinicLabel) {
-                        el.querySelector('.staff-clinic').textContent = staff.clinicLabel;
-                    }
-                }
+            let html = '';
+            const renderGroup = (title, icon, colorClass, cardBgClass, list) => {
+                if (list.length === 0) return '';
+                let g = `<div class="flex items-center gap-2 mb-1 mt-1"><span class="text-[10px] font-black ${colorClass} bg-white px-2 py-0.5 rounded shadow-sm border"><i class="${icon} mr-1"></i>${title}</span><div class="h-px bg-slate-300 flex-1"></div></div><div class="grid grid-cols-3 gap-1">`; 
+                list.forEach(doc => { g += `<div class="card-3d ${cardBgClass} py-1 px-0.5 flex flex-col items-center justify-center text-center h-[40px] shrink-0 border border-black/5"><span class="text-[8px] font-bold opacity-80 truncate w-full leading-none">${doc.role}</span><span class="text-[11px] font-black leading-tight w-full truncate mt-0.5">${doc.name}</span></div>`; });
+                return g + `</div>`;
             };
 
-            mapData('card-key', 'key', 'ภ.คีย์');
-            mapData('card-ipd', 'ipd', 'ภ.ใน');
-            mapData('card-tech', 'tech_morning', 'จพ.เช้า'); 
-            mapData('card-check1', 'check1', 'ภ.เช็ค1');
-            mapData('card-check2', 'check2', 'ภ.เช็ค2');
-            mapData('card-check3', 'check3', 'ภ.เช็ค3');     
-            mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1');
-            mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2');
-            mapData('card-clinic', 'clinic', 'ภ.คลินิก');
+            html += renderGroup('ER', 'fas fa-ambulance', 'text-rose-600 border-rose-200', 'bg-gradient-to-br from-rose-100 to-rose-200 text-rose-900', filterDocs(doctors.ER));
+            html += renderGroup('OPD', 'fas fa-stethoscope', 'text-blue-600 border-blue-200', 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-900', filterDocs(doctors.OPD));
+            html += renderGroup('IPD', 'fas fa-procedures', 'text-emerald-600 border-emerald-200', 'bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-900', filterDocs(doctors.IPD));
 
-            mapData('card-aft-pharm', 'afternoon_pharm', '');
-            mapData('card-aft-tech1', 'afternoon_tech1', '');
-            mapData('card-oncall', 'oncall', '');
-
-            const cAft1 = document.getElementById('card-aft-tech1').style.display !== 'none';
-            const cOnc = document.getElementById('card-oncall').style.display !== 'none';
-            document.getElementById('div-aft-tech1').style.display = cAft1 ? 'block' : 'none';
-            document.getElementById('div-oncall').style.display = cOnc ? 'block' : 'none';
+            container.innerHTML = html === '' ? `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์ในกะเวลานี้</div>` : html;
         }
 
-        // --- STREAMING_CHUNK: Managing dates and timezone clocks ---
-        function updateClock() {
-            const now = new Date();
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            document.getElementById('clock-display').textContent = now.toLocaleTimeString('th-TH', timeOptions);
+        function renderWeekly(weeklyList) {
+            const container = document.getElementById('weekly-container');
+            if (!container) return;
+            if (!weeklyList || weeklyList.length !== 5) { container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบข้อมูลรายสัปดาห์</div>`; return; }
 
-            const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์'];
-            const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-            
-            document.getElementById('date-display').textContent = `วัน${thaiDays[now.getDay()]} ${now.getDate()} ${thaiMonthsShort[now.getMonth()]} ${now.getFullYear() + 543}`;
-            
-            checkStaffShifts(now);
-            checkSwapCards(now);
-        }
+            const roles = [{ id: 'key', label: 'คีย์' }, { id: 'ipd', label: 'ใน' }, { id: 'tech', label: 'จพ.เช้า' }, { id: 'check1', label: 'เช็ค1' }, { id: 'check2', label: 'เช็ค2' }, { id: 'check3', label: 'เช็ค3' }, { id: 'dispense1', label: 'จ่าย1' }, { id: 'dispense2', label: 'จ่าย2' }, { id: 'afternoon_pharm', label: 'ภ.บ่าย' }, { id: 'afternoon_tech1', label: 'จพ.บ่าย' }, { id: 'oncall', label: 'Oncall' }];
 
-        // --- STREAMING_CHUNK: Configuring 2-minute cycle swapping for Fridge, Room, and Staff screens ---
-        function checkSwapCards(now) {
-            const min = now.getMinutes();
-            const sec = now.getSeconds();
-            
-            const isEvenMinute = (min % 2 === 0);
-            
-            const showFridge = isEvenMinute && (sec >= 0 && sec < 15);
-            const showRoom = isEvenMinute && (sec >= 15 && sec < 30);
+            const colorPalette = [
+                'bg-rose-100 text-rose-800 border-rose-300',
+                'bg-blue-100 text-blue-800 border-blue-300',
+                'bg-emerald-100 text-emerald-800 border-emerald-300',
+                'bg-amber-100 text-amber-800 border-amber-300',
+                'bg-purple-100 text-purple-800 border-purple-300',
+                'bg-cyan-100 text-cyan-800 border-cyan-300',
+                'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+                'bg-orange-100 text-orange-800 border-orange-300',
+                'bg-lime-100 text-lime-800 border-lime-300',
+                'bg-pink-100 text-pink-800 border-pink-300'
+            ];
+            let nameColorMap = {};
+            let colorIndex = 0;
 
-            const staffCol = document.getElementById('col-staff');
-            const fridgeCol = document.getElementById('col-fridge-temp');
-            const roomCol = document.getElementById('col-room-temp');
+            let html = `<table class="w-full h-full text-center border-collapse table-fixed"><thead><tr><th class="w-[15%] pb-1 border-b border-slate-300"></th>`;
+            weeklyList.forEach(day => { html += `<th class="w-[17%] font-black align-middle py-1 border-b border-slate-300 ${day.isToday ? 'bg-indigo-500 text-white shadow-md rounded-t' : 'bg-slate-200/70 text-slate-700 rounded-t'}">${day.dayName}</th>`; });
+            html += `</tr></thead><tbody>`;
 
-            if (showFridge) {
-                if (staffCol) staffCol.style.display = 'none';
-                if (roomCol) roomCol.style.display = 'none';
-                if (fridgeCol) fridgeCol.style.display = 'flex';
-            } else if (showRoom) {
-                if (staffCol) staffCol.style.display = 'none';
-                if (fridgeCol) fridgeCol.style.display = 'none';
-                if (roomCol) roomCol.style.display = 'flex';
-            } else {
-                if (fridgeCol) fridgeCol.style.display = 'none';
-                if (roomCol) roomCol.style.display = 'none';
-                if (staffCol) staffCol.style.display = 'flex';
-            }
-        }
-
-        // --- STREAMING_CHUNK: Aligning current personnel unique names calculation ---
-        function checkStaffShifts(now) {
-            const currentMins = now.getHours() * 60 + now.getMinutes();
-            const currentSecs = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-
-            const roles = {
-                'key': [{ start: 8 * 60, end: 11 * 60 + 30 }, { start: 12 * 60 + 30, end: 16 * 60 }],
-                'ipd': [{ start: 8 * 60, end: 12 * 60 }, { start: 13 * 60, end: 16 * 60 }],
-                'check': [{ start: 8 * 60, end: 12 * 60 + 30 }, { start: 13 * 60 + 30, end: 16 * 60 }],
-                'dispense': [{ start: 8 * 60, end: 12 * 60 + 30 }, { start: 13 * 60 + 30, end: 16 * 60 }],
-                'clinic': [{ start: 8 * 60, end: 16 * 60 }],
-                'tech': [{ start: 8 * 60, end: 11 * 60 }, { start: 12 * 60, end: 16 * 60 }]
-            };
-
-            let activeStaffNames = new Set(); // ใช้ Set เก็บชื่อเพื่อกรองคนที่ควบ 2 ตำแหน่ง
-
-            document.querySelectorAll('.staff-item').forEach(el => {
-                if (el.style.display === 'none') return; 
-
-                const roleKey = el.dataset.role;
-                const shifts = roles[roleKey];
-                if (!shifts) return;
-
-                let isActive = false;
-                let isEndingSoon = false;
-                let remainingSec = 0;
-
-                for (let shift of shifts) {
-                    if (currentMins >= shift.start && currentMins < shift.end) {
-                        isActive = true;
-                        remainingSec = (shift.end * 60) - currentSecs;
-                        if (remainingSec <= 300) isEndingSoon = true; 
-                        break;
-                    }
-                }
-
-                el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
-                const roleTextEl = el.querySelector('.staff-role-text');
-
-                if (isActive) {
-                    const staffNameEl = el.querySelector('.staff-name');
-                    if (staffNameEl) {
-                        const name = staffNameEl.textContent.trim();
-                        if (name && name !== '--') {
-                            activeStaffNames.add(name); // เพิ่มชื่อลงใน Set (ถ้าชื่อซ้ำจะถูกรวบอัตโนมัติ)
+            roles.forEach((role, i) => {
+                const isLast = i === roles.length - 1;
+                html += `<tr class="${isLast ? '' : 'border-b border-slate-200/50'}"><td class="text-[9px] font-bold text-slate-600 text-right pr-1 align-middle">${role.label}</td>`;
+                weeklyList.forEach(day => {
+                    const bg = day.isToday ? 'bg-indigo-50 shadow-[inset_0_0_4px_rgba(0,0,0,0.05)]' : '';
+                    const rB = (day.isToday && isLast) ? 'rounded-b' : '';
+                    const rD = day.roles ? day.roles[role.id] : null;
+                    let pUrl = '', sName = '';
+                    if (rD) { if (typeof rD === 'string') pUrl = rD; else { pUrl = rD.photo; sName = rD.name || ''; } }
+                    
+                    if (sName || pUrl) {
+                        if (sName && !nameColorMap[sName]) {
+                            nameColorMap[sName] = colorPalette[colorIndex % colorPalette.length];
+                            colorIndex++;
                         }
-                    }
+                        let nClass = sName ? nameColorMap[sName] : 'bg-white border-slate-200 text-slate-700';
 
-                    if (isEndingSoon) {
-                        el.classList.add('staff-ending');
-                        const m = Math.floor(remainingSec / 60).toString().padStart(2, '0');
-                        const s = (remainingSec % 60).toString().padStart(2, '0');
-                        roleTextEl.textContent = `${m}:${s}`;
-                        roleTextEl.classList.add('countdown-text');
+                        let pH = pUrl ? `<img src="${pUrl}" referrerpolicy="no-referrer" class="w-5 h-5 rounded-full object-cover border border-slate-300 shadow-sm mx-auto shrink-0" onerror="this.style.display='none'">` : '';
+                        let nH = sName ? `<div class="${nClass} border text-[6px] font-bold px-0.5 py-[1px] rounded-sm mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis w-10 text-center mx-auto leading-none shrink-0">${sName}</div>` : '';
+                        html += `<td class="align-middle py-0.5 ${bg} ${rB}"><div class="flex flex-col items-center justify-center min-h-[32px] w-full">${pH}${nH}</div></td>`;
                     } else {
-                        el.classList.add('staff-active');
-                        roleTextEl.classList.remove('countdown-text');
+                        html += `<td class="align-middle py-0.5 ${bg} ${rB}"><div class="min-h-[32px] w-full"></div></td>`;
                     }
-                } else {
-                    el.classList.add('staff-inactive');
-                    roleTextEl.classList.remove('countdown-text');
-                }
+                });
+                html += `</tr>`;
             });
-
-            // นับจำนวนคน(ชื่อ) จริงๆ ที่กำลังเข้ากะ
-            const activeCount = activeStaffNames.size;
-            document.getElementById('active-staff-count').textContent = activeCount + ' คน';
-
-            if (previousActiveCount !== -1 && previousActiveCount !== activeCount) {
-                console.log("Shift Changed detected!");
-                if(!isSpeaking) {
-                    playShiftChangeMelody();
-                } else {
-                     setTimeout(() => {
-                         if(!isSpeaking) playShiftChangeMelody();
-                     }, 3000);
-                }
-            }
-            previousActiveCount = activeCount;
+            container.innerHTML = html + `</tbody></table>`;
         }
 
-        // --- STREAMING_CHUNK: Processing gold, oil, and global news feeds ---
-        let mixData = [];
-        let currentMixIndex = 0;
+        function renderBoxes(boxes) {
+            const container = document.getElementById('boxes-container');
+            if(!container) return;
+            if(!boxes || boxes.length === 0) { container.innerHTML = `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ยังไม่มีการเปลี่ยนกล่องประจำวัน</div>`; return; }
+            let html = '';
+            boxes.forEach(b => {
+                html += `<div class="card-3d bg-white/80 p-1 flex flex-col items-center justify-center text-center"><img src="https://sawee-hosp.github.io/sawee-mr/box.png" class="w-8 h-8 mb-1 drop-shadow-sm"><span class="text-[9px] font-black text-slate-800 leading-tight w-full truncate">${b.name}</span><span class="text-[8px] font-bold text-slate-500 mt-0.5">${b.time}</span><span class="text-[7px] text-white bg-amber-600 px-1 py-[1px] rounded mt-0.5 truncate max-w-full">${b.pharm}</span></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function fetchSchedule() {
+            try {
+                const res = await fetch(GAS_SCHEDULE_API_URL);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                
+                if(data.today) updateStaffUI(data.today);
+                if(data.alerts) renderAlerts(data.alerts);
+                if(data.tempStatus) renderTempStatus(data.tempStatus);
+                if(data.lasa) renderLasa(data.lasa);
+                if(data.today && data.today.doctors) renderDoctors(data.today.doctors);
+                if(data.weekly) renderWeekly(data.weekly);
+                if(data.boxes) renderBoxes(data.boxes);
+                if(data.holidays) globalHolidays = data.holidays;
+
+            } catch(error) { console.error("Error fetching GS Schedule:", error); }
+        }
+
+        function renderIncidents(incidents) {
+            const container = document.getElementById('incident-container');
+            if(!container) return;
+            let html = '';
+            
+            html += `<div class="card-3d bg-white/90 p-2 mb-2">
+                <h3 class="text-xs font-black text-indigo-700 border-b border-indigo-200 pb-1 mb-1"><i class="fas fa-moon mr-1"></i>อุบัติการณ์ห้อง ER นอกเวลา</h3>`;
+            if(incidents.er && incidents.er.total > 0) {
+                const perc = ((incidents.er.errors / incidents.er.total)*100).toFixed(1);
+                html += `
+                <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 mt-1">
+                    <span>จำนวนใบสั่งยา: <span class="text-indigo-600">${incidents.er.total}</span></span>
+                    <span>Error: <span class="text-rose-600">${incidents.er.errors}</span> (${perc}%)</span>
+                </div>
+                <div class="text-[9px] text-slate-500 mt-1 text-right">ผู้ลงข้อมูล: ${incidents.er.pharmacist || '-'}</div>`;
+            } else if (incidents.er && incidents.er.total === 0 && incidents.er.errors === 0) {
+                 html += `
+                <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 mt-1">
+                    <span>จำนวนใบสั่งยา: <span class="text-indigo-600">${incidents.er.total}</span></span>
+                    <span>Error: <span class="text-emerald-600">0</span> (0.0%)</span>
+                </div>
+                <div class="text-center text-[10px] font-bold text-emerald-500 mt-1 mt-1">ไม่พบ Error ของเมื่อคืน</div>`;
+            } else {
+                html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
+            }
+            html += `</div>`;
+
+            html += `<div class="card-3d bg-white/90 p-2">
+                <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยา</h3>`;
+            if(incidents.mr && incidents.mr.length > 0) {
+                html += `<ul class="list-disc pl-4 text-[10px] font-bold text-slate-700 space-y-1 mt-1">`;
+                incidents.mr.forEach(err => { html += `<li><span class="text-rose-600">${err.cat}:</span> ${err.detail}</li>`; });
+                html += `</ul>`;
+            } else {
+                html += `<div class="text-center text-[10px] font-bold text-emerald-600 mt-1">ยังไม่พบความคลาดเคลื่อนวันนี้</div>`;
+            }
+            html += `</div>`;
+            
+            container.innerHTML = html;
+        }
+
+        async function fetchIncidentsData() {
+            try {
+                const res = await fetch(GAS_INCIDENT_API_URL);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                renderIncidents(data);
+            } catch(e) {
+                let solutionMsg = "(กรุณาตรวจสอบสิทธิ์ Google Sheet ให้เป็น Anyone)";
+                if(e.message.includes('404')) solutionMsg = "(URL ผิดหรือถูกลบ กรุณาอัปเดตลิงก์ใหม่)";
+                const container = document.getElementById('incident-container');
+                if(container) container.innerHTML = `<div class="text-center text-xs font-bold text-red-500 py-4">การเชื่อมต่อขัดข้อง<br>${solutionMsg}</div>`;
+            }
+        }
+
+        function renderDue(data) {
+            const container = document.getElementById('due-container');
+            if(!container) return;
+            
+            let html = '';
+            let hasData = false;
+            
+            const renderGroup = (title, items, color) => {
+                if(!items || items.length === 0) return '';
+                hasData = true;
+                let g = `<div class="mb-2"><div class="text-[10px] font-black text-white ${color} px-2 py-0.5 rounded-t inline-block">${title}</div><div class="bg-white/90 border border-${color.split('-')[1]}-200 rounded-b rounded-tr p-1">`;
+                items.forEach(d => { 
+                    let statusClass = d.status === 'ประเมินแล้ว' ? 'text-emerald-500' : 'text-rose-500';
+                    g += `<div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200 last:border-0 py-0.5"><span class="font-bold text-slate-700 truncate flex-1" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-16 text-center shrink-0">${d.hn}</span><span class="font-black ${statusClass} w-16 text-right shrink-0">${d.status}</span></div>`; 
+                });
+                return g + `</div></div>`;
+            };
+
+            html += renderGroup('Oseltamivir', data['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', data['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', data['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', data['Antibiotics'], 'bg-emerald-500');
+
+            if(!hasData) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
+            } else {
+                container.innerHTML = html;
+            }
+        }
+
+        async function fetchDueData() {
+            try {
+                const res = await fetch(GAS_DUE_API_URL);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                if(!data.error) renderDue(data);
+            } catch(error) { 
+                console.error("Error fetching DUE:", error); 
+                const container = document.getElementById('due-container');
+                if (container && container.innerHTML.includes('กำลังโหลดข้อมูล')) {
+                    let solutionMsg = "(ตรวจสอบสิทธิ์การเข้าถึงให้เป็น Anyone)";
+                    if(error.message.includes('404')) solutionMsg = "(URL ผิดหรือถูกลบ กรุณาอัปเดตลิงก์ใหม่)";
+                    container.innerHTML = `<div class="text-center text-xs font-bold text-red-500 py-4">การเชื่อมต่อขัดข้อง (DUE)<br>${solutionMsg}</div>`;
+                }
+            }
+        }
+
+        function fetchAppointments() {
+            if (!globalAppointments || globalAppointments.length === 0) return [];
+            let filtered = globalAppointments.slice(0, 8);
+            if (filtered.length > 0) {
+                let str = `<div class="text-[12px] font-bold text-blue-900 w-full text-center">วันนัดที่พบบ่อย</div>`;
+                let lines = [];
+                for (let i = 0; i < filtered.length; i += 2) {
+                    let text1 = `${filtered[i]['วันที่นัด']} <span class="text-blue-700 text-[8px] ml-0.5">[${filtered[i]['จำนวนวันนัด']}วัน]</span>`;
+                    let text2 = filtered[i+1] ? `${filtered[i+1]['วันที่นัด']} <span class="text-blue-700 text-[8px] ml-0.5">[${filtered[i+1]['จำนวนวันนัด']}วัน]</span>` : '';
+                    lines.push(`<div class="grid grid-cols-2 w-full px-0.5 text-[8.5px] font-bold text-blue-900 leading-tight mb-0.5 tracking-tight"><div class="text-left whitespace-nowrap">${text1}</div><div class="text-left whitespace-nowrap pl-0.5">${text2}</div></div>`);
+                }
+                str += `<div class="flex flex-col w-full">${lines.join('')}</div>`;
+                return [{ type: 'appt', text: str, bg: 'bg-blue-50 border-blue-300' }];
+            }
+            return [];
+        }
 
         async function fetchRealFeeds() {
+            let newMix = [];
             try {
-                const feeds = [
-                    { type: 'news', url: 'https://news.google.com/rss?hl=th&gl=TH&ceid=TH:th', bg: 'bg-white' },
-                    { type: 'gold', url: 'https://news.google.com/rss/search?q=ราคาทองคำ&hl=th&gl=TH&ceid=TH:th', bg: 'bg-yellow-50' },
-                    { type: 'oil', url: 'https://news.google.com/rss/search?q=ราคาน้ำมัน&hl=th&gl=TH&ceid=TH:th', bg: 'bg-slate-100' }
+                const feeds = [ 
+                    { url: 'https://news.google.com/rss/search?q=ข่าวทั่วไป&hl=th&gl=TH&ceid=TH:th', bg: 'bg-emerald-50' }, 
+                    { url: 'https://news.google.com/rss/search?q=ข่าวด่วน&hl=th&gl=TH&ceid=TH:th', bg: 'bg-blue-50' }, 
+                    { url: 'https://news.google.com/rss/search?q=ข่าวดัง&hl=th&gl=TH&ceid=TH:th', bg: 'bg-purple-50' } 
                 ];
-
-                let newMix = [];
-
                 for (let f of feeds) {
-                    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`;
-                    const res = await fetch(proxyUrl);
-                    const data = await res.json();
-                    
-                    if (data.status === 'ok' && data.items.length > 0) {
-                        const items = data.items.slice(0, 3);
-                        items.forEach(item => {
-                            let cleanTitle = item.title.split(' - ')[0]; 
-                            newMix.push({ type: f.type, text: cleanTitle, bg: f.bg });
-                        });
-                    }
+                    try {
+                        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(f.url)}`);
+                        const data = await res.json();
+                        if (data.status === 'ok') { 
+                            data.items.slice(0, 3).forEach(i => {
+                                let cleanTitle = i.title.split(' - ')[0];
+                                newMix.push({ type: 'news', text: `<div class="text-[11px] font-bold text-slate-800 line-clamp-4 leading-tight">${cleanTitle}</div>`, bg: f.bg });
+                            }); 
+                        }
+                    } catch(e) {}
                 }
-                
-                if(newMix.length > 0) {
-                    mixData = newMix.sort(() => Math.random() - 0.5); 
-                }
-            } catch(e) {
-                console.error("RSS Fetch Error", e);
+            } catch(e) {}
+
+            if (globalHolidays && globalHolidays.length > 0) {
+                globalHolidays.forEach(h => { newMix.push({ type: 'holiday', text: `<div class="text-[11px] font-bold text-rose-800 line-clamp-4 leading-tight">✨ วันนี้เป็น ${h} ✨</div>`, bg: 'bg-rose-50 border-rose-200' }); });
+            }
+            
+            const apptItems = fetchAppointments();
+            let finalMix = [];
+            
+            if (apptItems.length > 0) {
+                for(let i = 0; i < 12; i++) { finalMix.push(apptItems[0]); }
+                let shuffledNews = newMix.sort(() => Math.random() - 0.5).slice(0, 6); 
+                while(shuffledNews.length > 0 && shuffledNews.length < 6) { shuffledNews.push(shuffledNews[Math.floor(Math.random() * shuffledNews.length)]); }
+                finalMix = finalMix.concat(shuffledNews); 
+                mixData = finalMix; 
+            } else {
+                mixData = newMix.sort(() => Math.random() - 0.5); 
             }
         }
 
@@ -974,93 +1434,55 @@
             
             setTimeout(() => {
                 const item = mixData[currentMixIndex];
-                container.textContent = item.text;
-                card.className = `flex-1 overflow-hidden relative card-3d p-3 transition-colors duration-500 ${item.bg}`;
+                container.innerHTML = item.text; 
+                card.className = `flex-1 overflow-hidden relative card-3d p-2 transition-colors duration-500 flex items-center justify-center ${item.bg || 'bg-white/80'}`;
                 wrapper.style.opacity = 1;
                 currentMixIndex = (currentMixIndex + 1) % mixData.length;
             }, 500);
         }
 
-        // --- STREAMING_CHUNK: Fetching current localized weather statistics ---
+        function getWeatherEmoji(code) {
+            if (code === 0) return '☀️';
+            if (code >= 1 && code <= 3) return '⛅';
+            if (code >= 51 && code <= 67) return '🌧️';
+            if (code >= 95) return '⛈️';
+            return '☁️';
+        }
+
         async function fetchWeather() {
             try {
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&air_quality=pm2_5');
                 const data = await res.json();
+                const emoji = getWeatherEmoji(data.current.weather_code);
                 
-                const temp = Math.round(data.current.temperature_2m);
-                const code = data.current.weather_code;
+                document.getElementById('weather-icon').innerHTML = `<span class="text-[36px] leading-[0.8] drop-shadow-md">${emoji}</span>`;
+                document.getElementById('weather-temp').textContent = `${Math.round(data.current.temperature_2m)}°C`;
+                
                 const pm25 = data.current.pm2_5 ? Math.round(data.current.pm2_5) : 15; 
-                
-                let iconClass = 'fas fa-cloud';
-                let iconColor = 'text-slate-400';
-                
-                if (code === 0) { iconClass = 'fas fa-sun'; iconColor = 'text-amber-500'; }
-                else if (code >= 1 && code <= 3) { iconClass = 'fas fa-cloud-sun'; iconColor = 'text-sky-400'; }
-                else if (code >= 51 && code <= 67) { iconClass = 'fas fa-cloud-rain'; iconColor = 'text-blue-500'; }
-                else if (code >= 95) { iconClass = 'fas fa-bolt'; iconColor = 'text-purple-500'; }
-
-                document.getElementById('weather-icon').innerHTML = `<i class="${iconClass} ${iconColor}"></i>`;
-                document.getElementById('weather-temp').textContent = `${temp}°C`;
-                
                 const pmEl = document.getElementById('weather-pm');
                 pmEl.textContent = `PM2.5: ${pm25}`;
-                if(pm25 > 50) pmEl.className = "text-[10px] font-black leading-none mt-1 text-red-500";
-                else if(pm25 > 25) pmEl.className = "text-[10px] font-black leading-none mt-1 text-orange-500";
-                else pmEl.className = "text-[10px] font-black leading-none mt-1 text-emerald-600";
-                
-            } catch (error) {
-                console.error(error);
-            }
+                pmEl.className = `text-[10px] font-black leading-none mt-1 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
+            } catch (error) {}
         }
 
-        // --- Day of week BG ---
-        function updateBackground() {
-            const dayOfWeek = new Date().getDay();
-            const body = document.getElementById('main-body');
-            
-            body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
-            const bgClasses = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat'];
-            body.classList.add(bgClasses[dayOfWeek]);
-        }
-
-        // --- Tomorrow Demo Routine ---
-        setInterval(() => {
-            isDemoMode = true;
-            document.getElementById('col-staff').classList.add('bg-white/95'); 
-            document.getElementById('col-staff-title').textContent = "เภสัชกรประจำวัน (พรุ่งนี้)";
-            document.getElementById('col-afternoon-title').textContent = "เวรบ่าย & On Call (พรุ่งนี้)";
-            
-            if(staffSchedule.tomorrow) updateStaffUI(staffSchedule.tomorrow);
-
-            setTimeout(() => {
-                isDemoMode = false;
-                document.getElementById('col-staff').classList.remove('bg-white/95');
-                document.getElementById('col-staff-title').textContent = "เภสัชกรประจำวัน";
-                document.getElementById('col-afternoon-title').textContent = "เวรบ่าย & On Call";
-                
-                if(staffSchedule.today) updateStaffUI(staffSchedule.today);
-            }, 15000);
-
-        }, 60000);
-
-        // --- STREAMING_CHUNK: Launching master system initialization and recurring loop intervals ---
         window.onload = async function() {
-            updateClock();
-            updateBackground();
-            renderIPDList();
+            updateClock(); 
+            updateBackground(); 
             fetchWeather();
             
-            await fetchRealFeeds();
-            showMixedInfo();
+            await fetchHospitalData();
+            await fetchSchedule(); 
+            await fetchIncidentsData();
+            await fetchDueData();
+            await fetchRealFeeds(); 
             
-            fetchSchedule();
+            showMixedInfo();
+            startSlider();
             
             setInterval(updateClock, 1000); 
             setInterval(showMixedInfo, 10000); 
-            
-            // Refresh ข้อมูลจากฝั่ง GS ทุกๆ 30 วินาที
-            setInterval(() => { fetchSchedule(); }, 30000);
-            
+            setInterval(() => { fetchSchedule(); fetchIncidentsData(); fetchDueData(); }, 30000);
+            setInterval(() => { fetchHospitalData(); }, 30000);
             setInterval(() => { fetchRealFeeds(); fetchWeather(); updateBackground(); }, 3600 * 1000); 
         };
     </script>
