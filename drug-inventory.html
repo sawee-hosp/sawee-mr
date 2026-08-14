@@ -20,7 +20,6 @@
       --ha-color: #ffebee;
       --cool-color: #e3f2fd;
     }
-    /* เอา user-select: none; ออกเพื่อให้คลุมดำข้อความได้ตามที่แจ้งมา */
     body { background-color: var(--bg); color: var(--text); font-family: var(--font-main) !important; padding-bottom: 70px; }
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn 0.3s ease-in; }
@@ -360,8 +359,12 @@
                 <form id="form-reg">
                     <input id="reg-username" class="form-control mb-2" placeholder="Username *" required>
                     <input id="reg-name" class="form-control mb-2" placeholder="ชื่อ-สกุล *" required>
-                    <input id="reg-email" class="form-control mb-2" placeholder="Email">
                     
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted">ตึก (Box Group)</label>
+                        <div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto" id="reg-group-list">Loading...</div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="small fw-bold text-muted">สิทธิ์การเบิก (Substock)</label>
                         <div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto" id="reg-substock-list">Loading...</div>
@@ -378,18 +381,16 @@
     <div class="mb-2"><label class="small">ชื่อ-สกุล</label><input id="pf-name" class="form-control"></div>
     
     <div class="mb-2 p-2 bg-light rounded border">
+        <label class="small fw-bold text-primary">ตึก (Box Group)</label>
+        <div id="display-boxgroup" class="small text-muted" style="max-height: 150px; overflow-y: auto;"></div>
+    </div>
+
+    <div class="mb-2 p-2 bg-light rounded border">
         <label class="small fw-bold text-primary">สิทธิ์การเบิก (Substock)</label>
         <div id="display-substock" class="small text-muted" style="max-height: 150px; overflow-y: auto;"></div>
     </div>
     
-    <div class="mb-2 p-2 bg-light rounded border">
-        <label class="small fw-bold text-primary">ตึก (Box Group)</label>
-        <div id="display-boxgroup" class="small text-muted"></div>
-    </div>
-    
-    <div class="mb-2"><label class="small">Password</label><input id="pf-pass" class="form-control"></div>
-    <div class="mb-2"><label class="small">Email</label><input id="pf-email" class="form-control"></div>
-    <button onclick="saveProfile()" class="btn btn-primary w-100 mt-2">บันทึก</button>
+    <button onclick="saveProfile()" class="btn btn-primary w-100 mt-3">บันทึก</button>
     <hr>
     <button onclick="logout()" class="btn btn-danger w-100"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div></div></div></div>
@@ -428,7 +429,24 @@
           const raw = img.dataset.raw; 
           if(!raw || raw==='undefined' || raw==='') { img.classList.remove('loading'); return; } 
           if(raw.startsWith('http')) { img.src=raw; img.classList.remove('loading'); img.dataset.loaded=true; return; } 
-          callApi('resolveImage', { input: raw }).then(res => { if(res.status) { img.src = res.src; img.classList.remove('loading'); img.dataset.loaded=true; } }); 
+          
+          // --- LOCAL STORAGE CACHE FOR IMAGES ---
+          const cachedUrl = localStorage.getItem('saw_img_' + raw);
+          if (cachedUrl) {
+              img.src = cachedUrl;
+              img.classList.remove('loading');
+              img.dataset.loaded = true;
+              return;
+          }
+
+          callApi('resolveImage', { input: raw }).then(res => { 
+              if(res.status) { 
+                  img.src = res.src; 
+                  img.classList.remove('loading'); 
+                  img.dataset.loaded = true; 
+                  try { localStorage.setItem('saw_img_' + raw, res.src); } catch(e) {} // Save to Cache
+              } 
+          }); 
       }); 
   }
 
@@ -481,7 +499,7 @@
               document.getElementById('app-main').classList.remove('hidden');
               document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
               document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
-              startApp(); 
+              startApp(null, true); 
           } else {
              document.getElementById('login-form-box').classList.remove('hidden');
           }
@@ -494,22 +512,23 @@
           if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
               e.preventDefault(); 
               const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); 
-              if(!subs.length) return Swal.fire('เลือกสิทธิ์การเบิกอย่างน้อย 1 รายการ'); 
+              const grps = Array.from(document.querySelectorAll('.chk-grp:checked')).map(c=>c.value); 
+              if(!subs.length && !grps.length) return Swal.fire('เลือกสิทธิ์หรือตึกอย่างน้อย 1 รายการ'); 
               Swal.showLoading(); 
               
               const res = await callApi('registerUser', { 
                   username: document.getElementById('reg-username').value, 
                   name: document.getElementById('reg-name').value, 
-                  email: document.getElementById('reg-email').value, 
                   substock: subs, 
+                  boxGroup: grps,
                   photo: currentUser.photo || DEFAULT_IMG
               }); 
               
               if(res.status) {
                   currentUser.username = document.getElementById('reg-username').value;
                   currentUser.name = document.getElementById('reg-name').value;
-                  currentUser.email = document.getElementById('reg-email').value;
                   currentUser.substock = subs; 
+                  currentUser.boxGroup = grps;
                   if(!currentUser.userId) currentUser.userId = 'MANUAL_' + currentUser.username;
 
                   localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
@@ -586,63 +605,81 @@
 
   async function prepareRegistration(username, name) {
       document.getElementById('login-overlay').style.display = 'none';
+      const list = document.getElementById('reg-substock-list');
+      const grpList = document.getElementById('reg-group-list');
+      
+      list.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
+      grpList.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
+      mdlReg.show();
+
       const opts = await callApi('getRegOptions');
       if(opts.status) {
-         const list = document.getElementById('reg-substock-list');
          list.innerHTML = opts.options.map(o => `<div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="${o}"><label>${o}</label></div>`).join('');
+         grpList.innerHTML = opts.groups.map(g => `<div class="form-check"><input class="form-check-input chk-grp" type="checkbox" value="${g}"><label>${g}</label></div>`).join('');
+      } else {
+         list.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
+         grpList.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
       }
+      
       document.getElementById('reg-username').value = username;
       document.getElementById('reg-name').value = name;
       document.getElementById('reg-img').src = DEFAULT_IMG;
-      mdlReg.show();
   }
   
   function logout() {
       localStorage.removeItem('saw_user_v2');
+      localStorage.removeItem('saw_init_data');
       location.reload();
   }
 
   async function openProfile() {
       document.getElementById('pf-user').value = currentUser.username || '';
       document.getElementById('pf-name').value = currentUser.name || '';
-      document.getElementById('pf-pass').value = currentUser.password || '';
-      document.getElementById('pf-email').value = currentUser.email || '';
       
       const divSub = document.getElementById('display-substock');
+      const divGrp = document.getElementById('display-boxgroup');
+      
       divSub.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
+      divGrp.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
       mdlProfile.show();
       
       const opts = await callApi('getRegOptions');
       if(opts.status) {
-         let currentSubs = [];
-         if (Array.isArray(currentUser.substock)) {
-             currentSubs = currentUser.substock;
-         } else if (currentUser.substock) {
-             currentSubs = String(currentUser.substock).split(',').map(s=>s.trim());
-         }
+         let currentSubs = Array.isArray(currentUser.substock) ? currentUser.substock : String(currentUser.substock||'').split(',').map(s=>s.trim());
+         let currentGrps = Array.isArray(currentUser.boxGroup) ? currentUser.boxGroup : String(currentUser.boxGroup||'').split(',').map(s=>s.trim());
+         
          divSub.innerHTML = opts.options.map(o => {
              const checked = currentSubs.includes(o) ? 'checked' : '';
              return `<div class="form-check"><input class="form-check-input pf-chk-sub" type="checkbox" value="${o}" ${checked}><label>${o}</label></div>`;
          }).join('');
+         
+         divGrp.innerHTML = (opts.groups || []).map(g => {
+             const checked = currentGrps.includes(g) ? 'checked' : '';
+             return `<div class="form-check"><input class="form-check-input pf-chk-grp" type="checkbox" value="${g}" ${checked}><label>${g}</label></div>`;
+         }).join('');
       } else {
          divSub.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
+         divGrp.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
       }
   }
   
   async function saveProfile() {
       const subs = Array.from(document.querySelectorAll('.pf-chk-sub:checked')).map(c=>c.value);
+      const grps = Array.from(document.querySelectorAll('.pf-chk-grp:checked')).map(c=>c.value);
+      
       const pl = { 
           userId: currentUser.userId, 
           username: document.getElementById('pf-user').value, 
           name: document.getElementById('pf-name').value, 
           substock: subs, 
-          password: document.getElementById('pf-pass').value, 
-          email: document.getElementById('pf-email').value 
+          boxGroup: grps
       };
+      
       const res = await callApi('updateUserProfile', pl);
       if(res.status) {
           currentUser.name = pl.name;
           currentUser.substock = subs;
+          currentUser.boxGroup = grps;
           localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
           location.reload(); 
       } else Swal.fire(res.message);
@@ -650,53 +687,70 @@
 
   async function startApp(boxParam, fromCache=false) {
       if(!fromCache) {
-        document.getElementById('login-overlay').style.display = 'none'; document.getElementById('app-main').classList.remove('hidden');
-        document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
+        document.getElementById('login-overlay').style.display = 'none'; 
+        document.getElementById('app-main').classList.remove('hidden');
+        document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
+        document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
+      }
+
+      // --- LOCAL STORAGE CACHE FOR DASHBOARD ---
+      const cachedData = localStorage.getItem('saw_init_data');
+      if(cachedData) {
+          try {
+             const d = JSON.parse(cachedData);
+             renderDashboard(d, boxParam);
+          } catch(e){}
+      } else {
+          // If no cache, show initial loader somewhere if needed (or keep skeleton)
       }
       
+      // Fetch fresh data in background
       const res = await callApi('getInitialData', { user: currentUser });
-      if(res.status && res.data) {
-          const d = res.data;
-          
-          if (d.boxesOrder && d.boxesOrder.length > 0) {
-             renderBoxScroller('order', d.boxesOrder);
-          } else {
-             document.getElementById('box-scroller-order').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาที่คุณมีสิทธิ์เบิก (Substock)</div>';
-          }
-          
-          allBoxes = d.boxesStock || [];
-          if (allBoxes.length > 0) {
-             renderBoxScroller('stock', allBoxes);
-          } else {
-             document.getElementById('box-scroller-stock').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาในตึกของคุณ (Box Group)</div>';
-          }
-          
-          if(d.groups) {
-              document.getElementById('group-filter').innerHTML = 
-                `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
-                   ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
-                 </div>` + 
-                d.groups.map(g => {
-                    let count = allBoxes.filter(b=>b.group===g).length;
-                    return `<div class="badge rounded-pill bg-white text-dark border cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('${g}',this)">
-                              ${g} <span class="badge bg-secondary rounded-circle">${count}</span>
-                            </div>`;
-                }).join('');
-          }
-          
-          allHistory = d.history || [];
-          document.getElementById('hist-loader').classList.add('hidden');
-          if(allHistory.length > 0) {
-              const boxCounts = allHistory.reduce((acc, r) => { if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
-              const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
-              const scroller = document.getElementById('box-scroller-hist');
-              scroller.innerHTML = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
-                histBoxes.map(bName => `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${boxCounts[bName]||0}</span></div>`).join('');
-          } else {
-             document.getElementById('box-scroller-hist').innerHTML = '<div class="text-center w-100 py-2 small text-muted">ยังไม่มีประวัติการเบิก</div>';
-          }
-          renderHist(curHistStatus);
+      if(res.status !== false && res.status !== 'error' && res.data) {
+          localStorage.setItem('saw_init_data', JSON.stringify(res.data)); // Save to cache
+          renderDashboard(res.data, boxParam); // Re-render with fresh data
       }
+  }
+
+  function renderDashboard(d, boxParam) {
+      if (d.boxesOrder && d.boxesOrder.length > 0) {
+         renderBoxScroller('order', d.boxesOrder);
+      } else {
+         document.getElementById('box-scroller-order').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาที่คุณมีสิทธิ์เบิก (Substock)</div>';
+      }
+      
+      allBoxes = d.boxesStock || [];
+      if (allBoxes.length > 0) {
+         renderBoxScroller('stock', allBoxes);
+      } else {
+         document.getElementById('box-scroller-stock').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาในตึกของคุณ (Box Group)</div>';
+      }
+      
+      if(d.groups) {
+          document.getElementById('group-filter').innerHTML = 
+            `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
+               ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
+             </div>` + 
+            d.groups.map(g => {
+                let count = allBoxes.filter(b=>b.group===g).length;
+                return `<div class="badge rounded-pill bg-white text-dark border cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('${g}',this)">
+                          ${g} <span class="badge bg-secondary rounded-circle">${count}</span>
+                        </div>`;
+            }).join('');
+      }
+      
+      allHistory = d.history || [];
+      document.getElementById('hist-loader').classList.add('hidden');
+      if(allHistory.length > 0) {
+          const boxCounts = allHistory.reduce((acc, r) => { if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
+          const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
+          const scroller = document.getElementById('box-scroller-hist');
+          scroller.innerHTML = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
+            histBoxes.map(bName => `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${boxCounts[bName]||0}</span></div>`).join('');
+      } else {
+         document.getElementById('box-scroller-hist').innerHTML = '<div class="text-center w-100 py-2 small text-muted">ยังไม่มีประวัติการเบิก</div>';
+      }
+      renderHist(curHistStatus);
 
       if(boxParam) {
           if(allBoxes.length) {
@@ -778,7 +832,8 @@
   async function loadOrderItems(box) {
       document.getElementById('order-start-msg').classList.add('hidden');
       document.getElementById('order-grid').classList.remove('hidden');
-      document.getElementById('order-grid').innerHTML = Array(4).fill('<div class="skeleton mb-2"></div>').join('');
+      document.getElementById('order-grid').innerHTML = '<div class="w-100 text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2 text-muted small">กำลังโหลดรายการยา...</div></div>';
+      
       const res = await callApi('getItemsAndPendingOrder', { boxName: box });
       
       if(res.status) {
@@ -796,7 +851,9 @@
   }
   
   async function loadStockItems(box) {
-      const el = document.getElementById('stock-content'); el.innerHTML = '<div class="text-center mt-5 text-muted">Loading...</div>';
+      const el = document.getElementById('stock-content'); 
+      el.innerHTML = '<div class="w-100 text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2 text-muted small">กำลังโหลดรายการยา...</div></div>';
+      
       const res = await callApi('getItems', { boxName: box });
       if(!res.status) return el.innerHTML = 'Error';
       
@@ -1070,7 +1127,7 @@
                   Swal.fire('ลบสำเร็จ', '', 'success');
                   // อัปเดตข้อมูล History ใหม่
                   const histRes = await callApi('getInitialData', { user: currentUser });
-                  if(histRes.status) {
+                  if(histRes.status !== false && histRes.status !== 'error' && histRes.data) {
                       allHistory = histRes.data.history || [];
                       renderHist(curHistStatus);
                   }
@@ -1366,8 +1423,11 @@
                   title: 'ส่งข้อมูลเรียบร้อยแล้ว',
                   html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
               });
+              
+              // Force background refresh to update local cache
               const histRes = await callApi('getInitialData', { user: currentUser });
-              if(histRes.status !== false && histRes.status !== 'error') {
+              if(histRes.status !== false && histRes.status !== 'error' && histRes.data) {
+                  localStorage.setItem('saw_init_data', JSON.stringify(histRes.data));
                   allHistory = histRes.data.history || [];
               }
           } else {
