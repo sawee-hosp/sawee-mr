@@ -1420,7 +1420,7 @@
         async function fetchSchedule() {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); 
+                const timeoutId = setTimeout(() => controller.abort(), 45000); // ขยายเวลารอเป็น 45 วินาที
                 
                 const res = await fetch(GAS_SCHEDULE_API_URL, { signal: controller.signal });
                 clearTimeout(timeoutId);
@@ -1428,6 +1428,15 @@
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 const data = await res.json();
                 
+                if (data.error) {
+                    console.error("GAS Error:", data.error);
+                    const container = document.getElementById('alerts-container');
+                    if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                         container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Google Sheet:<br>${data.error}</div>`;
+                    }
+                    return;
+                }
+
                 if(data.today) updateStaffUI(data.today);
                 if(data.alerts) renderAlerts(data.alerts);
                 if(data.tempStatus) renderTempStatus(data.tempStatus);
@@ -1441,6 +1450,10 @@
 
             } catch(error) { 
                 console.warn("GS Schedule Fetch Warning (will retry automatically):", error.message); 
+                const container = document.getElementById('alerts-container');
+                if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                    container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
+                }
             }
         }
 
