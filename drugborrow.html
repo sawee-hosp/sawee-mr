@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ระบบขอใช้ยานอกบัญชีรายการยา รพ.สวี</title>
   
   <!-- 💊 Favicon รูปยา -->
@@ -22,7 +22,6 @@
         font-size: 16px; 
     }
     
-    /* Header Gradient Blue */
     .header-glam { 
         background: linear-gradient(135deg, #0056b3 0%, #004494 100%); 
         color: white; 
@@ -31,7 +30,6 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
     }
     
-    /* Main Blue Button */
     .btn-main { 
         background: linear-gradient(135deg, #0056b3 0%, #004494 100%); 
         color: white; 
@@ -39,120 +37,121 @@
     }
     .btn-main:hover { opacity: 0.9; color: white; }
     
-    /* Content Card */
     .section { 
         background: white; 
-        padding: 25px; 
-        border-radius: 12px; 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        padding: 20px; 
+        border-radius: 15px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
         margin-bottom: 20px; 
+        animation: fadeIn 0.3s ease-in-out;
     }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     .hidden { display: none !important; }
     
-    label { 
-        font-weight: 600; 
-        color: #2c3e50; 
-        margin-top: 10px; 
-        font-size: 1rem; 
+    label { font-weight: 600; color: #2c3e50; margin-top: 10px; font-size: 0.95rem; }
+    
+    /* 🔥 UI หน้าแรก (Dark Cards & Animation) 🔥 */
+    .menu-card {
+        border-radius: 20px;
+        padding: 25px 15px;
+        text-align: center;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.2s;
+        height: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        color: white;
+        border: none;
+    }
+    .menu-card:active { transform: scale(0.95); }
+    
+    /* โทนสีเข้มสำหรับปุ่มต่างๆ */
+    .menu-card.doctor { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+    .menu-card.pharmacy { background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); }
+    .menu-card.receive { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .menu-card.history { background: linear-gradient(135deg, #4b1248 0%, #8e44ad 100%); }
+    
+    .menu-card i { 
+        font-size: 3rem; 
+        margin-bottom: 5px; 
+        color: rgba(255,255,255,0.95);
+        animation: floatIcon 2.5s ease-in-out infinite;
+    }
+    .menu-card span { font-weight: 600; font-size: 1.05rem; line-height: 1.3; }
+
+    /* Animation สำหรับภาพบนปุ่ม */
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
     }
     
-    /* Drug List Item */
-    .drug-row { 
-        background: #f8f9fa; 
-        border: 1px solid #dee2e6;
-        border-left: 5px solid #0056b3; 
-        padding: 15px; 
-        margin-bottom: 10px; 
-        border-radius: 8px; 
-        position: relative; 
-    }
-    .remove-btn { 
-        position: absolute; 
-        top: 10px; 
-        right: 10px; 
-        color: #dc3545; 
-        cursor: pointer; 
-        font-size: 1.2rem; 
-    }
-    
-    /* Canvas Styling */
-    #sig-canvas, #car-sig-canvas { 
-        border: 2px dashed #bbb; 
-        border-radius: 8px; 
-        background: #fff; 
-        width: 100%; 
-        cursor: crosshair; 
-    }
-    
-    /* Global Loading */
-    #loading { 
-        position: fixed; 
-        top: 0; left: 0; 
-        width: 100%; height: 100%; 
-        background: rgba(255,255,255,0.9); 
-        z-index: 9999; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-    }
-    
-    .form-check-label { font-weight: normal; font-size: 0.95rem; }
-    .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
-    .text-green-glam { color: #198754; font-weight: bold; font-size: 1.1rem; }
-    .pointer { cursor: pointer; }
-    
-    /* Tab Arrow Style */
-    .nav-item { position: relative; display: flex; align-items: center; }
-    .nav-item:not(:last-child)::after {
-        content: "\F285"; /* Chevron Right Icon */
-        font-family: "bootstrap-icons";
-        font-size: 1.2rem;
-        color: #6ea8fe;
-        font-weight: bold;
-        margin: 0 5px;
-    }
-    
-    /* Badge Style (Inside Button) */
-    .nav-link { position: relative; }
-    .badge-notify {
+    .badge-corner {
         position: absolute;
-        top: 3px;
-        right: 5px;
+        top: -8px;
+        right: -8px;
         background-color: #dc3545;
         color: white;
         border-radius: 50%;
-        padding: 2px 6px;
-        font-size: 0.65rem;
-        display: none; /* Show by JS */
-        box-shadow: 0 0 2px white;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.9rem;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        border: 2px solid white;
+        display: none;
+    }
+
+    .drug-row { 
+        background: #f8f9fa; border: 1px solid #dee2e6; border-left: 5px solid #0056b3; 
+        padding: 15px; margin-bottom: 10px; border-radius: 8px; position: relative; 
+    }
+    .remove-btn { position: absolute; top: 10px; right: 10px; color: #dc3545; cursor: pointer; font-size: 1.2rem; }
+    
+    #sig-canvas, #car-sig-canvas { 
+        border: 2px dashed #bbb; border-radius: 8px; background: #f8f9fa; 
+        width: 100%; cursor: crosshair; 
+        touch-action: none;
     }
     
-    /* Ambulance Animation (Left to Right, Blue, Fast) */
-    @keyframes drive {
-        from { transform: translateX(-200%); } 
-        to { transform: translateX(200%); }
-    }
-    .ambulance-anim { 
-        animation: drive 1.5s linear infinite; 
-        display: inline-block; 
-        font-size: 3rem; 
-        color: #0056b3; 
+    #loading { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(255,255,255,0.9); z-index: 9999; 
+        display: flex; justify-content: center; align-items: center; 
     }
     
-    /* Phone Box */
-    .phone-box {
-        border: 2px solid #0d6efd;
-        border-radius: 15px;
-        padding: 10px;
-        text-align: center;
-        margin-top: 15px;
-        background-color: #f0f8ff;
-    }
+    .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
+    .pointer { cursor: pointer; }
+    
+    @keyframes drive { from { transform: translateX(-200%); } to { transform: translateX(200%); } }
+    .ambulance-anim { animation: drive 1.5s linear infinite; display: inline-block; font-size: 3rem; color: #0056b3; }
+    
+    .phone-box { border: 2px solid #0d6efd; border-radius: 15px; padding: 10px; text-align: center; margin-top: 15px; background-color: #f0f8ff; }
     .phone-number { font-size: 1.5rem; font-weight: bold; color: #0d6efd; }
+
+    /* กล่องประวัติแพทย์ */
+    .doc-history-box {
+        background: #eef2f5;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        border-left: 4px solid #6f42c1;
+    }
   </style>
 </head>
 <body>
+
+<!-- Datalist สำหรับ Suggest ชื่อยา -->
+<datalist id="drugSuggestList"></datalist>
 
 <div id="loading" class="hidden">
   <div class="text-center">
@@ -163,14 +162,11 @@
 
 <div class="header-glam sticky-top">
   <div class="container d-flex justify-content-between align-items-center">
-    <div class="fw-bold fs-5"><i class="bi bi-hospital"></i> ระบบขอใช้ยานอกฯ รพ.สวี</div>
+    <div class="fw-bold fs-5 pointer" onclick="app.show('home')"><i class="bi bi-hospital"></i> ระบบยานอกบัญชี</div>
     <div class="d-flex align-items-center gap-2">
-       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">วิธีใช้งาน</button>
-       
+       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">วิธีใช้</button>
        <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login</button>
-       
        <div id="userProfile" class="hidden d-flex align-items-center gap-2 text-white pointer" onclick="app.openRegisterModal(true)">
-           <span class="small fw-bold">Login: <span id="userName"></span></span>
            <img id="userPic" class="profile-img" src="">
        </div>
     </div>
@@ -183,130 +179,158 @@
   </div>
 </div>
 
-<div class="container mt-3">
-  <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded shadow-sm">
-    <li class="nav-item">
-        <button class="nav-link active fw-bold" onclick="app.show('doctor')">แพทย์ขอใช้ยา</button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link fw-bold" onclick="app.show('pharmacy')">
-            เภสัชกรพิมพ์ใบยืมยา
-            <span id="badge-phar" class="badge-notify">0</span>
-        </button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link fw-bold" onclick="app.show('receive')">
-            ลงรับยา
-            <span id="badge-rcv" class="badge-notify">0</span>
-        </button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link fw-bold" onclick="app.show('history')">ข้อมูลยาสนับสนุนทั้งหมด</button>
-    </li>
-  </ul>
+<div class="container mt-2">
+  
+  <div id="home" class="section bg-transparent shadow-none px-0">
+      <div class="row g-3">
+          <div class="col-6">
+              <div class="menu-card doctor" onclick="app.show('doctor')">
+                  <i class="bi bi-clipboard2-pulse"></i>
+                  <span>แพทย์<br>ขอใช้ยา</span>
+              </div>
+          </div>
+          <div class="col-6">
+              <div class="menu-card pharmacy" onclick="app.show('pharmacy')">
+                  <div id="badge-phar" class="badge-corner">0</div>
+                  <i class="bi bi-printer"></i>
+                  <span>เภสัชกร<br>พิมพ์ใบยืม</span>
+              </div>
+          </div>
+          <div class="col-6">
+              <div class="menu-card receive" onclick="app.show('receive')">
+                  <div id="badge-rcv" class="badge-corner">0</div>
+                  <i class="bi bi-box-seam"></i>
+                  <span>เภสัชกร<br>ลงรับยา</span>
+              </div>
+          </div>
+          <div class="col-6">
+              <div class="menu-card history" onclick="app.show('history')">
+                  <i class="bi bi-clock-history"></i>
+                  <span>ข้อมูล<br>สนับสนุนทั้งหมด</span>
+              </div>
+          </div>
+      </div>
+  </div>
 
-  <div id="doctor" class="section">
-    <h4 class="text-primary border-bottom pb-2 mb-3">แบบฟอร์มขอใช้ยา</h4>
+  <div id="doctor" class="section hidden">
+    <button class="btn btn-sm btn-light mb-3 text-secondary shadow-sm" onclick="app.show('home')"><i class="bi bi-arrow-left"></i> กลับหน้าหลัก</button>
+    <h4 class="text-primary border-bottom pb-2 mb-3"><i class="bi bi-pencil-square"></i> แบบฟอร์มขอใช้ยา</h4>
     <form id="reqForm">
-      <div class="row">
-        <div class="col-12">
-            <label>ชื่อแพทย์ผู้ขอใช้ยา *</label>
-            <input type="text" class="form-control" id="doctorName" placeholder="ใส่เต็มยศ เช่น นพ.ใจดี รักสวี" required>
-        </div>
+      
+      <div class="bg-light p-3 rounded border mb-3">
+          <label class="mt-0">ค้นหาชื่อแพทย์จากเลข ว.</label>
+          <div class="input-group mb-2">
+              <input type="number" id="licenseNo" class="form-control" placeholder="ระบุเลข ว. (เฉพาะตัวเลข)">
+              <button class="btn btn-primary" type="button" onclick="app.searchDoctor()">🔍 ค้นหา</button>
+          </div>
+          <label>ชื่อแพทย์ผู้ขอใช้ยา *</label>
+          <input type="text" class="form-control border-primary" id="doctorName" placeholder="ใส่เต็มยศ เช่น นพ.ใจดี รักสวี" required>
       </div>
 
-      <div class="d-flex justify-content-between align-items-center mt-4 mb-1">
-         <div>
-           <label class="m-0 text-dark fs-5 me-2">รายการยา *</label>
-           <a href="https://sawee-hosp.github.io/sawee-mr/drug-list.html" target="_blank" class="btn btn-sm btn-primary rounded-pill fw-bold">
-             <i class="bi bi-search"></i> เช็ครายการยา รพ.สวี
-           </a>
-         </div>
-         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="app.addDrugRow()">+ เพิ่มยาอีก</button>
-      </div>
-      <div class="small text-muted mb-3">
-         (กรณีไม่แน่ใจสามารถพิมพ์ค้นหายาก่อน หรือโทรสอบถาม ต่อ 133, ต่อ 137)
+      <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+         <label class="m-0 text-dark fs-5">รายการยา *</label>
+         <a href="https://sawee-hosp.github.io/sawee-mr/drug-list.html" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
+           <i class="bi bi-search"></i> เช็คยา รพ.
+         </a>
       </div>
       
+      <div class="alert alert-warning py-2 small mb-3">
+        <i class="bi bi-info-circle"></i> <b>หมายเหตุ:</b> หากแพทย์ไม่มั่นใจรูปแบบหรือความแรงของยา สามารถเว้นว่างไว้ให้เภสัชกรตรวจสอบได้
+      </div>
+      
+      <!-- Container สำหรับใส่รายการยา -->
       <div id="drugListContainer"></div>
       
-      <div class="alert alert-secondary mt-2 small">
-        <i class="bi bi-info-circle"></i> ระบุหมายเหตุ หากแพทย์ไม่มั่นใจรูปแบบหรือความแรงของยาให้เว้นว่างไว้
-      </div>
+      <!-- ปรับตำแหน่งปุ่มเพิ่มยามาไว้ด้านล่างฟอร์ม -->
+      <button type="button" id="btnAddDrug" class="btn btn-outline-primary w-100 rounded-pill fw-bold py-2 mt-2 shadow-sm" onclick="app.addDrugRow()">
+          <i class="bi bi-plus-circle"></i> เพิ่มยาตัวที่ 1
+      </button>
 
-      <hr class="my-4">
+      <hr class="my-4 border-2">
 
       <div class="row">
-         <div class="col-6"><label>รายละเอียดผู้ป่วย (ระบุชื่อ) *</label><input type="text" class="form-control" id="patientName" required></div>
-         <div class="col-6"><label>HN *</label><input type="text" class="form-control" id="hn" required></div>
+         <div class="col-7"><label>ผู้ป่วย (ระบุชื่อ) *</label><input type="text" class="form-control" id="patientName" required></div>
+         <div class="col-5"><label>HN *</label><input type="text" class="form-control" id="hn" required></div>
       </div>
       <label>ผลการวินิจฉัย</label><input type="text" class="form-control" id="diagnosis">
-      <label>ข้อบ่งใช้/ความจำเป็น/ข้อมูลสนับสนุน</label><input type="text" class="form-control" id="indication">
+      <label>ข้อบ่งใช้/ความจำเป็น</label><input type="text" class="form-control" id="indication">
       <label>แพทย์ที่ปรึกษา *</label><input type="text" class="form-control" id="staffName" required>
       <label>ข้อเสนอแนะ</label><input type="text" class="form-control" id="suggestion">
 
-      <label class="mt-4 bg-light p-2 rounded w-100 fw-bold border text-primary">เหตุผล (เลือก 1 ข้อ)</label>
-      <div class="ps-1">
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="A" id="rA"><label class="form-check-label" for="rA">A เกิดอาการไม่พึงประสงค์จากยา/แพ้ยา ซึ่งอยู่ในบัญชียาหลักแห่งชาติ</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="B" id="rB"><label class="form-check-label" for="rB">B ผลการรักษาไม่บรรลุเป้าหมาย แม้ว่าได้ใช้ยาในบัญชีของโรงพยาบาลจนครบตามมาตรฐานการรักษาแล้ว</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="C" id="rC"><label class="form-check-label" for="rC">C ไม่มีกลุ่มยาในบัญชียาโรงพยาบาลให้ใช้ แต่ผู้ป่วยมีความจำเป็นในการใช้ยานี้ตามข้อบ่งใช้ที่ได้ขึ้นทะเบียนไว้กับ อย.</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="D" id="rD"><label class="form-check-label" for="rD">D มี contraindication หรือ Drug Interaction กับยาในบัญชียาหลักแห่งชาติในบัญชียาโรงพยาบาล</label></div>
-        <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="E" id="rE"><label class="form-check-label" for="rE">E ยาในบัญชียาโรงพยาบาลมีราคาแพงกว่า (ในแง่ความคุ้มค่า)</label></div>
+      <label class="mt-4 bg-primary text-white p-2 rounded w-100 fw-bold shadow-sm">เหตุผล (เลือก 1 ข้อ)</label>
+      <div class="ps-1 mt-2">
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="A" id="rA"><label class="form-check-label" for="rA">A เกิดอาการไม่พึงประสงค์จากยา/แพ้ยาในบัญชี</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="B" id="rB"><label class="form-check-label" for="rB">B ผลการรักษาไม่บรรลุเป้าหมาย แม้ใช้ยามาตรฐานแล้ว</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="C" id="rC"><label class="form-check-label" for="rC">C ไม่มีกลุ่มยาใน รพ. ให้ใช้ แต่มีความจำเป็น</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="D" id="rD"><label class="form-check-label" for="rD">D มี contraindication กับยาใน รพ.</label></div>
+        <div class="form-check mb-2"><input class="form-check-input" type="radio" name="reasonCode" value="E" id="rE"><label class="form-check-label" for="rE">E ยาในบัญชียาโรงพยาบาลมีราคาแพงกว่า</label></div>
         <div class="form-check"><input class="form-check-input" type="radio" name="reasonCode" value="F" id="rF"><label class="form-check-label" for="rF">F อื่นๆ (ระบุ)</label></div>
         <input type="text" class="form-control mt-1 ms-4 w-75" id="reasonText" placeholder="ระบุเพิ่มเติม...">
       </div>
 
-      <label class="mt-4">ลงชื่อแพทย์ * (เซ็น หรือ ถ่ายรูป)</label>
-      <ul class="nav nav-tabs" id="sigTab">
+      <label class="mt-4 fs-5 text-primary">ลงชื่อแพทย์ * (เซ็น หรือ ถ่ายรูป)</label>
+      <ul class="nav nav-tabs mt-2" id="sigTab">
           <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-draw">วาดลายเซ็น</a></li>
-          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-upload">ถ่ายรูป</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-upload">อัปโหลดรูป</a></li>
       </ul>
-      <div class="tab-content border border-top-0 p-3 bg-white mb-3">
+      <div class="tab-content border border-top-0 p-2 bg-white mb-3 rounded-bottom">
           <div class="tab-pane active" id="tab-draw">
-              <div class="border p-1 bg-white rounded shadow-sm"><canvas id="sig-canvas" height="150"></canvas></div>
-              <button type="button" class="btn btn-secondary btn-sm mt-1" onclick="app.clearSig()">ล้าง</button>
+              <canvas id="sig-canvas" style="height: 220px;"></canvas>
+              <button type="button" class="btn btn-outline-danger btn-sm mt-2 w-100" onclick="app.clearSig()"><i class="bi bi-eraser"></i> ล้างลายเซ็น</button>
           </div>
-          <div class="tab-pane" id="tab-upload">
+          <div class="tab-pane p-3" id="tab-upload">
               <input type="file" class="form-control" id="sigFile" accept="image/*">
-              <div class="small text-muted mt-1">ถ่ายรูปจากกระดาษจริง</div>
+              <div class="small text-muted mt-2">กรณีวาดไม่ถนัด ให้ถ่ายรูปลายเซ็นบนกระดาษแนบมาได้เลย</div>
           </div>
       </div>
 
-      <button type="button" class="btn btn-main w-100 mt-4 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()">
-         <i class="bi bi-save"></i> บันทึกข้อมูล
+      <button type="button" class="btn btn-main w-100 mt-3 py-3 fs-5 rounded-pill shadow-lg fw-bold" onclick="app.submitData()">
+         <i class="bi bi-send"></i> ส่งแบบฟอร์ม
       </button>
+      
+      <!-- ส่วนแสดงประวัติของแพทย์ -->
+      <div class="doc-history-box hidden" id="myHistoryBox">
+          <h6 class="fw-bold text-purple mb-2" id="docHistoryTitle"><i class="bi bi-clock-history"></i> ประวัติการขอใช้ยาของแพทย์</h6>
+          <div id="myHistoryContent" class="small">กำลังโหลด...</div>
+      </div>
     </form>
   </div>
 
   <div id="pharmacy" class="section hidden">
+    <button class="btn btn-sm btn-light mb-3 text-secondary shadow-sm" onclick="app.show('home')"><i class="bi bi-arrow-left"></i> กลับหน้าหลัก</button>
+    <h4 class="text-warning border-bottom pb-2 mb-3"><i class="bi bi-printer"></i> เภสัชกรตรวจสอบ/พิมพ์</h4>
     <div id="pharmacy-loader" class="text-center py-5 hidden"><div class="spinner-border text-primary"></div></div>
     <div id="pendingList"></div>
   </div>
 
   <div id="receive" class="section hidden">
+    <button class="btn btn-sm btn-light mb-3 text-secondary shadow-sm" onclick="app.show('home')"><i class="bi bi-arrow-left"></i> กลับหน้าหลัก</button>
+    <h4 class="text-success border-bottom pb-2 mb-3"><i class="bi bi-box-seam"></i> รายการรอลงรับยา</h4>
     <div id="receive-loader" class="text-center py-5 hidden"><div class="spinner-border text-success"></div></div>
     <div id="approvedList"></div>
   </div>
 
   <div id="history" class="section hidden">
+    <button class="btn btn-sm btn-light mb-3 text-secondary shadow-sm" onclick="app.show('home')"><i class="bi bi-arrow-left"></i> กลับหน้าหลัก</button>
+    <h4 class="text-purple border-bottom pb-2 mb-3" style="color: #6f42c1;"><i class="bi bi-clock-history"></i> ประวัติทั้งหมด</h4>
     <div class="row mb-3 g-2">
-        <div class="col-5"><input type="date" id="filterStart" class="form-control"></div>
-        <div class="col-5"><input type="date" id="filterEnd" class="form-control"></div>
-        <div class="col-2"><button class="btn btn-primary w-100" onclick="app.loadHistory()">🔍</button></div>
+        <div class="col-5"><input type="date" id="filterStart" class="form-control form-control-sm"></div>
+        <div class="col-5"><input type="date" id="filterEnd" class="form-control form-control-sm"></div>
+        <div class="col-2"><button class="btn btn-primary btn-sm w-100" onclick="app.loadHistory()">🔍</button></div>
     </div>
     <div class="table-responsive">
-      <table class="table table-striped align-middle">
+      <table class="table table-sm table-striped align-middle" style="font-size: 0.9rem;">
         <thead class="table-primary"><tr><th>วันที่</th><th>แพทย์</th><th>รายการ</th><th>ราคา</th><th>สถานะ</th></tr></thead>
         <tbody id="historyTableBody"></tbody>
-        <tfoot class="table-dark"><tr><td colspan="3" class="text-end">รวมเป็นเงิน</td><td colspan="2" id="totalPrice">0.00</td></tr></tfoot>
+        <tfoot class="table-dark"><tr><td colspan="3" class="text-end">รวม</td><td colspan="2" id="totalPrice">0.00</td></tr></tfoot>
       </table>
     </div>
   </div>
 </div>
 
 <div class="modal fade" id="registerModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog">
-    <div class="modal-content">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
       <div class="modal-header bg-primary text-white">
           <h5 class="modal-title">ลงทะเบียนใช้งาน</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -319,55 +343,58 @@
           <label>เบอร์โทรศัพท์ (ถ้ามี)</label>
           <input type="text" id="regPhone" class="form-control" placeholder="08x-xxxxxxx">
       </div>
-      <div class="modal-footer"><button class="btn btn-primary w-100" onclick="app.register()">บันทึก</button></div>
+      <div class="modal-footer"><button class="btn btn-primary w-100 rounded-pill" onclick="app.register()">บันทึกข้อมูล</button></div>
     </div>
   </div>
 </div>
 
 <div class="modal fade" id="summaryModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-success text-white"><h5 class="modal-title">บันทึกสำเร็จ</h5></div>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="bi bi-check-circle"></i> ส่งฟอร์มสำเร็จ</h5></div>
       <div class="modal-body">
-        <p id="summaryText"></p>
-        
-        <div class="alert alert-info border-info" style="background-color: #e7f1ff; color: #004085;">
-            <i class="bi bi-info-circle-fill"></i> ส่งข้อมูลให้ห้องยาแล้ว โปรดโทรแจ้งห้องยาอีกครั้งเพื่อให้ประสานงานใช้ยานอก รพ.ให้
+        <p id="summaryText" class="mb-3"></p>
+        <div class="alert alert-info border-info small" style="background-color: #e7f1ff; color: #004085;">
+            <i class="bi bi-info-circle-fill"></i> โปรดโทรแจ้งห้องยาเพื่อให้ประสานงานจัดหายานอกบัญชี
         </div>
-        
         <div class="phone-box">
             <div class="small text-muted">เบอร์โทรฝ่ายเภสัชกรรม</div>
             <div class="phone-number">#113</div>
-            <div class="small mt-1 text-muted">เภสัชกรจะประสานงานกับโรงพยาบาลที่มียา<br>และจะแจ้งผลกลับไปยังแพทย์</div>
+            <div class="small mt-1 text-muted">เภสัชกรจะแจ้งผลกลับไปยังแพทย์</div>
         </div>
-        
-        <div class="text-center mt-4" style="overflow:hidden">
-            <i class="bi bi-truck ambulance-anim"></i>
-        </div>
+        <div class="text-center mt-4" style="overflow:hidden"><i class="bi bi-truck ambulance-anim"></i></div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-primary w-100" onclick="window.location.reload()">รับทราบ</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-success w-100 rounded-pill" onclick="window.location.reload()">ตกลง / กลับหน้าแรก</button></div>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="approveModal" tabindex="-1">
+<div class="modal fade" id="approveModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-warning">
-          <h5 class="modal-title">เภสัชกรตรวจสอบ</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> เภสัชกรตรวจสอบความถูกต้อง</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body bg-light">
+          <div class="alert alert-danger small mb-3">
+              <b>⚠️ กฎการตรวจสอบ (บังคับ):</b><br>
+              - ห้ามเว้นว่างทุกช่อง<br>
+              - <b>ความแรง/จำนวน</b> ต้องมีทั้งตัวเลขและตัวอักษรหน่วย (เช่น 500mg, 10 vial)<br>
+              - <b>ระยะเวลา</b> ต้องเป็นตัวเลขเท่านั้น (ไม่ต้องพิมพ์คำว่าวัน)
+          </div>
           <input type="hidden" id="ap_reqId">
           <div id="ap_drugInputs"></div>
-          <label class="mt-3">แนบรูปใบสั่งยา</label>
-          <input type="file" class="form-control" id="ap_imageFile" accept="image/*">
-          <label class="mt-3">ชื่อเภสัชกร</label>
-          <select class="form-select" id="ap_pharmacistName"><option value="">Loading...</option></select>
+          <div class="card p-3 shadow-sm mt-3 border-0">
+              <label class="mt-0">แนบรูปใบสั่งยา (ถ้ามี)</label>
+              <input type="file" class="form-control form-control-sm mb-2" id="ap_imageFile" accept="image/*">
+              <label>ผู้ตรวจสอบอนุมัติ</label>
+              <select class="form-select border-primary" id="ap_pharmacistName"><option value="">Loading...</option></select>
+          </div>
       </div>
-      <div class="modal-footer justify-content-between">
-          <button type="button" class="btn btn-secondary" onclick="app.cancelRequest()">ยกเลิกใบยืม</button>
-          <button type="button" class="btn btn-success" onclick="app.confirmApprove()">บันทึก & พิมพ์ PDF</button>
+      <div class="modal-footer p-2 bg-white">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="app.cancelRequest()">ยกเลิกใบยืม</button>
+          <button type="button" class="btn btn-success ms-auto fw-bold px-4" onclick="app.confirmApprove()">✔️ บันทึก & สร้าง PDF</button>
       </div>
     </div>
   </div>
@@ -377,24 +404,26 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
-          <h5 class="modal-title">ลงรับยา</h5>
+          <h5 class="modal-title"><i class="bi bi-box-seam"></i> บันทึกลงรับยา</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body bg-light">
           <input type="hidden" id="rc_reqId">
-          <p id="rc_display" class="text-green-glam mb-2"></p>
-          
+          <div class="alert alert-success p-2 mb-3 shadow-sm">
+             <i class="bi bi-person"></i> <span id="rc_display" class="fw-bold"></span>
+          </div>
           <div id="rc_drug_list"></div>
           
-          <hr>
-          <label class="fw-bold">หมายเหตุการรับ</label>
-          <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div>
-          <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div>
-          <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div>
-          <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="รพ.ต้นทางไม่อนุมัติ"><label class="form-check-label">รพ.ต้นทางไม่อนุมัติ</label></div>
+          <div class="card p-3 shadow-sm mt-3 border-0">
+              <label class="fw-bold mt-0 text-success">หมายเหตุการรับ</label>
+              <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="จ่ายแก่ผู้ป่วยแล้ว" checked><label class="form-check-label">จ่ายแก่ผู้ป่วยแล้ว</label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="storage"><label class="form-check-label">จัดเก็บไว้ที่ <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_storage"></label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="incomplete"><label class="form-check-label">ได้รับไม่ครบถ้วน <input type="text" class="form-control form-control-sm d-inline w-50" id="rc_note_incomplete"></label></div>
+              <div class="form-check"><input class="form-check-input" type="radio" name="rc_note_opt" value="รพ.ต้นทางไม่อนุมัติ"><label class="form-check-label">รพ.ต้นทางไม่อนุมัติ</label></div>
+          </div>
       </div>
-      <div class="modal-footer" id="rc_footer">
-          <button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button>
+      <div class="modal-footer bg-white" id="rc_footer">
+          <button type="button" class="btn btn-success w-100 rounded-pill fs-5 fw-bold" onclick="app.confirmReceive()">บันทึกรับยา</button>
       </div>
     </div>
   </div>
@@ -404,8 +433,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title"><i class="bi bi-ambulance"></i> พิมพ์ใบขอรถ</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title"><i class="bi bi-ambulance"></i> ขอรถโรงพยาบาล</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
           <input type="hidden" id="car_ref_reqId">
@@ -413,20 +442,20 @@
           <label>ตำแหน่ง</label><input type="text" id="car_job" class="form-control">
           <div class="row">
               <div class="col-6"><label>วันที่ใช้</label><input type="date" id="car_date" class="form-control"></div>
-              <div class="col-3"><label>เวลาเริ่ม</label><input type="time" id="car_start" class="form-control"></div>
-              <div class="col-3"><label>เวลาสิ้นสุด</label><input type="time" id="car_end" class="form-control"></div>
+              <div class="col-3"><label>เริ่ม</label><input type="time" id="car_start" class="form-control px-1"></div>
+              <div class="col-3"><label>สิ้นสุด</label><input type="time" id="car_end" class="form-control px-1"></div>
           </div>
-          <label>สถานที่</label><input type="text" id="car_place" class="form-control" value="คลังยา รพ.ชุมพรเขตรอุดมศักดิ์">
+          <label>สถานที่ไปรับยา</label><input type="text" id="car_place" class="form-control" value="คลังยา รพ.ชุมพรเขตรอุดมศักดิ์">
           <label>เหตุผล</label><textarea id="car_reason" class="form-control" rows="2"></textarea>
           
-<label class="mt-3">ลงชื่อ (เซ็น)</label>
-<div class="border p-1 bg-white rounded">
-    <canvas id="car-sig-canvas" style="width: 100%; height: 300px;"></canvas>
-</div>
-          <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="app.clearCarSig()">ล้าง</button>
+          <label class="mt-3 text-danger">ลายเซ็นผู้ขอใช้รถ</label>
+          <div class="border p-1 bg-light rounded">
+              <canvas id="car-sig-canvas" style="height: 200px;"></canvas>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="app.clearCarSig()">ล้างลายเซ็น</button>
       </div>
       <div class="modal-footer">
-          <button class="btn btn-success w-100" onclick="app.submitCarRequest()">สร้างใบขอรถ</button>
+          <button class="btn btn-danger w-100 rounded-pill" onclick="app.submitCarRequest()">สร้างใบขอรถ PDF</button>
       </div>
     </div>
   </div>
@@ -436,41 +465,16 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-info text-white">
-          <h5 class="modal-title">📖 วิธีการใช้งานระบบ</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title"><i class="bi bi-book"></i> วิธีใช้งาน</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <h6>1. การลงทะเบียน</h6>
-        <ul>
-            <li>เมื่อเข้าใช้งานครั้งแรก ให้กดปุ่ม "Login" (หรือคลิกที่มุมขวาบน)</li>
-            <li>กรอก <b>ชื่อ-สกุล (พร้อมคำนำหน้า)</b>, <b>ตำแหน่ง</b> และ <b>เบอร์โทรศัพท์</b></li>
-            <li>ข้อมูลนี้จะถูกนำไปกรอกอัตโนมัติในแบบฟอร์มต่างๆ</li>
-        </ul>
-        <hr>
-        <h6>2. แพทย์ขอใช้ยา</h6>
-        <ul>
-            <li>กรอกข้อมูลผู้ป่วย และรายละเอียดการวินิจฉัย</li>
-            <li>กด "+ เพิ่มยาอีก" เพื่อระบุรายการยา (ชื่อ, ความแรง, วิธีใช้, จำนวน)</li>
-            <li>เลือก "เหตุผลความจำเป็น"</li>
-            <li><b>ลงชื่อ:</b> สามารถวาดลายเซ็น หรือถ่ายรูปลายเซ็นจากกระดาษแนบได้</li>
-            <li>กด <b>"บันทึกข้อมูล"</b> แล้วแจ้งเบอร์ #113 เพื่อให้ห้องยาดำเนินการ</li>
-        </ul>
-        <hr>
-        <h6>3. เภสัชกรดำเนินการ</h6>
-        <ul>
-            <li>ไปที่แท็บ "เภสัชกรพิมพ์ใบยืมยา" (สังเกตจุดแดงแจ้งเตือน)</li>
-            <li>กดตรวจสอบรายการ สามารถแก้ไขรายละเอียดยาได้</li>
-            <li>เลือกชื่อเภสัชกร แล้วกด "อนุมัติ & พิมพ์ PDF"</li>
-            <li>ระบบจะสร้างเลขหนังสือและไฟล์ PDF ให้แชร์ลงกลุ่ม LINE</li>
-            <li><b>ขอรถ:</b> กดปุ่มรูปรถ 🚑 เพื่อสร้างใบขออนุญาตใช้รถยนต์ได้ทันที</li>
-        </ul>
-        <hr>
-        <h6>4. การลงรับยา</h6>
-        <ul>
-            <li>ไปที่แท็บ "ลงรับยา"</li>
-            <li>กดปุ่ม "รับยา" กรอกราคาและหมายเหตุการรับ</li>
-            <li>กดบันทึกและแชร์แจ้งเตือนในกลุ่ม LINE</li>
-        </ul>
+      <div class="modal-body small">
+         <p>เลือกเมนูในหน้าแรกตามบทบาทของคุณ:</p>
+         <ul>
+             <li><b>แพทย์:</b> ใช้ค้นหาเลข ว. กรอกข้อมูลยาผู้ป่วย และเซ็นชื่อ (ช่องที่แพทย์ไม่มั่นใจเว้นว่างไว้ให้เภสัชตรวจสอบได้)</li>
+             <li><b>เภสัชกรตรวจสอบ:</b> ทำหน้าที่ตรวจสอบ แก้ไข และเติมหน่วยยาให้ครบถ้วนตามหลักเกณฑ์ จากนั้นกดอนุมัติเพื่อสร้าง PDF ใบยืมยา</li>
+             <li><b>เภสัชกรรับยา:</b> เมื่อยามาถึง ให้เข้าไปบันทึกจำนวนที่ได้รับและราคา พร้อมหมายเหตุการรับ</li>
+         </ul>
       </div>
     </div>
   </div>
@@ -478,7 +482,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ⚠️ Update URL Here (ห้ามลืมเปลี่ยน url ของ Web App ของคุณเอง)
 const API_URL = "https://script.google.com/macros/s/AKfycbxwYS5eJYtTgKikbQ3_8LyuuG1Byw--1ojCUVRafpk3_yY9ncW9AD12XFUcYyn-i9mY/exec";
 const LIFF_ID = "2008862022-AUe9BjR5";
 
@@ -486,10 +489,35 @@ var app = {};
 var pendingData = [], approvedData = [];
 var helpModal, approveModal, receiveModal, summaryModal, registerModal, carModal;
 var currentUser = null;
+app.drugMasterList = []; // เก็บ Array ข้อมูลยาจาก Server
 
-// API Call
+// Custom UI
+app.showAlert = function(msg) {
+    let modalEl = document.getElementById('customAlertModal');
+    if(!modalEl) {
+        const modalHtml = `<div class="modal fade" id="customAlertModal" tabindex="-1" style="z-index: 10000;"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow"><div class="modal-body text-center mt-4"><p class="fs-5">${msg.replace(/\n/g, '<br>')}</p></div><div class="modal-footer border-0 justify-content-center"><button type="button" class="btn btn-primary px-5 rounded-pill" data-bs-dismiss="modal">ตกลง</button></div></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        modalEl = document.getElementById('customAlertModal');
+    }
+    modalEl.querySelector('.modal-body p').innerHTML = msg.replace(/\n/g, '<br>');
+    new bootstrap.Modal(modalEl).show();
+};
+
+app.showConfirm = function(msg, onConfirm) {
+    let modalEl = document.getElementById('customConfirmModal');
+    if(!modalEl) {
+        const modalHtml = `<div class="modal fade" id="customConfirmModal" tabindex="-1" style="z-index: 10000;"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow"><div class="modal-body text-center mt-4"><p class="fs-5">${msg}</p></div><div class="modal-footer border-0 justify-content-center gap-3"><button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">ยกเลิก</button><button type="button" class="btn btn-primary px-4 rounded-pill" id="customConfirmBtn">ยืนยัน</button></div></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        modalEl = document.getElementById('customConfirmModal');
+    }
+    modalEl.querySelector('.modal-body p').innerText = msg;
+    const btn = modalEl.querySelector('#customConfirmBtn');
+    btn.onclick = () => { bootstrap.Modal.getInstance(modalEl).hide(); if(onConfirm) onConfirm(); };
+    new bootstrap.Modal(modalEl).show();
+};
+
 app.callApi = async function(action, payload = {}) {
-    if(['submitRequest', 'approveAndGeneratePDF', 'registerUser', 'submitCarRequest'].includes(action)) {
+    if(['submitRequest', 'approveAndGeneratePDF', 'registerUser', 'submitCarRequest', 'getDoctorByLicense', 'getDoctorHistory'].includes(action)) {
         document.getElementById('loading').classList.remove('hidden');
     }
     try {
@@ -504,33 +532,25 @@ app.callApi = async function(action, payload = {}) {
         return result.data;
     } catch(e) {
         document.getElementById('loading').classList.add('hidden');
-        alert("System Error: " + e.message);
+        app.showAlert("System Error: " + e.message);
         throw e;
     }
 };
 
-// --- USER LOGIC ---
 app.checkUser = async function() {
     let uid = null, dName = "", pUrl = "";
     if(liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         uid = profile.userId; dName = profile.displayName; pUrl = profile.pictureUrl;
     }
-
     if(uid) {
         document.getElementById('btnLogin').classList.add('hidden');
         document.getElementById('userProfile').classList.remove('hidden');
         document.getElementById('userPic').src = pUrl;
-        document.getElementById('userName').innerText = dName;
         
         const user = await app.callApi('checkUser', { userId: uid });
-        if(user) {
-            currentUser = user;
-            if(document.getElementById('doctorName')) document.getElementById('doctorName').value = user.name;
-        } else {
-            document.getElementById('alertReg').classList.remove('hidden');
-            app.openRegisterModal();
-        }
+        if(user) currentUser = user;
+        else { document.getElementById('alertReg').classList.remove('hidden'); app.openRegisterModal(); }
     }
     app.updateBadges();
 };
@@ -540,13 +560,79 @@ app.updateBadges = async function() {
         const counts = await app.callApi('getBadgeCounts');
         const bPhar = document.getElementById('badge-phar');
         const bRcv = document.getElementById('badge-rcv');
-        if(counts.pending > 0) { bPhar.innerText = counts.pending; bPhar.style.display = 'block'; } 
-        else bPhar.style.display = 'none';
-        if(counts.approved > 0) { bRcv.innerText = counts.approved; bRcv.style.display = 'block'; } 
-        else bRcv.style.display = 'none';
+        if(counts.pending > 0) { bPhar.innerText = counts.pending; bPhar.style.display = 'flex'; } else bPhar.style.display = 'none';
+        if(counts.approved > 0) { bRcv.innerText = counts.approved; bRcv.style.display = 'flex'; } else bRcv.style.display = 'none';
     } catch(e) {}
 };
 
+// 🔥 Local Storage สำหรับดึงประวัติแพทย์
+app.checkDoctorStorage = function() {
+    const lic = localStorage.getItem('sawee_doc_lic');
+    const name = localStorage.getItem('sawee_doc_name');
+    if(lic && name) {
+        document.getElementById('licenseNo').value = lic;
+        document.getElementById('doctorName').value = name;
+        app.loadDoctorHistory(lic, name);
+    }
+};
+
+app.loadDoctorHistory = async function(licenseNo, docName) {
+    if(!licenseNo) return;
+    document.getElementById('myHistoryBox').classList.remove('hidden');
+    document.getElementById('docHistoryTitle').innerHTML = `<i class="bi bi-clock-history"></i> ประวัติการขอใช้ยาของแพทย์ ${docName || ''}`;
+    document.getElementById('myHistoryContent').innerHTML = "กำลังโหลดประวัติ...";
+    try {
+        const hist = await app.callApi('getDoctorHistory', { licenseNo: licenseNo });
+        if(!hist || hist.length === 0) {
+            document.getElementById('myHistoryContent').innerHTML = "<span class='text-muted'>ยังไม่มีประวัติการขอใช้ยา</span>";
+            return;
+        }
+        let html = '<ul class="list-group list-group-flush rounded mt-2">';
+        hist.forEach(h => {
+            let bClass = h.status === 'Pending' ? 'bg-warning text-dark' : (h.status === 'Approved' ? 'bg-info' : 'bg-success');
+            html += `<li class="list-group-item bg-transparent px-0 py-2 border-bottom border-light">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-truncate" style="max-width:70%"><b>${h.date}</b>: ${h.drug}</span>
+                            <span class="badge ${bClass}">${h.status}</span>
+                        </div>
+                     </li>`;
+        });
+        html += '</ul>';
+        document.getElementById('myHistoryContent').innerHTML = html;
+    } catch(e) {
+        document.getElementById('myHistoryContent').innerHTML = "<span class='text-danger'>ไม่สามารถโหลดประวัติได้</span>";
+    }
+};
+
+app.loadDrugSuggest = async function() {
+    try {
+        app.drugMasterList = await app.callApi('getUniqueDrugs');
+        const list = document.getElementById('drugSuggestList');
+        list.innerHTML = "";
+        app.drugMasterList.forEach(d => {
+            let option = document.createElement('option');
+            option.value = d.display;
+            list.appendChild(option);
+        });
+    } catch(e) {}
+};
+
+app.show = function(id) {
+    document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    
+    if(id==='doctor') {
+        app.checkRows();
+        app.checkDoctorStorage();
+        app.loadDrugSuggest();
+    }
+    if(id==='pharmacy') app.loadPharmacy();
+    if(id==='receive') app.loadApproved();
+    if(id==='history') app.loadHistory();
+};
+
+app.openHelp = function() { helpModal.show(); };
+app.login = function() { if(!liff.isLoggedIn()) liff.login(); else app.checkUser(); };
 app.openRegisterModal = function(isEdit = false) {
     if(currentUser) {
         document.getElementById('regName').value = currentUser.name;
@@ -555,389 +641,411 @@ app.openRegisterModal = function(isEdit = false) {
     }
     registerModal.show();
 };
-
 app.register = async function() {
     const name = document.getElementById('regName').value;
-    const job = document.getElementById('regJob').value;
-    const phone = document.getElementById('regPhone').value;
-    if(!name) return alert("กรุณาระบุชื่อ");
-    
+    if(!name) return app.showAlert("กรุณาระบุชื่อ");
     let uid = "browser_user";
     if(liff.isLoggedIn()) { const p = await liff.getProfile(); uid = p.userId; }
-    
-    const res = await app.callApi('registerUser', { userId: uid, name: name, job: job, phone: phone });
+    const res = await app.callApi('registerUser', { userId: uid, name: name, job: document.getElementById('regJob').value, phone: document.getElementById('regPhone').value });
     currentUser = res;
     registerModal.hide();
     document.getElementById('alertReg').classList.add('hidden');
-    alert("ลงทะเบียนสำเร็จ");
-    if(document.getElementById('doctorName')) document.getElementById('doctorName').value = name;
+    app.showAlert("ลงทะเบียนสำเร็จ");
 };
 
-// --- NAVIGATION ---
-app.show = function(id) {
-    document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-    document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
-    
-    const btns = document.querySelectorAll('.nav-link');
-    if(id==='doctor') { btns[0].classList.add('active'); app.checkRows(); }
-    if(id==='pharmacy') { btns[1].classList.add('active'); app.loadPharmacy(); }
-    if(id==='receive') { btns[2].classList.add('active'); app.loadApproved(); }
-    if(id==='history') { btns[3].classList.add('active'); app.loadHistory(); }
-};
-
-app.openHelp = function() { helpModal.show(); };
-app.login = function() { if(!liff.isLoggedIn()) liff.login(); else app.checkUser(); };
-
-// 🔥 ฟังก์ชันช่วยเปิดลิงก์แบบไม่โดนบล็อก (รองรับทั้งมือถือและคอมพิวเตอร์)
-app.fallbackShare = function(textMsg) {
-    const lineUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(textMsg);
-    // ใช้ location.href จะปลอดภัยที่สุดและไม่โดน Popup Blocker บล็อก
-    window.location.href = lineUrl; 
-};
-
-// 🔥 แชร์รูปแบบใหม่เป็น "ข้อความธรรมดา" 🔥
+app.fallbackShare = function(textMsg) { window.location.href = 'https://line.me/R/msg/text/?' + encodeURIComponent(textMsg); };
 app.shareApprove = async function(encodedData) {
-    if(!liff.isLoggedIn()) { 
-        alert("กรุณา Login LINE ก่อนแชร์เข้ากลุ่ม");
-        liff.login({ redirectUri: window.location.href });
-        return; 
-    }
+    if(!liff.isLoggedIn()) { app.showAlert("กรุณา Login LINE ก่อนแชร์"); return; }
     const data = JSON.parse(decodeURIComponent(encodedData));
-    
-    const textMsg = `มีการขอใช้ยานอกรพ.สวี รายใหม่\nชื่อยา/จำนวน: ${data.drugSummary}\nผู้ขอ: ${data.doctorName}\nวันที่ขอ: ${data.timestamp}\nเลขที่หนังสือ: ${data.docNum}\nกรุณาคลิกเพื่อดู pdf: \n${data.pdfUrl}`;
-
+    const textMsg = `มีการขอใช้ยานอกรพ.สวี รายใหม่\nชื่อยา/จำนวน: ${data.drugSummary}\nผู้ขอ: ${data.doctorName}\nวันที่ขอ: ${data.timestamp}\nเลขที่หนังสือ: ${data.docNum}\nคลิกดู pdf: \n${data.pdfUrl}`;
     if(liff.isApiAvailable('shareTargetPicker')) {
-        try {
-            await liff.shareTargetPicker([{ type: "text", text: textMsg }]);
-        } catch(e) {
-            console.error(e);
-            alert("⚠️ ไม่สามารถแชร์ผ่าน LIFF ได้ (Failed to fetch)\n\nวิธีแก้: คุณต้องไปที่เว็บ LINE Developers Console -> เลือก LIFF ของคุณ -> เปิดสวิตช์ 'Share Target Picker' ให้เป็น ON\n\nระบบจะสลับไปใช้การแชร์สำรองแทนครับ");
-            app.fallbackShare(textMsg);
-        }
-    } else { 
-        app.fallbackShare(textMsg);
-    }
+        try { await liff.shareTargetPicker([{ type: "text", text: textMsg }]); } 
+        catch(e) { app.fallbackShare(textMsg); }
+    } else { app.fallbackShare(textMsg); }
 };
-
-// 🔥 แชร์แจ้งเตือนรับยาเป็น "ข้อความธรรมดา" 🔥
 app.shareNotify = async function(text, url) {
-    if(!liff.isLoggedIn()) { 
-        alert("กรุณา Login LINE ก่อนแชร์เข้ากลุ่ม");
-        liff.login({ redirectUri: window.location.href });
-        return; 
-    }
-    let fullText = text;
-    if (url) fullText += "\n" + url;
-
+    if(!liff.isLoggedIn()) { app.showAlert("กรุณา Login LINE ก่อนแชร์"); return; }
+    let fullText = text + (url ? "\n" + url : "");
     if(liff.isApiAvailable('shareTargetPicker')) {
-        try {
-            await liff.shareTargetPicker([{ type: "text", text: fullText }]);
-        } catch(e) {
-            console.error(e);
-            app.fallbackShare(fullText);
-        }
-    } else { 
-        app.fallbackShare(fullText);
-    }
+        try { await liff.shareTargetPicker([{ type: "text", text: fullText }]); } 
+        catch(e) { app.fallbackShare(fullText); }
+    } else { app.fallbackShare(fullText); }
 };
 
-// --- DATA HELPERS ---
+app.searchDoctor = async function() {
+    const lic = document.getElementById('licenseNo').value;
+    if(!lic) return app.showAlert("กรุณาระบุเลข ว.");
+    try {
+        const docName = await app.callApi('getDoctorByLicense', { licenseNo: lic });
+        if(docName) {
+            document.getElementById('doctorName').value = docName;
+            localStorage.setItem('sawee_doc_lic', lic);
+            localStorage.setItem('sawee_doc_name', docName);
+            app.loadDoctorHistory(lic, docName);
+        } else {
+            app.showAlert("ไม่พบชื่อแพทย์จากเลข ว. นี้ (กรุณาพิมพ์ชื่อเอง)");
+        }
+    } catch(e) {}
+};
+
 app.getDrugs = function(json) { try { const d = JSON.parse(json); return Array.isArray(d) ? d : [{name: json, strength:"", quantity:""}]; } catch(e) { return [{name: json, strength:"", quantity:""}]; } };
 
-// --- DOCTOR ---
 app.addDrugRow = function() {
     const id = 'row_' + Date.now();
-    const html = `<div class="drug-row" id="${id}"><i class="bi bi-x-circle-fill remove-btn" onclick="document.getElementById('${id}').remove()"></i><div class="row g-2"><div class="col-8"><label class="m-0 small">ชื่อยา</label><input type="text" class="form-control form-control-sm d-name" placeholder="เช่น Levofloxacin injection"></div><div class="col-4"><label class="m-0 small">ความแรง(+หน่วย)</label><input type="text" class="form-control form-control-sm d-strength" placeholder="เช่น 750mg"></div><div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm d-qty" placeholder="เช่น 20 vials"></div><div class="col-4"><label class="m-0 small">วิธีใช้</label><input type="text" class="form-control form-control-sm d-regimen"></div><div class="col-4"><label class="m-0 small">ระยะเวลา(วัน)</label><input type="number" class="form-control form-control-sm d-duration" placeholder="เช่น 15"></div></div></div>`;
+    // เปลี่ยน type ของ d-duration จาก number เป็น text เพื่อให้ใส่คำว่า วัน ได้
+    const html = `<div class="drug-row" id="${id}"><i class="bi bi-x-circle-fill remove-btn" onclick="app.removeDrugRow('${id}')"></i><div class="row g-2"><div class="col-12"><label class="m-0 small text-primary">ชื่อยา</label><input type="text" class="form-control form-control-sm border-primary d-name" list="drugSuggestList" placeholder="เช่น Levofloxacin injection"></div><div class="col-6"><label class="m-0 small">ความแรง(+หน่วย)</label><input type="text" class="form-control form-control-sm d-strength" placeholder="เช่น 750mg"></div><div class="col-6"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm d-qty" placeholder="เช่น 20 vials"></div><div class="col-7"><label class="m-0 small">วิธีใช้</label><input type="text" class="form-control form-control-sm d-regimen"></div><div class="col-5"><label class="m-0 small">ระยะเวลา(วัน)</label><input type="text" class="form-control form-control-sm d-duration" placeholder="เช่น 15"></div></div></div>`;
     document.getElementById('drugListContainer').insertAdjacentHTML('beforeend', html);
-};
-app.checkRows = function() { if(document.getElementById('drugListContainer').children.length === 0) app.addDrugRow(); };
-app.submitData = async function() {
-    const req = ['doctorName', 'patientName', 'hn', 'staffName'];
-    for(let id of req) { if(!document.getElementById(id).value) return alert("กรุณากรอกข้อมูลให้ครบถ้วน"); }
-    let drugs = [], drugSummary = "";
-    document.querySelectorAll('.drug-row').forEach(r => {
-        let n = r.querySelector('.d-name').value;
-        if(n) { drugs.push({ name: n, strength: r.querySelector('.d-strength').value, quantity: r.querySelector('.d-qty').value, regimen: r.querySelector('.d-regimen').value, duration: r.querySelector('.d-duration').value }); drugSummary += `- ${n} (${r.querySelector('.d-qty').value})<br>`; }
+    
+    app.updateAddDrugButton();
+
+    const rowEl = document.getElementById(id);
+
+    // เพิ่ม Event Listener เพื่อจับจังหวะการเลือกยาจาก Suggestion
+    const nameInput = rowEl.querySelector('.d-name');
+    nameInput.addEventListener('input', function(e) {
+        const val = e.target.value;
+        const foundDrug = app.drugMasterList.find(d => d.display === val);
+        if(foundDrug) {
+            e.target.value = foundDrug.name;
+            rowEl.querySelector('.d-strength').value = foundDrug.strength;
+        }
     });
-    if(drugs.length === 0) return alert("ระบุยาอย่างน้อย 1 รายการ");
+
+    // แจ้งเตือนทันทีเมื่อช่องจำนวนไม่มีตัวอักษร (หน่วย)
+    const qtyInput = rowEl.querySelector('.d-qty');
+    qtyInput.addEventListener('blur', function(e) {
+        const val = e.target.value.trim();
+        if (val && !/[a-zA-Zก-ฮ]/.test(val)) {
+            app.showAlert("ช่องจำนวน: กรุณาระบุหน่วยด้วยครับ\n(เช่น 10 vial, 2 แผง)");
+        }
+    });
+
+    // เติมคำว่า "วัน" อัตโนมัติเมื่อกรอกระยะเวลา
+    const durInput = rowEl.querySelector('.d-duration');
+    durInput.addEventListener('blur', function(e) {
+        let val = e.target.value.trim();
+        let num = val.replace(/[^\d]/g, ''); // ดึงมาเฉพาะตัวเลข
+        if (num) {
+            e.target.value = num + " วัน";
+        } else {
+            e.target.value = ""; // ล้างค่าถ้าไม่มีตัวเลข
+        }
+    });
+};
+
+app.removeDrugRow = function(id) {
+    document.getElementById(id).remove();
+    app.updateAddDrugButton();
+};
+
+app.updateAddDrugButton = function() {
+    const count = document.getElementById('drugListContainer').children.length;
+    const btn = document.getElementById('btnAddDrug');
+    if(btn) {
+        btn.innerHTML = `<i class="bi bi-plus-circle"></i> เพิ่มยาตัวที่ ${count + 1}`;
+    }
+};
+
+app.checkRows = function() { if(document.getElementById('drugListContainer').children.length === 0) app.addDrugRow(); };
+
+app.submitData = async function() {
+    // ระบุชื่อฟิลด์เพื่อให้ Alert แจ้งได้ตรงจุด
+    const reqFields = [
+        { id: 'doctorName', name: 'ชื่อแพทย์ผู้ขอใช้ยา' },
+        { id: 'patientName', name: 'ชื่อผู้ป่วย' },
+        { id: 'hn', name: 'HN' },
+        { id: 'staffName', name: 'แพทย์ที่ปรึกษา' }
+    ];
+    
+    let missingFields = [];
+    for(let field of reqFields) {
+        if(!document.getElementById(field.id).value.trim()) {
+            missingFields.push(field.name);
+        }
+    }
+    
+    if(missingFields.length > 0) {
+        return app.showAlert("กรุณากรอกข้อมูลต่อไปนี้ให้ครบถ้วน:\n- " + missingFields.join('\n- '));
+    }
+    
+    // อัปเดต Storage เผื่อแพทย์พิมพ์แก้ชื่อเอง
+    const lic = document.getElementById('licenseNo').value;
+    const dName = document.getElementById('doctorName').value;
+    if(lic) {
+        localStorage.setItem('sawee_doc_lic', lic);
+        localStorage.setItem('sawee_doc_name', dName);
+    }
+    
+    let drugs = [], drugSummary = "";
+    let drugErrors = [];
+    
+    document.querySelectorAll('.drug-row').forEach((r, idx) => {
+        let n = r.querySelector('.d-name').value.trim();
+        let q = r.querySelector('.d-qty').value.trim();
+        let d = r.querySelector('.d-duration').value.trim();
+        
+        if(n) { 
+            // ตรวจสอบช่องจำนวนอีกครั้งก่อนส่ง
+            if(!q) {
+                drugErrors.push(`รายการยาที่ ${idx+1}: กรุณาระบุจำนวน`);
+            } else if(!/[a-zA-Zก-ฮ]/.test(q)) {
+                drugErrors.push(`รายการยาที่ ${idx+1}: ช่องจำนวนกรุณาระบุหน่วยด้วย`);
+            }
+
+            drugs.push({ 
+                name: n, 
+                strength: r.querySelector('.d-strength').value.trim(), 
+                quantity: q, 
+                regimen: r.querySelector('.d-regimen').value.trim(), 
+                duration: d.replace(/[^\d]/g, '') // ดึงเฉพาะตัวเลขส่งไปหลังบ้าน
+            }); 
+            drugSummary += `- ${n} (${q || 'เว้นว่าง'})<br>`; 
+        }
+    });
+    
+    if(drugs.length === 0) return app.showAlert("กรุณาระบุยาอย่างน้อย 1 รายการ");
+    if(drugErrors.length > 0) return app.showAlert("โปรดตรวจสอบข้อมูลยา:\n- " + drugErrors.join('\n- '));
+    
     let sigData = null;
     const fileInput = document.getElementById('sigFile');
-    if(fileInput.files.length > 0) { const reader = new FileReader(); reader.readAsDataURL(fileInput.files[0]); await new Promise(resolve => reader.onload = () => { sigData = reader.result; resolve(); }); } 
-    else { const cvs = document.getElementById('sig-canvas'); if(cvs.toDataURL() !== document.createElement('canvas').toDataURL()) sigData = cvs.toDataURL("image/png"); }
-    if(!sigData) return alert("กรุณาลงลายเซ็น หรือแนบรูป");
+    if(fileInput.files.length > 0) { 
+        const reader = new FileReader(); reader.readAsDataURL(fileInput.files[0]); 
+        await new Promise(resolve => reader.onload = () => { sigData = reader.result; resolve(); }); 
+    } else { 
+        const cvs = document.getElementById('sig-canvas'); 
+        if(cvs.toDataURL() !== document.createElement('canvas').toDataURL()) sigData = cvs.toDataURL("image/png"); 
+    }
+    if(!sigData) return app.showAlert("กรุณาลงลายเซ็น หรือแนบรูป");
+    
     const rEl = document.querySelector('input[name="reasonCode"]:checked');
-    const payload = { doctorName: document.getElementById('doctorName').value, drugs: drugs, staffName: document.getElementById('staffName').value, patientName: document.getElementById('patientName').value, hn: document.getElementById('hn').value, diagnosis: document.getElementById('diagnosis').value, indication: document.getElementById('indication').value, suggestion: document.getElementById('suggestion').value, reasonCode: rEl ? rEl.value : "", reasonText: document.getElementById('reasonText').value, signatureData: sigData, imageFile: null };
-    try { await app.callApi('submitRequest', payload); document.getElementById('summaryText').innerHTML = `<b>แพทย์ ${payload.doctorName}</b> ต้องการใช้ยา:<br>${drugSummary}`; summaryModal.show(); app.updateBadges(); } catch(e) {}
+    const payload = { 
+        licenseNo: lic,
+        doctorName: dName, 
+        drugs: drugs, 
+        staffName: document.getElementById('staffName').value, 
+        patientName: document.getElementById('patientName').value, 
+        hn: document.getElementById('hn').value, 
+        diagnosis: document.getElementById('diagnosis').value, 
+        indication: document.getElementById('indication').value, 
+        suggestion: document.getElementById('suggestion').value, 
+        reasonCode: rEl ? rEl.value : "", 
+        reasonText: document.getElementById('reasonText').value, 
+        signatureData: sigData, 
+        imageFile: null 
+    };
+    try { 
+        await app.callApi('submitRequest', payload); 
+        document.getElementById('summaryText').innerHTML = `<b>แพทย์ ${payload.doctorName}</b> ขอใช้ยา:<br>${drugSummary}`; 
+        summaryModal.show(); 
+        app.updateBadges(); 
+    } catch(e) {}
 };
 app.clearSig = function() { const ctx = document.getElementById('sig-canvas').getContext('2d'); ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); document.getElementById('sigFile').value = ""; };
 
-// --- PHARMACY ---
 app.loadPharmacy = async function() {
     document.getElementById('pharmacy-loader').classList.remove('hidden');
     document.getElementById('pendingList').innerHTML = "";
     try {
         pendingData = await app.callApi('getPharmacyDashboard');
         document.getElementById('pharmacy-loader').classList.add('hidden');
-        if(pendingData.length === 0) { document.getElementById('pendingList').innerHTML = "<div class='text-center mt-4'>ไม่มีรายการค้าง</div>"; return; }
+        if(pendingData.length === 0) { document.getElementById('pendingList').innerHTML = "<div class='alert alert-light text-center mt-4 border'>ไม่มีรายการค้าง</div>"; return; }
         let html = '';
         pendingData.forEach((item, i) => {
             let drugs = app.getDrugs(item.drugJson);
-            let drugDisplay = drugs.map(d => `- ${d.name} (${d.quantity})`).join('<br>');
-            let firstDrug = drugs[0] ? drugs[0].name : "ยา";
-            let carAction = `<button class="btn btn-sm btn-warning py-0" onclick="app.openCarModal(${i})"><i class="bi bi-ambulance"></i> ขอรถ</button>`;
-            if(item.carPdfUrl) carAction = `<a href="${item.carPdfUrl}" target="_blank" class="btn btn-sm btn-info py-0 text-white"><i class="bi bi-file-earmark-pdf"></i> ใบขอรถ</a>`;
-            
-            // เตรียมข้อมูลเพื่อสร้างข้อความ Text ตอนแชร์
-            let dateObj = new Date(item.reqDate);
-            let thaiDate = `${dateObj.getDate()} ${["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."][dateObj.getMonth()]} ${dateObj.getFullYear()+543}`;
-            let timeStr = `${('0'+dateObj.getHours()).slice(-2)}:${('0'+dateObj.getMinutes()).slice(-2)} น.`;
+            let drugDisplay = drugs.map(d => `- ${d.name} (${d.quantity || '-'})`).join('<br>');
             let shareData = encodeURIComponent(JSON.stringify({
-                drugName: firstDrug,
-                drugSummary: drugs.map(d => `${d.name} ${d.strength || ''} จำนวน ${d.quantity || ''}`).join(', '),
-                doctorName: item.doctorName, docNum: item.docNum, timestamp: `${thaiDate} เวลา ${timeStr}`, pdfUrl: item.pdfUrl
+                drugName: drugs[0] ? drugs[0].name : "ยา",
+                drugSummary: drugs.map(d => `${d.name} ${d.strength || ''} จน. ${d.quantity || ''}`).join(', '),
+                doctorName: item.doctorName, docNum: item.docNum, timestamp: item.reqDate, pdfUrl: item.pdfUrl
             }));
 
             let buttons = '';
-            if (item.status === 'Pending') buttons = `<button class="btn btn-outline-primary w-100 btn-sm" onclick="app.openApprove(${i})">ตรวจสอบ / อนุมัติ</button>`;
-            else if (item.status === 'Approved') buttons = `<div class="d-flex gap-2"><button class="btn btn-sm btn-secondary flex-fill" onclick="app.openPdf('${item.pdfUrl}')">ดู PDF</button><button class="btn btn-sm btn-success flex-fill" onclick="app.shareApprove('${shareData}')">แชร์เข้าไลน์กลุ่ม</button></div><div class="mt-2 text-end d-flex justify-content-between"><button class="btn btn-sm btn-danger py-0" onclick="app.cancelRequest('${item.reqId}')">ยกเลิกใบยืม</button>${carAction}</div>`;
+            if (item.status === 'Pending') buttons = `<button class="btn btn-primary w-100 btn-sm rounded-pill mt-2" onclick="app.openApprove(${i})">ตรวจสอบ / อนุมัติ</button>`;
+            else if (item.status === 'Approved') buttons = `<div class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-outline-secondary flex-fill rounded-pill" onclick="app.openPdf('${item.pdfUrl}')">ดู PDF</button><button class="btn btn-sm btn-success flex-fill rounded-pill" onclick="app.shareApprove('${shareData}')"><i class="bi bi-line"></i> แชร์</button></div><div class="mt-2 text-end d-flex justify-content-between"><button class="btn btn-sm btn-outline-danger py-0 border-0" onclick="app.cancelRequest('${item.reqId}')">ยกเลิกใบยืม</button><button class="btn btn-sm btn-warning py-0 rounded-pill" onclick="app.openCarModal(${i})"><i class="bi bi-ambulance"></i> ขอรถ</button></div>`;
             
-            html += `<div class="card p-3 mb-3 shadow-sm border-start border-4 ${item.status==='Pending'?'border-warning':'border-success'}"><div class="d-flex justify-content-between"><span class="fw-bold text-primary">${item.doctorName}</span><span class="badge badge-status ${item.status==='Pending'?'bg-warning text-dark':'bg-success'}">${item.status}</span></div><div class="small text-muted mb-2">${item.patientName} (${item.hn})</div><div class="bg-light p-2 rounded mb-2 small">${drugDisplay}</div>${buttons}</div>`;
+            html += `<div class="card p-3 mb-3 shadow-sm border-0 border-start border-4 ${item.status==='Pending'?'border-warning':'border-success'}"><div class="d-flex justify-content-between"><span class="fw-bold text-primary">${item.doctorName}</span><span class="badge ${item.status==='Pending'?'bg-warning text-dark':'bg-success'}">${item.status}</span></div><div class="small text-muted mb-2"><i class="bi bi-person"></i> ${item.patientName} (HN: ${item.hn})</div><div class="bg-light p-2 rounded mb-1 small">${drugDisplay}</div>${buttons}</div>`;
         });
         document.getElementById('pendingList').innerHTML = html;
         const list = await app.callApi('getUserList');
         const sel = document.getElementById('ap_pharmacistName');
-        sel.innerHTML = '<option value="">เลือก...</option>';
+        sel.innerHTML = '<option value="">เลือกรายชื่อ...</option>';
         list.forEach(p => sel.add(new Option(p, p)));
         if(currentUser) sel.value = currentUser.name;
     } catch(e) {}
 };
+
 app.openApprove = function(i) {
     const item = pendingData[i];
     document.getElementById('ap_reqId').value = item.reqId;
     const container = document.getElementById('ap_drugInputs');
     container.innerHTML = "";
     app.getDrugs(item.drugJson).forEach((d, idx) => {
-        container.insertAdjacentHTML('beforeend', `<div class="border p-2 mb-2 rounded bg-light drug-edit-row"><div class="fw-bold small text-primary mb-1">รายการที่ ${idx+1}</div><div class="row g-1"><div class="col-12"><label class="small">ชื่อยา</label><input type="text" class="form-control form-control-sm ap-name" value="${d.name}"></div><div class="col-6"><label class="small">ความแรง</label><input type="text" class="form-control form-control-sm ap-strength" value="${d.strength}"></div><div class="col-6"><label class="small">จำนวน</label><input type="text" class="form-control form-control-sm ap-qty" value="${d.quantity}"></div><div class="col-6"><label class="small">วิธีใช้</label><input type="text" class="form-control form-control-sm ap-regimen" value="${d.regimen}"></div><div class="col-6"><label class="small">ระยะเวลา</label><input type="text" class="form-control form-control-sm ap-duration" value="${d.duration}"></div></div></div>`);
+        container.insertAdjacentHTML('beforeend', `<div class="card shadow-sm p-3 mb-3 border-0 border-top border-primary border-3 drug-edit-row"><div class="fw-bold text-primary mb-2">ยาที่ ${idx+1}</div><div class="row g-2"><div class="col-12"><label class="small mt-0">ชื่อยา</label><input type="text" class="form-control form-control-sm ap-name" value="${d.name}"></div><div class="col-6"><label class="small mt-0">ความแรง (ต้องมีหน่วย)</label><input type="text" class="form-control form-control-sm ap-strength" value="${d.strength}" placeholder="เช่น 500 mg"></div><div class="col-6"><label class="small mt-0">จำนวน (ต้องมีหน่วย)</label><input type="text" class="form-control form-control-sm ap-qty" value="${d.quantity}" placeholder="เช่น 20 vial"></div><div class="col-7"><label class="small mt-0">วิธีใช้</label><input type="text" class="form-control form-control-sm ap-regimen" value="${d.regimen}"></div><div class="col-5"><label class="small mt-0">ระยะเวลา (ตัวเลขล้วน)</label><input type="number" class="form-control form-control-sm ap-duration" value="${d.duration}" placeholder="เช่น 14"></div></div></div>`);
     });
     approveModal.show();
 };
-app.cancelRequest = async function(reqId) { if(!reqId) reqId = document.getElementById('ap_reqId').value; if(!confirm("ยืนยันยกเลิก?")) return; try { await app.callApi('cancelRequest', {reqId: reqId}); alert("ยกเลิกแล้ว"); approveModal.hide(); app.loadPharmacy(); app.updateBadges(); } catch(e) {} };
+app.cancelRequest = async function(reqId) { 
+    if(!reqId) reqId = document.getElementById('ap_reqId').value; 
+    app.showConfirm("ยืนยันยกเลิกใบยืมยานี้ใช่หรือไม่?", async () => {
+        try { await app.callApi('cancelRequest', {reqId: reqId}); app.showAlert("ยกเลิกแล้ว"); approveModal.hide(); app.loadPharmacy(); app.updateBadges(); } catch(e) {} 
+    });
+};
+
 app.confirmApprove = async function() {
     const phar = document.getElementById('ap_pharmacistName').value;
-    if(!phar) return alert("เลือกเภสัชกร");
+    if(!phar) return app.showAlert("กรุณาเลือกชื่อเภสัชกร");
+    
     let editedDrugs = [];
-    document.querySelectorAll('.drug-edit-row').forEach(row => { editedDrugs.push({ name: row.querySelector('.ap-name').value, strength: row.querySelector('.ap-strength').value, quantity: row.querySelector('.ap-qty').value, regimen: row.querySelector('.ap-regimen').value, duration: row.querySelector('.ap-duration').value }); });
+    let errMsgs = [];
+    
+    document.querySelectorAll('.drug-edit-row').forEach((row, idx) => { 
+        let d = {
+            name: row.querySelector('.ap-name').value.trim(),
+            strength: row.querySelector('.ap-strength').value.trim(),
+            quantity: row.querySelector('.ap-qty').value.trim(),
+            regimen: row.querySelector('.ap-regimen').value.trim(),
+            duration: row.querySelector('.ap-duration').value.trim()
+        };
+        
+        if(!d.name) errMsgs.push(`ยาที่ ${idx+1}: ขาดชื่อยา`);
+        const hasNum = /\d/;
+        const hasChar = /[a-zA-Zก-ฮ]/;
+        if(!d.strength || !hasNum.test(d.strength) || !hasChar.test(d.strength)) errMsgs.push(`ยาที่ ${idx+1}: "ความแรง" ต้องมีตัวเลขและหน่วย (เช่น 500mg)`);
+        if(!d.quantity || !hasNum.test(d.quantity) || !hasChar.test(d.quantity)) errMsgs.push(`ยาที่ ${idx+1}: "จำนวน" ต้องมีตัวเลขและหน่วย (เช่น 10 เม็ด)`);
+        if(!d.regimen) errMsgs.push(`ยาที่ ${idx+1}: ขาดวิธีใช้`);
+        if(!d.duration || !/^\d+$/.test(d.duration)) errMsgs.push(`ยาที่ ${idx+1}: "ระยะเวลา" ต้องเป็นตัวเลขเท่านั้น ห้ามใส่คำว่าวัน`);
+        
+        editedDrugs.push(d); 
+    });
+    
+    if(errMsgs.length > 0) {
+        return app.showAlert("<b>กรุณาแก้ไขข้อมูลให้ถูกต้องตามเงื่อนไข:</b>\n" + errMsgs.join('\n'));
+    }
+    
     const org = pendingData.find(x => x.reqId == document.getElementById('ap_reqId').value);
     const payload = { reqId: org.reqId, drugs: editedDrugs, pharmacistName: phar, reason: org.reason, reasonCode: org.reasonCode, signatureId: org.signatureId, imageFile: null };
     const fInput = document.getElementById('ap_imageFile');
-    if(fInput.files.length > 0) { const reader = new FileReader(); reader.onload = async (e) => { payload.imageFile = e.target.result; app._sendApprove(payload); }; reader.readAsDataURL(fInput.files[0]); } else { app._sendApprove(payload); }
+    if(fInput.files.length > 0) { 
+        const reader = new FileReader(); 
+        reader.onload = async (e) => { payload.imageFile = e.target.result; app._sendApprove(payload); }; 
+        reader.readAsDataURL(fInput.files[0]); 
+    } else { app._sendApprove(payload); }
 };
 
-// 🔥 บันทึกเสร็จแล้วแชร์เป็น Text Message แบบใหม่
 app._sendApprove = async function(pl) { 
     approveModal.hide(); 
     try { 
         const res = await app.callApi('approveAndGeneratePDF', pl); 
-        alert("✅ อนุมัติแล้ว: " + res.docNum); 
-        
-        // แชร์เข้าไลน์
         let shareData = encodeURIComponent(JSON.stringify(res));
-        if(confirm("แชร์เข้า LINE Group?")) {
+        app.showConfirm(`✅ อนุมัติสำเร็จ\nเลขหนังสือ: ${res.docNum}\n\nต้องการแชร์เข้า LINE Group ทันทีหรือไม่?`, () => {
             app.shareApprove(shareData);
-        }
-        
+        });
         app.loadPharmacy(); 
         app.updateBadges(); 
     } catch(e) {} 
 };
 
-// --- CAR ---
 app.openCarModal = function(i) {
     const item = pendingData[i];
     const drugs = app.getDrugs(item.drugJson);
-    const firstDrug = drugs[0] ? drugs[0].name : "ยา";
     document.getElementById('car_ref_reqId').value = item.reqId;
     document.getElementById('car_date').valueAsDate = new Date();
     if(currentUser) {
         document.getElementById('car_requester').value = currentUser.name;
         document.getElementById('car_job').value = currentUser.job;
     }
-    document.getElementById('car_reason').value = `ไปรับยา ${firstDrug} เพื่อใช้กับผู้ป่วย ชื่อ ${item.patientName}`;
+    document.getElementById('car_reason').value = `ไปรับยา ${drugs[0]?drugs[0].name:'ยา'} เพื่อใช้กับผู้ป่วย ${item.patientName}`;
     carModal.show();
 };
 document.getElementById('carModal').addEventListener('shown.bs.modal', function () {
     const cvs = document.getElementById('car-sig-canvas');
-    cvs.width = cvs.offsetWidth;
-    cvs.height = cvs.offsetHeight; 
-    const ctx = cvs.getContext('2d');
-    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight; 
+    const ctx = cvs.getContext('2d'); ctx.clearRect(0, 0, cvs.width, cvs.height);
 });
 app.clearCarSig = function() { const ctx = document.getElementById('car-sig-canvas').getContext('2d'); ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); };
 app.submitCarRequest = async function() {
     const req = document.getElementById('car_requester').value;
-    const job = document.getElementById('car_job').value;
     const date = document.getElementById('car_date').value;
-    const start = document.getElementById('car_start').value;
-    const end = document.getElementById('car_end').value;
-    const place = document.getElementById('car_place').value;
-    const reason = document.getElementById('car_reason').value;
-    const refId = document.getElementById('car_ref_reqId').value;
-    if(!req || !date || !start || !end || !place || !reason) return alert("กรอกข้อมูลให้ครบ");
+    if(!req || !date) return app.showAlert("กรอกข้อมูลให้ครบ");
     const cvs = document.getElementById('car-sig-canvas');
-    if(cvs.toDataURL() === document.createElement('canvas').toDataURL()) return alert("กรุณาลงลายเซ็น");
-    const payload = { refReqId: refId, requester: req, job: job, useDate: date, timeStart: start, timeEnd: end, place: place, reason: reason, signatureData: cvs.toDataURL("image/png") };
+    if(cvs.toDataURL() === document.createElement('canvas').toDataURL()) return app.showAlert("กรุณาลงลายเซ็น");
+    const payload = { refReqId: document.getElementById('car_ref_reqId').value, requester: req, job: document.getElementById('car_job').value, useDate: date, timeStart: document.getElementById('car_start').value, timeEnd: document.getElementById('car_end').value, place: document.getElementById('car_place').value, reason: document.getElementById('car_reason').value, signatureData: cvs.toDataURL("image/png") };
     carModal.hide();
-    try { const res = await app.callApi('submitCarRequest', payload); alert("สร้างใบขอรถสำเร็จ"); app.loadPharmacy(); } catch(e) {}
+    try { await app.callApi('submitCarRequest', payload); app.showAlert("สร้างใบขอรถสำเร็จ"); app.loadPharmacy(); } catch(e) {}
 };
 
-// --- RECEIVE ---
 app.loadApproved = async function() {
     document.getElementById('receive-loader').classList.remove('hidden');
     document.getElementById('approvedList').innerHTML = "";
-    const urlParams = new URLSearchParams(window.location.search);
-    const directReqId = urlParams.get('reqId');
     try {
         approvedData = await app.callApi('getApprovedRequests'); 
         document.getElementById('receive-loader').classList.add('hidden');
-        if(directReqId) { const idx = approvedData.findIndex(d => d.reqId === directReqId); if(idx !== -1) app.openReceive(idx); }
-        if(approvedData.length === 0) { document.getElementById('approvedList').innerHTML = "<div class='text-center mt-4'>ไม่มีรายการค้างรับ</div>"; return; }
+        if(approvedData.length === 0) { document.getElementById('approvedList').innerHTML = "<div class='alert alert-light text-center mt-4 border'>ไม่มีรายการค้างรับ</div>"; return; }
         let html = '';
-        approvedData.forEach((item, i) => { html += `<div class="card p-3 mb-3 shadow-sm border-start border-4 border-success"><div class="fw-bold text-dark" style="font-weight:normal">${item.docNum} (${item.date})</div><div class="small my-1 text-green-glam fs-6">${item.drug}</div><div class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-secondary flex-fill" onclick="app.openPdf('${item.pdfUrl}')">ดู PDF</button><button class="btn btn-sm btn-success flex-fill" onclick="app.openReceive(${i})">รับยา</button><button class="btn btn-sm btn-outline-success" onclick="app.shareNotify('ได้รับยาแล้ว (${item.drug})', '')">แชร์เข้าไลน์กลุ่ม</button></div></div>`; });
+        approvedData.forEach((item, i) => { html += `<div class="card p-3 mb-3 shadow-sm border-0 border-start border-4 border-success"><div class="fw-bold text-dark mb-1" style="font-size:0.9rem">${item.docNum}</div><div class="text-success fw-bold fs-6">${item.drug}</div><div class="small text-muted mt-1"><i class="bi bi-person"></i> ${item.patient}</div><div class="d-flex gap-2 mt-3"><button class="btn btn-sm btn-outline-secondary flex-fill rounded-pill" onclick="app.openPdf('${item.pdfUrl}')">ดู PDF</button><button class="btn btn-sm btn-success flex-fill rounded-pill fw-bold" onclick="app.openReceive(${i})">ลงรับยา</button></div></div>`; });
         document.getElementById('approvedList').innerHTML = html;
     } catch(e) {}
 };
-app.openPdf = function(url) { if(!url) return alert("No PDF"); if(liff.isInClient()) liff.openWindow({ url: url, external: true }); else window.open(url, '_blank'); };
+app.openPdf = function(url) { if(!url) return; if(liff.isInClient()) liff.openWindow({ url: url, external: true }); else window.open(url, '_blank'); };
 
 app.openReceive = function(index) {
     const item = approvedData[index];
     document.getElementById('rc_reqId').value = item.reqId;
     document.getElementById('rc_display').innerText = "ผู้ป่วย: " + item.patient;
-    
     let html = '';
-    if(item.drugsList && item.drugsList.length > 0) {
+    if(item.drugsList) {
         item.drugsList.forEach((d, i) => {
-            html += `
-            <div class="border p-3 mb-2 rounded bg-light rc-drug-item">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="fw-bold text-primary rc-d-name">${d.name} ${d.strength || ''}</span>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input rc-receive-cb" type="checkbox" id="cb_${i}" checked onchange="app.toggleDrugReceive(${i})">
-                        <label class="form-check-label text-success rc-lbl" id="lbl_${i}" for="cb_${i}">ได้รับยา</label>
-                    </div>
-                </div>
-                <div class="row g-2 rc-inputs" id="inputs_${i}">
-                    <div class="col-6">
-                        <label class="small text-muted mb-1">จน.ที่รับ (ขอไป: ${d.quantity})</label>
-                        <input type="text" class="form-control form-control-sm rc-amount" value="${d.quantity}">
-                    </div>
-                    <div class="col-6">
-                        <label class="small text-muted mb-1">ราคา (บาท)</label>
-                        <input type="number" class="form-control form-control-sm rc-cost" placeholder="0">
-                    </div>
-                </div>
-            </div>`;
+            html += `<div class="card border-0 shadow-sm p-3 mb-2 rc-drug-item"><div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold text-primary rc-d-name">${d.name} ${d.strength || ''}</span><div class="form-check form-switch"><input class="form-check-input rc-receive-cb" type="checkbox" id="cb_${i}" checked onchange="app.toggleDrugReceive(${i})"><label class="form-check-label text-success rc-lbl fw-bold" id="lbl_${i}" for="cb_${i}">ได้รับ</label></div></div><div class="row g-2 rc-inputs" id="inputs_${i}"><div class="col-6"><label class="small text-muted mb-1">จน.ที่รับ (ขอไป: ${d.quantity})</label><input type="text" class="form-control form-control-sm rc-amount" value="${d.quantity}"></div><div class="col-6"><label class="small text-muted mb-1">ราคา (บาท)</label><input type="number" class="form-control form-control-sm rc-cost" placeholder="0"></div></div></div>`;
         });
     }
     document.getElementById('rc_drug_list').innerHTML = html;
-    
     document.querySelector('input[name="rc_note_opt"][value="จ่ายแก่ผู้ป่วยแล้ว"]').checked = true;
-    document.getElementById('rc_note_storage').value = "";
-    document.getElementById('rc_note_incomplete').value = "";
-    document.getElementById('rc_footer').innerHTML = `<button type="button" class="btn btn-success w-100" onclick="app.confirmReceive()">บันทึกรับยา</button>`;
+    document.getElementById('rc_note_storage').value = ""; document.getElementById('rc_note_incomplete').value = "";
+    document.getElementById('rc_footer').innerHTML = `<button type="button" class="btn btn-success w-100 rounded-pill fs-5 fw-bold" onclick="app.confirmReceive()">บันทึกรับยา</button>`;
     receiveModal.show();
 };
-
 app.toggleDrugReceive = function(idx) {
-    const cb = document.getElementById(`cb_${idx}`);
-    const inputsDiv = document.getElementById(`inputs_${idx}`);
-    const lbl = document.getElementById(`lbl_${idx}`);
-    const amtInput = inputsDiv.querySelector('.rc-amount');
-    const costInput = inputsDiv.querySelector('.rc-cost');
-    
-    if(cb.checked) {
-        lbl.innerText = "ได้รับยา";
-        lbl.classList.remove('text-danger');
-        lbl.classList.add('text-success');
-        amtInput.disabled = false;
-        costInput.disabled = false;
-    } else {
-        lbl.innerText = "ไม่ได้รับยา";
-        lbl.classList.remove('text-success');
-        lbl.classList.add('text-danger');
-        amtInput.disabled = true;
-        costInput.disabled = true;
-        amtInput.value = "0";
-        costInput.value = "0";
-    }
+    const cb = document.getElementById(`cb_${idx}`); const inputsDiv = document.getElementById(`inputs_${idx}`); const lbl = document.getElementById(`lbl_${idx}`); const amtInput = inputsDiv.querySelector('.rc-amount'); const costInput = inputsDiv.querySelector('.rc-cost');
+    if(cb.checked) { lbl.innerText = "ได้รับ"; lbl.className = "form-check-label text-success rc-lbl fw-bold"; amtInput.disabled = false; costInput.disabled = false; } 
+    else { lbl.innerText = "ไม่ได้รับ"; lbl.className = "form-check-label text-danger rc-lbl fw-bold"; amtInput.disabled = true; costInput.disabled = true; amtInput.value = "0"; costInput.value = "0"; }
 };
-
 app.confirmReceive = async function() {
-    let receivedDrugs = [];
-    let totalCost = 0;
-    
+    let receivedDrugs = [], totalCost = 0;
     document.querySelectorAll('.rc-drug-item').forEach(el => {
         const isReceived = el.querySelector('.rc-receive-cb').checked;
-        const name = el.querySelector('.rc-d-name').innerText;
-        const amt = el.querySelector('.rc-amount').value || "0";
         const cost = parseFloat(el.querySelector('.rc-cost').value) || 0;
-        
-        receivedDrugs.push({
-            name: name,
-            isReceived: isReceived,
-            amount: isReceived ? amt : "0",
-            cost: isReceived ? cost : 0
-        });
-        
+        receivedDrugs.push({ name: el.querySelector('.rc-d-name').innerText, isReceived: isReceived, amount: isReceived ? (el.querySelector('.rc-amount').value || "0") : "0", cost: isReceived ? cost : 0 });
         if(isReceived) totalCost += cost;
     });
     
-    let note = "";
-    const radio = document.querySelector('input[name="rc_note_opt"]:checked');
-    if(radio.value === 'storage') note = "จัดเก็บไว้ที่ " + document.getElementById('rc_note_storage').value;
-    else if(radio.value === 'incomplete') note = "ได้รับไม่ครบถ้วน " + document.getElementById('rc_note_incomplete').value;
-    else note = radio.value;
-
-    // สร้าง note สรุปยาที่ได้รับ/ไม่ได้รับเพื่อเก็บลง Sheet
+    let note = document.querySelector('input[name="rc_note_opt"]:checked').value;
+    if(note === 'storage') note = "จัดเก็บไว้ที่ " + document.getElementById('rc_note_storage').value;
+    else if(note === 'incomplete') note = "ได้รับไม่ครบ " + document.getElementById('rc_note_incomplete').value;
     let detailNotes = receivedDrugs.map(d => d.isReceived ? `${d.name}(${d.amount})` : `${d.name}(ไม่ได้)`).join(', ');
-    let combinedNote = `${note} [${detailNotes}]`;
-
-    const payload = { 
-        reqId: document.getElementById('rc_reqId').value, 
-        receivedDrugs: receivedDrugs,
-        totalCost: totalCost, 
-        note: combinedNote 
-    };
     
+    const payload = { reqId: document.getElementById('rc_reqId').value, receivedDrugs: receivedDrugs, totalCost: totalCost, note: `${note} [${detailNotes}]` };
     try {
         await app.callApi('completeRequest', payload);
-        
-        // สร้างข้อความแจ้งเตือนเข้าไลน์
         let msgDrugs = receivedDrugs.filter(d => d.isReceived).map(d => `- ${d.name} (${d.amount})`).join('\n');
         let msgNotReceived = receivedDrugs.filter(d => !d.isReceived).map(d => d.name).join(', ');
         let msg = `✅ ลงรับยาเรียบร้อย\nรายการที่ได้รับ:\n${msgDrugs || 'ไม่มี'}\n`;
         if(msgNotReceived) msg += `❌ ไม่ได้ยา: ${msgNotReceived}\n`;
-        msg += `💰 ยอดรวม: ${totalCost} บาท\n📝 หมายเหตุ: ${note}`;
+        msg += `💰 รวม: ${totalCost} บ.\n📝 หมายเหตุ: ${note}`;
         
-        document.getElementById('rc_footer').innerHTML = `<div class="w-100 text-center text-success mb-2 fw-bold">บันทึกสำเร็จ!</div><button class="btn btn-primary w-100" onclick="app.shareNotify('${msg}', '')">แชร์เข้าไลน์กลุ่ม</button>`;
-        app.loadApproved();
-        app.updateBadges();
+        document.getElementById('rc_footer').innerHTML = `<div class="w-100 text-center text-success mb-2 fw-bold">บันทึกสำเร็จ!</div><button class="btn btn-primary w-100 rounded-pill" onclick="app.shareNotify('${msg}', '')">แชร์เข้าไลน์กลุ่ม</button>`;
+        app.loadApproved(); app.updateBadges();
     } catch(e) {}
 };
 
-// --- HISTORY ---
 app.loadHistory = async function() {
-    document.getElementById('historyTableBody').innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
-    const s = document.getElementById('filterStart').value;
-    const e = document.getElementById('filterEnd').value;
+    document.getElementById('historyTableBody').innerHTML = "<tr><td colspan='5' class='text-center'>Loading...</td></tr>";
     try {
-        const data = await app.callApi('getAllHistory', {startDate:s, endDate:e});
+        const data = await app.callApi('getAllHistory', { startDate:document.getElementById('filterStart').value, endDate:document.getElementById('filterEnd').value });
         let html = '', total = 0;
         data.forEach(d => {
-            let cost = parseFloat(d.cost) || 0;
-            total += cost;
-            let pdf = d.pdfUrl ? `<button class="btn btn-sm btn-link p-0" onclick="app.openPdf('${d.pdfUrl}')"><i class="bi bi-file-pdf text-danger"></i></button>` : '';
-            html += `<tr><td>${d.date}</td><td><div class="text-truncate" style="max-width:100px">${d.doctor}</div></td><td><div class="text-truncate" style="max-width:120px">${d.drug}</div>${pdf}</td><td class="text-end">${cost.toLocaleString()}</td><td><span class="badge badge-status bg-secondary">${d.status}</span></td></tr>`;
+            let cost = parseFloat(d.cost) || 0; total += cost;
+            let pdf = d.pdfUrl ? `<br><a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="text-danger small"><i class="bi bi-file-pdf"></i> PDF</a>` : '';
+            html += `<tr><td>${d.date}</td><td><div class="text-truncate" style="max-width:80px">${d.doctor}</div></td><td><div style="max-width:120px; font-size:0.8rem">${d.drug}</div>${pdf}</td><td class="text-end">${cost.toLocaleString()}</td><td><span class="badge bg-secondary">${d.status}</span></td></tr>`;
         });
         document.getElementById('historyTableBody').innerHTML = html;
         document.getElementById('totalPrice').innerText = total.toLocaleString();
@@ -951,6 +1059,8 @@ window.onload = function() {
     summaryModal = new bootstrap.Modal(document.getElementById('summaryModal'));
     registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
     carModal = new bootstrap.Modal(document.getElementById('carModal'));
+
+    app.updateBadges();
 
     const cvs = document.getElementById('sig-canvas');
     const cvs2 = document.getElementById('car-sig-canvas');
@@ -973,10 +1083,9 @@ window.onload = function() {
         else { app.checkUser(); }
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('page') === 'receive') app.show('receive');
+        else app.show('home');
     });
-    app.checkRows();
 };
 </script>
-
 </body>
 </html>
