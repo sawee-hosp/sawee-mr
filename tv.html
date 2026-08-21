@@ -168,13 +168,18 @@
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-clipboard-list text-rose-500 mr-2"></i>อุบัติการณ์รายวัน</h2>
                 </div>
-                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="incident-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2 relative">
+                    <!-- 📌 เพิ่มคอนเทนเนอร์สำหรับ LASA ต่อท้าย -->
+                    <div id="incident-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+                    <div id="lasa-append-target"></div>
+                </div>
             </div>
 
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-due">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-pills text-purple-500 mr-2"></i>รายการยา DUE วันนี้</h2>
                 </div>
+                <!-- 📌 เพิ่มคอนเทนเนอร์สำหรับกราฟ DUE -->
                 <div id="due-chart-container" class="shrink-0 mb-1"></div>
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="due-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
             </div>
@@ -184,17 +189,12 @@
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-box-open text-amber-600 mr-2"></i>กล่องยาที่ใช้ไปวันนี้</h2>
                 </div>
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative" id="boxes-container">
-                    <div class="text-center text-xs text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div>
+                    <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
                 </div>
             </div>
 
-            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-lasa">
-                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
-                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>TOP 5 LASAs <span class="text-xs text-slate-500 font-bold">(30 วัน)</span></h2>
-                </div>
-                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="lasa-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
-            </div>
-
+            <!-- ไม่ใช้หน้า col-lasa แยกแล้ว จึงข้ามไปใช้ top-drugs -->
+            
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-top-drugs">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-chart-line text-blue-500 mr-2"></i>ยาใช้มากสุด <span class="text-[11px] text-slate-500 font-bold"></span></h2>
@@ -256,6 +256,11 @@
                 <div class="flex-1 flex flex-col min-h-0">
                     <div class="shrink-0 content-start">
                         <div class="grid grid-cols-5 gap-1.5" id="ipd-female-grid"><div class="text-center text-xs text-slate-500 col-span-5 py-4">กำลังโหลดข้อมูล...</div></div>
+                    </div>
+                    <!-- 📌 เพิ่มคอนเทนเนอร์แยกห้องคลอด LR -->
+                    <div class="shrink-0 content-start mt-2 border-t border-purple-200 pt-1">
+                         <div class="text-[10px] font-black text-purple-600 mb-1">แผนกห้องคลอด (LR)</div>
+                         <div class="grid grid-cols-5 gap-1.5" id="ipd-lr-grid"></div>
                     </div>
                     <div class="flex-1 overflow-y-auto no-scrollbar mt-1.5 border-t border-slate-200/50 pt-1 flex flex-col gap-0.5" id="ipd-f-list"></div>
                     <div class="mt-1 pt-1 border-t border-slate-400/30 shrink-0">
@@ -446,6 +451,7 @@
         const femaleBedsDef = []; for(let i=1;i<=25;i++) femaleBedsDef.push("F"+i);
         let maleWard = [...maleBedsDef];
         let femaleWard = [...femaleBedsDef];
+        let lrWard = [];
 
         let newsItems = [];
         let apptNewsCurrentIndex = 0;
@@ -613,7 +619,7 @@
             previousActiveCount = count;
 
             const secTotal = (now.getMinutes() * 60) + now.getSeconds();
-            const allCols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes', 'col-lasa', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-top-drugs', 'col-calendar'];
+            const allCols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-top-drugs', 'col-calendar'];
             const colsToLoop = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-incident', 'col-due', 'col-top-drugs', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-boxes', 'col-calendar'];
             const cycle = Math.floor((secTotal % (colsToLoop.length * 30)) / 30);
             
@@ -622,9 +628,6 @@
             if (isShiftTransition) {
                 const staffCol = document.getElementById('col-staff');
                 if (staffCol) staffCol.style.display = 'flex';
-            } else if (now.getMinutes() === 0 && now.getSeconds() >= 30 && now.getSeconds() < 40) {
-                const lasaCol = document.getElementById('col-lasa');
-                if (lasaCol) lasaCol.style.display = 'flex';
             } else {
                 const showCol = document.getElementById(colsToLoop[cycle]);
                 if (showCol) showCol.style.display = 'flex';
@@ -707,7 +710,7 @@
 
                 const textClass = isConfirmed ? "text-slate-800" : "text-white drop-shadow-sm";
                 const timeTextClass = isConfirmed ? "text-slate-600" : "text-white/90 drop-shadow-sm";
-                const cardStyleClass = isConfirmed ? "card-3d" : "alert-danger bg-red-500/80";
+                const cardStyleClass = isConfirmed ? "bg-gradient-to-r from-white to-slate-50 border border-slate-200 shadow-sm" : "alert-danger";
                 const fullName = item.patient_name || item.pname || ""; 
 
                 let badgesHtml = "";
@@ -813,6 +816,8 @@
         function processBedsData(bedsData) {
             globalActiveBeds = {}; bedListByAN = {};
             let countMale = 0, countFemale = 0, countLR = 0, countDC = 0, countAdm = 0;
+            let activeMale = 0, activeFemale = 0, activeLR = 0; // สำหรับนับอัตราครองเตียง
+            
             if(bedsData) {
                 bedsData.forEach(b => {
                     if (b.an) bedListByAN[b.an] = b;
@@ -823,9 +828,18 @@
                     if (statusAdm === 'DC') countDC++;
                     if (statusAdm === 'ADM' || statusAdm === 'ADMIT') countAdm++;
                     
-                    if (wName.includes('ชาย') || wName.includes('MALE') || bed.startsWith('M') || bed.includes('VIP4')) countMale++;
-                    else if (wName.includes('หญิง') || wName.includes('FEMALE') || bed.startsWith('F')) countFemale++;
-                    else if (wName.includes('คลอด')) countLR++;
+                    if (wName.includes('ชาย') || wName.includes('MALE') || bed.startsWith('M') || bed.includes('VIP4')) {
+                        countMale++;
+                        if (statusAdm !== 'DC') activeMale++;
+                    }
+                    else if (wName.includes('คลอด')) {
+                        countLR++;
+                        if (statusAdm !== 'DC') activeLR++;
+                    }
+                    else if (wName.includes('หญิง') || wName.includes('FEMALE') || bed.startsWith('F')) {
+                        countFemale++;
+                        if (statusAdm !== 'DC') activeFemale++;
+                    }
 
                     if(!bed) return;
                     const cp = statusAdm === 'ADMIT' ? 3 : (statusAdm === 'DC' ? 1 : 2);
@@ -835,40 +849,44 @@
             updateValueWithAnimation('sum-dc', countDC); updateValueWithAnimation('sum-admit', countAdm);
             updateValueWithAnimation('sum-male', countMale); updateValueWithAnimation('sum-female', countFemale); updateValueWithAnimation('sum-lr', countLR);
 
-            maleWard = [...maleBedsDef]; femaleWard = [...femaleBedsDef];
+            maleWard = [...maleBedsDef]; femaleWard = [...femaleBedsDef]; lrWard = [];
             Object.keys(globalActiveBeds).forEach(bed => {
                 const b = bed.toUpperCase(); const p = globalActiveBeds[bed].data; const wName = (p.ward_name || '').toUpperCase();
-                if (maleBedsDef.includes(b) || femaleBedsDef.includes(b)) return;
-                if (wName.includes('ชาย') || wName.includes('MALE') || b.startsWith('M') || b.includes('VIP4')) { if (!maleWard.includes(b)) maleWard.push(b); } 
+                if (wName.includes('คลอด')) { if(!lrWard.includes(b)) lrWard.push(b); }
+                else if (wName.includes('ชาย') || wName.includes('MALE') || b.startsWith('M') || b.includes('VIP4')) { if (!maleWard.includes(b)) maleWard.push(b); } 
                 else { if (!femaleWard.includes(b)) femaleWard.push(b); }
             });
             const sortBeds = (a, b) => { const nA = parseInt(a.replace(/\D/g, ''))||0; const nB = parseInt(b.replace(/\D/g, ''))||0; return a.replace(/\d/g, '') === b.replace(/\d/g, '') ? nA - nB : 0; };
-            maleWard.sort(sortBeds); femaleWard.sort(sortBeds);
+            maleWard.sort(sortBeds); femaleWard.sort(sortBeds); lrWard.sort(sortBeds);
             
-            renderIPDGrid(maleWard, 'ipd-male-grid', 'm');
-            renderIPDGrid(femaleWard, 'ipd-female-grid', 'f');
+            renderIPDGrid(maleWard, 'ipd-male-grid', 'm', activeMale, 25);
+            renderIPDGrid(femaleWard, 'ipd-female-grid', 'f', activeFemale, 25);
+            if (lrWard.length > 0) {
+                renderIPDGrid(lrWard, 'ipd-lr-grid', 'lr', activeLR, 10);
+            } else {
+                document.getElementById('ipd-lr-grid').innerHTML = '';
+            }
         }
 
-        function renderIPDGrid(wardArray, containerId, suff) {
+        function renderIPDGrid(wardArray, containerId, suff, activeCount, maxBeds) {
             const container = document.getElementById(containerId);
             const listContainer = document.getElementById(`ipd-${suff}-list`);
-            if(!container || !listContainer) return;
-            let html = ''; let listHtml = ''; let sAdmit = 0, sDC = 0, sScan = 0, activeCount = 0;
+            if(!container) return;
+            let html = ''; let listHtml = ''; let sAdmit = 0, sDC = 0, sScan = 0;
             
             let catNarcotic = ''; let catDue = ''; let catInhaler = '';
 
             wardArray.forEach(bedName => {
                 const pEntry = globalActiveBeds[bedName];
                 if (!pEntry) { 
-                    html += `<div class="card-3d bg-white/10 opacity-40 border-dashed border-slate-400 h-[26px] flex items-center justify-center shrink-0"><span class="font-bold text-[10px] text-slate-500">${bedName}</span></div>`; 
+                    html += `<div class="bed-box border-dashed opacity-40"><span class="font-bold text-[10px] text-slate-500">${bedName}</span></div>`; 
                 } else {
                     const p = pEntry.data;
                     const statusAdm = (p.StatusAdm || 'CONT').toUpperCase();
-                    if(statusAdm !== 'DC') activeCount++;
                     if(statusAdm === 'ADMIT') sAdmit++;
                     if(statusAdm === 'DC') sDC++;
                     
-                    let bgClass = statusAdm === "DC" ? "bg-gradient-to-br from-rose-500 to-red-700" : (statusAdm === "ADMIT" ? "bg-gradient-to-br from-emerald-400 to-green-600" : "bg-gradient-to-br from-sky-400 to-blue-600");
+                    let bgClass = statusAdm === "DC" ? "bed-dc text-white" : (statusAdm === "ADMIT" ? "bed-admit text-white" : "bed-cont text-white");
                     const statN = parseInt(p.Status_N) || 0; const statY = parseInt(p.Status_Y) || 0;
                     if(statN + statY > 0 && statusAdm !== 'DC') sScan++;
                     
@@ -880,9 +898,9 @@
                             : `<i class="fas fa-check-circle text-emerald-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow"></i>`;
                     }
                     
-                    html += `<div class="card-3d ${bgClass} h-[26px] relative flex items-center justify-center shrink-0 border-white/40">
+                    html += `<div class="bed-box ${bgClass} h-[26px]">
                         ${scannedOverlay}
-                        <span class="text-[11px] font-black text-white leading-none drop-shadow-md z-10">${bedName}</span>
+                        <span class="text-[11px] font-black leading-none drop-shadow-md z-10">${bedName}</span>
                         ${confirmIconHtml}
                     </div>`;
 
@@ -901,26 +919,36 @@
                 }
             });
 
-            if (catNarcotic) listHtml += `<div class="text-[10px] font-black text-violet-700 mt-1 bg-violet-100 px-1 rounded shadow-sm">ยาเสพติด</div>${catNarcotic}`;
-            if (catDue) listHtml += `<div class="text-[10px] font-black text-amber-700 mt-1 bg-amber-100 px-1 rounded shadow-sm">ยา DUE</div>${catDue}`;
-            if (catInhaler) listHtml += `<div class="text-[10px] font-black text-yellow-700 mt-1 bg-yellow-100 px-1 rounded shadow-sm">ยาพ่นใหม่</div>${catInhaler}`;
-
             container.innerHTML = html;
-            listContainer.innerHTML = listHtml || `<div class="text-center text-[9px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`;
             
-            document.getElementById(`map-sum-admit-${suff}`).textContent = sAdmit;
-            document.getElementById(`map-sum-dc-${suff}`).textContent = sDC;
-            document.getElementById(`map-sum-scan-${suff}`).textContent = sScan;
-            let pct = activeCount > 0 ? (sScan / activeCount) * 100 : 0;
-            document.getElementById(`map-scan-progress-${suff}`).style.width = `${pct}%`;
+            if (listContainer) {
+                if (catNarcotic) listHtml += `<div class="text-[10px] font-black text-violet-700 mt-1 bg-violet-100 px-1 rounded shadow-sm">ยาเสพติด</div>${catNarcotic}`;
+                if (catDue) listHtml += `<div class="text-[10px] font-black text-amber-700 mt-1 bg-amber-100 px-1 rounded shadow-sm">ยา DUE</div>${catDue}`;
+                if (catInhaler) listHtml += `<div class="text-[10px] font-black text-yellow-700 mt-1 bg-yellow-100 px-1 rounded shadow-sm">ยาพ่นใหม่</div>${catInhaler}`;
+                listContainer.innerHTML = listHtml || `<div class="text-center text-[9px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`;
+            }
+
+            const elAdmit = document.getElementById(`map-sum-admit-${suff}`);
+            const elDc = document.getElementById(`map-sum-dc-${suff}`);
+            const elScan = document.getElementById(`map-sum-scan-${suff}`);
+            const elProg = document.getElementById(`map-scan-progress-${suff}`);
+            
+            if(elAdmit) elAdmit.textContent = sAdmit;
+            if(elDc) elDc.textContent = sDC;
+            if(elScan) elScan.textContent = sScan;
+            if(elProg) {
+                let pct = activeCount > 0 ? (sScan / activeCount) * 100 : 0;
+                elProg.style.width = `${pct}%`;
+            }
 
             // อัปเดต Badge อัตราครองเตียง
-            const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
-            if(occupancyEl) {
-                const maxBeds = 25;
-                const vacant = Math.max(0, maxBeds - activeCount);
-                occupancyEl.textContent = `${activeCount}/ว่าง ${vacant}`;
-                occupancyEl.classList.remove('hidden');
+            if(suff === 'm' || suff === 'f') {
+                const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
+                if(occupancyEl) {
+                    const vacant = Math.max(0, maxBeds - activeCount);
+                    occupancyEl.textContent = `${activeCount}/ว่าง ${vacant}`;
+                    occupancyEl.classList.remove('hidden');
+                }
             }
         }
 
@@ -978,6 +1006,7 @@
             });
             container.innerHTML = html;
 
+            // Fake Shuffle Animation เริ่มทันที
             const elements = container.querySelectorAll('.top-drug-name');
             elements.forEach(el => {
                 const realText = el.getAttribute('data-real');
@@ -1105,7 +1134,7 @@
                     <div class="absolute inset-0 bg-blue-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
                     ${holidayText}
                     <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm">${d}</span>
-                    <span class="relative z-10 text-[7px] text-slate-800 font-black leading-none mt-0.5 drop-shadow-sm">${count > 0 ? count : ''}</span>
+                    <span class="relative z-10 mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 text-[7px] font-black drop-shadow-sm">${count}</span>` : ''}</span>
                 </div>`;
             }
             html += `</div>`;
@@ -1341,14 +1370,21 @@
         }
 
         function renderLasa(lasaList) {
-            const container = document.getElementById('lasa-container');
+            const container = document.getElementById('lasa-append-target');
             if (!container) return;
-            if (!lasaList || lasaList.length === 0) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-500 font-bold text-sm text-center"><i class="fas fa-check-circle text-emerald-500 text-3xl mb-2"></i>ไม่พบคู่ LASAs<br>ในช่วง 30 วันที่ผ่านมา</div>`; return; }
-            let html = '';
+            if (!lasaList || lasaList.length === 0) return;
+            
+            let html = `<div class="mt-2 pt-2 border-t border-slate-300 w-full"><div class="flex justify-between items-center mb-1"><h3 class="text-[11px] font-black text-amber-700"><i class="fas fa-exclamation-triangle mr-1"></i>TOP 5 LASAs (30 วัน)</h3></div>`;
             lasaList.forEach((item, index) => {
-                const rColor = ['bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-blue-500', 'bg-slate-500'][index] || 'bg-slate-500';
-                html += `<div class="card-3d bg-white/90 p-1.5 flex items-center gap-2 relative overflow-hidden shrink-0"><div class="absolute left-0 top-0 bottom-0 w-1 ${rColor}"></div><div class="${rColor} text-white font-black text-xs w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-1 shadow-sm">${index + 1}</div><div class="flex-1 flex flex-col min-w-0"><span class="text-[11px] font-black text-slate-800 truncate text-left">${item.d1}</span><span class="text-[11px] font-black text-slate-600 truncate border-t border-dashed border-slate-300 pt-0.5 mt-0.5 text-left">${item.d2}</span></div><div class="flex flex-col items-center justify-center bg-slate-100 px-2 py-1 rounded border border-slate-200 shrink-0"><span class="text-[9px] text-slate-500 font-bold leading-none mb-0.5">ความถี่</span><span class="text-sm font-black text-rose-600 leading-none">${item.count}</span></div></div>`;
+                const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
+                html += `<div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200 py-0.5 last:border-0">
+                    <span class="font-bold text-slate-700 truncate max-w-[45%]">${item.d1}</span>
+                    <span class="text-slate-400 font-bold mx-1">-</span>
+                    <span class="font-bold text-slate-700 truncate max-w-[45%]">${item.d2}</span>
+                    <span class="font-black ${rColor} ml-auto shrink-0 w-4 text-right">${item.count}</span>
+                </div>`;
             });
+            html += `</div>`;
             container.innerHTML = html;
         }
 
@@ -1505,7 +1541,7 @@
             html += `</div>`;
 
             // 2. อุบัติการณ์จัดยา (MR)
-            html += `<div class="card-3d bg-white/90 p-2">
+            html += `<div class="card-3d bg-white/90 p-2 mb-2">
                 <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยาผิด</h3>`;
             if(incidents.mr && incidents.mr.length > 0) {
                 html += `<ul class="list-none text-[10px] font-bold text-slate-700 space-y-1.5 mt-1">`;
@@ -1535,21 +1571,19 @@
             
             let chartHtml = `<div class="card-3d bg-white/90 p-1.5 w-full flex flex-col gap-1.5">`;
             catNames.forEach(cat => {
-                const items = data[cat] || [];
-                const total = items.length;
+                const stats = data.stats[cat] || { assessed: 0, unassessed: 0, total: 0 };
+                const total = stats.total;
                 if(total > 0) {
                     hasData = true;
-                    const assessedCount = items.filter(d => d.status === 'ประเมินแล้ว' || d.status === 'Completed').length;
-                    const unassessedCount = total - assessedCount;
-                    const unPct = (unassessedCount / total) * 100;
-                    const asPct = (assessedCount / total) * 100;
+                    const unPct = (stats.unassessed / total) * 100;
+                    const asPct = (stats.assessed / total) * 100;
                     
                     chartHtml += `
                     <div class="flex items-center text-[9px] font-bold w-full">
                         <div class="w-[60px] truncate text-slate-700">${cat}</div>
                         <div class="flex-1 flex h-3.5 bg-slate-200 rounded overflow-hidden shadow-inner mx-1">
-                            <div class="bg-rose-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${unPct}%">${unassessedCount > 0 ? unassessedCount : ''}</div>
-                            <div class="bg-emerald-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${asPct}%">${assessedCount > 0 ? assessedCount : ''}</div>
+                            <div class="bg-rose-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${unPct}%">${stats.unassessed > 0 ? stats.unassessed : ''}</div>
+                            <div class="bg-emerald-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${asPct}%">${stats.assessed > 0 ? stats.assessed : ''}</div>
                         </div>
                         <div class="w-8 text-right text-slate-600">${total}</div>
                     </div>`;
@@ -1575,10 +1609,10 @@
                 return g + `</div></div>`;
             };
 
-            html += renderGroup('Oseltamivir', data['Oseltamivir'], 'bg-purple-500');
-            html += renderGroup('Covids', data['Covids'], 'bg-rose-500');
-            html += renderGroup('Atorvastatin', data['Atorvastatin'], 'bg-blue-500');
-            html += renderGroup('Antibiotics', data['Antibiotics'], 'bg-emerald-500');
+            html += renderGroup('Oseltamivir', data.lists['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', data.lists['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', data.lists['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', data.lists['Antibiotics'], 'bg-emerald-500');
             
             container.innerHTML = html;
         }
@@ -1750,6 +1784,7 @@
             const isWorkingHour = h >= 8 && h < 16;
 
             if (isWorkingHour) {
+                // Working hour: Toggle Appt(50s) <-> News(10s)
                 if (isShowingAppt) {
                     isShowingAppt = false;
                     apptNewsDuration = 10000; 
@@ -1765,6 +1800,7 @@
                     renderApptCard();
                 }
             } else {
+                // Out of hours: Show 6 News (10s each) constantly
                 isShowingAppt = false;
                 apptNewsDuration = 10000;
                 if(newsItems.length > 0) {
@@ -1783,6 +1819,7 @@
         async function initNewsSystem() {
             newsItems = await fetchAllNews();
             nextNewsSlide();
+            // รีโหลดข่าวใหม่ทุกๆ 5 นาที (เวลาปกติ) หรือ 1 ชม (นอกเวลา)
             setInterval(async () => {
                 const h = new Date().getHours();
                 if(h >= 8 && h < 16) { newsItems = await fetchAllNews(); }
