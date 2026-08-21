@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
+        /* STREAMING_CHUNK:Base Styles */
         body { font-family: 'Noto Sans Thai', sans-serif !important; margin: 0; padding: 0; overflow: hidden; box-sizing: border-box; background-color: #0f172a; color: #1e293b; background-size: 200% 200%; animation: gradientMove 15s ease infinite; transition: background-image 1s ease; }
         @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .bg-sun { background-image: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
@@ -29,11 +30,13 @@
         .cloud-3 { width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); top: 40%; left: 30%; animation-delay: -10s; }
         @keyframes floatCloud { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 10%) scale(1.1); } }
         
+        /* STREAMING_CHUNK:Cards and Glassmorphism */
         .glass-panel { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-top: 1px solid rgba(255, 255, 255, 0.6); border-left: 1px solid rgba(255, 255, 255, 0.6); border-bottom: 1px solid rgba(0, 0, 0, 0.05); border-right: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); border-radius: 1rem; transition: background-color 0.5s; }
         .card-3d { background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85)); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05), 1px 2px 3px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.9); border-radius: 0.5rem; transition: all 0.3s ease; }
         .text-crystal { background: linear-gradient(to right, #ffffff 0%, #cbd5e1 40%, #e2e8f0 60%, #ffffff 100%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 4s linear infinite; text-shadow: 0 0 8px rgba(255,255,255,0.3); }
         .text-rainbow { background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: shine 4s linear infinite; line-height: 0.8; padding-bottom: 2px; }
         @keyframes shine { to { background-position: 200% center; } }
+        
         .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
         .staff-inactive { opacity: 0.35; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
         @keyframes soft-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
@@ -48,6 +51,7 @@
         .fade-text { transition: opacity 0.5s ease-in-out; }
         .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
         
+        /* STREAMING_CHUNK:Bed Map and Animations */
         .ipd-badge { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); border-right: 1px solid rgba(255,255,255,0.1); z-index: 2; }
         @keyframes forceMegaBlink { 0%, 100% { background-color: rgba(239, 68, 68, 1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); border-color: rgba(252, 165, 165, 0.8); } 50% { background-color: rgba(153, 27, 27, 1); box-shadow: 0 0 5px rgba(153, 27, 27, 0.8); border-color: rgba(239, 68, 68, 0.8); } }
         .alert-danger { animation: forceMegaBlink 1.5s infinite ease-in-out !important; border: 1px solid transparent !important; background-image: none !important; }
@@ -75,6 +79,7 @@
         .bed-cont { background: linear-gradient(135deg, rgba(14, 165, 233, 0.85) 0%, rgba(3, 105, 161, 0.95) 100%); }
         .thick-scanned-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; border-radius: 4px; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.2) 5px, rgba(0,0,0,0.2) 10px); }
 
+        /* News specific styles */
         .bg-blur-news { position: absolute; top: -5%; left: -5%; width: 110%; height: 110%; background-size: cover; background-position: center; filter: blur(30px) brightness(0.35); z-index: 0; transition: background-image 1s ease-in-out; }
         .main-image { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out; border-radius: 0.5rem; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b); width: 0%; transition: width 0.1s linear; }
@@ -85,6 +90,7 @@
     </style>
 </head>
 
+<!-- STREAMING_CHUNK:HTML Structure and Head -->
 <body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
     <div id="audio-unlock-banner" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-0 pointer-events-none">
         <i class="fas fa-volume-mute"></i> แตะหน้าจอเพื่อเปิดเสียงแจ้งเตือน
@@ -107,9 +113,9 @@
 
     <main class="flex-1 w-full flex justify-between gap-[1.5%] p-3 overflow-hidden z-10 relative">
         
+        <!-- คอลัมน์ซ้าย -->
+        <!-- STREAMING_CHUNK:Left Column Staff Section -->
         <aside id="left-col-wrapper" class="w-[26%] min-w-[26%] max-w-[26%] shrink-0 h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300 relative">
-            
-            <!-- Staff Section -->
             <div class="w-full h-full flex flex-col min-h-0" id="col-staff" style="display: flex;">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i>เภสัชกรประจำวัน</h2>
@@ -146,6 +152,7 @@
                 </div>
             </div>
 
+            <!-- STREAMING_CHUNK:Left Column Temps and Online Doctors -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-fridge-temp">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
@@ -168,11 +175,15 @@
 
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-doctors">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
-                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-500 mr-2"></i>ตารางแพทย์</h2>
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-500 mr-2"></i>แพทย์ที่กำลัง Online</h2>
                 </div>
-                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-1" id="doctors-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+                <!-- 📌 เปลี่ยน UI แพทย์เป็นรายชื่อเรียงลงมา พร้อมสถานะสีเขียวกระพริบ -->
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-1.5" id="doctors-container">
+                    <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
+                </div>
             </div>
 
+            <!-- STREAMING_CHUNK:Left Column Weekly and Incidents -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-weekly">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0 px-1">
                     <h2 class="text-[15px] font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-teal-500 mr-2"></i>ตารางเวรสัปดาห์นี้</h2>
@@ -190,6 +201,7 @@
                 </div>
             </div>
 
+            <!-- STREAMING_CHUNK:Left Column Due and Boxes -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-due">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-pills text-purple-500 mr-2"></i>รายการยา DUE วันนี้</h2>
@@ -207,6 +219,7 @@
                 </div>
             </div>
 
+            <!-- STREAMING_CHUNK:Left Column Top Drugs and Calendar -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-top-drugs">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-chart-line text-blue-500 mr-2"></i>ยาใช้มากสุด <span class="text-[11px] text-slate-500 font-bold"></span></h2>
@@ -216,7 +229,7 @@
                 </div>
             </div>
 
-            <!-- 📌 ปฏิทินรายเดือน ไม่ล้นกรอบ แสดงแค่ ปฏิทินนัดหมาย -->
+            <!-- 📌 ปฏิทินนัดหมาย (เอาชื่อเดือนออกตามสั่ง) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-calendar">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-rose-500 mr-2"></i>ปฏิทินนัดหมาย</h2>
@@ -234,7 +247,8 @@
                 </div>
             </div>
 
-            <!-- 📌 แผนผังเตียงชาย (รวมการนับเตียงว่าง) -->
+            <!-- STREAMING_CHUNK:Left Column IPD Bed Maps -->
+            <!-- 📌 แผนผังเตียงชาย (ใช้ CSS แบบดั้งเดิมทั้งหมด) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-male">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -260,6 +274,7 @@
                 </div>
             </div>
 
+            <!-- 📌 แผนผังเตียงหญิง (มีเตียงคลอดซ้อนอยู่) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-female">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -305,6 +320,7 @@
 
         </aside>
         
+        <!-- STREAMING_CHUNK:Center Column IPD List -->
         <!-- ตรงกลาง (IPD) -->
         <section class="h-full flex flex-col min-h-0 glass-panel p-2" style="width: 47%;">
             <div class="flex justify-between items-center px-1 pb-1 mb-1 border-b-2 border-slate-400/30 shrink-0">
@@ -400,6 +416,7 @@
             </footer>
         </section>
 
+        <!-- STREAMING_CHUNK:Right Column Alerts and News -->
         <!-- คอลัมน์ขวาสุด -->
         <section class="h-full flex flex-col min-h-0 glass-panel p-2 shrink-0" style="width: 25.5%;">
             <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
@@ -411,9 +428,10 @@
             
             <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex items-stretch gap-2 shrink-0 h-[100px]">
                 
-                <!-- 📌 การ์ดข่าวด่วน และ วันนัดที่พบบ่อย -->
+                <!-- 📌 การ์ดข่าวด่วน และ วันนัดที่พบบ่อย (โชว์เต็มพื้นที่ และซ่อนอย่างใดอย่างหนึ่ง) -->
                 <div id="news-card" class="flex-1 overflow-hidden relative card-3d transition-colors duration-500 bg-white/80 p-0 rounded-lg">
                     
+                    <!-- โหมดรูปข่าว (แสดงรูปเต็ม Card ไม่เหลือขอบ) -->
                     <div id="news-layer" class="absolute inset-0 h-full w-full opacity-0 pointer-events-none transition-opacity duration-500 z-10 bg-black">
                         <div id="bg-blur" class="bg-blur-news"></div>
                         <img id="main-image" class="main-image drop-shadow-md relative z-10" src="" alt="ภาพข่าว">
@@ -425,38 +443,40 @@
                         </div>
                     </div>
 
+                    <!-- โหมดแสดงวันนัดที่พบบ่อย (ประหยัดพื้นที่ ลบกรอบทิ้ง) -->
                     <div id="appt-layer" class="absolute inset-0 flex flex-col h-full bg-white z-10 transition-opacity duration-500 p-2 overflow-hidden hidden">
+                        <!-- จะถูกแทรกเนื้อหาโดย JS ให้อ่านง่ายและไม่เกะกะ -->
                     </div>
 
+                    <!-- หลอด Progress Bar สำหรับเปลี่ยนสไลด์ -->
                     <div class="absolute bottom-0 left-0 h-1 w-full bg-gray-300 overflow-hidden z-30">
                         <div id="progress-bar-fill" class="progress-bar-fill"></div>
                     </div>
                 </div>
 
-                <!-- 📌 การ์ดสภาพอากาศ กลับมาใช้ UI เดิมที่ตัวเลขใหญ่ ไม่ทับกัน -->
-                <div class="card-3d p-2 flex flex-col items-center justify-center gap-1 min-w-[5.5rem] bg-white/80 shrink-0 relative overflow-hidden">
-                    <div id="weather-icon" class="text-[36px] leading-[0.8] drop-shadow-md">
+                <!-- 📌 การ์ดสภาพอากาศ (UI เดิมตัวเลขใหญ่ ไม่โดนทับ ชิดขอบล่าง) -->
+                <div class="card-3d p-2 flex flex-col items-center justify-center gap-0 min-w-[5.5rem] bg-white/80 shrink-0 relative overflow-hidden">
+                    <div id="weather-icon" class="text-[32px] leading-[0.8] drop-shadow-md mb-0.5">
                         <i class="fas fa-spinner fa-spin text-slate-400"></i>
                     </div>
-                    <div class="flex flex-col items-center justify-center h-[28px] relative w-full mt-1">
+                    <div class="flex flex-col items-center justify-center h-[26px] relative w-full mt-1">
                         <span id="weather-temp-current" class="absolute transition-all duration-500 transform translate-y-0 opacity-100 text-2xl font-black text-slate-800 leading-none">--°C</span>
                         <span id="weather-temp-next" class="absolute transition-all duration-500 transform translate-y-full opacity-0 text-xl font-black text-blue-600 leading-none">--°C</span>
                     </div>
-                    <div class="flex items-center gap-1 mt-0">
-                        <span id="weather-pm" class="text-[10px] font-black leading-none">PM2.5: --</span>
+                    <div class="flex items-center gap-1 mt-0.5">
+                        <span id="weather-pm" class="text-[9.5px] font-black leading-none">PM2.5: --</span>
                     </div>
-                    <span id="weather-label" class="text-[8px] text-slate-500 font-bold leading-none mt-1 text-center">ปัจจุบัน</span>
+                    <span id="weather-label" class="text-[7.5px] text-slate-500 font-bold leading-none mt-1 text-center">ปัจจุบัน</span>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- STREAMING_CHUNK:Javascript Initialization -->
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw75ELvZom2PKT6XM6hJM0aknVZ9d6622R2aRPaYmVaPfX3TKDisRDcM3v65gjOmEJkag/exec"; 
         const GAS_SCHEDULE_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
-        
-        // Removed Gemini API Key and TTS Logic entirely
-        
+
         let audioUnlocked = false; 
         const prevValues = {}; 
         let currentSlide = 0; let sliderInterval = null; let rxSlideToggle = false;
@@ -522,6 +542,7 @@
 
         window.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.keyCode === 13) document.body.click(); });
 
+        /* STREAMING_CHUNK:Javascript Data Handling and Logic */
         function updateBackground() {
             const body = document.getElementById('main-body'); body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
             const days = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat']; body.classList.add(days[new Date().getDay()]);
@@ -652,7 +673,10 @@
                 let isConfirmed = (rawConfirm === 'Y' || rawConfirm === '1' || rawConfirm === 'TRUE');
                 const rawBox = item.rx_box || item.ช่องเก็บยา || ""; const boxNum = rawBox.replace(/\D/g, ''); 
 
-                if (!isConfirmed && bedNo !== "-") { if (!spokenItems.has(uniqueId)) { newUnconfirmedBeds.push({ bed: bedNo, status: statusAdm, box: boxNum, sy: item.SY, az: item.AZ }); spokenItems.add(uniqueId); } }
+                if (!isConfirmed && bedNo !== "-") { 
+                    const isNew = true; 
+                    if (isNew) { newUnconfirmedBeds.push({ bed: bedNo, status: statusAdm, box: boxNum, sy: item.SY, az: item.AZ }); } 
+                }
 
                 const textClass = isConfirmed ? "text-slate-800" : "text-white drop-shadow-sm";
                 const timeTextClass = isConfirmed ? "text-slate-600" : "text-white/90 drop-shadow-sm";
@@ -723,7 +747,7 @@
                 container.appendChild(row);
             });
 
-            // อัปเดต Badge ผู้ป่วยใหม่ IPD และเล่นเสียงเตือน (ไม่มีพูด TTS)
+            // อัปเดต Badge ผู้ป่วยใหม่ IPD
             const uniqueAlerts = []; const seenBeds = new Set();
             for (const item of newUnconfirmedBeds) { if (!seenBeds.has(item.bed)) { seenBeds.add(item.bed); uniqueAlerts.push(item); } }
             
@@ -737,13 +761,12 @@
                 }
             }
 
-            if (newUnconfirmedBeds.length > 0) {
-                if (audioUnlocked) {
-                    playNotificationSound();
-                }
+            if (newUnconfirmedBeds.length > 0 && audioUnlocked) {
+                playNotificationSound();
             }
         }
 
+        /* STREAMING_CHUNK:Javascript Logic for Bed Allocation */
         function processBedsData(bedsData) {
             globalActiveBeds = {}; bedListByAN = {};
             let countMale = 0, countFemale = 0, countLR = 0, countDC = 0, countAdm = 0;
@@ -753,7 +776,6 @@
                 bedsData.forEach(b => {
                     if (b.an) bedListByAN[b.an] = b;
                     const bed = b.bedno; 
-                    
                     if (!bed) return;
                     const bedText = String(bed);
                     
@@ -802,7 +824,7 @@
             }
         }
 
-        // 📌 แผนผังเตียง 3D Glassmorphism ดั้งเดิม (Badge มุมขวาล่างไม่ถูก Crop)
+        // 📌 กลับมาใช้ UI แผนผังเตียง 3D ดั้งเดิม โดยไม่ล้นหรือตัดขอบ
         function renderIPDGrid(wardArray, containerId, suff, activeCount, maxBeds) {
             const container = document.getElementById(containerId);
             const listContainer = document.getElementById(`ipd-${suff}-list`);
@@ -887,6 +909,7 @@
             }
         }
 
+        /* STREAMING_CHUNK:Javascript Sub-Renderers */
         function renderRxBoxesView() {
             const container = document.getElementById('ipd-rx-grid');
             if(!container) return;
@@ -1014,6 +1037,7 @@
             } catch(e) { return []; }
         }
 
+        // 📌 ปรับปฏิทินให้ตัวเลขอยู่กลาง ไม่ล้นกรอบ พร้อมทำ Heatmap ตามยอดคนไข้
         async function renderCalendar(monthlyApptData, todayClinicData) {
             const now = new Date();
             const year = now.getFullYear();
@@ -1065,7 +1089,7 @@
                     <div class="absolute inset-0 bg-blue-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
                     ${holidayText}
                     <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm">${d}</span>
-                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
+                    <span class="relative z-10 mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 text-[7px] font-black drop-shadow-sm">${count}</span>` : ''}</span>
                 </div>`;
             }
             html += `</div>`;
@@ -1081,6 +1105,7 @@
             document.getElementById('today-clinic-list').innerHTML = clinicHtml;
         }
 
+        /* STREAMING_CHUNK:Main Data Fetching */
         async function fetchHospitalData() {
             const timeEl = document.getElementById('last-update-time');
             if(timeEl) timeEl.innerHTML = `<i class="fas fa-sync-alt fa-spin mr-1.5 text-slate-500"></i>กำลังโหลด...`;
@@ -1193,9 +1218,7 @@
                 if (!spokenAlerts.has(a.id)) {
                     spokenAlerts.add(a.id);
                     if (a.type !== 'expiry') {
-                        let say = "";
-                        if (a.type === 'temperature') say = `เตือนอุณหภูมิเกินช่วง ${(a.deviceName || "").replace(/_/g, " ").trim()} ${parseFloat(a.tempValue || "0").toFixed(1)} องศาเซลเซียสค่ะ`;
-                        if (say) queueVoice(say);
+                        if (audioUnlocked) playNotificationSound();
                     }
                 }
             });
@@ -1295,6 +1318,7 @@
             if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
 
+        // 📌 เพิ่มไอคอนเม็ดยาหลากสีใน LASA
         function renderLasa(lasaList) {
             const container = document.getElementById('lasa-append-target');
             if (!container) return;
@@ -1315,27 +1339,33 @@
             container.innerHTML = html;
         }
 
+        /* STREAMING_CHUNK:Javascript Data Integrations */
         function renderDoctors(doctors) {
             const container = document.getElementById('doctors-container');
             if (!container) return;
-            if (!doctors || (!doctors.ER.length && !doctors.OPD.length && !doctors.IPD.length)) { container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์วันนี้</div>`; return; }
-
-            const isDayTime = new Date().getHours() >= 8 && new Date().getHours() < 16;
-            const filterDocs = (list) => list.filter(doc => isDayTime ? !doc.role.includes("นอกเวลา") : doc.role.includes("นอกเวลา"));
+            
+            // ใช้ query ที่แยกมาใหม่จาก onlineuser 
+            // ตอนนี้เราจะไม่ได้แบ่งตาม ER/OPD/IPD แต่จะเป็นหมวดหมู่ตามชื่อเครื่องแทน
+            // หากต้องการให้แสดงเป็นลิสต์เดียวรวมกัน สามารถใช้ html นี้ได้เลย
+            
+            if (!doctors || doctors.length === 0) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์วันนี้</div>`; 
+                return; 
+            }
 
             let html = '';
-            const renderGroup = (title, icon, colorClass, cardBgClass, list) => {
-                if (list.length === 0) return '';
-                let g = `<div class="flex items-center gap-2 mb-1 mt-1"><span class="text-[10px] font-black ${colorClass} bg-white px-2 py-0.5 rounded shadow-sm border"><i class="${icon} mr-1"></i>${title}</span><div class="h-px bg-slate-300 flex-1"></div></div><div class="grid grid-cols-3 gap-1">`; 
-                list.forEach(doc => { g += `<div class="card-3d ${cardBgClass} py-1 px-0.5 flex flex-col items-center justify-center text-center h-[40px] shrink-0 border border-black/5"><span class="text-[8px] font-bold opacity-80 truncate w-full leading-none">${doc.role}</span><span class="text-[11px] font-black leading-tight w-full truncate mt-0.5">${doc.name}</span></div>`; });
-                return g + `</div>`;
-            };
+            doctors.forEach(doc => { 
+                html += `
+                <div class="card-3d bg-white/90 py-1.5 px-2 flex flex-col justify-center shrink-0 border border-slate-200 mb-1">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981] animate-pulse shrink-0"></span>
+                        <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}</span>
+                    </div>
+                    <div class="text-[8.5px] font-bold text-slate-500 leading-none truncate ml-4 mt-1">${doc.computer_and_department}</div>
+                </div>`; 
+            });
 
-            html += renderGroup('ER', 'fas fa-ambulance', 'text-rose-600 border-rose-200', 'bg-gradient-to-br from-rose-100 to-rose-200 text-rose-900', filterDocs(doctors.ER));
-            html += renderGroup('OPD', 'fas fa-stethoscope', 'text-blue-600 border-blue-200', 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-900', filterDocs(doctors.OPD));
-            html += renderGroup('IPD', 'fas fa-procedures', 'text-emerald-600 border-emerald-200', 'bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-900', filterDocs(doctors.IPD));
-
-            container.innerHTML = html === '' ? `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์ในกะเวลานี้</div>` : html;
+            container.innerHTML = html;
         }
 
         function renderWeekly(weeklyList) {
@@ -1563,7 +1593,6 @@
                 if(data.alerts) renderAlerts(data.alerts);
                 if(data.tempStatus) renderTempStatus(data.tempStatus);
                 if(data.lasa) renderLasa(data.lasa);
-                if(data.today && data.today.doctors) renderDoctors(data.today.doctors);
                 if(data.weekly) renderWeekly(data.weekly);
                 if(data.boxes) renderBoxes(data.boxes, data.requisitions);
                 if(data.holidays) globalHolidays = data.holidays;
@@ -1575,41 +1604,6 @@
                     container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
                 }
             }
-        }
-
-        async function fetchWeather() {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
-                const dataW = await res.json();
-                
-                let pm25 = 15;
-                try {
-                    const resA = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2858&longitude=99.0183&current=pm2_5&timezone=Asia%2FBangkok');
-                    const dataA = await resA.json();
-                    if(dataA && dataA.current && dataA.current.pm2_5) {
-                        pm25 = Math.round(dataA.current.pm2_5);
-                    }
-                } catch(ea) {}
-                
-                const getWeatherEmoji = (code) => {
-                    if (code === 0) return '☀️'; if (code >= 1 && code <= 3) return '⛅';
-                    if (code >= 51 && code <= 67) return '🌧️'; if (code >= 95) return '⛈️';
-                    return '☁️';
-                };
-
-                document.getElementById('weather-icon').innerHTML = `<span class="text-[32px] leading-[0.8] drop-shadow-md">${getWeatherEmoji(dataW.current.weather_code)}</span>`;
-                
-                const curTemp = Math.round(dataW.current.temperature_2m);
-                const nextHourIdx = new Date().getHours() + 1;
-                const nextTemp = Math.round(dataW.hourly.temperature_2m[nextHourIdx] || curTemp);
-
-                document.getElementById('weather-temp-current').textContent = `${curTemp}°C`;
-                document.getElementById('weather-temp-next').textContent = `${nextTemp}°C`;
-                
-                const pmEl = document.getElementById('weather-pm');
-                pmEl.textContent = `PM2.5: ${pm25}`;
-                pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
-            } catch (error) {}
         }
 
         // --- ระบบดึงและจัดการ News/Appt Slider แบบรูปภาพ ---
@@ -1770,6 +1764,43 @@
             }, 60 * 60 * 1000);
         }
 
+        // 📌 ฟังก์ชันดึงสภาพอากาศ
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
+                const dataW = await res.json();
+                
+                let pm25 = 15;
+                try {
+                    const resA = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2858&longitude=99.0183&current=pm2_5&timezone=Asia%2FBangkok');
+                    const dataA = await resA.json();
+                    if(dataA && dataA.current && dataA.current.pm2_5) {
+                        pm25 = Math.round(dataA.current.pm2_5);
+                    }
+                } catch(ea) {}
+                
+                const getWeatherEmoji = (code) => {
+                    if (code === 0) return '☀️'; if (code >= 1 && code <= 3) return '⛅';
+                    if (code >= 51 && code <= 67) return '🌧️'; if (code >= 95) return '⛈️';
+                    return '☁️';
+                };
+
+                document.getElementById('weather-icon').innerHTML = `<span class="text-[32px] leading-[0.8] drop-shadow-md">${getWeatherEmoji(dataW.current.weather_code)}</span>`;
+                
+                const curTemp = Math.round(dataW.current.temperature_2m);
+                const nextHourIdx = new Date().getHours() + 1;
+                const nextTemp = Math.round(dataW.hourly.temperature_2m[nextHourIdx] || curTemp);
+
+                document.getElementById('weather-temp-current').textContent = `${curTemp}°C`;
+                document.getElementById('weather-temp-next').textContent = `${nextTemp}°C`;
+                
+                const pmEl = document.getElementById('weather-pm');
+                pmEl.textContent = `PM2.5: ${pm25}`;
+                pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
+            } catch (error) {}
+        }
+
+        /* STREAMING_CHUNK:App Initialization */
         window.addEventListener('load', async function () {
             console.log('Dashboard starting...');
             updateClock(); 
@@ -1785,6 +1816,7 @@
             initNewsSystem();
             startSliders();
             
+            // แอนิเมชันสลับอุณหภูมิปัจจุบัน/1ชม
             setInterval(() => {
                 const cur = document.getElementById('weather-temp-current');
                 const nxt = document.getElementById('weather-temp-next');
