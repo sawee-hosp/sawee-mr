@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard ผู้ป่วยในและห้องยา - รพ.สวี</title>
+    <!-- 📌 Favicon รูปกาชาดแดง -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23ef4444%22/><path d=%22M35 20h30v30h30v30h-30v30h-30v-30h-30v-30h30z%22 fill=%22white%22/></svg>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -229,7 +232,7 @@
                 </div>
             </div>
 
-            <!-- 📌 ปฏิทินนัดหมาย (เอาชื่อเดือนออกตามสั่ง) -->
+            <!-- 📌 ปฏิทินนัดหมาย (ลดความสูงช่องให้ตัวเลขอยู่กลาง ไม่ล้นกรอบ) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-calendar">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-rose-500 mr-2"></i>ปฏิทินนัดหมาย</h2>
@@ -248,7 +251,7 @@
             </div>
 
             <!-- STREAMING_CHUNK:Left Column IPD Bed Maps -->
-            <!-- 📌 แผนผังเตียงชาย (ใช้ CSS แบบดั้งเดิมทั้งหมด) -->
+            <!-- 📌 แผนผังเตียงชาย (ใช้ CSS แบบดั้งเดิมทั้งหมด + แก้นับว่าง) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-male">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -274,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- 📌 แผนผังเตียงหญิง (มีเตียงคลอดซ้อนอยู่) -->
+            <!-- 📌 แผนผังเตียงหญิง (มีเตียงคลอดซ้อนอยู่ + แก้นับว่าง) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-female">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -383,6 +386,7 @@
                     </div>
                     
                     <div class="relative flex-[2] h-full overflow-hidden bg-transparent">
+                        <!-- View 1: รอจ่าย / จ่ายแล้ว -->
                         <div id="rx-view-1" class="absolute inset-0 flex gap-1 transition-all duration-700 transform translate-y-0 opacity-100 p-[1px]">
                             <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
                                 <div class="bg-gradient-to-r from-teal-100 to-teal-200 h-3.5 text-center border-b border-teal-300 flex items-center justify-center"><span class="text-[8.5px] font-black text-teal-800 uppercase tracking-wide">รอจ่าย</span></div>
@@ -395,6 +399,7 @@
                                 <div id="time-dispense" class="h-3 text-[8px] text-center bg-white/60 text-slate-600 font-bold flex items-center justify-center tracking-tighter">00:00</div>
                             </div>
                         </div>
+                        <!-- View 2: ตะกร้าจัดยา / รายการยา -->
                         <div id="rx-view-2" class="absolute inset-0 flex gap-1 transition-all duration-700 transform translate-y-full opacity-0 pointer-events-none p-[1px]">
                             <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
                                 <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-3.5 text-center border-b border-amber-700 flex items-center justify-center"><span class="text-[8.5px] font-black text-white uppercase tracking-wide">ตะกร้าจัดยา</span></div>
@@ -472,7 +477,7 @@
         </section>
     </main>
 
-    <!-- STREAMING_CHUNK:Javascript Initialization -->
+    <!-- STREAMING_CHUNK:Javascript Setup -->
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw75ELvZom2PKT6XM6hJM0aknVZ9d6622R2aRPaYmVaPfX3TKDisRDcM3v65gjOmEJkag/exec"; 
         const GAS_SCHEDULE_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
@@ -502,12 +507,11 @@
         const RSS_FEEDS = [
             { name: "ข่าวสด", url: "https://www.khaosod.co.th/feed", color: "bg-orange-600" },
             { name: "ไทยรัฐ", url: "https://www.thairath.co.th/rss/news", color: "bg-green-700" },
-            { name: "สนุกนิวส์", url: "https://rssfeeds.sanook.com/rss/sanook/news.index.xml", color: "bg-red-600" },
             { name: "มติชน", url: "https://www.matichon.co.th/feed", color: "bg-blue-600" },
-            { name: "PPTV", url: "https://www.pptvhd36.com/rss/news.xml", color: "bg-sky-500" },
             { name: "อมรินทร์", url: "https://www.amarintv.com/rss/news.xml", color: "bg-rose-500" }
         ];
 
+        /* STREAMING_CHUNK:Javascript Logic - Alerts and Triggers */
         async function playShiftChangeMelody() {
             if (!audioUnlocked) return; 
             try {
@@ -542,7 +546,7 @@
 
         window.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.keyCode === 13) document.body.click(); });
 
-        /* STREAMING_CHUNK:Javascript Data Handling and Logic */
+        /* STREAMING_CHUNK:Javascript Logic - Update Handlers */
         function updateBackground() {
             const body = document.getElementById('main-body'); body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
             const days = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat']; body.classList.add(days[new Date().getDay()]);
@@ -604,6 +608,7 @@
             }
         }
 
+        /* STREAMING_CHUNK:Javascript Logic - App Flow and Sliders */
         function startSliders() {
             if(sliderInterval) clearInterval(sliderInterval);
             sliderInterval = setInterval(() => {
@@ -617,7 +622,6 @@
                 });
             }, 15000); 
 
-            // Rx Slider logic
             setInterval(() => {
                 rxSlideToggle = !rxSlideToggle;
                 const v1 = document.getElementById('rx-view-1');
@@ -650,6 +654,7 @@
             else if(prevValues[id] !== newVal) { prevValues[id] = newVal; el.textContent = newVal; el.classList.remove('animate-update'); void el.offsetWidth; el.classList.add('animate-update'); }
         }
 
+        /* STREAMING_CHUNK:Javascript Logic - Data Parsers */
         function renderData(dataList) {
             const container = document.getElementById('ipd-container');
             if(!container) return;
@@ -747,7 +752,6 @@
                 container.appendChild(row);
             });
 
-            // อัปเดต Badge ผู้ป่วยใหม่ IPD
             const uniqueAlerts = []; const seenBeds = new Set();
             for (const item of newUnconfirmedBeds) { if (!seenBeds.has(item.bed)) { seenBeds.add(item.bed); uniqueAlerts.push(item); } }
             
@@ -766,7 +770,7 @@
             }
         }
 
-        /* STREAMING_CHUNK:Javascript Logic for Bed Allocation */
+        /* STREAMING_CHUNK:Javascript Logic - Bed Logic */
         function processBedsData(bedsData) {
             globalActiveBeds = {}; bedListByAN = {};
             let countMale = 0, countFemale = 0, countLR = 0, countDC = 0, countAdm = 0;
@@ -787,15 +791,15 @@
                     
                     if (wName.includes('ชาย') || wName.includes('MALE') || bedText.startsWith('M') || bedText.includes('VIP4')) {
                         countMale++;
-                        if (statusAdm !== 'DC') activeMale++;
+                        if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeMale++;
                     }
                     else if (wName.includes('คลอด')) {
                         countLR++;
-                        if (statusAdm !== 'DC') activeLR++;
+                        if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeLR++;
                     }
                     else if (wName.includes('หญิง') || wName.includes('FEMALE') || bedText.startsWith('F')) {
                         countFemale++;
-                        if (statusAdm !== 'DC') activeFemale++;
+                        if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeFemale++;
                     }
 
                     const cp = statusAdm === 'ADMIT' ? 3 : (statusAdm === 'DC' ? 1 : 2);
@@ -824,7 +828,6 @@
             }
         }
 
-        // 📌 กลับมาใช้ UI แผนผังเตียง 3D ดั้งเดิม โดยไม่ล้นหรือตัดขอบ
         function renderIPDGrid(wardArray, containerId, suff, activeCount, maxBeds) {
             const container = document.getElementById(containerId);
             const listContainer = document.getElementById(`ipd-${suff}-list`);
@@ -898,7 +901,6 @@
                 elProg.style.width = `${pct}%`;
             }
 
-            // 📌 อัปเดต Badge อัตราครองเตียงที่ถูกต้อง (นับเตียงว่างรวม D/C)
             if(suff === 'm' || suff === 'f') {
                 const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
                 if(occupancyEl) {
@@ -1037,7 +1039,6 @@
             } catch(e) { return []; }
         }
 
-        // 📌 ปรับปฏิทินให้ตัวเลขอยู่กลาง ไม่ล้นกรอบ พร้อมทำ Heatmap ตามยอดคนไข้
         async function renderCalendar(monthlyApptData, todayClinicData) {
             const now = new Date();
             const year = now.getFullYear();
@@ -1073,7 +1074,7 @@
                 <div class="text-[9px] font-black text-purple-500">ส</div>
             </div><div class="grid grid-cols-7 gap-[2px]">`;
             
-            for(let i=0; i<firstDayIndex; i++) html += `<div class="bg-slate-200/40 rounded-sm h-[32px]"></div>`;
+            for(let i=0; i<firstDayIndex; i++) html += `<div class="bg-slate-200/40 rounded-sm h-[26px]"></div>`;
             for(let d=1; d<=daysInMonth; d++) {
                 const isToday = d === todayDate;
                 const count = apptMap[d] || 0;
@@ -1085,11 +1086,11 @@
                 const todayClass = isToday ? 'ring-[1.5px] ring-rose-500 bg-white animate-pulse' : 'bg-white/80';
                 const todayTextClass = isToday ? 'text-rose-600 font-black text-[12px]' : 'text-slate-700 font-bold text-[10px]';
                 
-                html += `<div class="relative h-[32px] flex flex-col items-center justify-center rounded-sm shadow-sm border border-slate-200 overflow-visible ${todayClass} transition-all">
+                html += `<div class="relative h-[26px] flex flex-col items-center justify-center rounded-sm shadow-sm border border-slate-200 overflow-visible ${todayClass} transition-all">
                     <div class="absolute inset-0 bg-blue-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
                     ${holidayText}
-                    <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm">${d}</span>
-                    <span class="relative z-10 mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 text-[7px] font-black drop-shadow-sm">${count}</span>` : ''}</span>
+                    <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm text-[9px]">${d}</span>
+                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
                 </div>`;
             }
             html += `</div>`;
@@ -1344,12 +1345,8 @@
             const container = document.getElementById('doctors-container');
             if (!container) return;
             
-            // ใช้ query ที่แยกมาใหม่จาก onlineuser 
-            // ตอนนี้เราจะไม่ได้แบ่งตาม ER/OPD/IPD แต่จะเป็นหมวดหมู่ตามชื่อเครื่องแทน
-            // หากต้องการให้แสดงเป็นลิสต์เดียวรวมกัน สามารถใช้ html นี้ได้เลย
-            
             if (!doctors || doctors.length === 0) { 
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์วันนี้</div>`; 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ยังไม่มีแพทย์ Login เข้าระบบ</div>`; 
                 return; 
             }
 
@@ -1443,7 +1440,6 @@
             if(!container) return;
             let html = '';
             
-            // 1. อุบัติการณ์ห้อง ER
             html += `<div class="card-3d bg-white/90 p-2 mb-2">
                 <h3 class="text-xs font-black text-indigo-700 border-b border-indigo-200 pb-1 mb-1"><i class="fas fa-moon mr-1"></i>อุบัติการณ์ห้อง ER นอกเวลา</h3>`;
             
@@ -1464,7 +1460,6 @@
                 html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1 pb-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
             }
 
-            // กราฟ ER Stacked Bar
             if(incidents.er_monthly && incidents.er_monthly.length > 0) {
                 let maxVal = Math.max(...incidents.er_monthly.map(d => d.total));
                 if(maxVal === 0) maxVal = 1;
@@ -1489,15 +1484,10 @@
                         barsHtml += `<div class="flex flex-col items-center justify-end h-full w-[8px] mx-[1px]"><span class="text-[6px] text-slate-300 mt-1 leading-none">${d}</span></div>`;
                     }
                 }
-                
-                html += `<div class="mt-2 w-full h-[80px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative">
-                    <span class="absolute top-0 left-0 text-[7px] text-slate-400">Total Rx</span>
-                    ${barsHtml}
-                </div>`;
+                html += `<div class="mt-2 w-full h-[80px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative"><span class="absolute top-0 left-0 text-[7px] text-slate-400">Total Rx</span>${barsHtml}</div>`;
             }
             html += `</div>`;
 
-            // 2. อุบัติการณ์จัดยา (MR)
             html += `<div class="card-3d bg-white/90 p-2 mb-2">
                 <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยาผิด</h3>`;
             if(incidents.mr && incidents.mr.length > 0) {
@@ -1521,9 +1511,6 @@
             if(!container || !chartContainer) return;
             
             let html = ''; let hasData = false;
-            
-            // ข้อมูลสำหรับกราฟ
-            const catColors = { 'Oseltamivir': 'bg-purple-500', 'Covids': 'bg-rose-500', 'Atorvastatin': 'bg-blue-500', 'Antibiotics': 'bg-emerald-500' };
             const catNames = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
             
             let chartHtml = `<div class="card-3d bg-white/90 p-1.5 w-full flex flex-col gap-1.5">`;
@@ -1593,6 +1580,7 @@
                 if(data.alerts) renderAlerts(data.alerts);
                 if(data.tempStatus) renderTempStatus(data.tempStatus);
                 if(data.lasa) renderLasa(data.lasa);
+                if(data.today && data.today.doctors) renderDoctors(data.today.doctors);
                 if(data.weekly) renderWeekly(data.weekly);
                 if(data.boxes) renderBoxes(data.boxes, data.requisitions);
                 if(data.holidays) globalHolidays = data.holidays;
@@ -1606,7 +1594,7 @@
             }
         }
 
-        // --- ระบบดึงและจัดการ News/Appt Slider แบบรูปภาพ ---
+        /* STREAMING_CHUNK:News and Appt System */
         function checkImageValid(url) {
             return new Promise((resolve) => {
                 if (!url || !url.startsWith('http')) { resolve(false); return; }
@@ -1764,42 +1752,6 @@
             }, 60 * 60 * 1000);
         }
 
-        // 📌 ฟังก์ชันดึงสภาพอากาศ
-        async function fetchWeather() {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
-                const dataW = await res.json();
-                
-                let pm25 = 15;
-                try {
-                    const resA = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2858&longitude=99.0183&current=pm2_5&timezone=Asia%2FBangkok');
-                    const dataA = await resA.json();
-                    if(dataA && dataA.current && dataA.current.pm2_5) {
-                        pm25 = Math.round(dataA.current.pm2_5);
-                    }
-                } catch(ea) {}
-                
-                const getWeatherEmoji = (code) => {
-                    if (code === 0) return '☀️'; if (code >= 1 && code <= 3) return '⛅';
-                    if (code >= 51 && code <= 67) return '🌧️'; if (code >= 95) return '⛈️';
-                    return '☁️';
-                };
-
-                document.getElementById('weather-icon').innerHTML = `<span class="text-[32px] leading-[0.8] drop-shadow-md">${getWeatherEmoji(dataW.current.weather_code)}</span>`;
-                
-                const curTemp = Math.round(dataW.current.temperature_2m);
-                const nextHourIdx = new Date().getHours() + 1;
-                const nextTemp = Math.round(dataW.hourly.temperature_2m[nextHourIdx] || curTemp);
-
-                document.getElementById('weather-temp-current').textContent = `${curTemp}°C`;
-                document.getElementById('weather-temp-next').textContent = `${nextTemp}°C`;
-                
-                const pmEl = document.getElementById('weather-pm');
-                pmEl.textContent = `PM2.5: ${pm25}`;
-                pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
-            } catch (error) {}
-        }
-
         /* STREAMING_CHUNK:App Initialization */
         window.addEventListener('load', async function () {
             console.log('Dashboard starting...');
@@ -1816,7 +1768,6 @@
             initNewsSystem();
             startSliders();
             
-            // แอนิเมชันสลับอุณหภูมิปัจจุบัน/1ชม
             setInterval(() => {
                 const cur = document.getElementById('weather-temp-current');
                 const nxt = document.getElementById('weather-temp-next');
