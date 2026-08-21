@@ -180,7 +180,6 @@
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-500 mr-2"></i>แพทย์ที่กำลัง Online</h2>
                 </div>
-                <!-- 📌 เปลี่ยน UI แพทย์เป็นรายชื่อเรียงลงมา พร้อมสถานะสีเขียวกระพริบ -->
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-1.5" id="doctors-container">
                     <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
                 </div>
@@ -232,7 +231,6 @@
                 </div>
             </div>
 
-            <!-- 📌 ปฏิทินนัดหมาย (ลดความสูงช่องให้ตัวเลขอยู่กลาง ไม่ล้นกรอบ) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-calendar">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-rose-500 mr-2"></i>ปฏิทินนัดหมาย</h2>
@@ -251,7 +249,6 @@
             </div>
 
             <!-- STREAMING_CHUNK:Left Column IPD Bed Maps -->
-            <!-- 📌 แผนผังเตียงชาย (ใช้ CSS แบบดั้งเดิมทั้งหมด + แก้นับว่าง) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-male">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -277,7 +274,6 @@
                 </div>
             </div>
 
-            <!-- 📌 แผนผังเตียงหญิง (มีเตียงคลอดซ้อนอยู่ + แก้นับว่าง) -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-female">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -386,7 +382,6 @@
                     </div>
                     
                     <div class="relative flex-[2] h-full overflow-hidden bg-transparent">
-                        <!-- View 1: รอจ่าย / จ่ายแล้ว -->
                         <div id="rx-view-1" class="absolute inset-0 flex gap-1 transition-all duration-700 transform translate-y-0 opacity-100 p-[1px]">
                             <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
                                 <div class="bg-gradient-to-r from-teal-100 to-teal-200 h-3.5 text-center border-b border-teal-300 flex items-center justify-center"><span class="text-[8.5px] font-black text-teal-800 uppercase tracking-wide">รอจ่าย</span></div>
@@ -399,7 +394,6 @@
                                 <div id="time-dispense" class="h-3 text-[8px] text-center bg-white/60 text-slate-600 font-bold flex items-center justify-center tracking-tighter">00:00</div>
                             </div>
                         </div>
-                        <!-- View 2: ตะกร้าจัดยา / รายการยา -->
                         <div id="rx-view-2" class="absolute inset-0 flex gap-1 transition-all duration-700 transform translate-y-full opacity-0 pointer-events-none p-[1px]">
                             <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
                                 <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-3.5 text-center border-b border-amber-700 flex items-center justify-center"><span class="text-[8.5px] font-black text-white uppercase tracking-wide">ตะกร้าจัดยา</span></div>
@@ -622,6 +616,7 @@
                 });
             }, 15000); 
 
+            // Rx Slider logic
             setInterval(() => {
                 rxSlideToggle = !rxSlideToggle;
                 const v1 = document.getElementById('rx-view-1');
@@ -752,6 +747,7 @@
                 container.appendChild(row);
             });
 
+            // อัปเดต Badge ผู้ป่วยใหม่ IPD
             const uniqueAlerts = []; const seenBeds = new Set();
             for (const item of newUnconfirmedBeds) { if (!seenBeds.has(item.bed)) { seenBeds.add(item.bed); uniqueAlerts.push(item); } }
             
@@ -770,7 +766,7 @@
             }
         }
 
-        /* STREAMING_CHUNK:Javascript Logic - Bed Logic */
+        /* STREAMING_CHUNK:Javascript Logic - Bed Allocation */
         function processBedsData(bedsData) {
             globalActiveBeds = {}; bedListByAN = {};
             let countMale = 0, countFemale = 0, countLR = 0, countDC = 0, countAdm = 0;
@@ -789,6 +785,7 @@
                     if (statusAdm === 'DC') countDC++;
                     if (statusAdm === 'ADM' || statusAdm === 'ADMIT') countAdm++;
                     
+                    // 📌 คำนวณเตียงว่าง (นับเฉพาะ CONT และ ADMIT เป็น active นอกนั้นถือว่าว่างรวม D/C)
                     if (wName.includes('ชาย') || wName.includes('MALE') || bedText.startsWith('M') || bedText.includes('VIP4')) {
                         countMale++;
                         if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeMale++;
@@ -828,6 +825,7 @@
             }
         }
 
+        // 📌 กลับมาใช้ UI แผนผังเตียง 3D ดั้งเดิม โดยไม่ล้นหรือตัดขอบ
         function renderIPDGrid(wardArray, containerId, suff, activeCount, maxBeds) {
             const container = document.getElementById(containerId);
             const listContainer = document.getElementById(`ipd-${suff}-list`);
@@ -901,6 +899,7 @@
                 elProg.style.width = `${pct}%`;
             }
 
+            // 📌 อัปเดต Badge อัตราครองเตียงที่ถูกต้อง (นับเตียงว่างรวม D/C)
             if(suff === 'm' || suff === 'f') {
                 const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
                 if(occupancyEl) {
@@ -966,6 +965,7 @@
             });
             container.innerHTML = html;
 
+            // Fake Shuffle Animation เริ่มทันที
             const elements = container.querySelectorAll('.top-drug-name');
             elements.forEach(el => {
                 const realText = el.getAttribute('data-real');
@@ -983,6 +983,7 @@
             });
         }
 
+        // 📌 แก้ไขส่วนแสดงผลแพทย์ช่องกลาง (ล่างสุด) ให้แสดงชื่อและจำนวนคนไข้ได้ถูกต้อง ไม่เป็น undefined
         function renderSliderData(data) {
             if(data.queue_flow) {
                 const flowMap = { '0_รอมาตามนัด': { name: 'ยังไม่มา', color: 'orange' }, '1_รอซักประวัติ': { name: 'รอซัก', color: 'blue' }, '2_รอพบแพทย์': { name: 'รอแพทย์', color: 'rose' }, '3_รอโต๊ะนัด': { name: 'โต๊ะนัด', color: 'pink' }, '4_รอรับยา': { name: 'รอยา', color: 'teal' }, '5_รอชำระเงิน': { name: 'การเงิน', color: 'yellow' }, '6_เสร็จสิ้นทุกขั้นตอน': { name: 'เสร็จสิ้น', color: 'emerald' } };
@@ -1007,13 +1008,14 @@
             if(data.doctor_summary) {
                 let docHtml = ''; const docs = data.doctor_summary.slice(0, 6);
                 for(let i=0; i<6; i++) {
-                    const doc = docs[i] || { doctor_name: '-', total_queue: 0 };
+                    const doc = docs[i] || { doctor_name: '-', total_patients: 0 };
                     let shortName = doc.doctor_name.replace('แพทย์หญิง', 'พญ.').replace('นายแพทย์', 'นพ.');
                     if(shortName !== '-') shortName = shortName.split(' ')[0];
+                    const qCount = doc.total_patients !== undefined ? doc.total_patients : (doc.total_queue || 0);
                     const key = 'doc_' + i; let animClass = '';
-                    if(prevValues[key] !== undefined && prevValues[key] !== doc.total_queue) animClass = 'animate-update';
-                    prevValues[key] = doc.total_queue;
-                    docHtml += `<div class="flex-1 card-3d flex flex-col p-0 overflow-hidden"><div class="h-4 bg-purple-100 text-[9px] font-bold text-center border-b border-purple-200 flex items-center justify-center truncate px-0.5 tracking-tighter">${shortName}</div><div class="flex-1 flex items-center justify-center text-xl font-black text-purple-700 leading-none"><span class="${animClass}">${doc.total_queue}</span></div></div>`;
+                    if(prevValues[key] !== undefined && prevValues[key] !== qCount) animClass = 'animate-update';
+                    prevValues[key] = qCount;
+                    docHtml += `<div class="flex-1 card-3d flex flex-col p-0 overflow-hidden"><div class="h-4 bg-purple-100 text-[9px] font-bold text-center border-b border-purple-200 flex items-center justify-center truncate px-0.5 tracking-tighter">${shortName}</div><div class="flex-1 flex items-center justify-center text-xl font-black text-purple-700 leading-none"><span class="${animClass}">${qCount}</span></div></div>`;
                 }
                 const viewDocs = document.getElementById('view-doctors');
                 if (viewDocs) viewDocs.innerHTML = docHtml;
@@ -1067,14 +1069,14 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDayIndex = new Date(year, month, 1).getDay(); 
             
-            let html = `<div class="grid grid-cols-7 gap-0.5 text-center mb-1">
-                <div class="text-[9px] font-black text-rose-600">อา</div><div class="text-[9px] font-black text-yellow-500">จ</div>
-                <div class="text-[9px] font-black text-pink-500">อ</div><div class="text-[9px] font-black text-emerald-500">พ</div>
-                <div class="text-[9px] font-black text-orange-500">พฤ</div><div class="text-[9px] font-black text-blue-500">ศ</div>
-                <div class="text-[9px] font-black text-purple-500">ส</div>
-            </div><div class="grid grid-cols-7 gap-[2px]">`;
+            let html = `<div class="grid grid-cols-7 gap-0.5 text-center mb-0.5">
+                <div class="text-[8px] font-black text-rose-600">อา</div><div class="text-[8px] font-black text-yellow-500">จ</div>
+                <div class="text-[8px] font-black text-pink-500">อ</div><div class="text-[8px] font-black text-emerald-500">พ</div>
+                <div class="text-[8px] font-black text-orange-500">พฤ</div><div class="text-[8px] font-black text-blue-500">ศ</div>
+                <div class="text-[8px] font-black text-purple-500">ส</div>
+            </div><div class="grid grid-cols-7 gap-[1px]">`;
             
-            for(let i=0; i<firstDayIndex; i++) html += `<div class="bg-slate-200/40 rounded-sm h-[26px]"></div>`;
+            for(let i=0; i<firstDayIndex; i++) html += `<div class="bg-slate-200/30 rounded-sm h-[26px]"></div>`;
             for(let d=1; d<=daysInMonth; d++) {
                 const isToday = d === todayDate;
                 const count = apptMap[d] || 0;
@@ -1082,15 +1084,14 @@
                 let holidayText = "";
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const hol = holidays.find(h => h.date === dateStr);
-                if (hol) holidayText = `<div class="absolute -top-[3px] -right-[3px] w-[10px] h-[10px] bg-rose-500 border border-white rounded-full z-20 flex items-center justify-center animate-bounce shadow-sm" title="${hol.localName}"></div>`;
-                const todayClass = isToday ? 'ring-[1.5px] ring-rose-500 bg-white animate-pulse' : 'bg-white/80';
-                const todayTextClass = isToday ? 'text-rose-600 font-black text-[12px]' : 'text-slate-700 font-bold text-[10px]';
+                if (hol) holidayText = `<div class="absolute -top-[2px] -right-[2px] w-[8px] h-[8px] bg-rose-500 border border-white rounded-full z-20" title="${hol.localName}"></div>`;
+                const todayClass = isToday ? 'ring-1 ring-rose-500 bg-white animate-pulse' : 'bg-white/80';
                 
-                html += `<div class="relative h-[26px] flex flex-col items-center justify-center rounded-sm shadow-sm border border-slate-200 overflow-visible ${todayClass} transition-all">
+                html += `<div class="relative h-[26px] flex flex-col items-center justify-center rounded-sm border border-slate-200 overflow-visible ${todayClass}">
                     <div class="absolute inset-0 bg-blue-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
                     ${holidayText}
-                    <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm text-[9px]">${d}</span>
-                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
+                    <span class="relative z-10 text-[9px] ${isToday ? 'text-rose-600 font-black' : 'text-slate-700 font-bold'} leading-none">${d}</span>
+                    <span class="relative z-10 text-[6px] leading-none mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 rounded px-0.5 font-black">${count}</span>` : ''}</span>
                 </div>`;
             }
             html += `</div>`;
@@ -1100,7 +1101,7 @@
             if (todayClinicData && todayClinicData.length > 0) {
                 todayClinicData.forEach((c, idx) => {
                     const color = ['bg-rose-100 text-rose-700 border-rose-200','bg-blue-100 text-blue-700 border-blue-200','bg-emerald-100 text-emerald-700 border-emerald-200','bg-amber-100 text-amber-700 border-amber-200','bg-purple-100 text-purple-700 border-purple-200'][idx % 5];
-                    clinicHtml += `<div class="flex justify-between items-center text-[10px] bg-white/80 px-2 py-[3px] rounded-md border border-slate-200 shadow-sm shrink-0"><span class="font-bold text-slate-700 truncate flex-1 leading-tight mr-1">${c.clinic_name || c.clinic_code}</span><span class="${color} font-black px-1.5 py-[1px] rounded border shrink-0 leading-none shadow-sm">${parseInt(c.total_patients).toLocaleString()}</span></div>`;
+                    clinicHtml += `<div class="flex justify-between items-center text-[10px] bg-white/80 px-2 py-[2px] rounded-md border border-slate-200 shadow-sm shrink-0"><span class="font-bold text-slate-700 truncate flex-1 leading-tight mr-1">${c.clinic_name || c.clinic_code}</span><span class="${color} font-black px-1.5 py-[1px] rounded border shrink-0 leading-none shadow-sm">${parseInt(c.total_patients).toLocaleString()}</span></div>`;
                 });
             } else { clinicHtml = `<div class="text-[10px] text-slate-500 text-center py-2 font-bold">ไม่มีนัดคลินิกวันนี้</div>`; }
             document.getElementById('today-clinic-list').innerHTML = clinicHtml;
@@ -1219,7 +1220,14 @@
                 if (!spokenAlerts.has(a.id)) {
                     spokenAlerts.add(a.id);
                     if (a.type !== 'expiry') {
-                        if (audioUnlocked) playNotificationSound();
+                        let say = "";
+                        if (a.type === 'leave') say = `แจ้งเตือนการลาหรือไปราชการ: ${a.desc} ค่ะ`;
+                        else if (a.type === 'non_formulary') say = `มีรายการขอใช้ยานอกบัญชีใหม่ จาก ${a.title.replace(' ขอใช้ยานอก', '').trim()} ค่ะ`;
+                        else if (a.type === 'requisition') say = `มีการเบิกยาใหม่ จาก ${a.title.replace('เบิกยา:', '').trim()} ค่ะ`;
+                        else if (a.type === 'temperature') say = `เตือนอุณหภูมิเกินช่วง ${(a.deviceName || "").replace(/_/g, " ").trim()} ${parseFloat(a.tempValue || "0").toFixed(1)} องศาเซลเซียสค่ะ`;
+                        else if (a.type === 'line') say = `มีการถามยาในไลน์ ${a.title.replace('ถามยา:', '').trim()} ค่ะ`;
+                        else if (a.type === 'checked') say = `${a.title.replace(/เช็คพร้อมใช้แล้ว|พร้อมใช้:|พร้อมใช้/g, '').trim()} เช็คพร้อมใช้แล้วค่ะ`;
+                        if (say) queueVoice(say);
                     }
                 }
             });
@@ -1319,249 +1327,7 @@
             if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
 
-        // 📌 เพิ่มไอคอนเม็ดยาหลากสีใน LASA
-        function renderLasa(lasaList) {
-            const container = document.getElementById('lasa-append-target');
-            if (!container) return;
-            if (!lasaList || lasaList.length === 0) return;
-            
-            let html = `<div class="mt-2 pt-2 border-t border-slate-300 w-full"><div class="flex justify-between items-center mb-1"><h3 class="text-[11px] font-black text-amber-700"><i class="fas fa-exclamation-triangle mr-1"></i>TOP 5 LASAs (30 วัน)</h3></div>`;
-            lasaList.forEach((item, index) => {
-                const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
-                html += `<div class="flex items-center text-[10px] border-b border-dashed border-slate-200 py-0.5 last:border-0">
-                    <i class="fas fa-pills ${rColor} mr-1 text-[8px] opacity-80"></i>
-                    <span class="font-bold text-slate-700 truncate max-w-[42%]">${item.d1}</span>
-                    <span class="text-slate-400 font-bold mx-1">-</span>
-                    <span class="font-bold text-slate-700 truncate max-w-[42%] flex-1">${item.d2}</span>
-                    <span class="font-black ${rColor} shrink-0 text-right">${item.count}</span>
-                </div>`;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
-        }
-
-        /* STREAMING_CHUNK:Javascript Data Integrations */
-        function renderDoctors(doctors) {
-            const container = document.getElementById('doctors-container');
-            if (!container) return;
-            
-            if (!doctors || doctors.length === 0) { 
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ยังไม่มีแพทย์ Login เข้าระบบ</div>`; 
-                return; 
-            }
-
-            let html = '';
-            doctors.forEach(doc => { 
-                html += `
-                <div class="card-3d bg-white/90 py-1.5 px-2 flex flex-col justify-center shrink-0 border border-slate-200 mb-1">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981] animate-pulse shrink-0"></span>
-                        <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}</span>
-                    </div>
-                    <div class="text-[8.5px] font-bold text-slate-500 leading-none truncate ml-4 mt-1">${doc.computer_and_department}</div>
-                </div>`; 
-            });
-
-            container.innerHTML = html;
-        }
-
-        function renderWeekly(weeklyList) {
-            const container = document.getElementById('weekly-container');
-            if (!container) return;
-            if (!weeklyList || weeklyList.length !== 5) { container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบข้อมูลรายสัปดาห์</div>`; return; }
-
-            const roles = [{ id: 'key', label: 'คีย์' }, { id: 'ipd', label: 'ใน' }, { id: 'tech', label: 'จพ.เช้า' }, { id: 'check1', label: 'เช็ค1' }, { id: 'check2', label: 'เช็ค2' }, { id: 'check3', label: 'เช็ค3' }, { id: 'dispense1', label: 'จ่าย1' }, { id: 'dispense2', label: 'จ่าย2' }, { id: 'afternoon_pharm', label: 'ภ.บ่าย' }, { id: 'afternoon_tech1', label: 'จพ.บ่าย' }, { id: 'oncall', label: 'Oncall' }];
-            const colorPalette = ['bg-rose-100 text-rose-800 border-rose-300', 'bg-blue-100 text-blue-800 border-blue-300', 'bg-emerald-100 text-emerald-800 border-emerald-300', 'bg-amber-100 text-amber-800 border-amber-300', 'bg-purple-100 text-purple-800 border-purple-300', 'bg-cyan-100 text-cyan-800 border-cyan-300', 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300', 'bg-orange-100 text-orange-800 border-orange-300', 'bg-lime-100 text-lime-800 border-lime-300', 'bg-pink-100 text-pink-800 border-pink-300'];
-            let nameColorMap = {}; let colorIndex = 0;
-
-            let html = `<table class="w-full h-full text-center border-collapse table-fixed"><thead><tr><th class="w-[15%] pb-1 border-b border-slate-300"></th>`;
-            weeklyList.forEach(day => { html += `<th class="w-[17%] font-black align-middle py-1 border-b border-slate-300 ${day.isToday ? 'bg-indigo-500 text-white shadow-md rounded-t' : 'bg-slate-200/70 text-slate-700 rounded-t'}">${day.dayName}</th>`; });
-            html += `</tr></thead><tbody>`;
-
-            roles.forEach((role, i) => {
-                const isLast = i === roles.length - 1;
-                html += `<tr class="${isLast ? '' : 'border-b border-slate-200/50'}"><td class="text-[9px] font-bold text-slate-600 text-right pr-1 align-middle">${role.label}</td>`;
-                weeklyList.forEach(day => {
-                    const bg = day.isToday ? 'bg-indigo-50 shadow-[inset_0_0_4px_rgba(0,0,0,0.05)]' : '';
-                    const rB = (day.isToday && isLast) ? 'rounded-b' : '';
-                    const rD = day.roles ? day.roles[role.id] : null;
-                    let pUrl = '', sName = '';
-                    if (rD) { if (typeof rD === 'string') pUrl = rD; else { pUrl = rD.photo; sName = rD.name || ''; } }
-                    
-                    if (sName || pUrl) {
-                        if (sName && !nameColorMap[sName]) { nameColorMap[sName] = colorPalette[colorIndex % colorPalette.length]; colorIndex++; }
-                        let nClass = sName ? nameColorMap[sName] : 'bg-white border-slate-200 text-slate-700';
-                        let pH = pUrl ? `<img src="${pUrl}" referrerpolicy="no-referrer" class="w-5 h-5 rounded-full object-cover border border-slate-300 shadow-sm mx-auto shrink-0" onerror="this.style.display='none'">` : '';
-                        let nH = sName ? `<div class="${nClass} border text-[6px] font-bold px-0.5 py-[1px] rounded-sm mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis w-10 text-center mx-auto leading-none shrink-0">${sName}</div>` : '';
-                        html += `<td class="align-middle py-0.5 ${bg} ${rB}"><div class="flex flex-col items-center justify-center min-h-[32px] w-full">${pH}${nH}</div></td>`;
-                    } else {
-                        html += `<td class="align-middle py-0.5 ${bg} ${rB}"><div class="min-h-[32px] w-full"></div></td>`;
-                    }
-                });
-                html += `</tr>`;
-            });
-            container.innerHTML = html + `</tbody></table>`;
-        }
-
-        function renderBoxes(boxes, requisitions) {
-            const container = document.getElementById('boxes-container');
-            if(!container) return;
-            
-            let reqHtml = '';
-            if(requisitions && requisitions.length > 0) {
-                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full"><div class="text-[10px] font-black text-blue-700 mb-1 flex items-center justify-center"><i class="fas fa-file-invoice mr-1"></i>ใบเบิกวันนี้</div><div class="flex flex-col gap-1 w-full px-1 max-h-[140px] overflow-y-auto no-scrollbar">`;
-                requisitions.forEach(req => {
-                    let stClass = "bg-orange-100 text-orange-700 border-orange-300";
-                    if(req.status === "กำลังจัดยา") stClass = "bg-sky-100 text-sky-700 border-sky-300";
-                    else if(req.status === "จัดเสร็จแล้ว" || req.status === "ตรวจสอบแล้ว") stClass = "bg-emerald-100 text-emerald-700 border-emerald-300";
-                    
-                    reqHtml += `<div class="flex items-center justify-between bg-white/70 p-1 rounded border shadow-sm"><div class="flex items-center gap-1.5 overflow-hidden"><span class="text-[9px] font-black text-slate-800 truncate max-w-[80px]">${req.dept}</span><span class="text-[8px] font-bold text-slate-500">${req.time} น.</span></div><span class="text-[8px] font-bold ${stClass} px-1 py-0.5 rounded border leading-none whitespace-nowrap">${req.status}</span></div>`;
-                });
-                reqHtml += `</div></div>`;
-            } else {
-                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full text-center text-[10px] font-bold text-slate-500">ไม่มีรายการส่งเบิกยาใหม่วันนี้</div>`;
-            }
-
-            if(!boxes || boxes.length === 0) { 
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 w-full py-4">ยังไม่มีการเปลี่ยนกล่องประจำวัน</div>` + reqHtml; 
-                return; 
-            }
-
-            let html = `<div class="grid grid-cols-3 gap-2 w-full content-start">`;
-            boxes.forEach(b => {
-                html += `<div class="card-3d bg-white/80 p-1 flex flex-col items-center justify-center text-center"><img src="https://sawee-hosp.github.io/sawee-mr/box.png" class="w-8 h-8 mb-1 drop-shadow-sm"><span class="text-[9px] font-black text-slate-800 leading-tight w-full truncate">${b.name}</span><span class="text-[8px] font-bold text-slate-500 mt-0.5">${b.time}</span><span class="text-[7px] text-white bg-amber-600 px-1 py-[1px] rounded mt-0.5 truncate max-w-full">${b.pharm}</span></div>`;
-            });
-            html += `</div>` + reqHtml;
-            container.innerHTML = html;
-        }
-
-        function renderIncidents(incidents) {
-            const container = document.getElementById('incident-container');
-            if(!container) return;
-            let html = '';
-            
-            html += `<div class="card-3d bg-white/90 p-2 mb-2">
-                <h3 class="text-xs font-black text-indigo-700 border-b border-indigo-200 pb-1 mb-1"><i class="fas fa-moon mr-1"></i>อุบัติการณ์ห้อง ER นอกเวลา</h3>`;
-            
-            if(incidents.er && incidents.er.total > 0) {
-                const perc = ((incidents.er.errors / incidents.er.total)*100).toFixed(1);
-                html += `
-                <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 mt-1">
-                    <span>จำนวนใบสั่งยา: <span class="text-indigo-600">${incidents.er.total}</span></span>
-                    <span>Error: <span class="text-rose-600">${incidents.er.errors}</span> (${perc}%)</span>
-                </div>
-                <div class="text-[9px] text-slate-500 mt-1 text-right border-b border-dashed border-slate-200 pb-1">ผู้ลงข้อมูล: ${incidents.er.pharmacist || '-'}</div>`;
-            } else if (incidents.er && incidents.er.total === 0 && incidents.er.errors === 0) {
-                 html += `
-                 <div class="bg-rose-500 text-white font-black p-2 rounded shadow-md mt-2 text-center animate-pulse border border-rose-300 text-[10px]">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>ยังไม่ได้ตรวจสอบใบสั่งยาของวันนี้
-                 </div>`;
-            } else {
-                html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1 pb-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
-            }
-
-            if(incidents.er_monthly && incidents.er_monthly.length > 0) {
-                let maxVal = Math.max(...incidents.er_monthly.map(d => d.total));
-                if(maxVal === 0) maxVal = 1;
-                
-                let barsHtml = '';
-                for(let d=1; d<=new Date().getDate(); d++) {
-                    const dayData = incidents.er_monthly.find(x => x.day === d);
-                    if(dayData) {
-                        const hTotal = Math.max(0, (dayData.total / maxVal) * 100);
-                        const hErr = Math.max(0, (dayData.errors / dayData.total) * 100) || 0;
-                        const hGood = 100 - hErr;
-                        barsHtml += `
-                        <div class="flex flex-col items-center justify-end h-full w-[8px] group relative mx-[1px]">
-                            <div class="w-full flex flex-col justify-end overflow-hidden rounded-sm" style="height: ${hTotal}%;">
-                                <div class="w-full bg-rose-500 transition-all" style="height: ${hErr}%;"></div>
-                                <div class="w-full bg-emerald-500 transition-all" style="height: ${hGood}%;"></div>
-                            </div>
-                            <span class="text-[6px] text-slate-500 mt-1 leading-none">${d}</span>
-                            <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] px-1 py-0.5 rounded whitespace-nowrap z-20">รวม: ${dayData.total} | ผิด: ${dayData.errors}</div>
-                        </div>`;
-                    } else {
-                        barsHtml += `<div class="flex flex-col items-center justify-end h-full w-[8px] mx-[1px]"><span class="text-[6px] text-slate-300 mt-1 leading-none">${d}</span></div>`;
-                    }
-                }
-                html += `<div class="mt-2 w-full h-[80px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative"><span class="absolute top-0 left-0 text-[7px] text-slate-400">Total Rx</span>${barsHtml}</div>`;
-            }
-            html += `</div>`;
-
-            html += `<div class="card-3d bg-white/90 p-2 mb-2">
-                <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยาผิด</h3>`;
-            if(incidents.mr && incidents.mr.length > 0) {
-                html += `<ul class="list-none text-[10px] font-bold text-slate-700 space-y-1.5 mt-1">`;
-                incidents.mr.forEach(err => { 
-                    let badgeText = err.cat || "ไม่ระบุ";
-                    html += `<li class="flex items-start gap-1"><span class="bg-rose-100 text-rose-700 border border-rose-300 px-1.5 py-[1px] rounded text-[8.5px] font-black shadow-sm leading-none shrink-0 mt-[1px]">${badgeText}</span><span class="leading-tight">${err.detail}</span></li>`; 
-                });
-                html += `</ul>`;
-            } else {
-                html += `<div class="text-center text-[10px] font-bold text-emerald-600 mt-1">ยังไม่พบความคลาดเคลื่อนวันนี้</div>`;
-            }
-            html += `</div>`;
-            
-            container.innerHTML = html;
-        }
-
-        function renderDue(data) {
-            const container = document.getElementById('due-container');
-            const chartContainer = document.getElementById('due-chart-container');
-            if(!container || !chartContainer) return;
-            
-            let html = ''; let hasData = false;
-            const catNames = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
-            
-            let chartHtml = `<div class="card-3d bg-white/90 p-1.5 w-full flex flex-col gap-1.5">`;
-            catNames.forEach(cat => {
-                const stats = data.stats[cat] || { assessed: 0, unassessed: 0, total: 0 };
-                const total = stats.total;
-                if(total > 0) {
-                    hasData = true;
-                    const unPct = (stats.unassessed / total) * 100;
-                    const asPct = (stats.assessed / total) * 100;
-                    
-                    chartHtml += `
-                    <div class="flex items-center text-[9px] font-bold w-full">
-                        <div class="w-[60px] truncate text-slate-700">${cat}</div>
-                        <div class="flex-1 flex h-3.5 bg-slate-200 rounded overflow-hidden shadow-inner mx-1">
-                            <div class="bg-rose-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${unPct}%">${stats.unassessed > 0 ? stats.unassessed : ''}</div>
-                            <div class="bg-emerald-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${asPct}%">${stats.assessed > 0 ? stats.assessed : ''}</div>
-                        </div>
-                        <div class="w-8 text-right text-slate-600">${total}</div>
-                    </div>`;
-                }
-            });
-            chartHtml += `</div>`;
-            
-            if(!hasData) {
-                chartContainer.innerHTML = '';
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
-                return;
-            }
-            
-            chartContainer.innerHTML = chartHtml;
-
-            const renderGroup = (title, items, color) => {
-                if(!items || items.length === 0) return '';
-                let g = `<div class="mb-2"><div class="text-[10px] font-black text-white ${color} px-2 py-0.5 rounded-t inline-block">${title}</div><div class="bg-white/90 border border-${color.split('-')[1]}-200 rounded-b rounded-tr p-1">`;
-                items.forEach(d => { 
-                    let statusClass = d.status === 'ประเมินแล้ว' || d.status === 'Completed' ? 'text-emerald-500' : 'text-rose-500';
-                    g += `<div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200 last:border-0 py-0.5"><span class="font-bold text-slate-700 truncate flex-1" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-16 text-center shrink-0">${d.hn}</span><span class="font-black ${statusClass} w-16 text-right shrink-0">${d.status}</span></div>`; 
-                });
-                return g + `</div></div>`;
-            };
-
-            html += renderGroup('Oseltamivir', data.lists['Oseltamivir'], 'bg-purple-500');
-            html += renderGroup('Covids', data.lists['Covids'], 'bg-rose-500');
-            html += renderGroup('Atorvastatin', data.lists['Atorvastatin'], 'bg-blue-500');
-            html += renderGroup('Antibiotics', data.lists['Antibiotics'], 'bg-emerald-500');
-            
-            container.innerHTML = html;
-        }
-
-        async function fetchSchedule() {
+        function async fetchSchedule() {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 45000); 
@@ -1580,7 +1346,6 @@
                 if(data.alerts) renderAlerts(data.alerts);
                 if(data.tempStatus) renderTempStatus(data.tempStatus);
                 if(data.lasa) renderLasa(data.lasa);
-                if(data.today && data.today.doctors) renderDoctors(data.today.doctors);
                 if(data.weekly) renderWeekly(data.weekly);
                 if(data.boxes) renderBoxes(data.boxes, data.requisitions);
                 if(data.holidays) globalHolidays = data.holidays;
@@ -1752,6 +1517,42 @@
             }, 60 * 60 * 1000);
         }
 
+        // 📌 ฟังก์ชันดึงสภาพอากาศ
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
+                const dataW = await res.json();
+                
+                let pm25 = 15;
+                try {
+                    const resA = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2858&longitude=99.0183&current=pm2_5&timezone=Asia%2FBangkok');
+                    const dataA = await resA.json();
+                    if(dataA && dataA.current && dataA.current.pm2_5) {
+                        pm25 = Math.round(dataA.current.pm2_5);
+                    }
+                } catch(ea) {}
+                
+                const getWeatherEmoji = (code) => {
+                    if (code === 0) return '☀️'; if (code >= 1 && code <= 3) return '⛅';
+                    if (code >= 51 && code <= 67) return '🌧️'; if (code >= 95) return '⛈️';
+                    return '☁️';
+                };
+
+                document.getElementById('weather-icon').innerHTML = `<span class="text-[32px] leading-[0.8] drop-shadow-md">${getWeatherEmoji(dataW.current.weather_code)}</span>`;
+                
+                const curTemp = Math.round(dataW.current.temperature_2m);
+                const nextHourIdx = new Date().getHours() + 1;
+                const nextTemp = Math.round(dataW.hourly.temperature_2m[nextHourIdx] || curTemp);
+
+                document.getElementById('weather-temp-current').textContent = `${curTemp}°C`;
+                document.getElementById('weather-temp-next').textContent = `${nextTemp}°C`;
+                
+                const pmEl = document.getElementById('weather-pm');
+                pmEl.textContent = `PM2.5: ${pm25}`;
+                pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
+            } catch (error) {}
+        }
+
         /* STREAMING_CHUNK:App Initialization */
         window.addEventListener('load', async function () {
             console.log('Dashboard starting...');
@@ -1768,6 +1569,7 @@
             initNewsSystem();
             startSliders();
             
+            // แอนิเมชันสลับอุณหภูมิปัจจุบัน/1ชม
             setInterval(() => {
                 const cur = document.getElementById('weather-temp-current');
                 const nxt = document.getElementById('weather-temp-next');
