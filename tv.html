@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard ผู้ป่วยในและห้องยา - รพ.สวี</title>
-    <!-- Favicon กาชาด -->
+    <!-- Favicon รูปกาชาด -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23ef4444%22/><path d=%22M35 20h30v30h30v30h-30v30h-30v-30h-30v-30h30z%22 fill=%22white%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,7 +62,7 @@
         @keyframes numberPulse { 0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.3); } 60% { transform: scale(1); } 100% { transform: scale(1); } }
         .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
         
-        /* 📌 แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม */
+        /* 📌 แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม (Badge มุมขวาล่างไม่ถูก Crop) */
         .bed-box { 
             position: relative; 
             border-radius: 4px; 
@@ -482,11 +482,10 @@
         let audioUnlocked = false; 
         const prevValues = {}; 
         let currentSlide = 0; let sliderInterval = null; let rxSlideToggle = false;
-        let spokenAlerts = new Set(); let previousActiveCount = -1;
+        let spokenItems = new Set(); let previousActiveCount = -1;
         let globalHolidays = []; window.lastTempStatusData = null;
         let globalAppointments = [];
-        let globalHadList = []; // เพิ่มตัวแปรสำหรับเก็บข้อมูล HAD
-        let spokenItems = new Set(); // กำหนดค่า spokenItems ป้องกัน Error ค้างโหลด
+        let globalHadList = []; 
 
         let globalActiveBeds = {};
         let rxBoxMap = {}; let bedListByAN = {};
@@ -535,7 +534,7 @@
 
         window.addEventListener('click', async function unlockAudio() {
             if (!audioUnlocked) {
-                audioUnlocked = true;
+                audioUnlocked = true; 
                 const banner = document.getElementById('audio-unlock-banner');
                 if (banner) { banner.classList.add('opacity-0'); banner.classList.remove('pointer-events-auto'); }
                 playNotificationSound();
@@ -1014,10 +1013,10 @@
             if(data.top_doc_queue) {
                 let docHtml = ''; const docs = data.top_doc_queue.slice(0, 6);
                 for(let i=0; i<6; i++) {
-                    const doc = docs[i] || { doctor_name: '-', total_queue: 0 };
+                    const doc = docs[i] || { doctor_name: '-', patient_count: 0 };
                     let shortName = doc.doctor_name.replace('แพทย์หญิง', 'พญ.').replace('นายแพทย์', 'นพ.');
                     if(shortName !== '-') shortName = shortName.split(' ')[0];
-                    const qCount = doc.total_queue !== undefined ? doc.total_queue : 0;
+                    const qCount = doc.patient_count !== undefined ? doc.patient_count : 0;
                     const key = 'doc_' + i; let animClass = '';
                     if(prevValues[key] !== undefined && prevValues[key] !== qCount) animClass = 'animate-update';
                     prevValues[key] = qCount;
@@ -1098,7 +1097,7 @@
                     <div class="absolute inset-0 bg-blue-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
                     ${holidayText}
                     <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm">${d}</span>
-                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
+                    <span class="relative z-10 mt-0.5">${count > 0 ? `<span class="bg-blue-100 text-blue-800 border border-blue-300 rounded px-1 text-[7px] font-black drop-shadow-sm">${count}</span>` : ''}</span>
                 </div>`;
             }
             html += `</div>`;
@@ -1355,17 +1354,22 @@
             if (!container) return;
             
             if (!doctors || doctors.length === 0) { 
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบตารางแพทย์วันนี้</div>`; 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ยังไม่มีแพทย์ Login เข้าระบบ</div>`; 
                 return; 
             }
 
             let html = '';
             doctors.forEach(doc => { 
+                let timeStr = "";
+                if(doc.first_active_time) {
+                    let d = new Date(doc.first_active_time);
+                    if(!isNaN(d)) timeStr = ` <span class="text-[8px] text-slate-400 font-normal">(${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)} น.)</span>`;
+                }
                 html += `
                 <div class="card-3d bg-white/90 py-1.5 px-2 flex flex-col justify-center shrink-0 border border-slate-200 mb-1">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981] animate-pulse shrink-0"></span>
-                        <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}</span>
+                        <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}${timeStr}</span>
                     </div>
                     <div class="text-[8.5px] font-bold text-slate-500 leading-none truncate ml-4 mt-1">${doc.computer_and_department}</div>
                 </div>`; 
@@ -1412,194 +1416,171 @@
             container.innerHTML = html + `</tbody></table>`;
         }
 
-        async function fetchSchedule() {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 45000); 
-                const res = await fetch(GAS_SCHEDULE_API_URL, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                const data = await res.json();
-                if (data.error) {
-                    const container = document.getElementById('alerts-container');
-                    if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
-                         container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Google Sheet:<br>${data.error}</div>`;
-                    }
-                    return;
-                }
-                if(data.today) updateStaffUI(data.today);
-                if(data.alerts) renderAlerts(data.alerts);
-                if(data.tempStatus) renderTempStatus(data.tempStatus);
-                if(data.lasa) renderLasa(data.lasa);
-                if(data.weekly) renderWeekly(data.weekly);
-                if(data.boxes) renderBoxes(data.boxes, data.requisitions);
-                if(data.holidays) globalHolidays = data.holidays;
-                if(data.incidents) renderIncidents(data.incidents);
-                if(data.due) renderDue(data.due);
-            } catch(error) { 
-                const container = document.getElementById('alerts-container');
-                if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
-                    container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
-                }
-            }
-        }
-
-        // --- ระบบดึงและจัดการ News/Appt Slider แบบรูปภาพ ---
-        function checkImageValid(url) {
-            return new Promise((resolve) => {
-                if (!url || !url.startsWith('http')) { resolve(false); return; }
-                const img = new Image();
-                img.onload = () => { if (img.width > 200 && img.height > 150) { resolve(true); } else { resolve(false); } };
-                img.onerror = () => resolve(false);
-                img.src = url;
-            });
-        }
-
-        function extractImage(item) {
-            if (item.thumbnail && item.thumbnail !== "") return item.thumbnail;
-            if (item.enclosure && item.enclosure.link) return item.enclosure.link;
-            const html = item.content || item.description || "";
-            const match = html.match(/<img[^>]+(?:src|data-src)="([^">]+)"/i);
-            return match ? match[1] : null;
-        }
-
-        async function fetchAllNews() {
-            let fetchedNews = [];
-            for (const feed of RSS_FEEDS) {
-                try {
-                    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&api_key=`); 
-                    const data = await response.json();
-                    if (data.status === 'ok') {
-                        const rawItems = data.items.map(item => {
-                            let imageUrl = extractImage(item);
-                            return { title: item.title.split(' - ')[0], source: feed.name, color: feed.color, image: imageUrl };
-                        }).filter(item => item.image);
-
-                        const validationPromises = rawItems.slice(0, 4).map(async (item) => {
-                            const isValid = await checkImageValid(item.image);
-                            return isValid ? item : null;
-                        });
-                        const validatedItems = (await Promise.all(validationPromises)).filter(item => item !== null);
-                        fetchedNews = fetchedNews.concat(validatedItems);
-                    }
-                } catch (error) {}
-            }
-            fetchedNews.sort(() => Math.random() - 0.5);
-            return fetchedNews;
-        }
-
-        function renderApptCard() {
-            const layer = document.getElementById('appt-layer');
-            const newsL = document.getElementById('news-layer');
-            if(!layer || !newsL) return;
+        function renderBoxes(boxes, requisitions) {
+            const container = document.getElementById('boxes-container');
+            if(!container) return;
             
-            newsL.classList.replace('opacity-100', 'opacity-0');
-            setTimeout(() => newsL.classList.add('hidden'), 500);
-            
-            layer.classList.remove('hidden');
-            setTimeout(() => layer.classList.replace('opacity-0', 'opacity-100'), 50);
-
-            let html = `<div class="text-[11px] font-black text-blue-900 w-full text-center border-b border-blue-200 pb-0.5 mb-1"><i class="fas fa-calendar-alt text-rose-500 mr-1"></i>วันนัดที่พบบ่อย (ล่วงหน้า)</div><div class="flex flex-col w-full px-1">`;
-            if(globalAppointments && globalAppointments.length > 0) {
-                globalAppointments.slice(0,5).forEach(item => {
-                    html += `<div class="flex justify-between items-center text-[10px] font-bold text-slate-700 leading-tight mb-0.5">
-                                <span>${item['วันที่นัด']} <span class="bg-blue-100 text-blue-800 border border-blue-200 px-1 rounded shadow-sm text-[8px] font-black ml-1">[${item['จำนวนวันนัด']} วัน]</span></span>
-                                <span class="text-rose-600 font-black text-[9px]">(${item['จำนวนคน']} คน)</span>
-                            </div>`;
+            let reqHtml = '';
+            if(requisitions && requisitions.length > 0) {
+                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full"><div class="text-[10px] font-black text-blue-700 mb-1 flex items-center justify-center"><i class="fas fa-file-invoice mr-1"></i>ใบเบิกวันนี้</div><div class="flex flex-col gap-1 w-full px-1 max-h-[140px] overflow-y-auto no-scrollbar">`;
+                requisitions.forEach(req => {
+                    let stClass = "bg-orange-100 text-orange-700 border-orange-300";
+                    if(req.status === "กำลังจัดยา") stClass = "bg-sky-100 text-sky-700 border-sky-300";
+                    else if(req.status === "จัดเสร็จแล้ว" || req.status === "ตรวจสอบแล้ว") stClass = "bg-emerald-100 text-emerald-700 border-emerald-300";
+                    
+                    reqHtml += `<div class="flex items-center justify-between bg-white/70 p-1 rounded border shadow-sm"><div class="flex items-center gap-1.5 overflow-hidden"><span class="text-[9px] font-black text-slate-800 truncate max-w-[80px]">${req.dept}</span><span class="text-[8px] font-bold text-slate-500">${req.time} น.</span></div><span class="text-[8px] font-bold ${stClass} px-1 py-0.5 rounded border leading-none whitespace-nowrap">${req.status}</span></div>`;
                 });
+                reqHtml += `</div></div>`;
             } else {
-                html += `<div class="text-[10px] text-slate-500 font-bold text-center mt-4">กำลังรอข้อมูลวันนัด...</div>`;
+                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full text-center text-[10px] font-bold text-slate-500">ไม่มีรายการส่งเบิกยาใหม่วันนี้</div>`;
+            }
+
+            if(!boxes || boxes.length === 0) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 w-full py-4">ยังไม่มีการเปลี่ยนกล่องประจำวัน</div>` + reqHtml; 
+                return; 
+            }
+
+            let html = `<div class="grid grid-cols-3 gap-2 w-full content-start">`;
+            boxes.forEach(b => {
+                html += `<div class="card-3d bg-white/80 p-1 flex flex-col items-center justify-center text-center"><img src="https://sawee-hosp.github.io/sawee-mr/box.png" class="w-8 h-8 mb-1 drop-shadow-sm"><span class="text-[9px] font-black text-slate-800 leading-tight w-full truncate">${b.name}</span><span class="text-[8px] font-bold text-slate-500 mt-0.5">${b.time}</span><span class="text-[7px] text-white bg-amber-600 px-1 py-[1px] rounded mt-0.5 truncate max-w-full">${b.pharm}</span></div>`;
+            });
+            html += `</div>` + reqHtml;
+            container.innerHTML = html;
+        }
+
+        function renderIncidents(incidents) {
+            const container = document.getElementById('incident-container');
+            if(!container) return;
+            let html = '';
+            
+            // 1. อุบัติการณ์ห้อง ER
+            html += `<div class="card-3d bg-white/90 p-2 mb-2">
+                <h3 class="text-xs font-black text-indigo-700 border-b border-indigo-200 pb-1 mb-1"><i class="fas fa-moon mr-1"></i>อุบัติการณ์ห้อง ER นอกเวลา</h3>`;
+            
+            if(incidents.er && incidents.er.total > 0) {
+                const perc = ((incidents.er.errors / incidents.er.total)*100).toFixed(1);
+                html += `
+                <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 mt-1">
+                    <span>จำนวนใบสั่งยา: <span class="text-indigo-600">${incidents.er.total}</span></span>
+                    <span>Error: <span class="text-rose-600">${incidents.er.errors}</span> (${perc}%)</span>
+                </div>
+                <div class="text-[9px] text-slate-500 mt-1 text-right border-b border-dashed border-slate-200 pb-1">ผู้ลงข้อมูล: ${incidents.er.pharmacist || '-'}</div>`;
+            } else if (incidents.er && incidents.er.total === 0 && incidents.er.errors === 0) {
+                 html += `
+                 <div class="bg-rose-500 text-white font-black p-2 rounded shadow-md mt-2 text-center animate-pulse border border-rose-300 text-[10px]">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>ยังไม่ได้ตรวจสอบใบสั่งยาของวันนี้
+                 </div>`;
+            } else {
+                html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1 pb-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
+            }
+
+            // กราฟ ER Stacked Bar
+            if(incidents.er_monthly && incidents.er_monthly.length > 0) {
+                let maxVal = Math.max(...incidents.er_monthly.map(d => d.total));
+                if(maxVal === 0) maxVal = 1;
+                
+                let barsHtml = '';
+                for(let d=1; d<=new Date().getDate(); d++) {
+                    const dayData = incidents.er_monthly.find(x => x.day === d);
+                    if(dayData) {
+                        const hTotal = Math.max(0, (dayData.total / maxVal) * 100);
+                        const hErr = Math.max(0, (dayData.errors / dayData.total) * 100) || 0;
+                        const hGood = 100 - hErr;
+                        barsHtml += `
+                        <div class="flex flex-col items-center justify-end h-full w-[8px] group relative mx-[1px]">
+                            <div class="w-full flex flex-col justify-end overflow-hidden rounded-sm" style="height: ${hTotal}%;">
+                                <div class="w-full bg-rose-500 transition-all" style="height: ${hErr}%;"></div>
+                                <div class="w-full bg-emerald-500 transition-all" style="height: ${hGood}%;"></div>
+                            </div>
+                            <span class="text-[6px] text-slate-500 mt-1 leading-none">${d}</span>
+                            <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] px-1 py-0.5 rounded whitespace-nowrap z-20">รวม: ${dayData.total} | ผิด: ${dayData.errors}</div>
+                        </div>`;
+                    } else {
+                        barsHtml += `<div class="flex flex-col items-center justify-end h-full w-[8px] mx-[1px]"><span class="text-[6px] text-slate-300 mt-1 leading-none">${d}</span></div>`;
+                    }
+                }
+                
+                html += `<div class="mt-2 w-full h-[80px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative">
+                    <span class="absolute top-0 left-0 text-[7px] text-slate-400">Total Rx</span>
+                    ${barsHtml}
+                </div>`;
             }
             html += `</div>`;
-            layer.innerHTML = html;
-        }
 
-        function renderNewsPicCard(item) {
-            const apptL = document.getElementById('appt-layer');
-            const newsL = document.getElementById('news-layer');
-            if(!apptL || !newsL) return;
-
-            apptL.classList.replace('opacity-100', 'opacity-0');
-            setTimeout(() => apptL.classList.add('hidden'), 500);
-            
-            newsL.classList.remove('hidden');
-
-            const mImg = document.getElementById('main-image');
-            mImg.classList.remove('opacity-100'); mImg.classList.add('opacity-0');
-            
-            setTimeout(() => {
-                mImg.src = item.image;
-                const bgBlur = document.getElementById('bg-blur');
-                if(bgBlur) bgBlur.style.backgroundImage = `url('${item.image}')`;
-                document.getElementById('news-title').innerText = item.title;
-                const sourceEl = document.getElementById('news-source');
-                sourceEl.innerText = item.source;
-                sourceEl.className = `px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest text-white shadow-lg ${item.color}`;
-                mImg.classList.remove('opacity-0'); mImg.classList.add('opacity-100');
-                newsL.classList.replace('opacity-0', 'opacity-100');
-            }, 500);
-        }
-
-        function updateNewsProgressBar() {
-            if (!apptNewsIsPlaying) return;
-            const elapsed = Date.now() - apptNewsStartTime;
-            const progress = (elapsed / apptNewsDuration) * 100;
-            const pb = document.getElementById('progress-bar-fill');
-            if(pb) pb.style.width = `${Math.min(progress, 100)}%`;
-            if (progress < 100) { apptNewsTimer = requestAnimationFrame(updateNewsProgressBar); }
-        }
-
-        function nextNewsSlide() {
-            cancelAnimationFrame(apptNewsTimer);
-            const pb = document.getElementById('progress-bar-fill');
-            if(pb) { pb.style.transition = 'none'; pb.style.width = '0%'; void pb.offsetWidth; pb.style.transition = 'width 0.1s linear'; }
-            
-            const h = new Date().getHours();
-            const isWorkingHour = h >= 8 && h < 16;
-
-            if (isWorkingHour) {
-                if (isShowingAppt) {
-                    isShowingAppt = false;
-                    apptNewsDuration = 10000; 
-                    if(newsItems.length > 0) {
-                        apptNewsCurrentIndex = (apptNewsCurrentIndex + 1) % newsItems.length;
-                        renderNewsPicCard(newsItems[apptNewsCurrentIndex]);
-                    } else {
-                        renderApptCard();
-                    }
-                } else {
-                    isShowingAppt = true;
-                    apptNewsDuration = 50000; 
-                    renderApptCard();
-                }
+            // 2. อุบัติการณ์จัดยา (MR)
+            html += `<div class="card-3d bg-white/90 p-2 mb-2">
+                <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยาผิด</h3>`;
+            if(incidents.mr && incidents.mr.length > 0) {
+                html += `<ul class="list-none text-[10px] font-bold text-slate-700 space-y-1.5 mt-1">`;
+                incidents.mr.forEach(err => { 
+                    let badgeText = err.cat || "ไม่ระบุ";
+                    html += `<li class="flex items-start gap-1"><span class="bg-rose-100 text-rose-700 border border-rose-300 px-1.5 py-[1px] rounded text-[8.5px] font-black shadow-sm leading-none shrink-0 mt-[1px]">${badgeText}</span><span class="leading-tight">${err.detail}</span></li>`; 
+                });
+                html += `</ul>`;
             } else {
-                isShowingAppt = false;
-                apptNewsDuration = 10000;
-                if(newsItems.length > 0) {
-                    apptNewsCurrentIndex = (apptNewsCurrentIndex + 1) % Math.min(6, newsItems.length);
-                    renderNewsPicCard(newsItems[apptNewsCurrentIndex]);
-                } else {
-                    renderApptCard();
-                }
+                html += `<div class="text-center text-[10px] font-bold text-emerald-600 mt-1">ยังไม่พบความคลาดเคลื่อนวันนี้</div>`;
             }
-
-            apptNewsStartTime = Date.now();
-            apptNewsTimer = requestAnimationFrame(updateNewsProgressBar);
-            setTimeout(nextNewsSlide, apptNewsDuration);
+            html += `</div>`;
+            
+            container.innerHTML = html;
         }
 
-        async function initNewsSystem() {
-            newsItems = await fetchAllNews();
-            nextNewsSlide();
-            setInterval(async () => {
-                const h = new Date().getHours();
-                if(h >= 8 && h < 16) { newsItems = await fetchAllNews(); }
-            }, 5 * 60 * 1000);
+        function renderDue(data) {
+            const container = document.getElementById('due-container');
+            const chartContainer = document.getElementById('due-chart-container');
+            if(!container || !chartContainer) return;
             
-            setInterval(async () => {
-                const h = new Date().getHours();
-                if(h < 8 || h >= 16) { newsItems = await fetchAllNews(); }
-            }, 60 * 60 * 1000);
+            let html = ''; let hasData = false;
+            
+            const catColors = { 'Oseltamivir': 'bg-purple-500', 'Covids': 'bg-rose-500', 'Atorvastatin': 'bg-blue-500', 'Antibiotics': 'bg-emerald-500' };
+            const catNames = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
+            
+            let chartHtml = `<div class="card-3d bg-white/90 p-1.5 w-full flex flex-col gap-1.5">`;
+            catNames.forEach(cat => {
+                const stats = data.stats[cat] || { assessed: 0, unassessed: 0, total: 0 };
+                const total = stats.total;
+                if(total > 0) {
+                    hasData = true;
+                    const unPct = (stats.unassessed / total) * 100;
+                    const asPct = (stats.assessed / total) * 100;
+                    
+                    chartHtml += `
+                    <div class="flex items-center text-[9px] font-bold w-full">
+                        <div class="w-[60px] truncate text-slate-700">${cat}</div>
+                        <div class="flex-1 flex h-3.5 bg-slate-200 rounded overflow-hidden shadow-inner mx-1">
+                            <div class="bg-rose-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${unPct}%">${stats.unassessed > 0 ? stats.unassessed : ''}</div>
+                            <div class="bg-emerald-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${asPct}%">${stats.assessed > 0 ? stats.assessed : ''}</div>
+                        </div>
+                        <div class="w-8 text-right text-slate-600">${total}</div>
+                    </div>`;
+                }
+            });
+            chartHtml += `</div>`;
+            
+            if(!hasData) {
+                chartContainer.innerHTML = '';
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
+                return;
+            }
+            
+            chartContainer.innerHTML = chartHtml;
+
+            const renderGroup = (title, items, color) => {
+                if(!items || items.length === 0) return '';
+                let g = `<div class="mb-2"><div class="text-[10px] font-black text-white ${color} px-2 py-0.5 rounded-t inline-block">${title}</div><div class="bg-white/90 border border-${color.split('-')[1]}-200 rounded-b rounded-tr p-1">`;
+                items.forEach(d => { 
+                    let statusClass = d.status === 'ประเมินแล้ว' || d.status === 'Completed' ? 'text-emerald-500' : 'text-rose-500';
+                    g += `<div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200 last:border-0 py-0.5"><span class="font-bold text-slate-700 truncate flex-1" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-16 text-center shrink-0">${d.hn}</span><span class="font-black ${statusClass} w-16 text-right shrink-0">${d.status}</span></div>`; 
+                });
+                return g + `</div></div>`;
+            };
+
+            html += renderGroup('Oseltamivir', data.lists['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', data.lists['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', data.lists['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', data.lists['Antibiotics'], 'bg-emerald-500');
+            
+            container.innerHTML = html;
         }
 
         // 📌 ฟังก์ชันดึงสภาพอากาศ
@@ -1654,6 +1635,7 @@
             initNewsSystem();
             startSliders();
             
+            // แอนิเมชันสลับอุณหภูมิปัจจุบัน/1ชม
             setInterval(() => {
                 const cur = document.getElementById('weather-temp-current');
                 const nxt = document.getElementById('weather-temp-next');
