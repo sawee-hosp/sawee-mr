@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ผู้ป่วยในและห้องยา - รพ.สวี</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23ef4444%22/><path d=%22M35 20h30v30h30v30h-30v30h-30v-30h-30v-30h30z%22 fill=%22white%22/></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Noto Sans Thai', sans-serif !important; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            box-sizing: border-box; 
+            background-color: #0f172a; 
+            color: #1e293b; 
+            background-size: 200% 200%; 
+            animation: gradientMove 15s ease infinite; 
+            transition: background-image 1s ease; 
+        }
+        @keyframes gradientMove { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
+        }
+        
+        .bg-sun { background-image: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
+        .bg-mon { background-image: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+        .bg-tue { background-image: linear-gradient(135deg, #ff007f 0%, #ff758c 100%); }
+        .bg-wed { background-image: linear-gradient(135deg, #0ba360 0%, #3cba92 100%); }
+        .bg-thu { background-image: linear-gradient(135deg, #ff7e00 0%, #ff5100 100%); } 
+        .bg-fri { background-image: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+        .bg-sat { background-image: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
+        
+        .cloud-container { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            overflow: hidden; 
+            z-index: 0; 
+            pointer-events: none; 
+        }
+        .cloud { 
+            position: absolute; 
+            border-radius: 50%; 
+            filter: blur(70px); 
+            opacity: 0.6; 
+            animation: floatCloud 20s infinite alternate ease-in-out; 
+        }
+        .cloud-1 { 
+            width: 50vw; 
+            height: 50vw; 
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%); 
+            top: -10%; 
+            left: -10%; 
+        }
+        .cloud-2 { 
+            width: 60vw; 
+            height: 60vw; 
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%); 
+            bottom: -20%; 
+            right: -10%; 
+            animation-delay: -5s; 
+        }
+        .cloud-3 { 
+            width: 40vw; 
+            height: 40vw; 
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); 
+            top: 40%; 
+            left: 30%; 
+            animation-delay: -10s; 
+        }
+        @keyframes floatCloud { 
+            0% { transform: translate(0, 0) scale(1); } 
+            100% { transform: translate(5%, 10%) scale(1.1); } 
+        }
+        
+        .glass-panel { 
+            background: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px); 
+            border-top: 1px solid rgba(255, 255, 255, 0.6); 
+            border-left: 1px solid rgba(255, 255, 255, 0.6); 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
+            border-right: 1px solid rgba(0, 0, 0, 0.05); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
+            border-radius: 1rem; 
+            transition: background-color 0.5s; 
+        }
+        .card-3d { 
+            background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85)); 
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 5px rgba(0, 0, 0, 0.05), 1px 2px 3px rgba(0,0,0,0.15); 
+            border: 1px solid rgba(255,255,255,0.9); 
+            border-radius: 0.5rem; 
+            transition: all 0.3s ease; 
+        }
+        .text-crystal { 
+            background: linear-gradient(to right, #ffffff 0%, #cbd5e1 40%, #e2e8f0 60%, #ffffff 100%); 
+            background-size: 200% auto; 
+            color: transparent; 
+            -webkit-background-clip: text; 
+            background-clip: text; 
+            animation: shine 4s linear infinite; 
+            text-shadow: 0 0 8px rgba(255,255,255,0.3); 
+        }
+        .text-rainbow { 
+            background-image: linear-gradient(to right, #ff3b30, #ff9500, #ffcc00, #4cd964, #5ac8fa, #ff2d55, #ff3b30); 
+            background-size: 200% auto; 
+            color: transparent; 
+            -webkit-background-clip: text; 
+            background-clip: text; 
+            animation: shine 4s linear infinite; 
+            line-height: 0.8; 
+            padding-bottom: 2px; 
+        }
+        @keyframes shine { 
+            to { background-position: 200% center; } 
+        }
+        
+        .staff-active { opacity: 1; filter: none; transition: all 0.3s; }
+        .staff-inactive { opacity: 0.35; filter: grayscale(100%); transform: scale(0.95); transition: all 0.3s; }
+        @keyframes soft-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .staff-ending { animation: soft-pulse 1.5s infinite; }
+        .countdown-text { color: #ef4444; font-weight: 900; } 
+        
+        @keyframes pulse-bg-red { 
+            0%, 100% { background-color: rgba(254, 226, 226, 0.95); box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); } 
+            50% { background-color: rgba(252, 165, 165, 0.95); box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.6); border-color: rgba(239, 68, 68, 1); } 
+        }
+        .temp-alert-card { animation: pulse-bg-red 1.5s infinite ease-in-out; border: 2px solid #ef4444 !important; }
+        .profile-img { box-shadow: inset 2px 2px 4px rgba(0,0,0,0.3), 1px 1px 3px rgba(255,255,255,0.9); border: 2px solid white; flex-shrink: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-text { transition: opacity 0.5s ease-in-out; }
+        .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
+        
+        .ipd-badge { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            bottom: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-weight: 900; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3); 
+            border-right: 1px solid rgba(255,255,255,0.1); 
+            z-index: 2; 
+        }
+        @keyframes forceMegaBlink { 
+            0%, 100% { background-color: rgba(239, 68, 68, 1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); border-color: rgba(252, 165, 165, 0.8); } 
+            50% { background-color: rgba(153, 27, 27, 1); box-shadow: 0 0 5px rgba(153, 27, 27, 0.8); border-color: rgba(239, 68, 68, 0.8); } 
+        }
+        .alert-danger { animation: forceMegaBlink 1.5s infinite ease-in-out !important; border: 1px solid transparent !important; background-image: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(5px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes numberPulse { 
+            0% { transform: scale(1); } 
+            15% { transform: scale(1.3); } 
+            30% { transform: scale(1); } 
+            45% { transform: scale(1.3); } 
+            60% { transform: scale(1); } 
+            100% { transform: scale(1); } 
+        }
+        .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
+        
+        .bed-box { 
+            position: relative; 
+            border-radius: 4px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+            border: 1px solid rgba(255,255,255,0.5); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 2px; 
+            overflow: visible !important; 
+            backdrop-filter: blur(8px);
+        }
+        .bed-admit { background: linear-gradient(135deg, #10b981 0%, #047857 100%); } 
+        .bed-dc { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); border: 1px solid #ff758c; } 
+        .bed-cont { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); }
+        .thick-scanned-bg { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            pointer-events: none; 
+            z-index: 0; 
+            border-radius: 4px; 
+            background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.15) 5px, rgba(0,0,0,0.15) 10px); 
+        }
+
+        .bg-blur-news { 
+            position: absolute; 
+            top: -5%; 
+            left: -5%; 
+            width: 110%; 
+            height: 110%; 
+            background-size: cover; 
+            background-position: center; 
+            filter: blur(30px) brightness(0.35); 
+            z-index: 0; 
+            transition: background-image 1s ease-in-out; 
+        }
+        .main-image { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transition: opacity 0.5s ease-in-out; 
+            border-radius: 0.5rem; 
+        }
+        .progress-bar-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #ef4444, #f59e0b); 
+            width: 0%; 
+            transition: width 0.1s linear; 
+        }
+        .text-shadow-custom { 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.5); 
+        }
+        
+        .animated-card-swap { transition: transform 0.4s ease-in-out; }
+    </style>
+</head>
+
+<body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
+    <div id="audio-unlock-banner" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-0 pointer-events-none">
+        <i class="fas fa-volume-mute"></i> แตะหน้าจอเพื่อเปิดเสียงแจ้งเตือน
+    </div>
+
+    <div class="cloud-container">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
+
+    <header class="w-full px-6 py-2 flex justify-between items-center shrink-0 bg-slate-900/80 backdrop-blur-md relative border-b border-white/10 z-20 whitespace-nowrap flex-nowrap overflow-hidden">
+        <div class="flex items-center shrink-0">
+            <h1 class="text-3xl font-black tracking-wide text-crystal leading-none">ฝ่ายเภสัชกรรมฯ รพ.สวี</h1>
+        </div>
+        <div class="flex items-center gap-6 shrink-0 ml-auto">
+            <div class="text-3xl font-black text-crystal drop-shadow-md leading-none" id="date-display">กำลังโหลด...</div>
+            <div class="w-[3px] h-8 bg-slate-500/50 rounded"></div>
+            <div class="text-[46px] font-black text-rainbow tracking-wider" id="clock-display">--:--:--</div>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full flex justify-between gap-[1.5%] p-3 overflow-hidden z-10 relative">
+        
+        <!-- คอลัมน์ซ้าย -->
+        <aside id="left-col-wrapper" class="w-[26%] min-w-[26%] max-w-[26%] shrink-0 h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300 relative">
+            <div class="w-full h-full flex flex-col min-h-0" id="col-staff" style="display: flex;">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i>เภสัชกรประจำวัน</h2>
+                    <span class="text-xs font-bold text-white bg-indigo-500 px-2 py-0.5 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
+                </div>
+                
+                <div class="flex-1 flex flex-col justify-around min-h-0 pb-1" id="staff-grid">
+                    <div class="flex justify-center gap-4">
+                        <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.คีย์</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                        <div class="staff-item flex flex-col items-center" data-role="ipd" id="card-ipd" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.ใน</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                        <div class="staff-item flex flex-col items-center" data-role="tech" id="card-tech" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">จพ.เช้า</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                    </div>
+                    <div class="divider-gradient"></div>
+                    <div class="flex justify-center gap-4">
+                        <div class="staff-item flex flex-col items-center" data-role="check" id="card-check1" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค1</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                        <div class="staff-item flex flex-col items-center" data-role="check" id="card-check2" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค2</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                        <div class="staff-item flex flex-col items-center" data-role="check" id="card-check3" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.เช็ค3</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                    </div>
+                    <div class="divider-gradient"></div>
+                    <div class="flex justify-center gap-4">
+                        <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense1" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย1</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                        <div class="staff-item flex flex-col items-center" data-role="dispense" id="card-dispense2" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text">ภ.จ่าย2</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                        <div class="staff-item flex flex-col items-center" data-role="clinic" id="card-clinic" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                            <span class="text-xs font-black text-slate-700 bg-white/70 px-2 py-0.5 rounded shadow-sm staff-role-text staff-clinic">ภ.คลินิก</span>
+                            <span class="text-[10px] font-bold text-slate-600 staff-name leading-none mt-0.5"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-1 pt-1 border-t-2 border-slate-400/30 shrink-0">
+                    <div class="card-3d p-2 py-1.5 flex justify-around items-center bg-white/60 transition-all duration-300" id="aft-container-div">
+                        <div class="flex flex-col text-center" id="card-aft-pharm" style="display:none;">
+                            <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span>
+                            <span class="text-xs font-black text-slate-800 staff-name">--</span>
+                        </div>
+                        <div class="w-[2px] h-6 bg-slate-300" id="div-aft-tech1"></div>
+                        <div class="flex flex-col text-center" id="card-aft-tech1" style="display:none;">
+                            <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span>
+                            <span class="text-xs font-black text-slate-800 staff-name">--</span>
+                        </div>
+                        <div class="w-[2px] h-6 bg-slate-300" id="div-oncall"></div>
+                        <div class="flex flex-col text-center" id="card-oncall" style="display:none;">
+                            <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span>
+                            <span class="text-xs font-black text-slate-800 staff-name">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-fridge-temp">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative">
+                    <div class="grid grid-cols-3 gap-1.5" id="temp-fridge-grid"><div class="text-center text-xs text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
+                    <div id="fridge-alert-msg" class="shrink-0 mt-3 relative z-20"></div> 
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-room-temp">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-wind text-teal-500 mr-2"></i>อุณหภูมิห้องปัจจุบัน</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative">
+                    <div class="grid grid-cols-3 gap-1.5" id="temp-room-grid"><div class="text-center text-xs text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
+                    <div id="room-alert-msg" class="shrink-0 mt-3 relative z-20"></div> 
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-doctors">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-500 mr-2"></i>แพทย์ที่กำลัง Online</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-1.5" id="doctors-container">
+                    <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-weekly">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0 px-1">
+                    <h2 class="text-[15px] font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-teal-500 mr-2"></i>ตารางเวรสัปดาห์นี้</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar" id="weekly-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-incident">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-clipboard-list text-rose-500 mr-2"></i>อุบัติการณ์รายวัน</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2 relative">
+                    <div id="incident-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+                    <div id="lasa-append-target"></div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-due">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-pills text-purple-500 mr-2"></i>รายการยา DUE วันนี้</h2>
+                </div>
+                <div id="due-chart-container" class="shrink-0 mb-1"></div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="due-container"><div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div></div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-boxes">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-box-open text-amber-600 mr-2"></i>กล่องยาที่ใช้ไปวันนี้</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative" id="boxes-container">
+                    <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-top-drugs">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-chart-line text-blue-500 mr-2"></i>ยาใช้มากสุด <span id="unique-drug-count-wrap" class="text-[11px] text-slate-500 font-bold hidden">(<span id="unique-drug-count">0</span> รายการ)</span></h2>
+                </div>
+                <div class="flex-1 overflow-hidden pt-1 relative" id="top-drugs-container-outer">
+                    <div class="flex flex-col gap-0.5 absolute w-full top-0 left-0 transition-transform duration-500" id="top-drugs-container">
+                        <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-calendar">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-rose-500 mr-2"></i>ปฏิทินนัดหมาย <span id="cal-month-title" class="text-[11px] text-slate-500 font-bold ml-1"></span></h2>
+                </div>
+                <div class="flex-1 flex flex-col min-h-0">
+                    <div class="shrink-0 pb-1" id="calendar-grid">
+                        <div class="text-center text-xs text-slate-500 py-4">กำลังโหลดปฏิทิน...</div>
+                    </div>
+                    <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex flex-col min-h-0 flex-1">
+                        <h3 class="text-[11px] font-black text-slate-700 mb-1 shrink-0"><i class="fas fa-hospital text-blue-500 mr-1"></i> คลินิกที่มีนัดวันนี้</h3>
+                        <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1 pr-1" id="today-clinic-list">
+                            <div class="text-center text-[10px] text-slate-500">กำลังโหลด...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-male">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
+                        <i class="fas fa-bed text-sky-500 mr-2"></i>ผู้ป่วยในชาย
+                        <span id="male-occupancy-badge" class="ml-2 bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded shadow-sm border border-blue-300 font-black hidden"></span>
+                    </h2>
+                </div>
+                <div class="flex-1 flex flex-col min-h-0">
+                    <div class="shrink-0 content-start">
+                        <div class="grid grid-cols-5 gap-1.5" id="ipd-male-grid"><div class="text-center text-xs text-slate-500 col-span-5 py-4">กำลังโหลดข้อมูล...</div></div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto no-scrollbar mt-1.5 border-t border-slate-200/50 pt-1 flex flex-col gap-0.5" id="ipd-m-list"></div>
+                    <div class="mt-1 pt-1 border-t border-slate-400/30 shrink-0">
+                        <div class="flex justify-between items-center text-[10px] font-bold text-slate-800 mb-1">
+                            <span>Admit: <span class="text-emerald-600" id="map-sum-admit-m">0</span></span>
+                            <span>D/C: <span class="text-rose-600" id="map-sum-dc-m">0</span></span>
+                            <span>Scan: <span class="text-sky-600" id="map-sum-scan-m">0</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-300 rounded-full overflow-hidden flex relative">
+                            <div id="map-scan-progress-m" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-female">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
+                        <i class="fas fa-bed text-pink-500 mr-2"></i>ผู้ป่วยในหญิง
+                        <span id="female-occupancy-badge" class="ml-2 bg-pink-100 text-pink-800 text-[10px] px-1.5 py-0.5 rounded shadow-sm border border-pink-300 font-black hidden"></span>
+                    </h2>
+                </div>
+                <div class="flex-1 flex flex-col min-h-0">
+                    <div class="shrink-0 content-start">
+                        <div class="grid grid-cols-5 gap-1.5" id="ipd-female-grid"><div class="text-center text-xs text-slate-500 col-span-5 py-4">กำลังโหลดข้อมูล...</div></div>
+                    </div>
+                    <div class="shrink-0 content-start mt-2 border-t border-purple-200 pt-1">
+                         <div class="text-[10px] font-black text-purple-600 mb-1">แผนกห้องคลอด (LR)</div>
+                         <div class="grid grid-cols-5 gap-1.5" id="ipd-lr-grid"></div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto no-scrollbar mt-1.5 border-t border-slate-200/50 pt-1 flex flex-col gap-0.5" id="ipd-f-list"></div>
+                    <div class="mt-1 pt-1 border-t border-slate-400/30 shrink-0">
+                        <div class="flex justify-between items-center text-[10px] font-bold text-slate-800 mb-1">
+                            <span>Admit: <span class="text-emerald-600" id="map-sum-admit-f">0</span></span>
+                            <span>D/C: <span class="text-rose-600" id="map-sum-dc-f">0</span></span>
+                            <span>Scan: <span class="text-sky-600" id="map-sum-scan-f">0</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-300 rounded-full overflow-hidden flex relative">
+                            <div id="map-scan-progress-f" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-rx">
+                <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-inbox text-blue-500 mr-2"></i>ช่องเก็บยาเดิม</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col content-start h-full">
+                    <div class="grid grid-cols-4 gap-1.5" id="ipd-rx-grid">
+                        <div class="text-center text-xs text-slate-500 col-span-4 py-4">กำลังโหลดข้อมูล...</div>
+                    </div>
+                    <div id="dc-alert-message" class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 text-[10px] font-bold px-2 py-1.5 rounded text-center animate-pulse shadow-sm">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>กล่องสีแดงคือ ผู้ป่วยเก็บยาที่ D/C แล้ว เภสัชกรกรุณาตรวจสอบ
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+        
+        <!-- ตรงกลาง (IPD) -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2" style="width: 47%;">
+            <div class="flex justify-between items-center px-1 pb-1 mb-1 border-b-2 border-slate-400/30 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
+                    <i class="fas fa-procedures text-blue-600 mr-2"></i>ผู้ป่วยใน (IPD)
+                    <span id="ipd-new-badge" class="ml-2 bg-rose-500 text-white text-[11px] px-2 py-0.5 rounded shadow-sm border border-rose-600 font-black animate-pulse hidden"></span>
+                </h2>
+                <span id="last-update-time" class="text-[10px] font-bold text-slate-700 bg-white/80 px-2 py-0.5 rounded-full shadow-sm border border-white/60 leading-none">
+                    <i class="fas fa-sync-alt fa-spin mr-1 text-slate-500"></i>กำลังโหลด...
+                </span>
+            </div>
+
+            <div class="flex-1 flex flex-col min-h-0 relative z-10 w-full overflow-hidden bg-white/20 rounded-lg p-1.5 border border-white/30">
+                <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-0.5 pb-0 w-full" id="ipd-container">
+                    <div class="flex flex-col items-center justify-center h-full text-slate-600 drop-shadow-md">
+                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i>
+                        <span class="text-sm font-bold">กำลังโหลดข้อมูล IPD...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="available-rx-boxes" class="text-[10px] text-slate-700 font-bold px-1 mt-0.5 mb-0.5 w-full truncate leading-tight drop-shadow-sm z-10 shrink-0"></div>
+
+            <footer class="shrink-0 flex flex-col gap-1 z-10 pb-0.5 mt-0">
+                <div class="flex justify-between gap-1 w-full h-[45px]">
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-rose-100 to-rose-200 h-4 text-center border-b border-rose-300 flex items-center justify-center"><span class="text-[9px] font-black text-rose-800 uppercase tracking-wide">D/C</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-rose-600 drop-shadow-sm" id="sum-dc">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-emerald-100 to-emerald-200 h-4 text-center border-b border-emerald-300 flex items-center justify-center"><span class="text-[9px] font-black text-emerald-800 uppercase tracking-wide">Admit</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-emerald-700 drop-shadow-sm" id="sum-admit">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-slate-200 to-slate-300 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[9px] font-bold text-slate-800 tracking-wide">IPD ชาย</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-slate-800 drop-shadow-sm" id="sum-male">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-slate-200 to-slate-300 h-4 text-center border-b border-slate-400 flex items-center justify-center"><span class="text-[9px] font-bold text-slate-800 tracking-wide">IPD หญิง</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-slate-800 drop-shadow-sm" id="sum-female">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-purple-100 to-purple-200 h-4 text-center border-b border-purple-300 flex items-center justify-center"><span class="text-[9px] font-bold text-purple-800 uppercase tracking-wide">LR</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-purple-700 drop-shadow-sm" id="sum-lr">-</span></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between gap-1 w-full h-[45px]">
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-orange-100 to-orange-200 h-4 text-center border-b border-orange-300 flex items-center justify-center"><span class="text-[9px] font-bold text-orange-800 tracking-wide">ผป.นัด</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-orange-700 drop-shadow-sm" id="sum-appointment">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-blue-100 to-blue-200 h-4 text-center border-b border-blue-300 flex items-center justify-center"><span class="text-[9px] font-bold text-blue-800 tracking-wide">OPD+ER</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-blue-800 drop-shadow-sm" id="sum-opd-er">-</span></div>
+                    </div>
+                    <div class="card-3d flex flex-col flex-1 overflow-hidden p-0">
+                        <div class="bg-gradient-to-r from-red-100 to-red-200 h-4 text-center border-b border-red-300 flex items-center justify-center"><span class="text-[9px] font-bold text-red-800 tracking-wide">Clinic+Other</span></div>
+                        <div class="flex-1 flex items-center justify-center"><span class="text-xl font-black text-red-700 drop-shadow-sm" id="sum-clinic-other">-</span></div>
+                    </div>
+                    
+                    <div class="relative flex-[2] h-full overflow-hidden bg-transparent">
+                        <div id="rx-view-1" class="absolute inset-0 flex gap-1 transition-all duration-700 transform translate-y-0 opacity-100 p-[1px]">
+                            <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
+                                <div class="bg-gradient-to-r from-teal-100 to-teal-200 h-3.5 text-center border-b border-teal-300 flex items-center justify-center"><span class="text-[8.5px] font-black text-teal-800 uppercase tracking-wide">รอจ่าย</span></div>
+                                <div class="flex-1 flex items-center justify-center py-0.5"><span class="text-lg font-black text-teal-700 drop-shadow-sm" id="sum-prepare">-</span></div>
+                                <div id="time-prepare" class="h-3 text-[8px] text-center bg-white/60 text-slate-600 font-bold flex items-center justify-center tracking-tighter">00:00</div>
+                            </div>
+                            <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
+                                <div class="bg-gradient-to-r from-indigo-100 to-indigo-200 h-3.5 text-center border-b border-indigo-300 flex items-center justify-center"><span class="text-[8.5px] font-black text-indigo-800 uppercase tracking-wide">จ่ายแล้ว</span></div>
+                                <div class="flex-1 flex items-center justify-center py-0.5"><span class="text-lg font-black text-indigo-700 drop-shadow-sm" id="sum-dispense">-</span></div>
+                                <div id="time-dispense" class="h-3 text-[8px] text-center bg-white/60 text-slate-600 font-bold flex items-center justify-center tracking-tighter">00:00</div>
+                            </div>
+                        </div>
+                        <div id="rx-view-2" class="absolute inset-0 flex gap-1 transition-all duration-700 transform translate-y-full opacity-0 pointer-events-none p-[1px]">
+                            <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
+                                <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-3.5 text-center border-b border-amber-700 flex items-center justify-center"><span class="text-[8.5px] font-black text-white uppercase tracking-wide">ตะกร้าจัดยา</span></div>
+                                <div class="flex-1 flex items-center justify-center bg-amber-50 py-0.5"><span class="text-lg font-black text-amber-700 drop-shadow-sm" id="sum-basket">-</span></div>
+                            </div>
+                            <div class="flex flex-col flex-1 overflow-hidden rounded-md bg-white">
+                                <div class="bg-gradient-to-r from-blue-700 to-blue-800 h-3.5 text-center border-b border-blue-900 flex items-center justify-center"><span class="text-[8.5px] font-black text-white uppercase tracking-wide">รายการยา</span></div>
+                                <div class="flex-1 flex items-center justify-center bg-blue-50 py-0.5"><span class="text-lg font-black text-blue-800 drop-shadow-sm" id="sum-rx-item">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative w-full h-[50px] overflow-hidden mt-0.5">
+                    <div id="view-flow" class="absolute inset-0 flex justify-between gap-0.5 w-full fade-in"></div>
+                    <div id="view-doctors" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
+                    <div id="view-clinics" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
+                </div>
+            </footer>
+        </section>
+
+        <!-- คอลัมน์ขวาสุด -->
+        <section class="h-full flex flex-col min-h-0 glass-panel p-2 shrink-0" style="width: 25.5%;">
+            <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
+                <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-bell text-rose-500 mr-2"></i>การแจ้งเตือนใหม่</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pb-1" id="alerts-container">
+                <div class="text-center text-slate-500 text-sm mt-4 font-bold">กำลังตรวจสอบข้อมูล...</div>
+            </div>
+            
+            <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex items-stretch gap-2 shrink-0 h-[100px]">
+                
+                <div id="news-card" class="flex-1 overflow-hidden relative card-3d transition-colors duration-500 bg-white/80 p-0 rounded-lg">
+                    <!-- โหมดรูปข่าว (แสดงรูปเต็ม Card ไม่เหลือขอบ) -->
+                    <div id="news-layer" class="absolute inset-0 h-full w-full opacity-0 pointer-events-none transition-opacity duration-500 z-10 bg-black">
+                        <div id="bg-blur" class="bg-blur-news"></div>
+                        <img id="main-image" class="main-image drop-shadow-md relative z-10" src="" alt="ภาพข่าว">
+                        <div class="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent pt-8 pb-2 px-3 z-20">
+                            <div class="flex items-center gap-1 mb-1">
+                                <span id="news-source" class="px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase shadow-sm">Source</span>
+                            </div>
+                            <h1 id="news-title" class="text-[10px] font-black text-white leading-tight line-clamp-2 text-shadow-custom"></h1>
+                        </div>
+                    </div>
+
+                    <!-- โหมดแสดงวันนัดที่พบบ่อย (ประหยัดพื้นที่ ลบกรอบทิ้ง) -->
+                    <div id="appt-layer" class="absolute inset-0 flex flex-col h-full bg-white z-10 transition-opacity duration-500 overflow-hidden hidden px-1 py-0.5">
+                        <!-- จะถูกแทรกเนื้อหาโดย JS ให้อ่านง่ายและไม่เกะกะ -->
+                    </div>
+
+                    <!-- หลอด Progress Bar สำหรับเปลี่ยนสไลด์ -->
+                    <div class="absolute bottom-0 left-0 h-1 w-full bg-gray-300 overflow-hidden z-30">
+                        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+
+                <!-- การ์ดสภาพอากาศ -->
+                <div class="card-3d p-2 flex flex-col items-center justify-center gap-0 min-w-[5.5rem] bg-white/80 shrink-0 relative overflow-hidden">
+                    <div id="weather-icon" class="text-[32px] leading-[0.8] drop-shadow-md mb-0.5">
+                        <i class="fas fa-spinner fa-spin text-slate-400"></i>
+                    </div>
+                    <div class="flex flex-col items-center justify-center h-[26px] relative w-full mt-1">
+                        <span id="weather-temp-current" class="absolute transition-all duration-500 transform translate-y-0 opacity-100 text-2xl font-black text-slate-800 leading-none">--°C</span>
+                        <span id="weather-temp-next" class="absolute transition-all duration-500 transform translate-y-full opacity-0 text-xl font-black text-blue-600 leading-none">--°C</span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-0.5">
+                        <span id="weather-pm" class="text-[9.5px] font-black leading-none">PM2.5: --</span>
+                    </div>
+                    <span id="weather-label" class="text-[7.5px] text-slate-500 font-bold leading-none mt-1 text-center">ปัจจุบัน</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw75ELvZom2PKT6XM6hJM0aknVZ9d6622R2aRPaYmVaPfX3TKDisRDcM3v65gjOmEJkag/exec"; 
+        const GAS_SCHEDULE_API_URL = "https://script.google.com/macros/s/AKfycbz-qxJREF8PhROeayh_9VGaCwHtBzO9dcNKWnvuCLobpVPL5nqbph0UWcmvaWA5iot-uA/exec";
+
+        let audioUnlocked = false; 
+        const prevValues = {}; 
+        let currentSlide = 0; let sliderInterval = null; let rxSlideToggle = false;
+        
+        let spokenItems = new Set();
+        let spokenAlerts = new Set();
+        let previousActiveCount = -1;
+        
+        let globalHolidays = []; window.lastTempStatusData = null;
+        let globalAppointments = [];
+        let globalHadList = []; 
+
+        let globalActiveBeds = {};
+        let rxBoxMap = {}; let bedListByAN = {};
+        let globalBoxByBedMap = {}; 
+        
+        const maleBedsDef = []; for(let i=1;i<=25;i++) maleBedsDef.push("M"+i);
+        const femaleBedsDef = []; for(let i=1;i<=25;i++) femaleBedsDef.push("F"+i);
+        let maleWard = [...maleBedsDef];
+        let femaleWard = [...femaleBedsDef];
+        let lrWard = [];
+
+        let newsItems = [];
+        let apptNewsCurrentIndex = 0;
+        let apptNewsIsPlaying = true;
+        let apptNewsTimer = null;
+        let apptNewsStartTime = 0;
+        let apptNewsDuration = 10000;
+        let isShowingAppt = true; 
+        let topDrugsAnimateInterval = null;
+        
+        const RSS_FEEDS = [
+            { name: "ข่าวสด", url: "https://www.khaosod.co.th/feed", color: "bg-orange-600" },
+            { name: "ไทยรัฐ", url: "https://www.thairath.co.th/rss/news", color: "bg-green-700" },
+            { name: "มติชน", url: "https://www.matichon.co.th/feed", color: "bg-blue-600" },
+            { name: "อมรินทร์", url: "https://www.amarintv.com/rss/news.xml", color: "bg-rose-500" }
+        ];
+
+        /* Audio Handlers */
+        async function playShiftChangeMelody() {
+            if (!audioUnlocked) return; 
+            try {
+                await Tone.start();
+                const synth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "sine" }, envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 1 } }).toDestination();
+                const now = Tone.now();
+                synth.triggerAttackRelease("C5", "8n", now); synth.triggerAttackRelease("E5", "8n", now + 0.15); synth.triggerAttackRelease("G5", "8n", now + 0.3); synth.triggerAttackRelease("C6", "4n", now + 0.45); 
+            } catch(e) {}
+            return new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        function playNotificationSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const audioCtx = new AudioContext(); const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
+                oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.02); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch (e) {}
+        }
+
+        window.addEventListener('click', async function unlockAudio() {
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                const banner = document.getElementById('audio-unlock-banner');
+                if (banner) { banner.classList.add('opacity-0'); banner.classList.remove('pointer-events-auto'); }
+                playNotificationSound();
+            }
+        });
+
+        window.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.keyCode === 13) document.body.click(); });
+
+        /* Clock and UI Logic */
+        function updateBackground() {
+            const body = document.getElementById('main-body'); body.className = body.className.replace(/\bbg-(sun|mon|tue|wed|thu|fri|sat)\b/g, '');
+            const days = ['bg-sun', 'bg-mon', 'bg-tue', 'bg-wed', 'bg-thu', 'bg-fri', 'bg-sat']; body.classList.add(days[new Date().getDay()]);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('clock-display');
+            if (clockEl) clockEl.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            const thD = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์']; const thM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const dateEl = document.getElementById('date-display');
+            if (dateEl) dateEl.textContent = `วัน${thD[now.getDay()]} ${now.getDate()} ${thM[now.getMonth()]} ${now.getFullYear() + 543}`;
+            checkSwapCards(now);
+        }
+
+        function checkSwapCards(now) {
+            const h = now.getHours(); const m = now.getMinutes(); const currentMins = (h * 60) + m;
+            
+            // หาว่าเช้ามีคนไหม (ถ้าว่างหมดคือวันหยุด)
+            const morningRoles = ['card-key', 'card-ipd', 'card-tech', 'card-check1', 'card-check2', 'card-check3', 'card-dispense1', 'card-dispense2', 'card-clinic'];
+            let hasMorningStaff = false;
+            morningRoles.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.style.display !== 'none') hasMorningStaff = true;
+            });
+            
+            const isHoliday = !hasMorningStaff;
+            const staffGrid = document.getElementById('staff-grid');
+            const aftDiv = document.getElementById('aft-container-div');
+            
+            let activeCountNum = 0;
+
+            if (isHoliday) {
+                if(staffGrid) staffGrid.style.display = 'none';
+                if(aftDiv) {
+                    if (h >= 8 && h < 20) {
+                        aftDiv.classList.remove('opacity-35', 'grayscale');
+                        
+                        let shownAftCards = 0;
+                        const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
+                        aftCards.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && el.style.display !== 'none') {
+                                shownAftCards++;
+                                el.style.opacity = '1';
+                                el.style.filter = 'none';
+                            }
+                        });
+                        activeCountNum = shownAftCards;
+
+                    } else {
+                        aftDiv.classList.add('opacity-35', 'grayscale');
+                        activeCountNum = 0;
+                    }
+                }
+            } else {
+                if (h >= 16) {
+                    if(staffGrid) staffGrid.style.display = 'none';
+                    if(aftDiv) {
+                        aftDiv.classList.remove('opacity-35', 'grayscale');
+                        
+                        let shownAftCards = 0;
+                        const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
+                        aftCards.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && el.style.display !== 'none') {
+                                shownAftCards++;
+                                el.style.opacity = '1';
+                                el.style.filter = 'none';
+                            }
+                        });
+                        activeCountNum = shownAftCards;
+                    }
+                } else {
+                    if(staffGrid) staffGrid.style.display = 'flex';
+                    if(aftDiv) {
+                        aftDiv.classList.add('opacity-35', 'grayscale');
+                    }
+                    
+                    const cM = now.getHours() * 60 + now.getMinutes(), cS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                    const roles = { 'key': [{ start: 8*60, end: 11*60+30 }, { start: 12*60+30, end: 16*60 }], 'ipd': [{ start: 8*60, end: 12*60 }, { start: 13*60, end: 16*60 }], 'check': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'dispense': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'clinic': [{ start: 8*60, end: 12*60 }], 'tech': [{ start: 8*60, end: 11*60 }, { start: 12*60, end: 16*60 }] };
+                    
+                    let active = new Set();
+                    document.querySelectorAll('#staff-grid .staff-item').forEach(el => {
+                        if (el.style.display === 'none') return; 
+                        const shifts = roles[el.dataset.role]; if (!shifts) return;
+                        let isAct = false, isEnd = false, remS = 0;
+                        for (let s of shifts) { if (cM >= s.start && cM < s.end) { isAct = true; remS = (s.end * 60) - cS; if (remS <= 300) isEnd = true; break; } }
+                        el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
+                        const rtEl = el.querySelector('.staff-role-text');
+                        if (isAct) {
+                            const nm = el.querySelector('.staff-name').textContent.trim(); if (nm && nm !== '--') active.add(nm);
+                            if (isEnd) { el.classList.add('staff-ending'); rtEl.textContent = `${Math.floor(remS / 60).toString().padStart(2, '0')}:${(remS % 60).toString().padStart(2, '0')}`; rtEl.classList.add('countdown-text'); }
+                            else { el.classList.add('staff-active'); rtEl.classList.remove('countdown-text'); }
+                        } else { el.classList.add('staff-inactive'); rtEl.classList.remove('countdown-text'); }
+                    });
+                    activeCountNum = active.size;
+                }
+            }
+
+            document.getElementById('active-staff-count').textContent = activeCountNum + ' คน';
+            if (previousActiveCount !== -1 && previousActiveCount !== activeCountNum) { playShiftChangeMelody(); }
+            previousActiveCount = activeCountNum;
+
+            const secTotal = (now.getMinutes() * 60) + now.getSeconds();
+            const allCols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-top-drugs', 'col-calendar'];
+            const colsToLoop = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-incident', 'col-due', 'col-top-drugs', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-boxes', 'col-calendar'];
+            const cycle = Math.floor((secTotal % (colsToLoop.length * 30)) / 30);
+            
+            allCols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
+
+            let isShiftTransition = false;
+            const shiftTimes = [11*60, 11*60+30, 12*60, 12*60+30, 13*60, 13*60+30, 16*60];
+            for(let t of shiftTimes) { if (Math.abs(currentMins - t) <= 2) { isShiftTransition = true; break; } }
+
+            if (isShiftTransition) {
+                const staffCol = document.getElementById('col-staff');
+                if (staffCol) staffCol.style.display = 'flex';
+            } else {
+                const showCol = document.getElementById(colsToLoop[cycle]);
+                if (showCol) showCol.style.display = 'flex';
+                if ((colsToLoop[cycle] === 'col-fridge-temp' || colsToLoop[cycle] === 'col-room-temp') && window.lastTempStatusData) {
+                    setTimeout(() => renderTempStatus(window.lastTempStatusData), 50);
+                }
+            }
+        }
+
+        function startSliders() {
+            if(sliderInterval) clearInterval(sliderInterval);
+            sliderInterval = setInterval(() => {
+                const views = ['view-flow', 'view-doctors', 'view-clinics']; currentSlide = (currentSlide + 1) % 3;
+                views.forEach((v, idx) => {
+                    const el = document.getElementById(v);
+                    if(el) {
+                        if(idx === currentSlide) { el.classList.remove('hidden'); el.classList.add('flex'); el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); } 
+                        else { el.classList.add('hidden'); el.classList.remove('flex'); }
+                    }
+                });
+            }, 15000); 
+
+            setInterval(() => {
+                rxSlideToggle = !rxSlideToggle;
+                const v1 = document.getElementById('rx-view-1');
+                const v2 = document.getElementById('rx-view-2');
+                if(v1 && v2) {
+                    if(rxSlideToggle) {
+                        v1.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+                        v1.classList.remove('translate-y-0');
+                        v2.classList.remove('opacity-0', 'translate-y-full', 'pointer-events-none');
+                        v2.classList.add('translate-y-0');
+                    } else {
+                        v2.classList.add('opacity-0', 'translate-y-full', 'pointer-events-none');
+                        v2.classList.remove('translate-y-0');
+                        v1.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
+                        v1.classList.add('translate-y-0');
+                    }
+                }
+            }, 5000);
+        }
+
+        function formatWaitTime(hhmmss) {
+            if(!hhmmss || hhmmss === '00:00:00') return { text: '00:00', isOver30: false };
+            const parts = hhmmss.split(':'); const h = parseInt(parts[0], 10); const m = parseInt(parts[1], 10); const s = parseInt(parts[2], 10); const totalMinutes = (h * 60) + m;
+            return { text: `${String(totalMinutes).padStart(2, '0')}:${String(s).padStart(2, '0')}`, isOver30: totalMinutes > 30 };
+        }
+
+        function updateValueWithAnimation(id, newVal) {
+            const el = document.getElementById(id); if(!el) return;
+            if(prevValues[id] === undefined) { prevValues[id] = newVal; el.textContent = newVal; } 
+            else if(prevValues[id] !== newVal) { prevValues[id] = newVal; el.textContent = newVal; el.classList.remove('animate-update'); void el.offsetWidth; el.classList.add('animate-update'); }
+        }
+
+        /* STREAMING_CHUNK:Javascript Data Renderers */
+        function renderData(dataList) {
+            const container = document.getElementById('ipd-container');
+            if(!container) return;
+            if(!dataList || dataList.length === 0) { container.innerHTML = `<div class="text-center text-slate-500 drop-shadow-md py-10 font-bold text-sm">ไม่มีรายการสั่งยาผู้ป่วยในในวันนี้</div>`; return; }
+
+            container.innerHTML = ''; let newUnconfirmedBeds = []; 
+
+            dataList.forEach((scanItem) => {
+                const item = bedListByAN[scanItem.an] || scanItem; 
+                const statusAdm = item.StatusAdm ? item.StatusAdm.toUpperCase() : "CONT";
+
+                let timeDisplay = "--:--";
+                if (scanItem.scan_datetime) { const match = scanItem.scan_datetime.match(/(\d{2}):(\d{2}):(\d{2})/); if (match) timeDisplay = match[1] + ":" + match[2]; }
+
+                let bgClass = "bg-sky-500"; let statusBadgeClass = "bg-sky-100 text-sky-800 border-sky-300"; let statusLabel = "Cont";
+                if (statusAdm === 'ADM' || statusAdm === 'ADMIT') { bgClass = "bg-emerald-500"; statusBadgeClass = "bg-green-100 text-green-800 border-green-300"; statusLabel = "Admit"; }
+                if (statusAdm === 'DC') { bgClass = "bg-rose-500"; statusBadgeClass = "bg-rose-100 text-rose-800 border-rose-300"; statusLabel = "D/C"; }
+
+                const bedNo = item.bedno ? item.bedno : "-"; const hnNo = item.hn ? item.hn : "-"; const uniqueId = item.hn + "_" + scanItem.scan_datetime; 
+                const rawConfirm = scanItem.confirm_prescription ? String(scanItem.confirm_prescription).trim().toUpperCase() : 'N';
+                let isConfirmed = (rawConfirm === 'Y' || rawConfirm === '1' || rawConfirm === 'TRUE');
+                const rawBox = item.rx_box || item.ช่องเก็บยา || globalBoxByBedMap[bedNo] || ""; 
+                const boxNum = rawBox.replace(/\D/g, ''); 
+
+                if (!isConfirmed && bedNo !== "-") { 
+                    if (!spokenItems.has(uniqueId)) { 
+                        newUnconfirmedBeds.push({ bed: bedNo, status: statusAdm, box: boxNum, sy: item.SY, az: item.AZ }); 
+                        spokenItems.add(uniqueId); 
+                    } 
+                }
+
+                const textClass = isConfirmed ? "text-slate-800" : "text-white drop-shadow-sm";
+                const timeTextClass = isConfirmed ? "text-slate-600" : "text-white/90 drop-shadow-sm";
+                const cardStyleClass = isConfirmed ? "card-3d" : "alert-danger bg-red-500/80";
+                const fullName = item.patient_name || item.pname || ""; 
+
+                let badgesHtml = "";
+                if(item.is_new_inhaler === 'Y') badgesHtml += `<span class="bg-yellow-400 text-black px-1 rounded-sm text-[8px] font-black shadow-sm ml-1 shrink-0">พ่นใหม่</span>`;
+                if(item.Meropenem === 'Y' || item.Tazocin === 'Y') badgesHtml += `<span class="bg-amber-500 text-black px-1 rounded-sm text-[8px] font-black shadow-sm ml-1 shrink-0">DUE</span>`;
+                if(item.Morphine_Pethidine_Midazolam === 'Y' || item.narcotics === 'Y') badgesHtml += `<span class="bg-violet-600 text-white px-1 rounded-sm text-[8px] font-black shadow-sm ml-1 shrink-0">ยส.</span>`;
+                if(item.allergy && item.allergy !== 'ไม่มีประวัติแพ้ยา' && item.allergy !== '-') {
+                    let algName = item.allergy.substring(0, 10);
+                    badgesHtml += `<span class="bg-red-600 text-white px-1 rounded-sm text-[8px] font-black shadow-sm ml-1 shrink-0">แพ้ ${algName}</span>`;
+                }
+
+                let rightBadges = "";
+                if (boxNum !== "") rightBadges += `<div class="shrink-0 bg-slate-900 text-white rounded border border-slate-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">${boxNum}</div>`;
+                if (statusAdm === 'DC') {
+                    if (item.AZ === 'Y') rightBadges += `<div class="shrink-0 bg-slate-900 text-white rounded border border-slate-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">AZ</div>`;
+                    if (item.SY === 'Y') rightBadges += `<div class="shrink-0 bg-slate-900 text-white rounded border border-slate-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">SY</div>`;
+                    if (item.TMF === 'Y') rightBadges += `<div class="shrink-0 bg-blue-700 text-white rounded border border-blue-900 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">TMF</div>`;
+                    if (item.AUG === 'Y') rightBadges += `<div class="shrink-0 bg-orange-500 text-white rounded border border-orange-700 w-[18px] h-[18px] flex items-center justify-center font-mono font-black text-[10px] shadow-sm z-20">AUG</div>`;
+                }
+
+                let icdName = item.main_dx_name || "";
+                if (icdName.length > 30) icdName = icdName.substring(0, 30) + "...";
+
+                let crclHtml = '';
+                let crclVal = parseFloat(item.clcr);
+                if (!isNaN(crclVal)) {
+                    let crclClass = crclVal <= 60 ? 'text-red-600 font-black' : 'text-slate-600 font-bold';
+                    if (crclVal <= 60) crclHtml = `<span class="bg-white/60 px-1 rounded border border-slate-200 text-slate-600">CrCl: <span class="${crclClass}">${item.clcr}</span></span>`;
+                }
+
+                let inrHtml = '';
+                let inrVal = parseFloat(item.inr);
+                if (!isNaN(inrVal)) {
+                    let inrClass = (inrVal < 2 || inrVal > 3) ? 'text-red-600 font-black' : 'text-slate-600 font-bold';
+                    inrHtml = `<span class="bg-white/60 px-1 rounded border border-slate-200 text-slate-600">INR: <span class="${inrClass}">${item.inr}</span></span>`;
+                }
+
+                const row = document.createElement('div');
+                row.className = `${cardStyleClass} rounded-md relative flex flex-col justify-center min-h-[34px] pl-[38px] pr-1 shrink-0 mb-[3px] py-[2px] overflow-hidden`;
+                row.innerHTML = `
+                    <div class="ipd-badge ${bgClass} w-[36px] text-[12px] font-black font-mono tracking-tight shrink-0 flex items-center justify-center absolute left-0 top-0 bottom-0 z-10 rounded-l-md">${bedNo}</div>
+                    <div class="flex items-start justify-between w-full z-10 leading-none min-w-0">
+                        <div class="flex items-center flex-wrap gap-1 flex-1 min-w-0 mr-1">
+                            <span class="${textClass} font-black text-[14px] font-mono tracking-wide">${hnNo}</span>
+                            <span class="${textClass} font-bold text-[13px] tracking-tight truncate max-w-[120px]">${fullName}</span>
+                            ${badgesHtml}
+                        </div>
+                        <div class="flex items-center gap-[2px] shrink-0 h-full">
+                            ${rightBadges}
+                            <span class="text-[7.5px] font-black px-1 py-[2px] rounded border shadow-sm ${statusBadgeClass} leading-none ml-0.5">${statusLabel}</span>
+                            <span class="text-[8px] font-bold ${timeTextClass} w-7 text-right">${timeDisplay}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between w-full z-10 mt-[2px] text-[7px] font-bold text-slate-500 leading-none">
+                        <div class="flex gap-1 shrink-0">
+                            ${crclHtml}
+                            ${inrHtml}
+                        </div>
+                        <div class="truncate text-right flex-1 text-[7.5px] ${isConfirmed ? 'text-slate-500' : 'text-white/80'} ml-1">
+                            ${item.main_dx_code ? `[${item.main_dx_code}] ` : ''}${icdName}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            const uniqueAlerts = []; const seenBeds = new Set();
+            for (const item of newUnconfirmedBeds) { if (!seenBeds.has(item.bed)) { seenBeds.add(item.bed); uniqueAlerts.push(item); } }
+            
+            const ipdBadge = document.getElementById('ipd-new-badge');
+            if(ipdBadge) {
+                if(uniqueAlerts.length > 0) {
+                    ipdBadge.textContent = `(ใหม่ ${uniqueAlerts.length})`;
+                    ipdBadge.classList.remove('hidden');
+                } else {
+                    ipdBadge.classList.add('hidden');
+                }
+            }
+
+            if (newUnconfirmedBeds.length > 0 && audioUnlocked) {
+                playNotificationSound();
+            }
+        }
+
+        function processBedsData(bedsData) {
+            globalActiveBeds = {}; bedListByAN = {};
+            let countMale = 0, countFemale = 0, countLR = 0, countDC = 0, countAdm = 0;
+            let activeMale = 0, activeFemale = 0, activeLR = 0; 
+            
+            if(bedsData) {
+                bedsData.forEach(b => {
+                    if (b.an) bedListByAN[b.an] = b;
+                    const bed = b.bedno; 
+                    if (!bed) return;
+                    const bedText = String(bed);
+                    
+                    const wName = (b.ward_name || '').toUpperCase();
+                    const statusAdm = (b.StatusAdm || 'CONT').toUpperCase();
+                    
+                    if (statusAdm === 'DC') countDC++;
+                    if (statusAdm === 'ADM' || statusAdm === 'ADMIT') countAdm++;
+                    
+                    if (wName.includes('ชาย') || wName.includes('MALE') || bedText.startsWith('M') || bedText.includes('VIP4')) {
+                        countMale++;
+                        if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeMale++;
+                    }
+                    else if (wName.includes('คลอด')) {
+                        countLR++;
+                        if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeLR++;
+                    }
+                    else if (wName.includes('หญิง') || wName.includes('FEMALE') || bedText.startsWith('F')) {
+                        countFemale++;
+                        if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeFemale++;
+                    }
+
+                    const cp = statusAdm === 'ADMIT' ? 3 : (statusAdm === 'DC' ? 1 : 2);
+                    if(!globalActiveBeds[bedText] || cp > globalActiveBeds[bedText].priority) globalActiveBeds[bedText] = { data: b, priority: cp };
+                });
+            }
+            updateValueWithAnimation('sum-dc', countDC); updateValueWithAnimation('sum-admit', countAdm);
+            updateValueWithAnimation('sum-male', countMale); updateValueWithAnimation('sum-female', countFemale); updateValueWithAnimation('sum-lr', countLR);
+
+            maleWard = [...maleBedsDef]; femaleWard = [...femaleBedsDef]; lrWard = [];
+            Object.keys(globalActiveBeds).forEach(bed => {
+                const b = bed.toUpperCase(); const p = globalActiveBeds[bed].data; const wName = (p.ward_name || '').toUpperCase();
+                if (wName.includes('คลอด')) { if(!lrWard.includes(b)) lrWard.push(b); }
+                else if (wName.includes('ชาย') || wName.includes('MALE') || b.startsWith('M') || b.includes('VIP4')) { if (!maleWard.includes(b)) maleWard.push(b); } 
+                else { if (!femaleWard.includes(b)) femaleWard.push(b); }
+            });
+            const sortBeds = (a, b) => { const nA = parseInt(a.replace(/\D/g, ''))||0; const nB = parseInt(b.replace(/\D/g, ''))||0; return a.replace(/\d/g, '') === b.replace(/\d/g, '') ? nA - nB : 0; };
+            maleWard.sort(sortBeds); femaleWard.sort(sortBeds); lrWard.sort(sortBeds);
+            
+            renderIPDGrid(maleWard, 'ipd-male-grid', 'm', activeMale);
+            renderIPDGrid(femaleWard, 'ipd-female-grid', 'f', activeFemale);
+            if (lrWard.length > 0) {
+                renderIPDGrid(lrWard, 'ipd-lr-grid', 'lr', activeLR);
+            } else {
+                document.getElementById('ipd-lr-grid').innerHTML = '';
+            }
+        }
+
+        function renderIPDGrid(wardArray, containerId, suff, activeCount) {
+            const container = document.getElementById(containerId);
+            const listContainer = document.getElementById(`ipd-${suff}-list`);
+            if(!container) return;
+            let html = ''; let listHtml = ''; let sAdmit = 0, sDC = 0, sScan = 0;
+            
+            let catDue = ''; let catInhaler = ''; let catHAD = '';
+
+            wardArray.forEach(bedName => {
+                const pEntry = globalActiveBeds[bedName];
+                if (!pEntry) { 
+                    html += `<div class="bed-box border-dashed opacity-40"><span class="font-bold text-[10px] text-slate-500">${bedName}</span></div>`; 
+                } else {
+                    const p = pEntry.data;
+                    const statusAdm = (p.StatusAdm || 'CONT').toUpperCase();
+                    if(statusAdm === 'ADMIT') sAdmit++;
+                    if(statusAdm === 'DC') sDC++;
+                    
+                    let bgClass = statusAdm === "DC" ? "bed-dc text-white" : (statusAdm === "ADMIT" ? "bed-admit text-white" : "bed-cont text-white");
+                    const statN = parseInt(p.Status_N) || 0; const statY = parseInt(p.Status_Y) || 0;
+                    if(statN + statY > 0 && statusAdm !== 'DC') sScan++;
+                    
+                    const scannedOverlay = (statN + statY > 0) ? `<div class="thick-scanned-bg"></div>` : '';
+                    let confirmIconHtml = '';
+                    if (statN + statY > 0) {
+                        confirmIconHtml = statN > 0 
+                            ? `<i class="fas fa-times-circle text-rose-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow animate-pulse"></i>` 
+                            : `<i class="fas fa-check-circle text-emerald-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow"></i>`;
+                    }
+                    
+                    const boxNumber = globalBoxByBedMap[bedName] || "";
+                    let dcBoxHtml = "";
+                    if (statusAdm === 'DC' && boxNumber) {
+                        dcBoxHtml = `<div class="absolute -top-[5px] -right-[5px] bg-slate-900 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-md z-20 border border-slate-600">${boxNumber}</div>`;
+                    }
+
+                    html += `<div class="bed-box ${bgClass} h-[26px]">
+                        ${scannedOverlay}
+                        ${dcBoxHtml}
+                        <span class="text-[11px] font-black leading-none drop-shadow-md z-10">${bedName}</span>
+                        ${confirmIconHtml}
+                    </div>`;
+
+                    if (statusAdm !== 'DC') {
+                        let nameTxt = p.patient_name || '--';
+                        if (p.Meropenem === 'Y' || p.Tazocin === 'Y') {
+                            catDue += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt}</div>`;
+                        }
+                        if (p.is_new_inhaler === 'Y') {
+                            catInhaler += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt}</div>`;
+                        }
+                        
+                        const hadItem = globalHadList.find(h => h.bedno === bedName);
+                        if (hadItem) {
+                            catHAD += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2" title="${hadItem.had_drug_list}"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-slate-400 drop-shadow-sm">(${hadItem.had_drug_list})</span></div>`;
+                        }
+                    }
+                }
+            });
+
+            container.innerHTML = html;
+            
+            if (listContainer) {
+                if (catHAD) listHtml += `<div class="text-[10px] font-black text-rose-700 mt-1 bg-rose-100 px-1 rounded shadow-sm">High Alert Drug</div>${catHAD}`;
+                if (catDue) listHtml += `<div class="text-[10px] font-black text-amber-700 mt-1 bg-amber-100 px-1 rounded shadow-sm">ยา DUE</div>${catDue}`;
+                if (catInhaler) listHtml += `<div class="text-[10px] font-black text-yellow-700 mt-1 bg-yellow-100 px-1 rounded shadow-sm">ยาพ่นใหม่</div>${catInhaler}`;
+                listContainer.innerHTML = listHtml || `<div class="text-center text-[9px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`;
+            }
+
+            const elAdmit = document.getElementById(`map-sum-admit-${suff}`);
+            const elDc = document.getElementById(`map-sum-dc-${suff}`);
+            const elScan = document.getElementById(`map-sum-scan-${suff}`);
+            const elProg = document.getElementById(`map-scan-progress-${suff}`);
+            
+            if(elAdmit) elAdmit.textContent = sAdmit;
+            if(elDc) elDc.textContent = sDC;
+            if(elScan) elScan.textContent = sScan;
+            if(elProg) {
+                let pct = activeCount > 0 ? (sScan / activeCount) * 100 : 0;
+                elProg.style.width = `${pct}%`;
+            }
+
+            if(suff === 'm' || suff === 'f') {
+                const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
+                if(occupancyEl) {
+                    const totalCardDrawn = wardArray.length;
+                    const vacant = Math.max(0, totalCardDrawn - activeCount);
+                    occupancyEl.textContent = `${activeCount}/ว่าง ${vacant}`;
+                    occupancyEl.classList.remove('hidden');
+                }
+            }
+        }
+
+        function renderRxBoxesView() {
+            const container = document.getElementById('ipd-rx-grid');
+            if(!container) return;
+            let html = ''; let hasDCRx = false;
+            for(let i=1; i<=26; i++) {
+                const bed = rxBoxMap[i] || '-';
+                const isActive = bed !== '-';
+                let isDC = false; let dcBadges = '';
+                if(isActive && globalActiveBeds[bed]) {
+                    const data = globalActiveBeds[bed].data;
+                    const st = (data.StatusAdm || 'CONT').toUpperCase();
+                    if(st === 'DC') {
+                        isDC = true; hasDCRx = true;
+                    }
+                }
+                let bClass = 'bg-white/50 border border-white/20 opacity-70'; let tClass = 'text-slate-400'; let labelClass = 'text-slate-500';
+                if(isActive) {
+                    if(isDC) { bClass = 'bg-red-600 shadow-md border-red-700'; tClass = 'text-white font-black'; labelClass = 'text-red-100'; }
+                    else { bClass = 'bg-blue-100 border border-blue-300 shadow-sm'; tClass = 'text-blue-700 font-black'; labelClass = 'text-slate-500'; }
+                }
+                html += `<div class="${bClass} relative flex flex-col items-center justify-center p-1 rounded h-[40px] shrink-0 transition-all"><span class="text-[9px] font-bold ${labelClass} leading-none mb-0.5">ช่อง ${i}</span><span class="text-[14px] ${tClass} leading-none">${bed}</span><div class="absolute bottom-0 right-0 flex">${dcBadges}</div></div>`;
+            }
+            container.innerHTML = html;
+
+            const msgEl = document.getElementById('dc-alert-message');
+            if(msgEl) {
+                if(hasDCRx) msgEl.classList.remove('hidden'); else msgEl.classList.add('hidden');
+            }
+        }
+
+        function startTopDrugsSwapAnimation() {
+            if (topDrugsAnimateInterval) return; 
+            topDrugsAnimateInterval = setInterval(() => {
+                const container = document.getElementById('top-drugs-container');
+                if (!container || container.children.length < 3) return;
+                
+                const children = Array.from(container.children);
+                if (children[0].classList.contains('text-center')) return; 
+
+                const idx = Math.floor(Math.random() * (children.length - 1)) + 1;
+                const el1 = children[idx];
+                const el2 = children[idx - 1];
+
+                el1.classList.add('animated-card-swap');
+                el2.classList.add('animated-card-swap');
+
+                const h1 = el1.offsetHeight + 2; 
+                el1.style.transform = `translateY(-${h1}px)`;
+                el2.style.transform = `translateY(${h1}px)`;
+
+                setTimeout(() => {
+                    el1.classList.remove('animated-card-swap');
+                    el2.classList.remove('animated-card-swap');
+                    el1.style.transform = '';
+                    el2.style.transform = '';
+                    
+                    container.insertBefore(el1, el2);
+                    
+                    Array.from(container.children).forEach((child, i) => {
+                        const rankEl = child.querySelector('.rank-num');
+                        if (rankEl) {
+                            rankEl.textContent = i + 1;
+                            rankEl.className = `rank-num w-5 text-[10px] font-black text-center shrink-0 ${['text-rose-600', 'text-orange-500', 'text-amber-500'][i] || 'text-slate-600'}`;
+                        }
+                    });
+                }, 400); 
+            }, 3000); 
+        }
+
+        function renderTopDrugs(drugs) {
+            const container = document.getElementById('top-drugs-container');
+            const outerContainer = document.getElementById('top-drugs-container-outer');
+            
+            if(!container) return;
+            if(!drugs || drugs.length === 0) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4 w-full">ไม่มีข้อมูลยา</div>`; 
+                if(topDrugsAnimateInterval) { clearInterval(topDrugsAnimateInterval); topDrugsAnimateInterval = null; }
+                return; 
+            }
+
+            if (topDrugsAnimateInterval && container.children.length > 1 && !container.children[0].classList.contains('text-center')) {
+                return;
+            }
+
+            let html = '';
+            drugs.forEach((d, idx) => {
+                const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500'][idx] || 'text-slate-600';
+                const ptCount = d.total_patients_used || 0;
+                html += `<div class="w-full flex justify-between items-center bg-white/60 p-1 rounded shadow-sm border border-white/50 shrink-0 mb-0.5">
+                    <div class="flex items-center flex-1 min-w-0 pr-2">
+                        <span class="rank-num w-5 text-[10px] font-black ${rColor} text-center shrink-0">${idx+1}</span>
+                        <span class="text-[9.5px] font-bold text-slate-800 truncate">${d.drug_name}</span>
+                    </div>
+                    <div class="flex flex-col items-end shrink-0">
+                        <span class="text-[10px] font-black text-blue-700 leading-none">${parseInt(d.total_qty).toLocaleString()} <span class="text-[7.5px] text-slate-500 font-bold ml-0.5">(${ptCount} คน)</span></span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+            
+            startTopDrugsSwapAnimation();
+        }
+
+        function renderSliderData(data) {
+            if(data.queue_flow) {
+                const flowMap = { '0_รอมาตามนัด': { name: 'ยังไม่มา', color: 'orange' }, '1_รอซักประวัติ': { name: 'รอซัก', color: 'blue' }, '2_รอพบแพทย์': { name: 'รอแพทย์', color: 'rose' }, '3_รอโต๊ะนัด': { name: 'โต๊ะนัด', color: 'pink' }, '4_รอรับยา': { name: 'รอยา', color: 'teal' }, '5_รอชำระเงิน': { name: 'การเงิน', color: 'yellow' }, '6_เสร็จสิ้นทุกขั้นตอน': { name: 'เสร็จสิ้น', color: 'emerald' } };
+                let flowHtml = '';
+                const steps = ['0_รอมาตามนัด', '1_รอซักประวัติ', '2_รอพบแพทย์', '3_รอโต๊ะนัด', '4_รอรับยา', '5_รอชำระเงิน', '6_เสร็จสิ้นทุกขั้นตอน'];
+                steps.forEach((stepName, index) => {
+                    const item = data.queue_flow.find(q => q['ขั้นตอน'] === stepName);
+                    const count = item ? item['จำนวนผู้ป่วย (คน)'] : 0;
+                    const timeStr = item ? item['ระยะเวลาเฉลี่ย (HH:MM:SS)'] : '00:00:00';
+                    const timeData = formatWaitTime(timeStr);
+                    const config = flowMap[stepName];
+                    const key = 'flow_' + index; let animClass = '';
+                    if(prevValues[key] !== undefined && prevValues[key] !== count) animClass = 'animate-update';
+                    prevValues[key] = count;
+                    const timeColorClass = timeData.isOver30 ? 'bg-yellow-400 text-yellow-900 font-black' : 'bg-white/60 text-slate-600 font-bold';
+                    flowHtml += `<div class="flex-1 card-3d flex flex-col p-0 overflow-hidden rounded-md"><div class="h-3.5 bg-${config.color}-100 text-[8px] font-bold text-center border-b border-${config.color}-200 flex items-center justify-center tracking-tighter">${config.name}</div><div class="flex-1 flex items-center justify-center text-lg font-black text-${config.color}-700 leading-none py-0.5"><span class="${animClass}">${count}</span></div><div class="h-3 text-[8px] text-center ${timeColorClass} flex items-center justify-center tracking-tighter">${timeData.text}</div></div>`;
+                    if (index < steps.length - 1) flowHtml += `<div class="flex flex-col justify-center items-center px-0.5 text-white drop-shadow-md"><i class="fas fa-chevron-right text-base font-black animate-pulse" style="text-shadow: 0 0 4px rgba(0,0,0,0.6);"></i></div>`;
+                });
+                const viewFlow = document.getElementById('view-flow');
+                if (viewFlow) viewFlow.innerHTML = flowHtml;
+            }
+            if(data.top_doc_queue) {
+                let docHtml = ''; const docs = data.top_doc_queue.slice(0, 6);
+                for(let i=0; i<6; i++) {
+                    const doc = docs[i] || { doctor_name: '-', patient_count: 0 };
+                    let shortName = doc.doctor_name.replace('แพทย์หญิง', 'พญ.').replace('นายแพทย์', 'นพ.');
+                    if(shortName !== '-') shortName = shortName.split(' ')[0];
+                    const qCount = doc.patient_count !== undefined ? doc.patient_count : 0;
+                    const key = 'doc_' + i; let animClass = '';
+                    if(prevValues[key] !== undefined && prevValues[key] !== qCount) animClass = 'animate-update';
+                    prevValues[key] = qCount;
+                    docHtml += `<div class="flex-1 card-3d flex flex-col p-0 overflow-hidden"><div class="h-4 bg-purple-100 text-[9px] font-bold text-center border-b border-purple-200 flex items-center justify-center truncate px-0.5 tracking-tighter">${shortName}</div><div class="flex-1 flex items-center justify-center text-xl font-black text-purple-700 leading-none"><span class="${animClass}">${qCount}</span></div></div>`;
+                }
+                const viewDocs = document.getElementById('view-doctors');
+                if (viewDocs) viewDocs.innerHTML = docHtml;
+            }
+            if(data.clinic_summary) {
+                let clinicHtml = ''; const clinics = data.clinic_summary.slice(0, 6);
+                for(let i=0; i<6; i++) {
+                    const c = clinics[i] || { clinic_name: '-', total_patients: 0 };
+                    const key = 'clinic_' + i; let animClass = '';
+                    if(prevValues[key] !== undefined && prevValues[key] !== c.total_patients) animClass = 'animate-update';
+                    prevValues[key] = c.total_patients;
+                    clinicHtml += `<div class="flex-1 card-3d flex flex-col p-0 overflow-hidden"><div class="h-4 bg-fuchsia-100 text-[9px] font-bold text-center border-b border-fuchsia-200 flex items-center justify-center truncate px-0.5 tracking-tighter">${c.clinic_name}</div><div class="flex-1 flex items-center justify-center text-xl font-black text-fuchsia-700 leading-none"><span class="${animClass}">${c.total_patients}</span></div></div>`;
+                }
+                const viewClinics = document.getElementById('view-clinics');
+                if (viewClinics) viewClinics.innerHTML = clinicHtml;
+            }
+        }
+
+        async function fetchThaiHolidays(year) {
+            try {
+                const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/TH`);
+                return await res.json();
+            } catch(e) { return []; }
+        }
+
+        function renderApptCard() {
+            const layer = document.getElementById('appt-layer');
+            const newsL = document.getElementById('news-layer');
+            if(!layer || !newsL) return;
+            
+            newsL.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => newsL.classList.add('hidden'), 500);
+            
+            layer.classList.remove('hidden');
+            setTimeout(() => layer.classList.replace('opacity-0', 'opacity-100'), 50);
+
+            let html = `<div class="flex flex-col w-full px-2 h-full justify-center" style="gap: 3px;">`;
+            if(globalAppointments && globalAppointments.length > 0) {
+                globalAppointments.slice(0,5).forEach((item) => {
+                    html += `<div class="flex justify-between items-center text-[11px] font-bold text-slate-800 leading-none w-full">
+                                <span>${item['วันที่นัด']} <span class="text-blue-600 ml-1">[${item['จำนวนวันนัด']} วัน]</span></span>
+                                <span class="text-rose-600 font-black text-[10px]">(${item['จำนวนคน']} คน)</span>
+                            </div>`;
+                });
+            } else {
+                html += `<div class="text-[10px] text-slate-500 font-bold text-center mt-4">กำลังรอข้อมูลวันนัด...</div>`;
+            }
+            html += `</div>`;
+            layer.innerHTML = html;
+        }
+
+        async function renderCalendar(monthlyApptData, todayClinicData) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth(); 
+            const todayDate = now.getDate();
+            
+            const thM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const yearTh = (year + 543).toString().substring(2);
+            document.getElementById('cal-month-title').textContent = `(${thM[month]} ${yearTh})`;
+            
+            if (!window.cachedHolidays || window.cachedHolidayYear !== year) {
+                window.cachedHolidays = await fetchThaiHolidays(year);
+                window.cachedHolidayYear = year;
+            }
+            const holidays = window.cachedHolidays || [];
+            
+            const apptMap = {};
+            let maxAppt = 0;
+            if (monthlyApptData) {
+                monthlyApptData.forEach(item => {
+                    const dMatch = item.appointment_date.match(/\d{4}-\d{2}-(\d{2})/);
+                    if (dMatch) {
+                        const day = parseInt(dMatch[1], 10);
+                        apptMap[day] = parseInt(item.total_patients) || 0;
+                        if (apptMap[day] > maxAppt) maxAppt = apptMap[day];
+                    }
+                });
+            }
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayIndex = new Date(year, month, 1).getDay(); 
+            
+            let html = `<div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+                <div class="text-[9px] font-black text-rose-600">อา</div><div class="text-[9px] font-black text-yellow-500">จ</div>
+                <div class="text-[9px] font-black text-pink-500">อ</div><div class="text-[9px] font-black text-emerald-500">พ</div>
+                <div class="text-[9px] font-black text-orange-500">พฤ</div><div class="text-[9px] font-black text-blue-500">ศ</div>
+                <div class="text-[9px] font-black text-purple-500">ส</div>
+            </div><div class="grid grid-cols-7 gap-[2px]">`;
+            
+            for(let i=0; i<firstDayIndex; i++) html += `<div class="bg-slate-200/40 rounded-sm h-[32px]"></div>`;
+            for(let d=1; d<=daysInMonth; d++) {
+                const isToday = d === todayDate;
+                const count = apptMap[d] || 0;
+                let opacity = maxAppt > 0 && count > 0 ? Math.max(0.15, count / maxAppt) : 0;
+                
+                let holidayText = "";
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const hol = holidays.find(h => h.date === dateStr);
+                if (hol) holidayText = `<div class="absolute -top-[3px] -right-[3px] w-[10px] h-[10px] bg-rose-500 border border-white rounded-full z-20 flex items-center justify-center animate-bounce shadow-sm" title="${hol.localName}"></div>`;
+
+                const todayClass = isToday ? 'ring-[1.5px] ring-rose-500 bg-white animate-pulse' : 'bg-white/80';
+                const todayTextClass = isToday ? 'text-rose-600 font-black text-[12px]' : 'text-slate-700 font-bold text-[10px]';
+                
+                html += `<div class="relative h-[32px] flex flex-col items-center justify-center rounded-sm shadow-sm border border-slate-200 overflow-hidden ${todayClass} transition-all">
+                    <div class="absolute inset-0 bg-red-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
+                    ${holidayText}
+                    <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm mt-1">${d}</span>
+                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-red-100 text-red-800 border border-red-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
+                </div>`;
+            }
+            html += `</div>`;
+            document.getElementById('calendar-grid').innerHTML = html;
+            
+            let clinicHtml = '';
+            if (todayClinicData && todayClinicData.length > 0) {
+                todayClinicData.forEach((c, idx) => {
+                    const color = ['bg-rose-100 text-rose-700 border-rose-200','bg-blue-100 text-blue-700 border-blue-200','bg-emerald-100 text-emerald-700 border-emerald-200','bg-amber-100 text-amber-700 border-amber-200','bg-purple-100 text-purple-700 border-purple-200'][idx % 5];
+                    clinicHtml += `<div class="flex justify-between items-center text-[10px] bg-white/80 px-2 py-[3px] rounded-md border border-slate-200 shadow-sm shrink-0"><span class="font-bold text-slate-700 truncate flex-1 leading-tight mr-1">${c.clinic_name || c.clinic_code}</span><span class="${color} font-black px-1.5 py-[1px] rounded border shrink-0 leading-none shadow-sm">${parseInt(c.total_patients).toLocaleString()}</span></div>`;
+                });
+            } else { clinicHtml = `<div class="text-[10px] text-slate-500 text-center py-2 font-bold">ไม่มีนัดคลินิกวันนี้</div>`; }
+            document.getElementById('today-clinic-list').innerHTML = clinicHtml;
+        }
+
+        /* STREAMING_CHUNK:Main Data Fetching */
+        async function fetchHospitalData() {
+            const timeEl = document.getElementById('last-update-time');
+            if(timeEl) timeEl.innerHTML = `<i class="fas fa-sync-alt fa-spin mr-1.5 text-slate-500"></i>กำลังโหลด...`;
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            try {
+                const res = await fetch(API_URL, { signal: controller.signal, cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const responseData = await res.json();
+                if (responseData.error) throw new Error(responseData.error);
+                
+                const coreData = responseData.data ? responseData.data : responseData;
+                const timestamp = responseData.timestamp || null;
+
+                if (coreData && typeof coreData === 'object') {
+                    if (coreData.rx_boxes && Array.isArray(coreData.rx_boxes)) { 
+                        rxBoxMap = {}; 
+                        globalBoxByBedMap = {};
+                        coreData.rx_boxes.forEach(r => { 
+                            if(r.bedno && r.rx_box) {
+                                rxBoxMap[r.rx_box] = r.bedno; 
+                                globalBoxByBedMap[r.bedno] = r.rx_box.replace(/\D/g, ''); 
+                            }
+                        }); 
+                    }
+                    
+                    if (coreData.had_list && Array.isArray(coreData.had_list)) globalHadList = coreData.had_list;
+                    
+                    if (coreData.bed_list && Array.isArray(coreData.bed_list)) processBedsData(coreData.bed_list);
+                    else if (coreData.ipd_list && Array.isArray(coreData.ipd_list)) processBedsData(coreData.ipd_list);
+                    renderRxBoxesView();
+                    
+                    if (coreData.top_drugs && Array.isArray(coreData.top_drugs)) renderTopDrugs(coreData.top_drugs);
+                    
+                    if (coreData.available_rx_boxes) {
+                        const avBoxEl = document.getElementById('available-rx-boxes');
+                        if (avBoxEl) avBoxEl.textContent = `ช่องเก็บยาว่าง : ${coreData.available_rx_boxes.join(', ')}`;
+                    }
+
+                    let ipdData = coreData.scan_list || []; renderData(ipdData);
+                    
+                    if (coreData.opd_summary) { 
+                        updateValueWithAnimation('sum-appointment', parseInt(coreData.opd_summary.appointment) || 0); 
+                        updateValueWithAnimation('sum-opd-er', parseInt(coreData.opd_summary.er_opd) || 0); 
+                        updateValueWithAnimation('sum-clinic-other', parseInt(coreData.opd_summary.clinic_other) || 0); 
+                    }
+                    if (coreData.rx_summary) { 
+                        updateValueWithAnimation('sum-prepare', parseInt(coreData.rx_summary.prepare) || 0); 
+                        updateValueWithAnimation('sum-dispense', parseInt(coreData.rx_summary.dispense) || 0); 
+                    }
+                    if (coreData.basket_summary) {
+                        updateValueWithAnimation('sum-basket', parseInt(coreData.basket_summary.total_patients) || 0); 
+                        updateValueWithAnimation('sum-rx-item', parseInt(coreData.basket_summary.total_prescribed_items) || 0); 
+                        
+                        const uqEl = document.getElementById('unique-drug-count');
+                        const uqWrap = document.getElementById('unique-drug-count-wrap');
+                        if(uqEl && coreData.basket_summary.unique_drug_count) {
+                            uqEl.textContent = parseInt(coreData.basket_summary.unique_drug_count).toLocaleString();
+                            if(uqWrap) uqWrap.classList.remove('hidden');
+                        }
+                    }
+
+                    renderSliderData(coreData);
+
+                    if (coreData.monthly_appointments || coreData.today_clinic_appointments) {
+                        renderCalendar(coreData.monthly_appointments, coreData.today_clinic_appointments);
+                    }
+
+                    if (coreData.appointments && Array.isArray(coreData.appointments)) globalAppointments = coreData.appointments;
+                }
+                
+                if(timeEl) {
+                    if (timestamp) {
+                        let finalTimeStr = timestamp;
+                        if (timestamp.includes('T') && timestamp.includes('Z')) {
+                            const dateObj = new Date(timestamp);
+                            if (!isNaN(dateObj.getTime())) finalTimeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')} น.`;
+                        } else {
+                            const match = String(timestamp).match(/(\d{2}):(\d{2})/);
+                            if(match) finalTimeStr = `${match[1]}:${match[2]} น.`;
+                        }
+                        timeEl.innerHTML = `<i class="fas fa-check-circle mr-1.5 text-emerald-600"></i>อัปเดต ${finalTimeStr}`;
+                    } else {
+                        const now = new Date(); timeEl.innerHTML = `<i class="fas fa-check-circle mr-1.5 text-emerald-600"></i>อัปเดต ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+                    }
+                }
+            } catch (error) { 
+                console.warn("fetchHospitalData error:", error);
+                if(timeEl) timeEl.innerHTML = `<i class="fas fa-exclamation-circle mr-1 text-rose-500"></i> รอโหลดใหม่`; 
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        function updateStaffUI(data) {
+            if(!data) return;
+            const mapData = (elId, prop, defRole) => {
+                const el = document.getElementById(elId); if(!el) return;
+                const st = data[prop];
+                if(!st || !st.name || st.name.trim() === "") el.style.display = 'none';
+                else {
+                    el.style.display = 'flex';
+                    let dName = prop !== 'clinic' ? st.name.split('(')[0].trim() : st.name;
+                    const nEl = el.querySelector('.staff-name'); if(nEl) nEl.textContent = dName;
+                    const iEl = el.querySelector('.staff-img');
+                    if(iEl) { iEl.setAttribute("referrerpolicy", "no-referrer"); if (st.photo) iEl.src = st.photo; else iEl.src = `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(dName.substring(0, 2))}`; }
+                    const rEl = el.querySelector('.staff-role-text'); if(rEl && !rEl.classList.contains('countdown-text')) rEl.textContent = defRole;
+                    if(prop === 'clinic' && st.clinicLabel) el.querySelector('.staff-clinic').textContent = st.clinicLabel;
+                }
+            };
+            mapData('card-key', 'key', 'ภ.คีย์'); mapData('card-ipd', 'ipd', 'ภ.ใน'); mapData('card-tech', 'tech_morning', 'จพ.เช้า'); mapData('card-check1', 'check1', 'ภ.เช็ค1'); mapData('card-check2', 'check2', 'ภ.เช็ค2'); mapData('card-check3', 'check3', 'ภ.เช็ค3'); mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1'); mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2'); mapData('card-clinic', 'clinic', 'ภ.คลินิก'); mapData('card-aft-pharm', 'afternoon_pharm', ''); mapData('card-aft-tech1', 'afternoon_tech1', ''); mapData('card-oncall', 'oncall', '');
+            document.getElementById('div-aft-tech1').style.display = document.getElementById('card-aft-tech1').style.display !== 'none' ? 'block' : 'none';
+            document.getElementById('div-oncall').style.display = document.getElementById('card-oncall').style.display !== 'none' ? 'block' : 'none';
+        }
+
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            if(!container) return;
+            if(alerts.length === 0) { container.innerHTML = `<div class="card-3d bg-slate-50/90 p-2 flex items-center justify-center h-full"><span class="text-slate-500 font-bold text-sm">ไม่มีการแจ้งเตือนใหม่</span></div>`; return; }
+            container.innerHTML = '';
+            alerts.forEach(a => {
+                let bg, ic, tc, dc, tiC, tT = a.title, dT = a.desc;
+                if (a.type === 'leave') { bg='bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200'; tc='text-amber-900'; dc='text-amber-800 font-bold'; ic='<i class="fas fa-calendar-times text-amber-600 text-xl drop-shadow-sm"></i>'; tiC='text-amber-800 bg-white border-amber-200'; }
+                else if (a.type === 'non_formulary') { bg='bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200'; tc='text-purple-900'; dc='text-purple-800'; ic='<i class="fas fa-file-medical text-purple-600 text-xl drop-shadow-sm"></i>'; tiC='text-purple-800 bg-white border-purple-200'; }
+                else if (a.type === 'requisition') { bg='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'; tc='text-blue-900'; dc='text-blue-800'; ic='<i class="fas fa-box-open text-blue-700 text-xl drop-shadow-sm"></i>'; tiC='text-blue-800 bg-white border-blue-200'; }
+                else if (a.type === 'temperature') { bg='bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 temp-alert-card'; tc='text-orange-900 font-black'; dc='text-red-800 font-extrabold text-[10px]'; ic='<i class="fas fa-temperature-high text-orange-600 text-xl drop-shadow-sm animate-pulse"></i>'; tiC='text-orange-800 bg-white border-orange-200'; }
+                else if (a.type === 'line') { bg='bg-gradient-to-br from-[#f2fcf2] to-[#e6f9e6] border-[#00B900]/30'; tc='text-[#009900]'; dc='text-[#007700]'; ic='<i class="fab fa-line text-[#00B900] text-xl drop-shadow-sm"></i>'; tiC='text-[#009900] bg-white border-[#00B900]/30'; }
+                else if (a.type === 'expiry') { bg='bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200'; tc='text-rose-900'; dc='text-rose-800'; ic='<i class="fas fa-exclamation-triangle text-rose-600 text-xl drop-shadow-sm"></i>'; tiC='text-rose-800 bg-white border-rose-200'; }
+                else if (a.type === 'checked') { bg='bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200'; tc='text-teal-900'; dc='text-teal-800'; ic='<i class="fas fa-box text-teal-600 text-xl drop-shadow-sm"></i>'; tiC='text-teal-800 bg-white border-teal-200'; tT = a.title.replace(/เช็คพร้อมใช้แล้ว|พร้อมใช้:|พร้อมใช้/g, '').trim() + " เช็คพร้อมใช้แล้ว"; dT = a.desc + " | " + a.timeStr; }
+
+                container.innerHTML += `<div class="card-3d ${bg} p-1.5 flex items-center gap-2 transition-all duration-300"><div class="w-7 flex justify-center shrink-0">${ic}</div><div class="flex-1 flex flex-col justify-center overflow-hidden"><div class="flex justify-between items-start mb-0.5"><span class="text-xs font-black ${tc} truncate">${tT}</span><span class="text-[9px] ${tiC} font-black px-1 py-0.5 rounded shadow-sm border shrink-0">${a.timeStr}</span></div><span class="text-[10px] font-bold ${dc} line-clamp-2 leading-tight">${dT}</span></div></div>`;
+
+                if (!spokenAlerts.has(a.id)) {
+                    spokenAlerts.add(a.id);
+                    if (a.type !== 'expiry') {
+                        if (audioUnlocked) playNotificationSound();
+                    }
+                }
+            });
+        }
+
+        function drawSparkline(canvasId, dataArray, isFridge) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || !dataArray || dataArray.length === 0) return;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio; canvas.height = rect.height * window.devicePixelRatio;
+            const w = canvas.width; const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            let minT = Math.min(...dataArray); let maxT = Math.max(...dataArray);
+            if (isFridge) { minT = Math.min(minT, 1); maxT = Math.max(maxT, 9); } 
+            else { minT = Math.min(minT, 20); maxT = Math.max(maxT, 32); }
+
+            const paddingY = 4 * window.devicePixelRatio; const paddingX = 2 * window.devicePixelRatio;
+            const usableH = h - (paddingY * 2); const range = (maxT - minT) === 0 ? 1 : (maxT - minT);
+            const getY = (val) => h - paddingY - ((val - minT) / range) * usableH;
+            const getX = (index) => paddingX + (index / (dataArray.length - 1 || 1)) * (w - paddingX * 2);
+            const clamp = (val) => Math.max(0, Math.min(1, val));
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, h);
+            if (isFridge) {
+                const yHigh = getY(8); const yLow = getY(2);  
+                gradient.addColorStop(0, '#ef4444'); gradient.addColorStop(clamp(yHigh / h), '#ef4444');
+                gradient.addColorStop(clamp((yHigh / h) + 0.001), '#0ea5e9'); gradient.addColorStop(clamp((yLow / h) - 0.001), '#0ea5e9');
+                gradient.addColorStop(clamp(yLow / h), '#ef4444'); gradient.addColorStop(1, '#ef4444');
+            } else {
+                const yHigh = getY(30); 
+                gradient.addColorStop(0, '#ef4444'); gradient.addColorStop(clamp(yHigh / h), '#ef4444');
+                gradient.addColorStop(clamp((yHigh / h) + 0.001), '#0ea5e9'); gradient.addColorStop(1, '#0ea5e9');
+            }
+
+            ctx.beginPath(); ctx.moveTo(getX(0), getY(dataArray[0]));
+            for (let i = 1; i < dataArray.length; i++) ctx.lineTo(getX(i), getY(dataArray[i]));
+            ctx.strokeStyle = gradient; ctx.lineWidth = 0.8 * window.devicePixelRatio; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+            ctx.lineTo(getX(dataArray.length - 1), h); ctx.lineTo(getX(0), h); ctx.closePath();
+            
+            const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+            fillGrad.addColorStop(0, 'rgba(14, 165, 233, 0.15)'); fillGrad.addColorStop(1, 'rgba(14, 165, 233, 0)');
+            ctx.fillStyle = fillGrad; ctx.fill();
+        }
+
+        function renderTempStatus(tempStatus) {
+            window.lastTempStatusData = tempStatus; 
+            let hasFridgeAlert = false; let hasRoomAlert = false;
+            
+            const createCard = (item, isFridge, idx) => {
+                const isAlert = item.alert; const hasData = item.temp !== '--' && item.temp !== '';
+                if (isAlert && hasData) { if (isFridge) hasFridgeAlert = true; else hasRoomAlert = true; }
+                
+                let cardClass = isAlert ? "temp-alert-card" : "bg-white/95 border-slate-200";
+                let headerClass = isAlert ? "text-white" : "text-white";
+                let headerStyle = isAlert ? "background: linear-gradient(to right, #dc2626, #991b1b);" : (isFridge ? "background: linear-gradient(to right, #0369a1, #075985);" : "background: linear-gradient(to right, #047857, #065f46);");
+                        
+                let tempColor = isAlert ? "text-red-700" : "text-slate-800";
+                let humColor = isAlert ? "text-red-500" : "text-slate-500";
+
+                if (!hasData) { cardClass = "bg-slate-200 border-slate-300 opacity-70"; headerClass = "text-white"; headerStyle = "background: #94a3b8;"; tempColor = "text-slate-400"; humColor = "text-slate-400"; }
+                const canvasId = `sparkline-${isFridge ? 'f' : 'r'}-${idx}`;
+                return `<div class="card-3d relative overflow-hidden flex flex-col ${cardClass} h-[70px]"><div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-black uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center z-10 shadow-sm" style="${headerStyle}">${item.name}</div><div class="flex-1 flex flex-col items-center justify-center bg-white/45 min-h-0 z-10 pt-1 pb-2"><span class="text-xl font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span><span class="text-[9px] font-bold ${humColor} leading-none mt-1 opacity-95">RH: ${item.hum}%</span></div>${hasData ? `<canvas id="${canvasId}" class="absolute bottom-0 left-0 w-full h-1/3 z-0 opacity-80 pointer-events-none"></canvas>` : ''}</div>`;
+            };
+
+            const renderGroup = (data, isFridge) => {
+                if (!data || data.length === 0) return '';
+                let html = '';
+                const renderSection = (title, items) => {
+                    if (items.length === 0) return '';
+                    let sectionHtml = `<div class="col-span-3 flex justify-center mt-1 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
+                    sectionHtml += items.map((item, idx) => createCard(item, isFridge, title.length+idx)).join(''); 
+                    return sectionHtml;
+                };
+                html += renderSection('ห้องยา', data.filter(i => i.room === 'ห้องยา'));
+                html += renderSection('คลังยา', data.filter(i => i.room === 'คลังยา'));
+                html += renderSection('หน่วยงานอื่นๆ', data.filter(i => i.room !== 'ห้องยา' && i.room !== 'คลังยา'));
+                return html;
+            };
+
+            const fGrid = document.getElementById('temp-fridge-grid');
+            if(fGrid) fGrid.innerHTML = tempStatus.fridge.length ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
+            const rGrid = document.getElementById('temp-room-grid');
+            if(rGrid) rGrid.innerHTML = tempStatus.room.length ? renderGroup(tempStatus.room, false) : `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
+
+            setTimeout(() => {
+                ['ห้องยา', 'คลังยา', 'หน่วยงานอื่นๆ'].forEach(room => {
+                    tempStatus.fridge.filter(i => i.room === room).forEach((item, idx) => { if (item.history && item.history.length > 0) drawSparkline(`sparkline-f-${room.length+idx}`, item.history, true); });
+                    tempStatus.room.filter(i => i.room === room).forEach((item, idx) => { if (item.history && item.history.length > 0) drawSparkline(`sparkline-r-${room.length+idx}`, item.history, false); });
+                });
+            }, 50);
+
+            const fMsg = document.getElementById('fridge-alert-msg');
+            if(fMsg) fMsg.innerHTML = hasFridgeAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
+            const rMsg = document.getElementById('room-alert-msg');
+            if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
+        }
+
+        function renderAlertsError() {
+            const container = document.getElementById('alerts-container');
+            if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Server</div>`;
+            }
+        }
+
+        async function fetchSchedule() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 45000); 
+                const res = await fetch(GAS_SCHEDULE_API_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                if (data.error) {
+                    renderAlertsError();
+                    if(data.today) updateStaffUI(data.today);
+                    renderTempStatus({fridge: [], room: []});
+                    renderLasa([]);
+                    renderWeekly([]);
+                    renderBoxes([], []);
+                    renderIncidents({er:{total:0, errors:0}, mr:[]});
+                    renderDue({stats:{}, lists:{}});
+                    return;
+                }
+                if(data.today) updateStaffUI(data.today);
+                if(data.alerts) renderAlerts(data.alerts);
+                if(data.tempStatus) renderTempStatus(data.tempStatus);
+                if(data.lasa) renderLasa(data.lasa);
+                if(data.weekly) renderWeekly(data.weekly);
+                if(data.boxes) renderBoxes(data.boxes, data.requisitions);
+                if(data.holidays) globalHolidays = data.holidays;
+                if(data.incidents) renderIncidents(data.incidents);
+                if(data.due) renderDue(data.due);
+            } catch(error) { 
+                const container = document.getElementById('alerts-container');
+                if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                    container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
+                }
+                renderDue({stats: {}, lists: {}});
+                renderIncidents({er: {total:0, errors:0}, mr: [], er_monthly: []});
+                renderBoxes([], []);
+            }
+        }
+
+        function checkImageValid(url) {
+            return new Promise((resolve) => {
+                if (!url || !url.startsWith('http')) { resolve(false); return; }
+                const img = new Image();
+                img.onload = () => { if (img.width > 200 && img.height > 150) { resolve(true); } else { resolve(false); } };
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        function extractImage(item) {
+            if (item.thumbnail && item.thumbnail !== "") return item.thumbnail;
+            if (item.enclosure && item.enclosure.link) return item.enclosure.link;
+            const html = item.content || item.description || "";
+            const match = html.match(/<img[^>]+(?:src|data-src)="([^">]+)"/i);
+            return match ? match[1] : null;
+        }
+
+        async function fetchAllNews() {
+            let fetchedNews = [];
+            for (const feed of RSS_FEEDS) {
+                try {
+                    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&api_key=`); 
+                    const data = await response.json();
+                    if (data.status === 'ok') {
+                        const rawItems = data.items.map(item => {
+                            let imageUrl = extractImage(item);
+                            return { title: item.title.split(' - ')[0], source: feed.name, color: feed.color, image: imageUrl };
+                        }).filter(item => item.image);
+
+                        const validationPromises = rawItems.slice(0, 4).map(async (item) => {
+                            const isValid = await checkImageValid(item.image);
+                            return isValid ? item : null;
+                        });
+                        const validatedItems = (await Promise.all(validationPromises)).filter(item => item !== null);
+                        fetchedNews = fetchedNews.concat(validatedItems);
+                    }
+                } catch (error) {}
+            }
+            fetchedNews.sort(() => Math.random() - 0.5);
+            return fetchedNews;
+        }
+
+        function updateNewsProgressBar() {
+            if (!apptNewsIsPlaying) return;
+            const elapsed = Date.now() - apptNewsStartTime;
+            const progress = (elapsed / apptNewsDuration) * 100;
+            const pb = document.getElementById('progress-bar-fill');
+            if(pb) pb.style.width = `${Math.min(progress, 100)}%`;
+            if (progress < 100) { apptNewsTimer = requestAnimationFrame(updateNewsProgressBar); }
+        }
+
+        function nextNewsSlide() {
+            cancelAnimationFrame(apptNewsTimer);
+            const pb = document.getElementById('progress-bar-fill');
+            if(pb) { pb.style.transition = 'none'; pb.style.width = '0%'; void pb.offsetWidth; pb.style.transition = 'width 0.1s linear'; }
+            
+            const h = new Date().getHours();
+            const isWorkingHour = h >= 8 && h < 16;
+
+            if (isWorkingHour) {
+                if (isShowingAppt) {
+                    isShowingAppt = false;
+                    apptNewsDuration = 10000; 
+                    if(newsItems.length > 0) {
+                        apptNewsCurrentIndex = (apptNewsCurrentIndex + 1) % newsItems.length;
+                        renderNewsPicCard(newsItems[apptNewsCurrentIndex]);
+                    } else {
+                        renderApptCard();
+                    }
+                } else {
+                    isShowingAppt = true;
+                    apptNewsDuration = 50000; 
+                    renderApptCard();
+                }
+            } else {
+                isShowingAppt = false;
+                apptNewsDuration = 10000;
+                if(newsItems.length > 0) {
+                    apptNewsCurrentIndex = (apptNewsCurrentIndex + 1) % Math.min(6, newsItems.length);
+                    renderNewsPicCard(newsItems[apptNewsCurrentIndex]);
+                } else {
+                    renderApptCard();
+                }
+            }
+
+            apptNewsStartTime = Date.now();
+            apptNewsTimer = requestAnimationFrame(updateNewsProgressBar);
+            setTimeout(nextNewsSlide, apptNewsDuration);
+        }
+
+        async function initNewsSystem() {
+            newsItems = await fetchAllNews();
+            nextNewsSlide();
+            setInterval(async () => {
+                const h = new Date().getHours();
+                if(h >= 8 && h < 16) { newsItems = await fetchAllNews(); }
+            }, 5 * 60 * 1000);
+            
+            setInterval(async () => {
+                const h = new Date().getHours();
+                if(h < 8 || h >= 16) { newsItems = await fetchAllNews(); }
+            }, 60 * 60 * 1000);
+        }
+// 📌 ฟังก์ชันดึงสภาพอากาศที่หายไป
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
+                const dataW = await res.json();
+                
+                let pm25 = 15;
+                try {
+                    const resA = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2858&longitude=99.0183&current=pm2_5&timezone=Asia%2FBangkok');
+                    const dataA = await resA.json();
+                    if(dataA && dataA.current && dataA.current.pm2_5) {
+                        pm25 = Math.round(dataA.current.pm2_5);
+                    }
+                } catch(ea) {}
+                
+                const getWeatherEmoji = (code) => {
+                    if (code === 0) return '☀️'; if (code >= 1 && code <= 3) return '⛅';
+                    if (code >= 51 && code <= 67) return '🌧️'; if (code >= 95) return '⛈️';
+                    return '☁️';
+                };
+
+                document.getElementById('weather-icon').innerHTML = `<span class="text-[32px] leading-[0.8] drop-shadow-md">${getWeatherEmoji(dataW.current.weather_code)}</span>`;
+                
+                const curTemp = Math.round(dataW.current.temperature_2m);
+                const nextHourIdx = new Date().getHours() + 1;
+                const nextTemp = Math.round(dataW.hourly.temperature_2m[nextHourIdx] || curTemp);
+
+                document.getElementById('weather-temp-current').textContent = `${curTemp}°C`;
+                document.getElementById('weather-temp-next').textContent = `${nextTemp}°C`;
+                
+                const pmEl = document.getElementById('weather-pm');
+                pmEl.textContent = `PM2.5: ${pm25}`;
+                pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
+            } catch (error) {}
+        }
+        /* App Initialization */
+        window.addEventListener('load', function () {
+            console.log('Dashboard starting...');
+            updateClock(); 
+            updateBackground(); 
+            
+            fetchWeather().catch(error => {
+                console.warn('Weather error:', error);
+            });
+            
+            fetchHospitalData();
+            fetchSchedule(); 
+            
+            initNewsSystem();
+            startSliders();
+            
+            setInterval(() => {
+                const cur = document.getElementById('weather-temp-current');
+                const nxt = document.getElementById('weather-temp-next');
+                const lbl = document.getElementById('weather-label');
+                if(!cur || !nxt) return;
+                
+                if (cur.classList.contains('opacity-100')) {
+                    cur.classList.replace('opacity-100', 'opacity-0');
+                    cur.classList.replace('translate-y-0', '-translate-y-full');
+                    nxt.classList.replace('opacity-0', 'opacity-100');
+                    nxt.classList.replace('translate-y-full', 'translate-y-0');
+                    if(lbl) lbl.textContent = "ใน 1 ชม.";
+                } else {
+                    nxt.classList.replace('opacity-100', 'opacity-0');
+                    nxt.classList.replace('translate-y-0', 'translate-y-full');
+                    cur.classList.replace('opacity-0', 'opacity-100');
+                    cur.classList.replace('-translate-y-full', 'translate-y-0');
+                    if(lbl) lbl.textContent = "ปัจจุบัน";
+                }
+            }, 5000);
+
+            setInterval(updateClock, 1000); 
+            setInterval(fetchHospitalData, 30000);
+            setInterval(fetchSchedule, 30000);
+            setInterval(() => { fetchWeather(); updateBackground(); }, 3600 * 1000); 
+        });
+    </script>
+</body>
+</html>
