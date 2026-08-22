@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard ผู้ป่วยในและห้องยา - รพ.สวี</title>
-    <!-- Favicon รูปกาชาด -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23ef4444%22/><path d=%22M35 20h30v30h30v30h-30v30h-30v-30h-30v-30h30z%22 fill=%22white%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +13,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     
     <style>
-        /* Base Styles */
         body { 
             font-family: 'Noto Sans Thai', sans-serif !important; 
             margin: 0; 
@@ -86,7 +84,6 @@
             100% { transform: translate(5%, 10%) scale(1.1); } 
         }
         
-        /* Cards and Glassmorphism */
         .glass-panel { 
             background: rgba(255, 255, 255, 0.25); 
             backdrop-filter: blur(15px); 
@@ -146,7 +143,6 @@
         .fade-text { transition: opacity 0.5s ease-in-out; }
         .divider-gradient { height: 2px; background: linear-gradient(to right, transparent, rgba(0,0,0,0.15), transparent); margin: 4px 0; width: 90%; align-self: center; }
         
-        /* Bed Map and Animations */
         .ipd-badge { 
             position: absolute; 
             left: 0; 
@@ -181,7 +177,6 @@
         }
         .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
         
-        /* แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม */
         .bed-box { 
             position: relative; 
             border-radius: 4px; 
@@ -210,7 +205,6 @@
             background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.15) 5px, rgba(0,0,0,0.15) 10px); 
         }
 
-        /* News specific styles */
         .bg-blur-news { 
             position: absolute; 
             top: -5%; 
@@ -351,7 +345,6 @@
                 </div>
             </div>
 
-            <!-- Temps and Online Doctors -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-fridge-temp">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
@@ -381,7 +374,6 @@
                 </div>
             </div>
 
-            <!-- Weekly and Incidents -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-weekly">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0 px-1">
                     <h2 class="text-[15px] font-black text-slate-800 drop-shadow-sm"><i class="fas fa-calendar-alt text-teal-500 mr-2"></i>ตารางเวรสัปดาห์นี้</h2>
@@ -399,7 +391,6 @@
                 </div>
             </div>
 
-            <!-- Due and Boxes -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-due">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-pills text-purple-500 mr-2"></i>รายการยา DUE วันนี้</h2>
@@ -417,7 +408,6 @@
                 </div>
             </div>
 
-            <!-- Top Drugs and Calendar -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-top-drugs">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-chart-line text-blue-500 mr-2"></i>ยาใช้มากสุด <span id="unique-drug-count-wrap" class="text-[11px] text-slate-500 font-bold hidden">(<span id="unique-drug-count">0</span> รายการ)</span></h2>
@@ -446,7 +436,6 @@
                 </div>
             </div>
 
-            <!-- IPD Bed Maps -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-ipd-male">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm flex items-center">
@@ -647,7 +636,7 @@
                     </div>
                 </div>
 
-                <!-- 📌 การ์ดสภาพอากาศ -->
+                <!-- การ์ดสภาพอากาศ -->
                 <div class="card-3d p-2 flex flex-col items-center justify-center gap-0 min-w-[5.5rem] bg-white/80 shrink-0 relative overflow-hidden">
                     <div id="weather-icon" class="text-[32px] leading-[0.8] drop-shadow-md mb-0.5">
                         <i class="fas fa-spinner fa-spin text-slate-400"></i>
@@ -683,6 +672,8 @@
 
         let globalActiveBeds = {};
         let rxBoxMap = {}; let bedListByAN = {};
+        let globalBoxByBedMap = {}; 
+        
         const maleBedsDef = []; for(let i=1;i<=25;i++) maleBedsDef.push("M"+i);
         const femaleBedsDef = []; for(let i=1;i<=25;i++) femaleBedsDef.push("F"+i);
         let maleWard = [...maleBedsDef];
@@ -759,7 +750,7 @@
         function checkSwapCards(now) {
             const h = now.getHours(); const m = now.getMinutes(); const currentMins = (h * 60) + m;
             
-            // 📌 หาว่าเช้ามีคนไหม (ถ้าว่างหมดคือวันหยุด)
+            // หาว่าเช้ามีคนไหม (ถ้าว่างหมดคือวันหยุด)
             const morningRoles = ['card-key', 'card-ipd', 'card-tech', 'card-check1', 'card-check2', 'card-check3', 'card-dispense1', 'card-dispense2', 'card-clinic'];
             let hasMorningStaff = false;
             morningRoles.forEach(id => {
@@ -779,7 +770,6 @@
                     if (h >= 8 && h < 20) {
                         aftDiv.classList.remove('opacity-35', 'grayscale');
                         
-                        // เอาเฉพาะที่มีข้อมูล (แสดงรูป/ชื่อ)
                         let shownAftCards = 0;
                         const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
                         aftCards.forEach(id => {
@@ -936,7 +926,8 @@
                 const bedNo = item.bedno ? item.bedno : "-"; const hnNo = item.hn ? item.hn : "-"; const uniqueId = item.hn + "_" + scanItem.scan_datetime; 
                 const rawConfirm = scanItem.confirm_prescription ? String(scanItem.confirm_prescription).trim().toUpperCase() : 'N';
                 let isConfirmed = (rawConfirm === 'Y' || rawConfirm === '1' || rawConfirm === 'TRUE');
-                const rawBox = item.rx_box || item.ช่องเก็บยา || ""; const boxNum = rawBox.replace(/\D/g, ''); 
+                const rawBox = item.rx_box || item.ช่องเก็บยา || globalBoxByBedMap[bedNo] || ""; 
+                const boxNum = rawBox.replace(/\D/g, ''); 
 
                 if (!isConfirmed && bedNo !== "-") { 
                     if (!spokenItems.has(uniqueId)) { 
@@ -1014,7 +1005,6 @@
                 container.appendChild(row);
             });
 
-            // อัปเดต Badge ผู้ป่วยใหม่ IPD
             const uniqueAlerts = []; const seenBeds = new Set();
             for (const item of newUnconfirmedBeds) { if (!seenBeds.has(item.bed)) { seenBeds.add(item.bed); uniqueAlerts.push(item); } }
             
@@ -1051,7 +1041,6 @@
                     if (statusAdm === 'DC') countDC++;
                     if (statusAdm === 'ADM' || statusAdm === 'ADMIT') countAdm++;
                     
-                    // คำนวณเตียงว่าง (นับเฉพาะ CONT และ ADMIT เป็น active นอกนั้นถือว่าว่างรวม D/C)
                     if (wName.includes('ชาย') || wName.includes('MALE') || bedText.startsWith('M') || bedText.includes('VIP4')) {
                         countMale++;
                         if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeMale++;
@@ -1091,7 +1080,6 @@
             }
         }
 
-        // แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม โดยไม่ล้นหรือตัดขอบ
         function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             const container = document.getElementById(containerId);
             const listContainer = document.getElementById(`ipd-${suff}-list`);
@@ -1122,8 +1110,15 @@
                             : `<i class="fas fa-check-circle text-emerald-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow"></i>`;
                     }
                     
+                    const boxNumber = globalBoxByBedMap[bedName] || "";
+                    let dcBoxHtml = "";
+                    if (statusAdm === 'DC' && boxNumber) {
+                        dcBoxHtml = `<div class="absolute -top-[5px] -right-[5px] bg-slate-900 text-white text-[8px] font-black w-4 h-4 flex items-center justify-center rounded-full shadow-md z-20 border border-slate-600">${boxNumber}</div>`;
+                    }
+
                     html += `<div class="bed-box ${bgClass} h-[26px]">
                         ${scannedOverlay}
+                        ${dcBoxHtml}
                         <span class="text-[11px] font-black leading-none drop-shadow-md z-10">${bedName}</span>
                         ${confirmIconHtml}
                     </div>`;
@@ -1139,7 +1134,7 @@
                         
                         const hadItem = globalHadList.find(h => h.bedno === bedName);
                         if (hadItem) {
-                            catHAD += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2" title="${hadItem.had_drug_list}"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-white drop-shadow-sm">(${hadItem.had_drug_list})</span></div>`;
+                            catHAD += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2" title="${hadItem.had_drug_list}"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-slate-400 drop-shadow-sm">(${hadItem.had_drug_list})</span></div>`;
                         }
                     }
                 }
@@ -1167,7 +1162,6 @@
                 elProg.style.width = `${pct}%`;
             }
 
-            // อัปเดต Badge อัตราครองเตียงที่ถูกต้อง (นับเตียงว่างรวม D/C โดยใช้ Length จริงของการ์ดที่วาด)
             if(suff === 'm' || suff === 'f') {
                 const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
                 if(occupancyEl) {
@@ -1179,7 +1173,6 @@
             }
         }
 
-        /* STREAMING_CHUNK:Javascript Sub-Renderers */
         function renderRxBoxesView() {
             const container = document.getElementById('ipd-rx-grid');
             if(!container) return;
@@ -1193,10 +1186,6 @@
                     const st = (data.StatusAdm || 'CONT').toUpperCase();
                     if(st === 'DC') {
                         isDC = true; hasDCRx = true;
-                        if(data.AZ === 'Y') dcBadges += '<span class="text-[6px] bg-slate-900 text-white px-0.5 rounded mr-[1px]">AZ</span>';
-                        if(data.SY === 'Y') dcBadges += '<span class="text-[6px] bg-slate-900 text-white px-0.5 rounded mr-[1px]">SY</span>';
-                        if(data.TMF === 'Y') dcBadges += '<span class="text-[6px] bg-blue-700 text-white px-0.5 rounded mr-[1px]">TMF</span>';
-                        if(data.AUG === 'Y') dcBadges += '<span class="text-[6px] bg-orange-500 text-white px-0.5 rounded mr-[1px]">AUG</span>';
                     }
                 }
                 let bClass = 'bg-white/50 border border-white/20 opacity-70'; let tClass = 'text-slate-400'; let labelClass = 'text-slate-500';
@@ -1214,7 +1203,6 @@
             }
         }
 
-        // เริ่ม Animation ไต่ Rank แบบ Real-time
         function startTopDrugsSwapAnimation() {
             if (topDrugsAnimateInterval) return; 
             topDrugsAnimateInterval = setInterval(() => {
@@ -1265,7 +1253,6 @@
                 return; 
             }
 
-            // ถ้ามีการเริ่มแอนิเมชันอยู่แล้ว และไม่ได้เปลี่ยนข้อมูลกะทันหัน ให้ปล่อยรันต่อไป
             if (topDrugsAnimateInterval && container.children.length > 1 && !container.children[0].classList.contains('text-center')) {
                 return;
             }
@@ -1357,13 +1344,12 @@
             layer.classList.remove('hidden');
             setTimeout(() => layer.classList.replace('opacity-0', 'opacity-100'), 50);
 
-            // 📌 วันนัดล่วงหน้า > 30 วัน โชว์ 5 อันดับแรก ไม่ใส่ลำดับ
-            let html = `<div class="flex flex-col w-full px-1 gap-1 h-full justify-center">`;
+            let html = `<div class="flex flex-col w-full px-2 h-full justify-center" style="gap: 3px;">`;
             if(globalAppointments && globalAppointments.length > 0) {
-                globalAppointments.slice(0,5).forEach((item, idx) => {
-                    html += `<div class="flex justify-between items-center text-[10px] font-bold text-slate-700 bg-white/60 p-1 rounded border border-slate-200 shadow-sm leading-none">
-                                <span>${item['วันที่นัด']} <span class="text-blue-600 ml-0.5">[${item['จำนวนวันนัด']} วัน]</span></span>
-                                <span class="text-rose-600 font-black">(${item['จำนวนคน']} คน)</span>
+                globalAppointments.slice(0,5).forEach((item) => {
+                    html += `<div class="flex justify-between items-center text-[11px] font-bold text-slate-800 leading-none w-full">
+                                <span>${item['วันที่นัด']} <span class="text-blue-600 ml-1">[${item['จำนวนวันนัด']} วัน]</span></span>
+                                <span class="text-rose-600 font-black text-[10px]">(${item['จำนวนคน']} คน)</span>
                             </div>`;
                 });
             } else {
@@ -1464,7 +1450,16 @@
                 const timestamp = responseData.timestamp || null;
 
                 if (coreData && typeof coreData === 'object') {
-                    if (coreData.rx_boxes && Array.isArray(coreData.rx_boxes)) { rxBoxMap = {}; coreData.rx_boxes.forEach(r => { if(r.bedno && r.rx_box) rxBoxMap[r.rx_box] = r.bedno; }); }
+                    if (coreData.rx_boxes && Array.isArray(coreData.rx_boxes)) { 
+                        rxBoxMap = {}; 
+                        globalBoxByBedMap = {};
+                        coreData.rx_boxes.forEach(r => { 
+                            if(r.bedno && r.rx_box) {
+                                rxBoxMap[r.rx_box] = r.bedno; 
+                                globalBoxByBedMap[r.bedno] = r.rx_box.replace(/\D/g, ''); 
+                            }
+                        }); 
+                    }
                     
                     if (coreData.had_list && Array.isArray(coreData.had_list)) globalHadList = coreData.had_list;
                     
@@ -1675,24 +1670,11 @@
             if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
 
-        function renderLasa(lasaList) {
-            const container = document.getElementById('lasa-append-target');
-            if (!container) return;
-            if (!lasaList || lasaList.length === 0) return;
-            
-            let html = `<div class="mt-2 pt-2 border-t border-slate-300 w-full"><div class="flex justify-between items-center mb-1"><h3 class="text-[11px] font-black text-amber-700"><i class="fas fa-exclamation-triangle mr-1"></i>TOP 5 LASAs (30 วัน)</h3></div>`;
-            lasaList.forEach((item, index) => {
-                const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
-                html += `<div class="flex items-center text-[10px] bg-white/80 p-1.5 rounded shadow-sm border border-slate-200 mb-1">
-                    <i class="fas fa-pills ${rColor} mr-1.5 text-[10px] opacity-80"></i>
-                    <span class="font-bold text-slate-700 truncate max-w-[42%]">${item.d1}</span>
-                    <span class="text-slate-400 font-bold mx-1">-</span>
-                    <span class="font-bold text-slate-700 truncate max-w-[42%] flex-1">${item.d2}</span>
-                    <span class="font-black ${rColor} shrink-0 text-right">${item.count}</span>
-                </div>`;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
+        function renderAlertsError() {
+            const container = document.getElementById('alerts-container');
+            if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Server</div>`;
+            }
         }
 
         async function fetchSchedule() {
@@ -1704,10 +1686,14 @@
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 const data = await res.json();
                 if (data.error) {
-                    const container = document.getElementById('alerts-container');
-                    if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
-                         container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Google Sheet:<br>${data.error}</div>`;
-                    }
+                    renderAlertsError();
+                    if(data.today) updateStaffUI(data.today);
+                    renderTempStatus({fridge: [], room: []});
+                    renderLasa([]);
+                    renderWeekly([]);
+                    renderBoxes([], []);
+                    renderIncidents({er:{total:0, errors:0}, mr:[]});
+                    renderDue({stats:{}, lists:{}});
                     return;
                 }
                 if(data.today) updateStaffUI(data.today);
@@ -1724,6 +1710,9 @@
                 if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
                     container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
                 }
+                renderDue({stats: {}, lists: {}});
+                renderIncidents({er: {total:0, errors:0}, mr: [], er_monthly: []});
+                renderBoxes([], []);
             }
         }
 
@@ -1768,60 +1757,6 @@
             }
             fetchedNews.sort(() => Math.random() - 0.5);
             return fetchedNews;
-        }
-
-        function renderApptCard() {
-            const layer = document.getElementById('appt-layer');
-            const newsL = document.getElementById('news-layer');
-            if(!layer || !newsL) return;
-            
-            newsL.classList.replace('opacity-100', 'opacity-0');
-            setTimeout(() => newsL.classList.add('hidden'), 500);
-            
-            layer.classList.remove('hidden');
-            setTimeout(() => layer.classList.replace('opacity-0', 'opacity-100'), 50);
-
-            let html = `<div class="flex flex-col w-full px-1 gap-1 h-full justify-center">`;
-            if(globalAppointments && globalAppointments.length > 0) {
-                globalAppointments.slice(0,5).forEach((item, idx) => {
-                    html += `<div class="flex justify-between items-center text-[10px] font-bold text-slate-700 leading-tight bg-white/50 p-1 rounded shadow-sm border border-slate-200">
-                                <div class="flex items-center gap-1.5">
-                                    <span>${item['วันที่นัด']} <span class="text-blue-600 ml-0.5">[${item['จำนวนวันนัด']} วัน]</span></span>
-                                </div>
-                                <span class="text-rose-600 font-black text-[9px] bg-white px-1.5 py-0.5 rounded shadow-sm border border-rose-100">(${item['จำนวนคน']} คน)</span>
-                            </div>`;
-                });
-            } else {
-                html += `<div class="text-[10px] text-slate-500 font-bold text-center mt-4">กำลังรอข้อมูลวันนัด...</div>`;
-            }
-            html += `</div>`;
-            layer.innerHTML = html;
-        }
-
-        function renderNewsPicCard(item) {
-            const apptL = document.getElementById('appt-layer');
-            const newsL = document.getElementById('news-layer');
-            if(!apptL || !newsL) return;
-
-            apptL.classList.replace('opacity-100', 'opacity-0');
-            setTimeout(() => apptL.classList.add('hidden'), 500);
-            
-            newsL.classList.remove('hidden');
-
-            const mImg = document.getElementById('main-image');
-            mImg.classList.remove('opacity-100'); mImg.classList.add('opacity-0');
-            
-            setTimeout(() => {
-                mImg.src = item.image;
-                const bgBlur = document.getElementById('bg-blur');
-                if(bgBlur) bgBlur.style.backgroundImage = `url('${item.image}')`;
-                document.getElementById('news-title').innerText = item.title;
-                const sourceEl = document.getElementById('news-source');
-                sourceEl.innerText = item.source;
-                sourceEl.className = `px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest text-white shadow-lg ${item.color}`;
-                mImg.classList.remove('opacity-0'); mImg.classList.add('opacity-100');
-                newsL.classList.replace('opacity-0', 'opacity-100');
-            }, 500);
         }
 
         function updateNewsProgressBar() {
