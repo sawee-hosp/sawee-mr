@@ -62,7 +62,7 @@
         @keyframes numberPulse { 0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.3); } 60% { transform: scale(1); } 100% { transform: scale(1); } }
         .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
         
-        /* 📌 แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม (Badge มุมขวาล่างไม่ถูก Crop) */
+        /* 📌 แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม */
         .bed-box { 
             position: relative; 
             border-radius: 4px; 
@@ -534,7 +534,7 @@
 
         window.addEventListener('click', async function unlockAudio() {
             if (!audioUnlocked) {
-                audioUnlocked = true; 
+                audioUnlocked = true;
                 const banner = document.getElementById('audio-unlock-banner');
                 if (banner) { banner.classList.add('opacity-0'); banner.classList.remove('pointer-events-auto'); }
                 playNotificationSound();
@@ -1583,7 +1583,7 @@
             container.innerHTML = html;
         }
 
-        // 📌 ฟังก์ชันดึงสภาพอากาศ
+        // 📌 ฟังก์ชันดึงสภาพอากาศ กลับมาแล้ว
         async function fetchWeather() {
             try {
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
@@ -1617,6 +1617,196 @@
                 pmEl.textContent = `PM2.5: ${pm25}`;
                 pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
             } catch (error) {}
+        }
+
+        async function fetchSchedule() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 45000); 
+                const res = await fetch(GAS_SCHEDULE_API_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                if (data.error) {
+                    const container = document.getElementById('alerts-container');
+                    if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                         container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Google Sheet:<br>${data.error}</div>`;
+                    }
+                    return;
+                }
+                if(data.today) updateStaffUI(data.today);
+                if(data.alerts) renderAlerts(data.alerts);
+                if(data.tempStatus) renderTempStatus(data.tempStatus);
+                if(data.lasa) renderLasa(data.lasa);
+                if(data.weekly) renderWeekly(data.weekly);
+                if(data.boxes) renderBoxes(data.boxes, data.requisitions);
+                if(data.holidays) globalHolidays = data.holidays;
+                if(data.incidents) renderIncidents(data.incidents);
+                if(data.due) renderDue(data.due);
+            } catch(error) { 
+                const container = document.getElementById('alerts-container');
+                if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                    container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
+                }
+            }
+        }
+
+        // --- ระบบดึงและจัดการ News/Appt Slider แบบรูปภาพ ---
+        function checkImageValid(url) {
+            return new Promise((resolve) => {
+                if (!url || !url.startsWith('http')) { resolve(false); return; }
+                const img = new Image();
+                img.onload = () => { if (img.width > 200 && img.height > 150) { resolve(true); } else { resolve(false); } };
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        function extractImage(item) {
+            if (item.thumbnail && item.thumbnail !== "") return item.thumbnail;
+            if (item.enclosure && item.enclosure.link) return item.enclosure.link;
+            const html = item.content || item.description || "";
+            const match = html.match(/<img[^>]+(?:src|data-src)="([^">]+)"/i);
+            return match ? match[1] : null;
+        }
+
+        async function fetchAllNews() {
+            let fetchedNews = [];
+            for (const feed of RSS_FEEDS) {
+                try {
+                    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&api_key=`); 
+                    const data = await response.json();
+                    if (data.status === 'ok') {
+                        const rawItems = data.items.map(item => {
+                            let imageUrl = extractImage(item);
+                            return { title: item.title.split(' - ')[0], source: feed.name, color: feed.color, image: imageUrl };
+                        }).filter(item => item.image);
+
+                        const validationPromises = rawItems.slice(0, 4).map(async (item) => {
+                            const isValid = await checkImageValid(item.image);
+                            return isValid ? item : null;
+                        });
+                        const validatedItems = (await Promise.all(validationPromises)).filter(item => item !== null);
+                        fetchedNews = fetchedNews.concat(validatedItems);
+                    }
+                } catch (error) {}
+            }
+            fetchedNews.sort(() => Math.random() - 0.5);
+            return fetchedNews;
+        }
+
+        function renderApptCard() {
+            const layer = document.getElementById('appt-layer');
+            const newsL = document.getElementById('news-layer');
+            if(!layer || !newsL) return;
+            
+            newsL.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => newsL.classList.add('hidden'), 500);
+            
+            layer.classList.remove('hidden');
+            setTimeout(() => layer.classList.replace('opacity-0', 'opacity-100'), 50);
+
+            let html = `<div class="text-[11px] font-black text-blue-900 w-full text-center border-b border-blue-200 pb-0.5 mb-1"><i class="fas fa-calendar-alt text-rose-500 mr-1"></i>วันนัดที่พบบ่อย (ล่วงหน้า)</div><div class="flex flex-col w-full px-1">`;
+            if(globalAppointments && globalAppointments.length > 0) {
+                globalAppointments.slice(0,5).forEach(item => {
+                    html += `<div class="flex justify-between items-center text-[10px] font-bold text-slate-700 leading-tight mb-0.5">
+                                <span>${item['วันที่นัด']} <span class="bg-blue-100 text-blue-800 border border-blue-200 px-1 rounded shadow-sm text-[8px] font-black ml-1">[${item['จำนวนวันนัด']} วัน]</span></span>
+                                <span class="text-rose-600 font-black text-[9px]">(${item['จำนวนคน']} คน)</span>
+                            </div>`;
+                });
+            } else {
+                html += `<div class="text-[10px] text-slate-500 font-bold text-center mt-4">กำลังรอข้อมูลวันนัด...</div>`;
+            }
+            html += `</div>`;
+            layer.innerHTML = html;
+        }
+
+        function renderNewsPicCard(item) {
+            const apptL = document.getElementById('appt-layer');
+            const newsL = document.getElementById('news-layer');
+            if(!apptL || !newsL) return;
+
+            apptL.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => apptL.classList.add('hidden'), 500);
+            
+            newsL.classList.remove('hidden');
+
+            const mImg = document.getElementById('main-image');
+            mImg.classList.remove('opacity-100'); mImg.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                mImg.src = item.image;
+                const bgBlur = document.getElementById('bg-blur');
+                if(bgBlur) bgBlur.style.backgroundImage = `url('${item.image}')`;
+                document.getElementById('news-title').innerText = item.title;
+                const sourceEl = document.getElementById('news-source');
+                sourceEl.innerText = item.source;
+                sourceEl.className = `px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest text-white shadow-lg ${item.color}`;
+                mImg.classList.remove('opacity-0'); mImg.classList.add('opacity-100');
+                newsL.classList.replace('opacity-0', 'opacity-100');
+            }, 500);
+        }
+
+        function updateNewsProgressBar() {
+            if (!apptNewsIsPlaying) return;
+            const elapsed = Date.now() - apptNewsStartTime;
+            const progress = (elapsed / apptNewsDuration) * 100;
+            const pb = document.getElementById('progress-bar-fill');
+            if(pb) pb.style.width = `${Math.min(progress, 100)}%`;
+            if (progress < 100) { apptNewsTimer = requestAnimationFrame(updateNewsProgressBar); }
+        }
+
+        function nextNewsSlide() {
+            cancelAnimationFrame(apptNewsTimer);
+            const pb = document.getElementById('progress-bar-fill');
+            if(pb) { pb.style.transition = 'none'; pb.style.width = '0%'; void pb.offsetWidth; pb.style.transition = 'width 0.1s linear'; }
+            
+            const h = new Date().getHours();
+            const isWorkingHour = h >= 8 && h < 16;
+
+            if (isWorkingHour) {
+                if (isShowingAppt) {
+                    isShowingAppt = false;
+                    apptNewsDuration = 10000; 
+                    if(newsItems.length > 0) {
+                        apptNewsCurrentIndex = (apptNewsCurrentIndex + 1) % newsItems.length;
+                        renderNewsPicCard(newsItems[apptNewsCurrentIndex]);
+                    } else {
+                        renderApptCard();
+                    }
+                } else {
+                    isShowingAppt = true;
+                    apptNewsDuration = 50000; 
+                    renderApptCard();
+                }
+            } else {
+                isShowingAppt = false;
+                apptNewsDuration = 10000;
+                if(newsItems.length > 0) {
+                    apptNewsCurrentIndex = (apptNewsCurrentIndex + 1) % Math.min(6, newsItems.length);
+                    renderNewsPicCard(newsItems[apptNewsCurrentIndex]);
+                } else {
+                    renderApptCard();
+                }
+            }
+
+            apptNewsStartTime = Date.now();
+            apptNewsTimer = requestAnimationFrame(updateNewsProgressBar);
+            setTimeout(nextNewsSlide, apptNewsDuration);
+        }
+
+        async function initNewsSystem() {
+            newsItems = await fetchAllNews();
+            nextNewsSlide();
+            setInterval(async () => {
+                const h = new Date().getHours();
+                if(h >= 8 && h < 16) { newsItems = await fetchAllNews(); }
+            }, 5 * 60 * 1000);
+            
+            setInterval(async () => {
+                const h = new Date().getHours();
+                if(h < 8 || h >= 16) { newsItems = await fetchAllNews(); }
+            }, 60 * 60 * 1000);
         }
 
         /* STREAMING_CHUNK:App Initialization */
@@ -1665,3 +1855,4 @@
     </script>
 </body>
 </html>
+```eof
