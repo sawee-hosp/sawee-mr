@@ -270,13 +270,14 @@
                 <i class="fas fa-pause text-[10px]" id="pause-toggle-icon"></i>
             </button>
             
-            <div class="w-full h-full flex flex-col min-h-0" id="col-staff" style="display: flex;">
+ <div class="w-full h-full flex flex-col min-h-0" id="col-staff" style="display: flex;">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i>เภสัชกรประจำวัน</h2>
                     <span class="text-xs font-bold text-white bg-indigo-500 px-2 py-0.5 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
                 </div>
                 
-                <div class="flex-1 flex flex-col justify-around min-h-0 pb-1" id="staff-grid">
+                <!-- 📌 ส่วนที่ 1: ตารางเวรวันปกติ (staff-grid) -->
+                <div id="staff-grid" class="flex-1 overflow-hidden flex flex-col gap-1 min-h-0">
                     <div class="flex justify-center gap-4">
                         <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;">
                             <img src="" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover object-top profile-img mb-1 staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
@@ -331,19 +332,49 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-1 pt-1 border-t-2 border-slate-400/30 shrink-0">
+
+                <!-- 📌 ส่วนที่ 2: ตารางเวรวันหยุด (holiday-grid) (จะโชว์เฉพาะวันหยุด) -->
+                <div id="holiday-grid" class="hidden flex-1 flex-col gap-2 min-h-0 pt-2">
+                    <div class="staff-item flex items-center bg-white/70 p-2 rounded-md border shadow-sm transition-all duration-300" data-role="hol-allday" id="card-hol-pharm" style="display:none;">
+                        <img src="" class="w-10 h-10 rounded-full object-cover object-top profile-img staff-img border border-slate-300 shadow-sm shrink-0 bg-white" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <div class="ml-2 flex flex-col min-w-0 flex-1">
+                            <span class="text-[11px] font-black text-rose-700 leading-none truncate">เภสัชกรวันหยุด</span>
+                            <span class="text-[12px] font-bold text-slate-800 truncate leading-tight staff-name mt-0.5">--</span>
+                        </div>
+                        <div class="staff-role-text text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border ml-1 shrink-0">08:00-20:00</div>
+                    </div>
+                    <div class="staff-item flex items-center bg-white/70 p-2 rounded-md border shadow-sm transition-all duration-300" data-role="hol-allday" id="card-hol-tech-allday" style="display:none;">
+                        <img src="" class="w-10 h-10 rounded-full object-cover object-top profile-img staff-img border border-slate-300 shadow-sm shrink-0 bg-white" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <div class="ml-2 flex flex-col min-w-0 flex-1">
+                            <span class="text-[11px] font-black text-blue-700 leading-none truncate">จพ.เภสัช ชบ.</span>
+                            <span class="text-[12px] font-bold text-slate-800 truncate leading-tight staff-name mt-0.5">--</span>
+                        </div>
+                        <div class="staff-role-text text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border ml-1 shrink-0">08:00-20:00</div>
+                    </div>
+                    <div class="staff-item flex items-center bg-white/70 p-2 rounded-md border shadow-sm transition-all duration-300" data-role="hol-morning" id="card-hol-tech-morn" style="display:none;">
+                        <img src="" class="w-10 h-10 rounded-full object-cover object-top profile-img staff-img border border-slate-300 shadow-sm shrink-0 bg-white" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
+                        <div class="ml-2 flex flex-col min-w-0 flex-1">
+                            <span class="text-[11px] font-black text-emerald-700 leading-none truncate">จพ.เภสัช เช้า</span>
+                            <span class="text-[12px] font-bold text-slate-800 truncate leading-tight staff-name mt-0.5">--</span>
+                        </div>
+                        <div class="staff-role-text text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border ml-1 shrink-0">08:00-16:00</div>
+                    </div>
+                </div>
+
+                <!-- 📌 ส่วนที่ 3: เวรบ่าย/Oncall (ดันชิดขอบล่างด้วย mt-auto เสมอ) -->
+                <div class="mt-auto pt-1 border-t-2 border-slate-400/30 shrink-0">
                     <div class="card-3d p-2 py-1.5 flex justify-around items-center bg-white/60 transition-all duration-300" id="aft-container-div">
-                        <div class="flex flex-col text-center" id="card-aft-pharm" style="display:none;">
+                        <div class="staff-item flex flex-col text-center" data-role="aft" id="card-aft-pharm" style="display:none;">
                             <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span>
                             <span class="text-xs font-black text-slate-800 staff-name">--</span>
                         </div>
                         <div class="w-[2px] h-6 bg-slate-300" id="div-aft-tech1"></div>
-                        <div class="flex flex-col text-center" id="card-aft-tech1" style="display:none;">
+                        <div class="staff-item flex flex-col text-center" data-role="aft" id="card-aft-tech1" style="display:none;">
                             <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span>
                             <span class="text-xs font-black text-slate-800 staff-name">--</span>
                         </div>
                         <div class="w-[2px] h-6 bg-slate-300" id="div-oncall"></div>
-                        <div class="flex flex-col text-center" id="card-oncall" style="display:none;">
+                        <div class="staff-item flex flex-col text-center" data-role="oncall" id="card-oncall" style="display:none;">
                             <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span>
                             <span class="text-xs font-black text-slate-800 staff-name">--</span>
                         </div>
@@ -778,8 +809,10 @@
             }
         });
 
-        function checkSwapCards(now) {
+function checkSwapCards(now) {
             const h = now.getHours(); const m = now.getMinutes(); const currentMins = (h * 60) + m;
+            const cM = currentMins; 
+            const cS = h * 3600 + m * 60 + now.getSeconds();
             
             // หาว่าเช้ามีคนไหม (ถ้าว่างหมดคือวันหยุด)
             const morningRoles = ['card-key', 'card-ipd', 'card-tech', 'card-check1', 'card-check2', 'card-check3', 'card-dispense1', 'card-dispense2', 'card-clinic'];
@@ -791,89 +824,115 @@
             
             const isHoliday = !hasMorningStaff;
             const staffGrid = document.getElementById('staff-grid');
+            const holGrid = document.getElementById('holiday-grid');
             const aftDiv = document.getElementById('aft-container-div');
             
-            let activeCountNum = 0;
+            let active = new Set();
 
+            // 📌 1. จัดการตารางเวรปกติ vs วันหยุด
             if (isHoliday) {
                 if(staffGrid) staffGrid.style.display = 'none';
-                if(aftDiv) {
-                    if (h >= 8 && h < 20) {
-                        aftDiv.classList.remove('opacity-35', 'grayscale');
-                        
-                        let shownAftCards = 0;
-                        const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
-                        aftCards.forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el && el.style.display !== 'none') {
-                                shownAftCards++;
-                                el.style.opacity = '1';
-                                el.style.filter = 'none';
-                            }
-                        });
-                        activeCountNum = shownAftCards;
+                if(holGrid) holGrid.style.display = 'flex';
+                
+                const holRoles = { 
+                    'hol-allday': [{ start: 8*60, end: 20*60 }], 
+                    'hol-morning': [{ start: 8*60, end: 16*60 }] 
+                };
+                
+                document.querySelectorAll('#holiday-grid .staff-item').forEach(el => {
+                    if (el.style.display === 'none') return; 
+                    const shifts = holRoles[el.dataset.role]; if (!shifts) return;
+                    let isAct = false, isEnd = false, remS = 0;
+                    for (let s of shifts) { 
+                        if (cM >= s.start && cM < s.end) { 
+                            isAct = true; remS = (s.end * 60) - cS; 
+                            if (remS <= 300) isEnd = true; 
+                            break; 
+                        } 
+                    }
+                    el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
+                    const rtEl = el.querySelector('.staff-role-text');
+                    if (isAct) {
+                        const nm = el.querySelector('.staff-name').textContent.trim(); if (nm && nm !== '--') active.add(nm);
+                        if (isEnd) { el.classList.add('staff-ending'); rtEl.textContent = `${Math.floor(remS / 60).toString().padStart(2, '0')}:${(remS % 60).toString().padStart(2, '0')}`; rtEl.classList.add('countdown-text'); }
+                        else { el.classList.add('staff-active'); rtEl.classList.remove('countdown-text'); }
+                    } else { el.classList.add('staff-inactive'); rtEl.classList.remove('countdown-text'); }
+                });
 
-                    } else {
-                        aftDiv.classList.add('opacity-35', 'grayscale');
-                        activeCountNum = 0;
-                    }
-                }
             } else {
-                if (h >= 16) {
-                    if(staffGrid) staffGrid.style.display = 'none';
-                    if(aftDiv) {
-                        aftDiv.classList.remove('opacity-35', 'grayscale');
-                        
-                        let shownAftCards = 0;
-                        const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
-                        aftCards.forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el && el.style.display !== 'none') {
-                                shownAftCards++;
-                                el.style.opacity = '1';
-                                el.style.filter = 'none';
-                            }
-                        });
-                        activeCountNum = shownAftCards;
+                if(staffGrid) staffGrid.style.display = 'flex';
+                if(holGrid) holGrid.style.display = 'none';
+                
+                const roles = { 
+                    'key': [{ start: 8*60, end: 11*60+30 }, { start: 12*60+30, end: 16*60 }], 
+                    'ipd': [{ start: 8*60, end: 12*60 }, { start: 13*60, end: 16*60 }], 
+                    'check': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 
+                    'dispense': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 
+                    'clinic': [{ start: 8*60, end: 12*60 }], 
+                    'tech': [{ start: 8*60, end: 11*60 }, { start: 12*60, end: 16*60 }] 
+                };
+                
+                document.querySelectorAll('#staff-grid .staff-item').forEach(el => {
+                    if (el.style.display === 'none') return; 
+                    const shifts = roles[el.dataset.role]; if (!shifts) return;
+                    let isAct = false, isEnd = false, remS = 0;
+                    for (let s of shifts) { 
+                        if (cM >= s.start && cM < s.end) { 
+                            isAct = true; remS = (s.end * 60) - cS; 
+                            if (remS <= 300) isEnd = true; 
+                            break; 
+                        } 
                     }
-                } else {
-                    if(staffGrid) staffGrid.style.display = 'flex';
-                    if(aftDiv) {
-                        aftDiv.classList.add('opacity-35', 'grayscale');
-                    }
-                    
-                    const cM = now.getHours() * 60 + now.getMinutes(), cS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-                    const roles = { 'key': [{ start: 8*60, end: 11*60+30 }, { start: 12*60+30, end: 16*60 }], 'ipd': [{ start: 8*60, end: 12*60 }, { start: 13*60, end: 16*60 }], 'check': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'dispense': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'clinic': [{ start: 8*60, end: 12*60 }], 'tech': [{ start: 8*60, end: 11*60 }, { start: 12*60, end: 16*60 }] };
-                    
-                    let active = new Set();
-                    document.querySelectorAll('#staff-grid .staff-item').forEach(el => {
-                        if (el.style.display === 'none') return; 
-                        const shifts = roles[el.dataset.role]; if (!shifts) return;
-                        let isAct = false, isEnd = false, remS = 0;
-                        for (let s of shifts) { if (cM >= s.start && cM < s.end) { isAct = true; remS = (s.end * 60) - cS; if (remS <= 300) isEnd = true; break; } }
-                        el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
-                        const rtEl = el.querySelector('.staff-role-text');
-                        if (isAct) {
-                            const nm = el.querySelector('.staff-name').textContent.trim(); if (nm && nm !== '--') active.add(nm);
-                            if (isEnd) { el.classList.add('staff-ending'); rtEl.textContent = `${Math.floor(remS / 60).toString().padStart(2, '0')}:${(remS % 60).toString().padStart(2, '0')}`; rtEl.classList.add('countdown-text'); }
-                            else { el.classList.add('staff-active'); rtEl.classList.remove('countdown-text'); }
-                        } else { el.classList.add('staff-inactive'); rtEl.classList.remove('countdown-text'); }
-                    });
-                    activeCountNum = active.size;
-                }
+                    el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
+                    const rtEl = el.querySelector('.staff-role-text');
+                    if (isAct) {
+                        const nm = el.querySelector('.staff-name').textContent.trim(); if (nm && nm !== '--') active.add(nm);
+                        if (isEnd) { el.classList.add('staff-ending'); rtEl.textContent = `${Math.floor(remS / 60).toString().padStart(2, '0')}:${(remS % 60).toString().padStart(2, '0')}`; rtEl.classList.add('countdown-text'); }
+                        else { el.classList.add('staff-active'); rtEl.classList.remove('countdown-text'); }
+                    } else { el.classList.add('staff-inactive'); rtEl.classList.remove('countdown-text'); }
+                });
             }
 
+            // 📌 2. เวรบ่าย/Oncall (ทำงานแยกอิสระ แสดงตลอด ไม่โดน Grayscale)
+            if (aftDiv) {
+                aftDiv.classList.remove('opacity-35', 'grayscale', 'hidden');
+                
+                const aftRoles = {
+                    'aft': [{ start: 16*60, end: 24*60 }],
+                    'oncall': [{ start: 16*60, end: 24*60 }, { start: 0, end: 8*60 }]
+                };
+                
+                document.querySelectorAll('#aft-container-div .staff-item, #aft-container-div .flex-col').forEach(el => {
+                    if (el.style.display === 'none') return;
+                    const role = el.dataset.role;
+                    if(!role) return;
+                    const shifts = aftRoles[role]; if (!shifts) return;
+                    let isAct = false;
+                    for (let s of shifts) { 
+                        if (cM >= s.start && cM < s.end) { isAct = true; break; } 
+                    }
+                    el.classList.remove('staff-active', 'staff-inactive', 'staff-ending');
+                    if (isAct) {
+                        el.classList.add('staff-active');
+                        const nm = el.querySelector('.staff-name').textContent.trim(); if (nm && nm !== '--') active.add(nm);
+                    } else {
+                        el.classList.add('staff-inactive');
+                    }
+                });
+            }
+
+            let activeCountNum = active.size;
             document.getElementById('active-staff-count').textContent = activeCountNum + ' คน';
             if (previousActiveCount !== -1 && previousActiveCount !== activeCountNum) { playShiftChangeMelody(); }
             previousActiveCount = activeCountNum;
 
+            // 📌 3. การหมุนการ์ดต่างๆ ตามเวลา 30 วิ
             const secTotal = (now.getMinutes() * 60) + now.getSeconds();
             const allCols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-top-drugs', 'col-calendar'];
             const colsToLoop = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-incident', 'col-due', 'col-top-drugs', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-boxes', 'col-calendar'];
             
-            // 📌 Logic หยุดสลับหน้าจอ (Pause)
+            // Logic หยุดสลับหน้าจอ (Pause)
             if (isLeftColPaused) {
-                // ถ้าถูกสั่งหยุด ให้โชว์หน้าที่ล็อกไว้ (pausedColId)
                 if (pausedColId) {
                     allCols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
                     const showCol = document.getElementById(pausedColId);
@@ -882,7 +941,6 @@
                 return; // หยุดการทำงานส่วนลูปเวลาทิ้งไปเลย
             }
             
-            // ทำงานปกติตามรอบ 30 วินาที
             const cycle = Math.floor((secTotal % (colsToLoop.length * 30)) / 30);
             
             allCols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
@@ -894,11 +952,11 @@
             if (isShiftTransition) {
                 const staffCol = document.getElementById('col-staff');
                 if (staffCol) staffCol.style.display = 'flex';
-                pausedColId = 'col-staff'; // แอบเก็บค่าไว้ เผื่อผู้ใช้กดหยุดช่วงนี้
+                pausedColId = 'col-staff'; 
             } else {
                 const showCol = document.getElementById(colsToLoop[cycle]);
                 if (showCol) showCol.style.display = 'flex';
-                pausedColId = colsToLoop[cycle]; // แอบเก็บค่าไว้ เผื่อผู้ใช้กดหยุด
+                pausedColId = colsToLoop[cycle]; 
                 
                 if ((colsToLoop[cycle] === 'col-fridge-temp' || colsToLoop[cycle] === 'col-room-temp') && window.lastTempStatusData) {
                     setTimeout(() => renderTempStatus(window.lastTempStatusData), 50);
@@ -1625,7 +1683,7 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
             }
         }
 
-        function updateStaffUI(data) {
+function updateStaffUI(data) {
             if(!data) return;
             const mapData = (elId, prop, defRole) => {
                 const el = document.getElementById(elId); if(!el) return;
@@ -1641,9 +1699,57 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
                     if(prop === 'clinic' && st.clinicLabel) el.querySelector('.staff-clinic').textContent = st.clinicLabel;
                 }
             };
-            mapData('card-key', 'key', 'ภ.คีย์'); mapData('card-ipd', 'ipd', 'ภ.ใน'); mapData('card-tech', 'tech_morning', 'จพ.เช้า'); mapData('card-check1', 'check1', 'ภ.เช็ค1'); mapData('card-check2', 'check2', 'ภ.เช็ค2'); mapData('card-check3', 'check3', 'ภ.เช็ค3'); mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1'); mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2'); mapData('card-clinic', 'clinic', 'ภ.คลินิก'); mapData('card-aft-pharm', 'afternoon_pharm', ''); mapData('card-aft-tech1', 'afternoon_tech1', ''); mapData('card-oncall', 'oncall', '');
-            document.getElementById('div-aft-tech1').style.display = document.getElementById('card-aft-tech1').style.display !== 'none' ? 'block' : 'none';
-            document.getElementById('div-oncall').style.display = document.getElementById('card-oncall').style.display !== 'none' ? 'block' : 'none';
+            
+            // 📌 แมปข้อมูลวันปกติ และเวรบ่าย (คงเดิม)
+            mapData('card-key', 'key', 'ภ.คีย์'); 
+            mapData('card-ipd', 'ipd', 'ภ.ใน'); 
+            mapData('card-tech', 'tech_morning', 'จพ.เช้า'); 
+            mapData('card-check1', 'check1', 'ภ.เช็ค1'); 
+            mapData('card-check2', 'check2', 'ภ.เช็ค2'); 
+            mapData('card-check3', 'check3', 'ภ.เช็ค3'); 
+            mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1'); 
+            mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2'); 
+            mapData('card-clinic', 'clinic', 'ภ.คลินิก'); 
+            mapData('card-aft-pharm', 'afternoon_pharm', ''); 
+            mapData('card-aft-tech1', 'afternoon_tech1', ''); 
+            mapData('card-oncall', 'oncall', '');
+
+            // 📌 แมปข้อมูลวันหยุด (แยก 3 ชื่อจาก String เดียว)
+            let holNames = [];
+            // ดึงข้อมูลวันหยุด (รองรับชื่อตัวแปร holiday_staff หรือ holiday จากฝั่ง GAS)
+            let holData = data['holiday_staff'] || data['holiday']; 
+            let holStr = "";
+            if (holData && holData.name) holStr = holData.name;
+            else if (typeof holData === 'string') holStr = holData;
+            
+            if (holStr) holNames = holStr.trim().split(/\s+/); // หั่นด้วยช่องว่าง
+
+            const mapHoliday = (elId, nameStr) => {
+                const el = document.getElementById(elId); if(!el) return;
+                if(!nameStr || nameStr === '--') {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = 'flex';
+                    const nEl = el.querySelector('.staff-name'); if(nEl) nEl.textContent = nameStr;
+                    const iEl = el.querySelector('.staff-img');
+                    if(iEl) { 
+                        iEl.setAttribute("referrerpolicy", "no-referrer"); 
+                        // พยายามดึงรูปจาก globalPicMap หรือใช้ตัวหนังสือย่อถ้าไม่มีรูป
+                        iEl.src = (typeof globalPicMap !== 'undefined' && globalPicMap[nameStr]) ? globalPicMap[nameStr] : `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(nameStr.substring(0, 2))}`; 
+                    }
+                }
+            };
+
+            // โยนชื่อลงการ์ดทั้ง 3 ใบตามลำดับ
+            mapHoliday('card-hol-pharm', holNames[0] || '');
+            mapHoliday('card-hol-tech-allday', holNames[1] || '');
+            mapHoliday('card-hol-tech-morn', holNames[2] || '');
+
+            // 📌 ซ่อน/แสดง เส้นคั่นของเวรบ่าย
+            const divAftTech1 = document.getElementById('div-aft-tech1');
+            if(divAftTech1) divAftTech1.style.display = document.getElementById('card-aft-tech1').style.display !== 'none' ? 'block' : 'none';
+            const divOncall = document.getElementById('div-oncall');
+            if(divOncall) divOncall.style.display = document.getElementById('card-oncall').style.display !== 'none' ? 'block' : 'none';
         }
 
         function renderAlerts(alerts) {
@@ -1713,57 +1819,105 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
             ctx.fillStyle = fillGrad; ctx.fill();
         }
 
-        function renderTempStatus(tempStatus) {
-            window.lastTempStatusData = tempStatus; 
-            let hasFridgeAlert = false; let hasRoomAlert = false;
-            
-            const createCard = (item, isFridge, idx) => {
-                const isAlert = item.alert; const hasData = item.temp !== '--' && item.temp !== '';
-                if (isAlert && hasData) { if (isFridge) hasFridgeAlert = true; else hasRoomAlert = true; }
+// 📌 1. ฟังก์ชันคำนวณสีพื้นหลังตามช่วงอุณหภูมิ (ไล่เฉดสี ฟ้า -> แดง)
+        function getTempBgColor(temp, type) {
+            if (temp === '--' || isNaN(parseFloat(temp))) return 'rgba(255, 255, 255, 0.7)'; // ค่าเริ่มต้น
+            let t = parseFloat(temp);
+            let r, g, b;
+
+            if (type === 'fridge') {
+                if (t < 2) {
+                    return 'rgba(59, 130, 246, 0.5)'; // < 2 องศา: สีฟ้า 50%
+                } else if (t >= 2 && t <= 8) {
+                    // 2 - 8 องศา: ไล่เฉดจากฟ้า (59, 130, 246) ไปแดง (239, 68, 68) ที่โปร่งใส 25%
+                    let ratio = (t - 2) / 6;
+                    r = Math.round(59 + ratio * (239 - 59));
+                    g = Math.round(130 + ratio * (68 - 130));
+                    b = Math.round(246 + ratio * (68 - 246));
+                    return `rgba(${r}, ${g}, ${b}, 0.25)`;
+                } else {
+                    return 'rgba(239, 68, 68, 0.25)'; // > 8 องศา: สีแดง 25%
+                }
+            } else if (type === 'room') {
+                if (t < 20) {
+                    return 'rgba(59, 130, 246, 0.5)'; // < 20 องศา: สีฟ้า 50%
+                } else if (t >= 20 && t <= 30) {
+                    // 20 - 30 องศา: ไล่เฉดจากฟ้าไปแดง ที่โปร่งใส 25%
+                    let ratio = (t - 20) / 10;
+                    r = Math.round(59 + ratio * (239 - 59));
+                    g = Math.round(130 + ratio * (68 - 130));
+                    b = Math.round(246 + ratio * (68 - 246));
+                    return `rgba(${r}, ${g}, ${b}, 0.25)`;
+                } else {
+                    return 'rgba(239, 68, 68, 0.25)'; // > 30 องศา: สีแดง 25%
+                }
+            }
+            return 'rgba(255, 255, 255, 0.7)';
+        }
+
+        // 📌 2. ฟังก์ชันวาดการ์ดอุณหภูมิ (อัปเดตใส่ Background อัตโนมัติ)
+        function renderTempStatus(data) {
+            if (!data) return;
+            window.lastTempStatusData = data; // เก็บไว้โหลดซ้ำตอนสลับการ์ด
+
+            const renderCards = (items, containerId, type) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
                 
-                let cardClass = isAlert ? "temp-alert-card" : "bg-white/95 border-slate-200";
-                let headerClass = isAlert ? "text-white" : "text-white";
-                let headerStyle = isAlert ? "background: linear-gradient(to right, #dc2626, #991b1b);" : (isFridge ? "background: linear-gradient(to right, #0369a1, #075985);" : "background: linear-gradient(to right, #047857, #065f46);");
-                        
-                let tempColor = isAlert ? "text-red-700" : "text-slate-800";
-                let humColor = isAlert ? "text-red-500" : "text-slate-500";
+                if (!items || items.length === 0) {
+                    container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4 font-bold">ไม่พบข้อมูลอุปกรณ์</div>`;
+                    return;
+                }
 
-                if (!hasData) { cardClass = "bg-slate-200 border-slate-300 opacity-70"; headerClass = "text-white"; headerStyle = "background: #94a3b8;"; tempColor = "text-slate-400"; humColor = "text-slate-400"; }
-                const canvasId = `sparkline-${isFridge ? 'f' : 'r'}-${idx}`;
-                return `<div class="card-3d relative overflow-hidden flex flex-col ${cardClass} h-[70px]"><div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-black uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center z-10 shadow-sm" style="${headerStyle}">${item.name}</div><div class="flex-1 flex flex-col items-center justify-center bg-white/45 min-h-0 z-10 pt-1 pb-2"><span class="text-xl font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span><span class="text-[9px] font-bold ${humColor} leading-none mt-1 opacity-95">RH: ${item.hum}%</span></div>${hasData ? `<canvas id="${canvasId}" class="absolute bottom-0 left-0 w-full h-1/3 z-0 opacity-80 pointer-events-none"></canvas>` : ''}</div>`;
-            };
-
-            const renderGroup = (data, isFridge) => {
-                if (!data || data.length === 0) return '';
                 let html = '';
-                const renderSection = (title, items) => {
-                    if (items.length === 0) return '';
-                    let sectionHtml = `<div class="col-span-3 flex justify-center mt-1 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
-                    sectionHtml += items.map((item, idx) => createCard(item, isFridge, title.length+idx)).join(''); 
-                    return sectionHtml;
-                };
-                html += renderSection('ห้องยา', data.filter(i => i.room === 'ห้องยา'));
-                html += renderSection('คลังยา', data.filter(i => i.room === 'คลังยา'));
-                html += renderSection('หน่วยงานอื่นๆ', data.filter(i => i.room !== 'ห้องยา' && i.room !== 'คลังยา'));
-                return html;
+                items.forEach((item, index) => {
+                    const isAlert = item.alert;
+                    const tempVal = parseFloat(item.temp);
+                    
+                    // เงื่อนไขแจ้งเตือนอุณหภูมิผิดปกติ (Logic เดิม)
+                    const isTempError = !isNaN(tempVal) && (type === 'fridge' ? (tempVal < 2 || tempVal > 8) : (tempVal < 20 || tempVal > 30));
+                    
+                    // Header และ Border สีแดงถ้าแจ้งเตือน (Logic เดิม)
+                    const headerClass = isAlert || isTempError ? 'text-rose-700 bg-rose-200 border-rose-300 font-black' : 'text-slate-700 bg-slate-100 border-slate-200';
+                    const borderClass = isAlert || isTempError ? 'border-rose-400 shadow-[0_0_8px_rgba(225,29,72,0.3)]' : 'border-slate-200 shadow-sm';
+                    const textClass = isAlert || isTempError ? 'text-rose-600 animate-pulse' : 'text-slate-800';
+                    
+                    // ดึงสี Background แบบไล่เฉด (ฟังก์ชันใหม่)
+                    const bgColor = getTempBgColor(item.temp, type);
+
+                    html += `
+                    <div class="card-3d border ${borderClass} rounded-md overflow-hidden flex flex-col mb-1.5 transition-all duration-500" style="background-color: ${bgColor}; backdrop-filter: blur(4px);">
+                        <div class="text-[9px] font-bold px-1.5 py-0.5 border-b flex justify-between items-center ${headerClass}">
+                            <span class="truncate pr-1"><i class="fas fa-thermometer-half mr-1"></i>${item.name}</span>
+                            <span class="shrink-0 text-[8px] opacity-80">${item.room || ''}</span>
+                        </div>
+                        <div class="p-1 flex items-center justify-between">
+                            <div class="flex flex-col pl-1">
+                                <div class="text-xl font-black ${textClass} leading-none tracking-tighter drop-shadow-sm">
+                                    ${item.temp !== '--' ? item.temp + '<span class="text-[12px] align-top">°C</span>' : '--'}
+                                </div>
+                                <div class="text-[8px] font-bold text-slate-600 mt-0.5"><i class="fas fa-tint mr-0.5 text-blue-500"></i> ความชื้น: ${item.hum !== '--' ? item.hum + '%' : '--'}</div>
+                            </div>
+                            <div class="w-16 h-6 ml-2 pr-1">
+                                <canvas id="sparkline-${type}-${index}" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+
+                // วาดกราฟ Sparkline (ถ้ามีฟังก์ชัน drawSparkline เดิมอยู่แล้ว)
+                if (typeof drawSparkline === 'function') {
+                    items.forEach((item, index) => {
+                        if(item.history && item.history.length > 0) {
+                            drawSparkline(`sparkline-${type}-${index}`, item.history, type);
+                        }
+                    });
+                }
             };
 
-            const fGrid = document.getElementById('temp-fridge-grid');
-            if(fGrid) fGrid.innerHTML = tempStatus.fridge.length ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
-            const rGrid = document.getElementById('temp-room-grid');
-            if(rGrid) rGrid.innerHTML = tempStatus.room.length ? renderGroup(tempStatus.room, false) : `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
-
-            setTimeout(() => {
-                ['ห้องยา', 'คลังยา', 'หน่วยงานอื่นๆ'].forEach(room => {
-                    tempStatus.fridge.filter(i => i.room === room).forEach((item, idx) => { if (item.history && item.history.length > 0) drawSparkline(`sparkline-f-${room.length+idx}`, item.history, true); });
-                    tempStatus.room.filter(i => i.room === room).forEach((item, idx) => { if (item.history && item.history.length > 0) drawSparkline(`sparkline-r-${room.length+idx}`, item.history, false); });
-                });
-            }, 50);
-
-            const fMsg = document.getElementById('fridge-alert-msg');
-            if(fMsg) fMsg.innerHTML = hasFridgeAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
-            const rMsg = document.getElementById('room-alert-msg');
-            if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
+            renderCards(data.fridge, 'fridge-temp-container', 'fridge');
+            renderCards(data.room, 'room-temp-container', 'room');
         }
         // 📌 ฟังก์ชันวาดอุบัติการณ์รายวัน (ที่หายไป)
 function renderIncidents(incidents) {
