@@ -1213,18 +1213,16 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                     if(statusAdm === 'ADMIT') sAdmit++;
                     if(statusAdm === 'DC') sDC++;
                     
-                    // 📌 UI แบบ Glassmorphism (ตามที่ Gen จนสวยแล้ว)
-                    let bgClass = statusAdm === "DC" 
-                        ? "bg-slate-500/50 text-white backdrop-blur-md border border-slate-400/50" 
-                        : (statusAdm === "ADMIT" 
-                            ? "bg-rose-500/50 text-white backdrop-blur-md border border-rose-400/50" 
-                            : "bg-white/60 text-slate-800 backdrop-blur-md border border-white/60 shadow-sm");
+                    // ✅ กลับมาใช้คลาส CSS ที่เตรียมไว้แล้ว (.bed-dc, .bed-admit, .bed-cont)
+                    let bgClass = statusAdm === "DC" ? "bed-dc text-white" : (statusAdm === "ADMIT" ? "bed-admit text-white" : "bed-cont text-white");
                     
                     // 📌 เงื่อนไขแถบเส้นทแยง (สแกน order วันนั้นเรียบร้อยแล้ว)
                     const statN = parseInt(p.Status_N) || 0; const statY = parseInt(p.Status_Y) || 0;
                     const isScanned = (statN + statY > 0);
                     if (isScanned && statusAdm !== 'DC') sScan++;
-                    const scannedOverlay = isScanned ? `<div class="absolute inset-0 z-0 rounded-[inherit] pointer-events-none opacity-20" style="background: repeating-linear-gradient(45deg, #000, #000 2px, transparent 2px, transparent 6px);"></div>` : '';
+                    
+                    // ลายทแยงสุดสวย (ใช้คลาส .thick-scanned-bg ที่เตรียมไว้ใน CSS)
+                    const scannedOverlay = isScanned ? `<div class="thick-scanned-bg"></div>` : '';
                     
                     // 📌 Badge Med Reconcile (เครื่องหมายถูก/ผิด)
                     const isMedRec = (p.is_med_rec === 'Y');
@@ -1245,12 +1243,17 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                         let nameTxt = p.patient_name || '--';
                         
                         // 📌 หมวดยาพิเศษ (ใส่คลาส truncate บังคับบรรทัดเดียว ห้ามตัดขึ้นบรรทัดใหม่)
-                        if (p.Meropenem === 'Y' || p.Tazocin === 'Y') {
+                        // เปลี่ยนไปดึงชื่อยาจาก Query จริงๆ
+                        if (p.Meropenem || p.Tazocin) {
                             let dueDrugs = [];
-                            if (p.Meropenem === 'Y') dueDrugs.push('Meropenem');
-                            if (p.Tazocin === 'Y') dueDrugs.push('Tazocin');
-                            catDue += `<div class="text-[9.5px] font-bold text-black truncate pl-2"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-amber-600/90 px-1 rounded shadow-sm ml-0.5">(${dueDrugs.join(', ')})</span></div>`;
+                            if (p.Meropenem && p.Meropenem !== 'N' && p.Meropenem !== '') dueDrugs.push(p.Meropenem !== 'Y' ? p.Meropenem : 'Meropenem');
+                            if (p.Tazocin && p.Tazocin !== 'N' && p.Tazocin !== '') dueDrugs.push(p.Tazocin !== 'Y' ? p.Tazocin : 'Tazocin');
+                            
+                            if (dueDrugs.length > 0) {
+                                catDue += `<div class="text-[9.5px] font-bold text-black truncate pl-2"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-amber-600/90 px-1 rounded shadow-sm ml-0.5">(${dueDrugs.join(', ')})</span></div>`;
+                            }
                         }
+                        
                         if (p.is_new_inhaler === 'Y') {
                             let inhDrug = p.inhaler_name || p.inhaler_drug || 'ยาพ่น';
                             catInhaler += `<div class="text-[9.5px] font-bold text-black truncate pl-2"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-yellow-500/90 px-1 rounded shadow-sm ml-0.5">(${inhDrug})</span></div>`;
@@ -1855,191 +1858,224 @@ function updateStaffUI(data) {
             return 'rgba(255, 255, 255, 0.7)';
         }
 
-        // 📌 2. ฟังก์ชันวาดการ์ดอุณหภูมิ (อัปเดตใส่ Background อัตโนมัติ)
-        function renderTempStatus(data) {
-            if (!data) return;
-            window.lastTempStatusData = data; // เก็บไว้โหลดซ้ำตอนสลับการ์ด
-
-            const renderCards = (items, containerId, type) => {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                
-                if (!items || items.length === 0) {
-                    container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4 font-bold">ไม่พบข้อมูลอุปกรณ์</div>`;
-                    return;
-                }
-
-                let html = '';
-                items.forEach((item, index) => {
-                    const isAlert = item.alert;
-                    const tempVal = parseFloat(item.temp);
-                    
-                    // เงื่อนไขแจ้งเตือนอุณหภูมิผิดปกติ (Logic เดิม)
-                    const isTempError = !isNaN(tempVal) && (type === 'fridge' ? (tempVal < 2 || tempVal > 8) : (tempVal < 20 || tempVal > 30));
-                    
-                    // Header และ Border สีแดงถ้าแจ้งเตือน (Logic เดิม)
-                    const headerClass = isAlert || isTempError ? 'text-rose-700 bg-rose-200 border-rose-300 font-black' : 'text-slate-700 bg-slate-100 border-slate-200';
-                    const borderClass = isAlert || isTempError ? 'border-rose-400 shadow-[0_0_8px_rgba(225,29,72,0.3)]' : 'border-slate-200 shadow-sm';
-                    const textClass = isAlert || isTempError ? 'text-rose-600 animate-pulse' : 'text-slate-800';
-                    
-                    // ดึงสี Background แบบไล่เฉด (ฟังก์ชันใหม่)
-                    const bgColor = getTempBgColor(item.temp, type);
-
-                    html += `
-                    <div class="card-3d border ${borderClass} rounded-md overflow-hidden flex flex-col mb-1.5 transition-all duration-500" style="background-color: ${bgColor}; backdrop-filter: blur(4px);">
-                        <div class="text-[9px] font-bold px-1.5 py-0.5 border-b flex justify-between items-center ${headerClass}">
-                            <span class="truncate pr-1"><i class="fas fa-thermometer-half mr-1"></i>${item.name}</span>
-                            <span class="shrink-0 text-[8px] opacity-80">${item.room || ''}</span>
-                        </div>
-                        <div class="p-1 flex items-center justify-between">
-                            <div class="flex flex-col pl-1">
-                                <div class="text-xl font-black ${textClass} leading-none tracking-tighter drop-shadow-sm">
-                                    ${item.temp !== '--' ? item.temp + '<span class="text-[12px] align-top">°C</span>' : '--'}
-                                </div>
-                                <div class="text-[8px] font-bold text-slate-600 mt-0.5"><i class="fas fa-tint mr-0.5 text-blue-500"></i> ความชื้น: ${item.hum !== '--' ? item.hum + '%' : '--'}</div>
-                            </div>
-                            <div class="w-16 h-6 ml-2 pr-1">
-                                <canvas id="sparkline-${type}-${index}" class="w-full h-full"></canvas>
-                            </div>
-                        </div>
-                    </div>`;
-                });
-                container.innerHTML = html;
-
-                // วาดกราฟ Sparkline (ถ้ามีฟังก์ชัน drawSparkline เดิมอยู่แล้ว)
-                if (typeof drawSparkline === 'function') {
-                    items.forEach((item, index) => {
-                        if(item.history && item.history.length > 0) {
-                            drawSparkline(`sparkline-${type}-${index}`, item.history, type);
-                        }
-                    });
-                }
-            };
-
-            renderCards(data.fridge, 'fridge-temp-container', 'fridge');
-            renderCards(data.room, 'room-temp-container', 'room');
-        }
-        // 📌 ฟังก์ชันวาดอุบัติการณ์รายวัน (ที่หายไป)
-function renderIncidents(incidents) {
-            const container = document.getElementById('incident-container');
-            if(!container) return;
-            let html = '';
+ function renderTempStatus(tempStatus) {
+            window.lastTempStatusData = tempStatus; 
+            let hasFridgeAlert = false; let hasRoomAlert = false;
             
-            html += `<div class="card-3d bg-white/90 p-2 mb-2">
-                <h3 class="text-xs font-black text-indigo-700 border-b border-indigo-200 pb-1 mb-1"><i class="fas fa-moon mr-1"></i>อุบัติการณ์ห้อง ER นอกเวลา</h3>`;
-            
-            // 📌 ข้อมูล ER ของวันนี้
-            if(incidents.er && incidents.er.total > 0) {
-                const perc = ((incidents.er.errors / incidents.er.total)*100).toFixed(1);
-                html += `
-                <div class="flex justify-between items-center text-[11px] font-bold text-slate-700 mt-1">
-                    <span>จำนวนใบสั่งยา: <span class="text-indigo-600">${incidents.er.total}</span></span>
-                    <span>Error: <span class="text-rose-600">${incidents.er.errors}</span> (${perc}%)</span>
-                </div>
-                <div class="text-[9px] text-slate-500 mt-1 text-right border-b border-dashed border-slate-200 pb-1">ผู้ลงข้อมูล: ${incidents.er.pharmacist || '-'}</div>`;
-            } else if (incidents.er && incidents.er.total === 0 && incidents.er.errors === 0) {
-                 html += `
-                 <div class="bg-rose-500 text-white font-black p-2 rounded shadow-md mt-2 text-center animate-pulse border border-rose-300 text-[10px]">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>ยังไม่ได้ตรวจสอบใบสั่งยาของวันนี้
-                 </div>`;
-            } else {
-                html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1 pb-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
-            }
+            // 📌 1. ฟังก์ชันคำนวณสีพื้นหลังตามช่วงอุณหภูมิ (แทรกไว้ข้างในนี้เลย)
+            const getTempBgColor = (temp, type) => {
+                if (temp === '--' || isNaN(parseFloat(temp))) return 'rgba(255, 255, 255, 0.95)'; // ค่าเริ่มต้น
+                let t = parseFloat(temp);
+                let r, g, b;
 
-            // 📌 กราฟ ER Stacked Bar รายเดือน (นำกลับมาแล้ว)
-            if(incidents.er_monthly && incidents.er_monthly.length > 0) {
-                let maxVal = Math.max(...incidents.er_monthly.map(d => d.total));
-                if(maxVal === 0) maxVal = 1; // กัน Error หารด้วยศูนย์
-                
-                let barsHtml = '';
-                // ลูปวาดแท่งกราฟตั้งแต่วันที่ 1 จนถึงวันปัจจุบัน
-                for(let d=1; d<=new Date().getDate(); d++) {
-                    const dayData = incidents.er_monthly.find(x => x.day === d);
-                    if(dayData) {
-                        const hTotal = Math.max(0, (dayData.total / maxVal) * 100);
-                        const hErr = Math.max(0, (dayData.errors / dayData.total) * 100) || 0;
-                        const hGood = 100 - hErr;
-                        barsHtml += `
-                        <div class="flex flex-col items-center justify-end h-full w-[8px] group relative mx-[1px]">
-                            <div class="w-full flex flex-col justify-end overflow-hidden rounded-sm" style="height: ${hTotal}%;">
-                                <div class="w-full bg-rose-500 transition-all" style="height: ${hErr}%;"></div>
-                                <div class="w-full bg-emerald-500 transition-all" style="height: ${hGood}%;"></div>
-                            </div>
-                            <span class="text-[6px] text-slate-500 mt-1 leading-none">${d}</span>
-                            <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] px-1 py-0.5 rounded whitespace-nowrap z-20 shadow-md">
-                                รวม: ${dayData.total} | ผิด: ${dayData.errors}
-                            </div>
-                        </div>`;
+                if (type === 'fridge') {
+                    if (t < 2) {
+                        return 'rgba(59, 130, 246, 0.5)'; 
+                    } else if (t >= 2 && t <= 8) {
+                        let ratio = (t - 2) / 6;
+                        r = Math.round(59 + ratio * (239 - 59));
+                        g = Math.round(130 + ratio * (68 - 130));
+                        b = Math.round(246 + ratio * (68 - 246));
+                        return `rgba(${r}, ${g}, ${b}, 0.25)`;
                     } else {
-                        // วันที่ไม่มีข้อมูล
-                        barsHtml += `<div class="flex flex-col items-center justify-end h-full w-[8px] mx-[1px]"><span class="text-[6px] text-slate-300 mt-1 leading-none">${d}</span></div>`;
+                        return 'rgba(239, 68, 68, 0.25)'; 
+                    }
+                } else if (type === 'room') {
+                    if (t < 20) {
+                        return 'rgba(59, 130, 246, 0.5)'; 
+                    } else if (t >= 20 && t <= 30) {
+                        let ratio = (t - 20) / 10;
+                        r = Math.round(59 + ratio * (239 - 59));
+                        g = Math.round(130 + ratio * (68 - 130));
+                        b = Math.round(246 + ratio * (68 - 246));
+                        return `rgba(${r}, ${g}, ${b}, 0.25)`;
+                    } else {
+                        return 'rgba(239, 68, 68, 0.25)'; 
                     }
                 }
-                
-                html += `<div class="mt-2 w-full h-[60px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative">
-                    <span class="absolute top-0 left-0 text-[7px] text-slate-400">Total Rx</span>
-                    ${barsHtml}
-                </div>`;
-            }
-            html += `</div>`;
+                return 'rgba(255, 255, 255, 0.95)';
+            };
 
-            // 📌 2. อุบัติการณ์จัดยา (MR)
-            html += `<div class="card-3d bg-white/90 p-2 mb-2">
-                <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยาผิด</h3>`;
-            if(incidents.mr && incidents.mr.length > 0) {
-                html += `<ul class="list-none text-[10px] font-bold text-slate-700 space-y-1.5 mt-1">`;
-                incidents.mr.forEach(err => { 
-                    let badgeText = err.cat || "ไม่ระบุ";
-                    html += `<li class="flex items-start gap-1"><span class="bg-rose-100 text-rose-700 border border-rose-300 px-1.5 py-[1px] rounded text-[8.5px] font-black shadow-sm leading-none shrink-0 mt-[1px]">${badgeText}</span><span class="leading-tight">${err.detail}</span></li>`; 
+            const createCard = (item, isFridge, idx) => {
+                const isAlert = item.alert; const hasData = item.temp !== '--' && item.temp !== '';
+                if (isAlert && hasData) { if (isFridge) hasFridgeAlert = true; else hasRoomAlert = true; }
+                
+                // ถอด bg-white/95 ออกชั่วคราว เพื่อให้สี Transparent ที่เราคำนวณมาแสดงผลได้
+                let cardClass = isAlert ? "temp-alert-card" : "border-slate-200"; 
+                let headerClass = isAlert ? "text-white" : "text-white";
+                let headerStyle = isAlert ? "background: linear-gradient(to right, #dc2626, #991b1b);" : (isFridge ? "background: linear-gradient(to right, #0369a1, #075985);" : "background: linear-gradient(to right, #047857, #065f46);");
+                        
+                let tempColor = isAlert ? "text-red-700" : "text-slate-800";
+                let humColor = isAlert ? "text-red-500" : "text-slate-500";
+                
+                // 📌 2. ดึงสีพื้นหลังมาใช้
+                let bgColor = getTempBgColor(item.temp, isFridge ? 'fridge' : 'room');
+
+                if (!hasData) { cardClass = "bg-slate-200 border-slate-300 opacity-70"; headerClass = "text-white"; headerStyle = "background: #94a3b8;"; tempColor = "text-slate-400"; humColor = "text-slate-400"; bgColor = "rgba(255, 255, 255, 0.5)"; }
+                const canvasId = `sparkline-${isFridge ? 'f' : 'r'}-${idx}`;
+                
+                // 📌 3. นำ bgColor ไปใส่ใน style พร้อมเพิ่มการเบลอ (backdrop-filter) เพื่อความสวยงาม
+                return `<div class="card-3d relative overflow-hidden flex flex-col ${cardClass} h-[70px]" style="background-color: ${bgColor}; backdrop-filter: blur(4px);">
+                    <div class="w-full ${headerClass} text-[7.5px] py-0.5 px-1 text-center font-black uppercase leading-[1.1] overflow-hidden line-clamp-2 h-[18px] flex items-center justify-center z-10 shadow-sm" style="${headerStyle}">${item.name}</div>
+                    <div class="flex-1 flex flex-col items-center justify-center bg-white/45 min-h-0 z-10 pt-1 pb-2">
+                        <span class="text-xl font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
+                        <span class="text-[9px] font-bold ${humColor} leading-none mt-1 opacity-95">RH: ${item.hum}%</span>
+                    </div>
+                    ${hasData ? `<canvas id="${canvasId}" class="absolute bottom-0 left-0 w-full h-1/3 z-0 opacity-80 pointer-events-none"></canvas>` : ''}
+                </div>`;
+            };
+
+            const renderGroup = (data, isFridge) => {
+                if (!data || data.length === 0) return '';
+                let html = '';
+                const renderSection = (title, items) => {
+                    if (items.length === 0) return '';
+                    let sectionHtml = `<div class="col-span-3 flex justify-center mt-1 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8.5px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
+                    sectionHtml += items.map((item, idx) => createCard(item, isFridge, title.length+idx)).join(''); 
+                    return sectionHtml;
+                };
+                html += renderSection('ห้องยา', data.filter(i => i.room === 'ห้องยา'));
+                html += renderSection('คลังยา', data.filter(i => i.room === 'คลังยา'));
+                html += renderSection('หน่วยงานอื่นๆ', data.filter(i => i.room !== 'ห้องยา' && i.room !== 'คลังยา'));
+                return html;
+            };
+
+            const fGrid = document.getElementById('temp-fridge-grid');
+            if(fGrid) fGrid.innerHTML = tempStatus.fridge.length ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
+            const rGrid = document.getElementById('temp-room-grid');
+            if(rGrid) rGrid.innerHTML = tempStatus.room.length ? renderGroup(tempStatus.room, false) : `<div class="text-center text-xs text-slate-500 col-span-3 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
+
+            setTimeout(() => {
+                ['ห้องยา', 'คลังยา', 'หน่วยงานอื่นๆ'].forEach(room => {
+                    tempStatus.fridge.filter(i => i.room === room).forEach((item, idx) => { if (item.history && item.history.length > 0) drawSparkline(`sparkline-f-${room.length+idx}`, item.history, true); });
+                    tempStatus.room.filter(i => i.room === room).forEach((item, idx) => { if (item.history && item.history.length > 0) drawSparkline(`sparkline-r-${room.length+idx}`, item.history, false); });
                 });
-                html += `</ul>`;
-            } else {
-                html += `<div class="text-center text-[10px] font-bold text-emerald-600 mt-1">ยังไม่พบความคลาดเคลื่อนวันนี้</div>`;
-            }
-            html += `</div>`;
-            
-            container.innerHTML = html;
+            }, 50);
+
+            const fMsg = document.getElementById('fridge-alert-msg');
+            if(fMsg) fMsg.innerHTML = hasFridgeAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
+            const rMsg = document.getElementById('room-alert-msg');
+            if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
-        
-function renderDoctors(doctors) {
-            const container = document.getElementById('doctors-container');
-            if (!container) return;
+function renderIncidents(data) {
+            const container = document.getElementById('incident-container');
+            const appendTarget = document.getElementById('lasa-append-target');
+            if(!container) return;
             
-            if (!doctors || doctors.length === 0) { 
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4 font-bold">ยังไม่มีแพทย์ Login เข้าระบบ</div>`; 
+            if(!data || (!data.er && !data.mr)) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>`; 
                 return; 
             }
 
-            // 📌 Logic กรอง 1 แพทย์ 1 เครื่องล่าสุด
-            const uniqueDoctorsMap = new Map();
-            doctors.forEach(doc => {
-                // ถ้ายังไม่มีชื่อแพทย์คนนี้ใน Map ให้เพิ่มเข้าไปเลย (ยึดเครื่องแรกที่เจอ)
-                if (!uniqueDoctorsMap.has(doc.doctor_name)) {
-                    uniqueDoctorsMap.set(doc.doctor_name, doc);
-                }
-            });
+            let html = '';
 
-            // แปลงกลับจาก Map เป็น Array เพื่อนำไปวาด UI
-            const uniqueDoctors = Array.from(uniqueDoctorsMap.values());
+            // 📌 1. วาดการ์ดสรุปห้อง ER (รวมรายเดือน + รายวัน)
+            if (data.er || data.er_monthly) {
+                // ข้อมูลรายวัน
+                const erData = data.er || { total: 0, errors: 0 };
+                const tTotal = parseInt(erData.total) || 0;
+                const tErr = parseInt(erData.errors) || 0;
+                const pct = tTotal > 0 ? ((tErr / tTotal) * 100).toFixed(1) : 0;
+                
+                // ข้อมูลรายเดือน (ถ้า GAS ส่งมา)
+                const mData = data.er_monthly || { total: 0, errors: 0 };
+                const mTotal = parseInt(mData.total) || 0;
+                const mErr = parseInt(mData.errors) || 0;
+                const mPct = mTotal > 0 ? ((mErr / mTotal) * 100).toFixed(1) : 0;
+                
+                let erBg = tErr > 0 ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200";
+                let erText = tErr > 0 ? "text-rose-600" : "text-emerald-600";
+                let monthlyTextClass = mErr > 0 ? "text-rose-700" : "text-emerald-700";
+
+                html += `
+                <div class="card-3d ${erBg} p-2 flex flex-col items-center justify-center border mb-2 shadow-sm rounded-lg overflow-hidden relative">
+                    <div class="absolute top-0 w-full bg-rose-500 text-white text-[8px] font-black py-0.5 text-center shadow-sm z-10"><i class="fas fa-ambulance mr-1"></i>ER นอกเวลา</div>
+                    
+                    <!-- 📌 สรุปยอดรวมทั้งเดือน -->
+                    <div class="mt-4 mb-2 w-[90%] bg-white/70 border border-slate-200 rounded-md p-1.5 text-center shadow-sm">
+                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">รวมทั้งเดือน</span>
+                        <div class="flex items-baseline justify-center gap-1.5 leading-none">
+                            <span class="text-[14px] font-black text-slate-800">${mTotal} <span class="text-[9px] font-bold text-slate-500">ใบ</span></span>
+                            <span class="text-[10px] text-slate-300">|</span>
+                            <span class="text-[14px] font-black ${monthlyTextClass}"><span class="text-[10px] font-bold text-rose-500">Error </span>${mErr} <span class="text-[10px] bg-white/80 px-1 rounded shadow-sm border opacity-90">(${mPct}%)</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 📌 ยอดของวันนี้ -->
+                    <div class="flex justify-center items-end gap-3 w-full border-t border-slate-200/50 pt-2">
+                        <div class="text-center">
+                            <div class="text-[9px] font-black text-slate-500 leading-none mb-1">ใบสั่งยาวันนี้</div>
+                            <div class="text-3xl font-black text-slate-800 leading-none drop-shadow-sm">${tTotal}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] font-black ${erText} leading-none mb-1">Error วันนี้</div>
+                            <div class="text-3xl font-black ${erText} leading-none drop-shadow-sm">${tErr} <span class="text-xs ml-1 bg-white/80 px-1 rounded shadow-sm border opacity-80">(${pct}%)</span></div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // 📌 2. วาดการ์ดรายการ MR Error (เหมือนเดิม)
+            if (data.mr && data.mr.length > 0) {
+                let mrHtml = `<div class="card-3d bg-slate-50 p-2 flex flex-col gap-1 border border-slate-200">
+                    <div class="text-[10px] font-black text-slate-700 border-b border-slate-200 pb-1 mb-1"><i class="fas fa-exclamation-triangle text-amber-500 mr-1"></i>MR Error วันนี้</div>`;
+                data.mr.forEach(item => {
+                    mrHtml += `<div class="flex justify-between items-center text-[9px] bg-white p-1 rounded border border-slate-200 shadow-sm">
+                        <div class="flex items-center gap-1.5 flex-1 min-w-0 pr-1">
+                            <span class="font-black text-white bg-slate-700 px-1.5 py-0.5 rounded shadow-sm shrink-0 w-8 text-center">${item.bed}</span>
+                            <span class="text-slate-600 font-bold truncate max-w-[70px]" title="${item.reason}">${item.reason || '-'}</span>
+                        </div>
+                        <span class="text-slate-500 shrink-0 border-l pl-1 font-mono">${item.hn || '-'}</span>
+                    </div>`;
+                });
+                mrHtml += `</div>`;
+                html += mrHtml;
+            }
+
+            container.innerHTML = html || `<div class="text-center text-xs text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>`;
+            
+            // ย้าย LASA Alert มาต่อท้าย
+            if (appendTarget && window.lastLasaHtml) { appendTarget.innerHTML = window.lastLasaHtml; }
+        }
+function renderDoctors(doctors) {
+            const container = document.getElementById('doctors-container');
+            if(!container) return;
+            if(!doctors || doctors.length === 0) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีแพทย์/ห้องยา Online ขณะนี้</div>`; 
+                return; 
+            }
 
             let html = '';
-            uniqueDoctors.forEach(doc => { 
-                let timeStr = "";
-                if(doc.first_active_time) {
-                    let d = new Date(doc.first_active_time);
-                    if(!isNaN(d)) timeStr = ` <span class="text-[8px] text-slate-400 font-normal">(${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)} น.)</span>`;
-                }
+            
+            doctors.forEach(doc => {
+                const isDoc = (doc.user_type === 'doctor');
+                
+                // 📌 จัดการสี Background (Transparent 80% คือ rgba(..., 0.8))
+                // หมอ (doctor) = เขียวอ่อนออกขาว
+                // ห้องยา (mr) = เหลืองอ่อนออกขาว
+                const bgClass = isDoc ? 'bg-[#f0fdf4]/80' : 'bg-[#fefce8]/80';
+                
+                // 📌 จัดการสีกรอบและสีไอคอน
+                const borderClass = isDoc ? 'border-emerald-200' : 'border-yellow-200';
+                const iconColor = isDoc ? 'text-emerald-500' : 'text-yellow-600';
+                const iconClass = isDoc ? 'fa-user-md' : 'fa-prescription-bottle-alt';
+                
+                const timeText = doc.login_time || '--:--';
+
                 html += `
-                <div class="card-3d bg-white/90 py-1.5 px-2 flex flex-col justify-center shrink-0 border border-slate-200 mb-1">
-                    <div class="flex items-center gap-1.5">
-                        <span class="relative flex h-2.5 w-2.5 shrink-0">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                        </span>
-                        <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}${timeStr}</span>
+                <div class="card-3d ${bgClass} p-1.5 flex items-start gap-2 border ${borderClass} mb-1">
+                    <div class="w-6 h-6 rounded-full bg-white flex items-center justify-center border border-slate-200 shadow-sm shrink-0">
+                        <i class="fas ${iconClass} ${iconColor} text-[10px]"></i>
                     </div>
-                    <div class="text-[8.5px] font-bold text-slate-500 leading-none truncate ml-4 mt-1">${doc.computer_and_department}</div>
-                </div>`; 
+                    <div class="flex-1 min-w-0 flex flex-col">
+                        <div class="flex justify-between items-center w-full">
+                            <span class="text-[11px] font-black text-slate-800 truncate">${doc.doctor_name}</span>
+                            <span class="text-[8px] font-bold text-slate-400 shrink-0 ml-1 bg-white/60 px-1 py-0.5 rounded shadow-sm border border-slate-200"><i class="far fa-clock mr-0.5"></i>${timeText}</span>
+                        </div>
+                        <span class="text-[8px] text-slate-500 truncate font-bold"><i class="fas fa-desktop mr-1 opacity-50"></i>${doc.computer_and_department}</span>
+                        <span class="text-[7.5px] text-slate-400 font-bold uppercase"><i class="fas fa-sign-in-alt mr-1 opacity-50"></i>${doc.login_name}</span>
+                    </div>
+                </div>`;
             });
 
             container.innerHTML = html;
