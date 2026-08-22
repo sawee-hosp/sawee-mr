@@ -1359,7 +1359,7 @@
             layer.innerHTML = html;
         }
 
-        async function renderCalendar(monthlyApptData, todayClinicData) {
+async function renderCalendar(monthlyApptData, todayClinicData) {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth(); 
@@ -1377,16 +1377,28 @@
             
             const apptMap = {};
             let maxAppt = 0;
+            let sumAppt = 0;
+            let activeDaysCount = 0;
+
+            // 📌 1. คำนวณหาค่า Max, Sum และนับจำนวนวันที่มีนัดหมาย
             if (monthlyApptData) {
                 monthlyApptData.forEach(item => {
                     const dMatch = item.appointment_date.match(/\d{4}-\d{2}-(\d{2})/);
                     if (dMatch) {
                         const day = parseInt(dMatch[1], 10);
-                        apptMap[day] = parseInt(item.total_patients) || 0;
-                        if (apptMap[day] > maxAppt) maxAppt = apptMap[day];
+                        const pts = parseInt(item.total_patients) || 0;
+                        apptMap[day] = pts;
+                        if (pts > maxAppt) maxAppt = pts;
+                        if (pts > 0) {
+                            sumAppt += pts;
+                            activeDaysCount++;
+                        }
                     }
                 });
             }
+
+            // 📌 2. หาค่าเฉลี่ยผู้ป่วยต่อวัน (คำนวณเฉพาะวันที่มีคิวนัด)
+            const avgAppt = activeDaysCount > 0 ? sumAppt / activeDaysCount : 0;
 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDayIndex = new Date(year, month, 1).getDay(); 
@@ -1399,10 +1411,31 @@
             </div><div class="grid grid-cols-7 gap-[2px]">`;
             
             for(let i=0; i<firstDayIndex; i++) html += `<div class="bg-slate-200/40 rounded-sm h-[32px]"></div>`;
+            
             for(let d=1; d<=daysInMonth; d++) {
                 const isToday = d === todayDate;
                 const count = apptMap[d] || 0;
-                let opacity = maxAppt > 0 && count > 0 ? Math.max(0.15, count / maxAppt) : 0;
+                
+                // 📌 3. Logic ไล่สี Heatmap ตามค่าเฉลี่ย
+                let bgColorClass = "bg-transparent";
+                let opacity = 0;
+                
+                if (count > 0) {
+                    if (count < avgAppt) {
+                        // น้อยกว่าค่าเฉลี่ย -> สีเขียว (ยิ่งน้อย = เขียวเข้ม(opacity ใกล้ 1) / เข้าใกล้ค่าเฉลี่ย = เขียวอ่อน(opacity ใกล้ 0.2))
+                        bgColorClass = "bg-emerald-500";
+                        opacity = 0.2 + 0.8 * (1 - (count / avgAppt)); 
+                    } else {
+                        // มากกว่าหรือเท่ากับค่าเฉลี่ย -> สีแดง (เข้าใกล้ค่าเฉลี่ย = แดงอ่อน(opacity ใกล้ 0.2) / ยิ่งทะลุค่าเฉลี่ยไปถึง Max = แดงเข้ม(opacity ใกล้ 1))
+                        bgColorClass = "bg-rose-500";
+                        let diffMax = maxAppt - avgAppt;
+                        if (diffMax === 0) diffMax = 1; // กัน Error หารด้วยศูนย์
+                        opacity = 0.2 + 0.8 * ((count - avgAppt) / diffMax);
+                    }
+                }
+                
+                // ควบคุม opacity ไม่ให้เกิน 1
+                opacity = Math.min(1, Math.max(0, opacity));
                 
                 let holidayText = "";
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -1410,13 +1443,14 @@
                 if (hol) holidayText = `<div class="absolute -top-[3px] -right-[3px] w-[10px] h-[10px] bg-rose-500 border border-white rounded-full z-20 flex items-center justify-center animate-bounce shadow-sm" title="${hol.localName}"></div>`;
 
                 const todayClass = isToday ? 'ring-[1.5px] ring-rose-500 bg-white animate-pulse' : 'bg-white/80';
-                const todayTextClass = isToday ? 'text-rose-600 font-black text-[12px]' : 'text-slate-700 font-bold text-[10px]';
+                const todayTextClass = isToday ? 'text-rose-600 font-black text-[12px]' : 'text-slate-800 font-bold text-[10px]';
                 
+                // ปรับตัวเลข badge ให้มีพื้นหลังขาวกึ่งโปร่งใส เพื่อให้อ่านง่ายขึ้นเมื่อสี Heatmap เข้ม
                 html += `<div class="relative h-[32px] flex flex-col items-center justify-center rounded-sm shadow-sm border border-slate-200 overflow-hidden ${todayClass} transition-all">
-                    <div class="absolute inset-0 bg-red-500 transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
+                    <div class="absolute inset-0 ${bgColorClass} transition-opacity rounded-sm z-0" style="opacity: ${opacity}"></div>
                     ${holidayText}
                     <span class="relative z-10 ${todayTextClass} leading-none drop-shadow-sm mt-1">${d}</span>
-                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-red-100 text-red-800 border border-red-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
+                    <span class="relative z-10 text-[7px] mt-0.5">${count > 0 ? `<span class="bg-white/80 text-slate-800 border border-slate-300 rounded px-1 font-black drop-shadow-sm">${count}</span>` : ''}</span>
                 </div>`;
             }
             html += `</div>`;
@@ -1431,7 +1465,6 @@
             } else { clinicHtml = `<div class="text-[10px] text-slate-500 text-center py-2 font-bold">ไม่มีนัดคลินิกวันนี้</div>`; }
             document.getElementById('today-clinic-list').innerHTML = clinicHtml;
         }
-
         /* STREAMING_CHUNK:Main Data Fetching */
         async function fetchHospitalData() {
             const timeEl = document.getElementById('last-update-time');
@@ -1669,7 +1702,63 @@
             const rMsg = document.getElementById('room-alert-msg');
             if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
+// 📌 ฟังก์ชันวาดรายการยา DUE วันนี้ (ที่ระบบตัดหายไป)
+        function renderDue(data) {
+            const container = document.getElementById('due-container');
+            const chartContainer = document.getElementById('due-chart-container');
+            if(!container || !chartContainer) return;
+            
+            let html = ''; let hasData = false;
+            
+            const catNames = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
+            
+            let chartHtml = `<div class="card-3d bg-white/90 p-1.5 w-full flex flex-col gap-1.5">`;
+            catNames.forEach(cat => {
+                const stats = data.stats[cat] || { assessed: 0, unassessed: 0, total: 0 };
+                const total = stats.total;
+                if(total > 0) {
+                    hasData = true;
+                    const unPct = (stats.unassessed / total) * 100;
+                    const asPct = (stats.assessed / total) * 100;
+                    
+                    chartHtml += `
+                    <div class="flex items-center text-[9px] font-bold w-full">
+                        <div class="w-[60px] truncate text-slate-700">${cat}</div>
+                        <div class="flex-1 flex h-3.5 bg-slate-200 rounded overflow-hidden shadow-inner mx-1">
+                            <div class="bg-rose-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${unPct}%">${stats.unassessed > 0 ? stats.unassessed : ''}</div>
+                            <div class="bg-emerald-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${asPct}%">${stats.assessed > 0 ? stats.assessed : ''}</div>
+                        </div>
+                        <div class="w-8 text-right text-slate-600">${total}</div>
+                    </div>`;
+                }
+            });
+            chartHtml += `</div>`;
+            
+            if(!hasData) {
+                chartContainer.innerHTML = '';
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
+                return;
+            }
+            
+            chartContainer.innerHTML = chartHtml;
 
+            const renderGroup = (title, items, color) => {
+                if(!items || items.length === 0) return '';
+                let g = `<div class="mb-2"><div class="text-[10px] font-black text-white ${color} px-2 py-0.5 rounded-t inline-block">${title}</div><div class="bg-white/90 border border-${color.split('-')[1]}-200 rounded-b rounded-tr p-1">`;
+                items.forEach(d => { 
+                    let statusClass = d.status === 'ประเมินแล้ว' || d.status === 'Completed' ? 'text-emerald-500' : 'text-rose-500';
+                    g += `<div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200 last:border-0 py-0.5"><span class="font-bold text-slate-700 truncate flex-1" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-16 text-center shrink-0">${d.hn}</span><span class="font-black ${statusClass} w-16 text-right shrink-0">${d.status}</span></div>`; 
+                });
+                return g + `</div></div>`;
+            };
+
+            html += renderGroup('Oseltamivir', data.lists['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', data.lists['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', data.lists['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', data.lists['Antibiotics'], 'bg-emerald-500');
+            
+            container.innerHTML = html;
+        }
         function renderAlertsError() {
             const container = document.getElementById('alerts-container');
             if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
@@ -1758,7 +1847,32 @@
             fetchedNews.sort(() => Math.random() - 0.5);
             return fetchedNews;
         }
+// 📌 ฟังก์ชันวาดการ์ดรูปข่าว (ที่ระบบเผลอตัดทิ้งไป)
+        function renderNewsPicCard(item) {
+            const apptL = document.getElementById('appt-layer');
+            const newsL = document.getElementById('news-layer');
+            if(!apptL || !newsL) return;
 
+            apptL.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => apptL.classList.add('hidden'), 500);
+            
+            newsL.classList.remove('hidden');
+
+            const mImg = document.getElementById('main-image');
+            mImg.classList.remove('opacity-100'); mImg.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                mImg.src = item.image;
+                const bgBlur = document.getElementById('bg-blur');
+                if(bgBlur) bgBlur.style.backgroundImage = `url('${item.image}')`;
+                document.getElementById('news-title').innerText = item.title;
+                const sourceEl = document.getElementById('news-source');
+                sourceEl.innerText = item.source;
+                sourceEl.className = `px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest text-white shadow-lg ${item.color}`;
+                mImg.classList.remove('opacity-0'); mImg.classList.add('opacity-100');
+                newsL.classList.replace('opacity-0', 'opacity-100');
+            }, 500);
+        }
         function updateNewsProgressBar() {
             if (!apptNewsIsPlaying) return;
             const elapsed = Date.now() - apptNewsStartTime;
