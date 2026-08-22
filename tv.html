@@ -181,7 +181,7 @@
         }
         .animate-update { display: inline-block; animation: numberPulse 2s ease-in-out; }
         
-        /* แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม (Badge มุมขวาล่างไม่ถูก Crop) */
+        /* แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม */
         .bed-box { 
             position: relative; 
             border-radius: 4px; 
@@ -276,6 +276,7 @@
                     <span class="text-xs font-bold text-white bg-indigo-500 px-2 py-0.5 rounded shadow border border-indigo-400" id="active-staff-count">--</span>
                 </div>
                 
+                <!-- 📌 Grid ทีมเช้า -->
                 <div class="flex-1 flex flex-col justify-around min-h-0 pb-1" id="staff-grid">
                     <div class="flex justify-center gap-4">
                         <div class="staff-item flex flex-col items-center" data-role="key" id="card-key" style="display:none;">
@@ -331,19 +332,24 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 📌 Grid ทีมบ่าย (Afternoon) -->
                 <div class="mt-1 pt-1 border-t-2 border-slate-400/30 shrink-0">
                     <div class="card-3d p-2 py-1.5 flex justify-around items-center bg-white/60 transition-all duration-300" id="aft-container-div">
-                        <div class="flex flex-col text-center" id="card-aft-pharm" style="display:none;">
+                        <div class="flex flex-col text-center staff-item-aft" id="card-aft-pharm" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-10 h-10 rounded-full object-cover object-top profile-img mb-1 mx-auto staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                             <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">ภ.เวรบ่าย</span>
                             <span class="text-xs font-black text-slate-800 staff-name">--</span>
                         </div>
                         <div class="w-[2px] h-6 bg-slate-300" id="div-aft-tech1"></div>
-                        <div class="flex flex-col text-center" id="card-aft-tech1" style="display:none;">
+                        <div class="flex flex-col text-center staff-item-aft" id="card-aft-tech1" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-10 h-10 rounded-full object-cover object-top profile-img mb-1 mx-auto staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                             <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">จพ.เวรบ่าย</span>
                             <span class="text-xs font-black text-slate-800 staff-name">--</span>
                         </div>
                         <div class="w-[2px] h-6 bg-slate-300" id="div-oncall"></div>
-                        <div class="flex flex-col text-center" id="card-oncall" style="display:none;">
+                        <div class="flex flex-col text-center staff-item-aft" id="card-oncall" style="display:none;">
+                            <img src="" referrerpolicy="no-referrer" class="w-10 h-10 rounded-full object-cover object-top profile-img mb-1 mx-auto staff-img" onerror="this.src='https://placehold.co/150x150/e2e8f0/64748b?text=...' ">
                             <span class="text-[10px] font-bold text-slate-500 leading-none mb-0.5">Oncall</span>
                             <span class="text-xs font-black text-slate-800 staff-name">--</span>
                         </div>
@@ -759,6 +765,7 @@
         function checkSwapCards(now) {
             const h = now.getHours(); const m = now.getMinutes(); const currentMins = (h * 60) + m;
             
+            // 📌 หาว่าเช้ามีคนไหม (ถ้าว่างหมดคือวันหยุด)
             const morningRoles = ['card-key', 'card-ipd', 'card-tech', 'card-check1', 'card-check2', 'card-check3', 'card-dispense1', 'card-dispense2', 'card-clinic'];
             let hasMorningStaff = false;
             morningRoles.forEach(id => {
@@ -777,7 +784,20 @@
                 if(aftDiv) {
                     if (h >= 8 && h < 20) {
                         aftDiv.classList.remove('opacity-35', 'grayscale');
-                        activeCountNum = Array.from(aftDiv.querySelectorAll('.flex.flex-col')).filter(el => el.style.display !== 'none').length;
+                        
+                        // เอาเฉพาะที่มีข้อมูล (แสดงรูป/ชื่อ)
+                        let shownAftCards = 0;
+                        const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
+                        aftCards.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && el.style.display !== 'none') {
+                                shownAftCards++;
+                                el.style.opacity = '1';
+                                el.style.filter = 'none';
+                            }
+                        });
+                        activeCountNum = shownAftCards;
+
                     } else {
                         aftDiv.classList.add('opacity-35', 'grayscale');
                         activeCountNum = 0;
@@ -788,11 +808,24 @@
                     if(staffGrid) staffGrid.style.display = 'none';
                     if(aftDiv) {
                         aftDiv.classList.remove('opacity-35', 'grayscale');
-                        activeCountNum = Array.from(aftDiv.querySelectorAll('.flex.flex-col')).filter(el => el.style.display !== 'none').length;
+                        
+                        let shownAftCards = 0;
+                        const aftCards = ['card-aft-pharm', 'card-aft-tech1', 'card-oncall'];
+                        aftCards.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && el.style.display !== 'none') {
+                                shownAftCards++;
+                                el.style.opacity = '1';
+                                el.style.filter = 'none';
+                            }
+                        });
+                        activeCountNum = shownAftCards;
                     }
                 } else {
                     if(staffGrid) staffGrid.style.display = 'flex';
-                    if(aftDiv) aftDiv.classList.add('opacity-35', 'grayscale');
+                    if(aftDiv) {
+                        aftDiv.classList.add('opacity-35', 'grayscale');
+                    }
                     
                     const cM = now.getHours() * 60 + now.getMinutes(), cS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
                     const roles = { 'key': [{ start: 8*60, end: 11*60+30 }, { start: 12*60+30, end: 16*60 }], 'ipd': [{ start: 8*60, end: 12*60 }, { start: 13*60, end: 16*60 }], 'check': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'dispense': [{ start: 8*60, end: 12*60+30 }, { start: 13*60+30, end: 16*60 }], 'clinic': [{ start: 8*60, end: 12*60 }], 'tech': [{ start: 8*60, end: 11*60 }, { start: 12*60, end: 16*60 }] };
@@ -1024,7 +1057,7 @@
                     if (statusAdm === 'DC') countDC++;
                     if (statusAdm === 'ADM' || statusAdm === 'ADMIT') countAdm++;
                     
-                    // 📌 คำนวณเตียงว่าง (นับเฉพาะ CONT และ ADMIT เป็น active นอกนั้นถือว่าว่างรวม D/C)
+                    // คำนวณเตียงว่าง (นับเฉพาะ CONT และ ADMIT เป็น active นอกนั้นถือว่าว่างรวม D/C)
                     if (wName.includes('ชาย') || wName.includes('MALE') || bedText.startsWith('M') || bedText.includes('VIP4')) {
                         countMale++;
                         if (statusAdm === 'CONT' || statusAdm === 'ADMIT') activeMale++;
@@ -1064,7 +1097,7 @@
             }
         }
 
-        // 📌 กลับมาใช้ UI แผนผังเตียง 3D ดั้งเดิม โดยไม่ล้นหรือตัดขอบ
+        // แผนผังเตียง 3D Glassmorphism สวยๆ แบบดั้งเดิม โดยไม่ล้นหรือตัดขอบ
         function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             const container = document.getElementById(containerId);
             const listContainer = document.getElementById(`ipd-${suff}-list`);
@@ -1140,6 +1173,7 @@
                 elProg.style.width = `${pct}%`;
             }
 
+            // อัปเดต Badge อัตราครองเตียงที่ถูกต้อง (นับเตียงว่างรวม D/C โดยใช้ Length จริงของการ์ดที่วาด)
             if(suff === 'm' || suff === 'f') {
                 const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
                 if(occupancyEl) {
@@ -1186,6 +1220,7 @@
             }
         }
 
+        // เริ่ม Animation ไต่ Rank แบบ Real-time
         function startTopDrugsSwapAnimation() {
             if (topDrugsAnimateInterval) return; 
             topDrugsAnimateInterval = setInterval(() => {
@@ -1236,6 +1271,7 @@
                 return; 
             }
 
+            // ถ้ามีการเริ่มแอนิเมชันอยู่แล้ว และไม่ได้เปลี่ยนข้อมูลกะทันหัน ให้ปล่อยรันต่อไป
             if (topDrugsAnimateInterval && container.children.length > 1 && !container.children[0].classList.contains('text-center')) {
                 return;
             }
@@ -1327,10 +1363,10 @@
             layer.classList.remove('hidden');
             setTimeout(() => layer.classList.replace('opacity-0', 'opacity-100'), 50);
 
+            // 📌 วันนัดล่วงหน้า > 30 วัน โชว์ 5 อันดับแรก ไม่ใส่ลำดับ
             let html = `<div class="flex flex-col w-full px-1 gap-1 h-full justify-center">`;
             if(globalAppointments && globalAppointments.length > 0) {
                 globalAppointments.slice(0,5).forEach((item, idx) => {
-                    const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][idx] || 'text-slate-500';
                     html += `<div class="flex justify-between items-center text-[10px] font-bold text-slate-700 leading-tight bg-white/50 p-1 rounded shadow-sm border border-slate-200">
                                 <div class="flex items-center gap-1.5">
                                     <span>${item['วันที่นัด']} <span class="bg-blue-100 text-blue-800 border border-blue-200 px-1 rounded shadow-sm text-[8px] font-black ml-1">[${item['จำนวนวันนัด']} วัน]</span></span>
@@ -1857,41 +1893,6 @@
                 const h = new Date().getHours();
                 if(h < 8 || h >= 16) { newsItems = await fetchAllNews(); }
             }, 60 * 60 * 1000);
-        }
-
-        async function fetchWeather() {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.2858&longitude=99.0183&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=Asia%2FBangkok');
-                const dataW = await res.json();
-                
-                let pm25 = 15;
-                try {
-                    const resA = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=10.2858&longitude=99.0183&current=pm2_5&timezone=Asia%2FBangkok');
-                    const dataA = await resA.json();
-                    if(dataA && dataA.current && dataA.current.pm2_5) {
-                        pm25 = Math.round(dataA.current.pm2_5);
-                    }
-                } catch(ea) {}
-                
-                const getWeatherEmoji = (code) => {
-                    if (code === 0) return '☀️'; if (code >= 1 && code <= 3) return '⛅';
-                    if (code >= 51 && code <= 67) return '🌧️'; if (code >= 95) return '⛈️';
-                    return '☁️';
-                };
-
-                document.getElementById('weather-icon').innerHTML = `<span class="text-[32px] leading-[0.8] drop-shadow-md">${getWeatherEmoji(dataW.current.weather_code)}</span>`;
-                
-                const curTemp = Math.round(dataW.current.temperature_2m);
-                const nextHourIdx = new Date().getHours() + 1;
-                const nextTemp = Math.round(dataW.hourly.temperature_2m[nextHourIdx] || curTemp);
-
-                document.getElementById('weather-temp-current').textContent = `${curTemp}°C`;
-                document.getElementById('weather-temp-next').textContent = `${nextTemp}°C`;
-                
-                const pmEl = document.getElementById('weather-pm');
-                pmEl.textContent = `PM2.5: ${pm25}`;
-                pmEl.className = `text-[9.5px] font-black leading-none mt-0 ${pm25 > 50 ? 'text-red-500' : pm25 > 25 ? 'text-orange-500' : 'text-emerald-600'}`;
-            } catch (error) {}
         }
 
         /* App Initialization */
