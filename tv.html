@@ -239,8 +239,8 @@
 </head>
 
 <body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
-<!-- 📌 แถบเตือนเปิดเสียงแจ้งเตือน -->
-    <div id="audio-unlock-banner" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-100 pointer-events-auto">
+<!-- 📌 แถบเตือนเปิดเสียงแจ้งเตือน (คลิกเพื่อซ่อน) -->
+    <div id="audio-unlock-banner" onclick="this.style.display='none';" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-100 pointer-events-auto hover:bg-rose-600">
         <i class="fas fa-volume-mute"></i> แตะหน้าจอเพื่อเปิดเสียงแจ้งเตือน
     </div>
 
@@ -952,7 +952,7 @@
         }
 
         /* STREAMING_CHUNK:Javascript Data Renderers */
-        function renderData(dataList) {
+ function renderData(dataList) {
             const container = document.getElementById('ipd-container');
             if(!container) return;
             if(!dataList || dataList.length === 0) { container.innerHTML = `<div class="text-center text-slate-500 drop-shadow-md py-10 font-bold text-sm">ไม่มีรายการสั่งยาผู้ป่วยในในวันนี้</div>`; return; }
@@ -987,6 +987,17 @@
                 const timeTextClass = isConfirmed ? "text-slate-600" : "text-white/90 drop-shadow-sm";
                 const cardStyleClass = isConfirmed ? "card-3d" : "alert-danger bg-red-500/80";
                 const fullName = item.patient_name || item.pname || ""; 
+
+                // 📌 จุดที่เพิ่ม: สร้างตัวแปร chronicBadge (สีม่วง)
+                let chronicBadge = '';
+                if (item.chronic_clinic && item.chronic_clinic.trim() !== '') {
+                    chronicBadge = `
+                    <div class="mt-1">
+                        <span class="inline-flex items-center bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 text-[7.5px] font-black px-1 py-[1.5px] rounded-[3px] shadow-sm leading-tight max-w-full">
+                            <i class="fas fa-stethoscope mr-1 opacity-70"></i> <span class="truncate">${item.chronic_clinic}</span>
+                        </span>
+                    </div>`;
+                }
 
                 let badgesHtml = "";
                 if(item.is_new_inhaler === 'Y') badgesHtml += `<span class="bg-yellow-400 text-black px-1 rounded-sm text-[8px] font-black shadow-sm ml-1 shrink-0">พ่นใหม่</span>`;
@@ -1025,13 +1036,19 @@
 
                 const row = document.createElement('div');
                 row.className = `${cardStyleClass} rounded-md relative flex flex-col justify-center min-h-[34px] pl-[38px] pr-1 shrink-0 mb-[3px] py-[2px] overflow-hidden`;
+                
+                // 📌 จุดที่นำ chronicBadge ไปวางในการ์ด (ใต้ fullName)
                 row.innerHTML = `
                     <div class="ipd-badge ${bgClass} w-[36px] text-[12px] font-black font-mono tracking-tight shrink-0 flex items-center justify-center absolute left-0 top-0 bottom-0 z-10 rounded-l-md">${bedNo}</div>
                     <div class="flex items-start justify-between w-full z-10 leading-none min-w-0">
-                        <div class="flex items-center flex-wrap gap-1 flex-1 min-w-0 mr-1">
-                            <span class="${textClass} font-black text-[14px] font-mono tracking-wide">${hnNo}</span>
-                            <span class="${textClass} font-bold text-[13px] tracking-tight truncate max-w-[120px]">${fullName}</span>
-                            ${badgesHtml}
+                        <div class="flex flex-col flex-1 min-w-0 mr-1">
+                            <div class="flex items-center flex-wrap gap-1">
+                                <span class="${textClass} font-black text-[14px] font-mono tracking-wide">${hnNo}</span>
+                                <span class="${textClass} font-bold text-[13px] tracking-tight truncate max-w-[120px]">${fullName}</span>
+                                ${badgesHtml}
+                            </div>
+                            <!-- 📌 แทรกตรงนี้ครับ -->
+                            ${chronicBadge}
                         </div>
                         <div class="flex items-center gap-[2px] shrink-0 h-full">
                             ${rightBadges}
@@ -1145,20 +1162,17 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                     if(statusAdm === 'ADMIT') sAdmit++;
                     if(statusAdm === 'DC') sDC++;
                     
-                    let bgClass = statusAdm === "DC" ? "bed-dc text-white" : (statusAdm === "ADMIT" ? "bed-admit text-white" : "bed-cont text-white");
+                    let bgClass = statusAdm === "DC" 
+                        ? "bg-slate-500/50 text-white backdrop-blur-md border border-slate-400/50" 
+                        : (statusAdm === "ADMIT" 
+                            ? "bg-rose-500/50 text-white backdrop-blur-md border border-rose-400/50" 
+                            : "bg-white/60 text-slate-800 backdrop-blur-md border border-white/60 shadow-sm");
                     
-                    // 📌 Logic ใหม่: เช็คจาก is_med_rec
                     const isMedRec = (p.is_med_rec === 'Y');
-                    
-                    // ใช้นับ Progress ว่าเตียงที่ยังไม่ D/C เตียงไหนทำ Med Rec แล้วบ้าง
                     if (isMedRec && statusAdm !== 'DC') sScan++;
                     
-                    // ใส่ลายเส้น Overlay ถ้าทำ Med Rec แล้ว
-                    const scannedOverlay = isMedRec ? `<div class="thick-scanned-bg"></div>` : '';
+                    const scannedOverlay = isMedRec ? `<div class="absolute inset-0 z-0 rounded-[inherit] pointer-events-none opacity-20" style="background: repeating-linear-gradient(45deg, #000, #000 2px, transparent 2px, transparent 6px);"></div>` : '';
                     
-                    // 📌 Badge มุมขวาล่าง 
-                    // ถ้าทำ Med Rec แล้ว (TRUE) = เครื่องหมายถูก สีเขียว
-                    // ถ้ายังไม่ทำ (FALSE) = กากบาท สีแดงกระพริบ (ซ่อนในเคสที่ D/C แล้ว)
                     let confirmIconHtml = '';
                     if (statusAdm !== 'DC') {
                         confirmIconHtml = isMedRec 
@@ -1166,7 +1180,7 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                             : `<i class="fas fa-times-circle text-rose-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow animate-pulse"></i>`;
                     }
                     
-                    html += `<div class="bed-box ${bgClass} h-[26px]">
+                    html += `<div class="bed-box relative ${bgClass} h-[26px] overflow-visible rounded-md flex items-center justify-center">
                         ${scannedOverlay}
                         <span class="text-[11px] font-black leading-none drop-shadow-md z-10">${bedName}</span>
                         ${confirmIconHtml}
@@ -1175,24 +1189,24 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                     if (statusAdm !== 'DC') {
                         let nameTxt = p.patient_name || '--';
                         
-                        // 📌 1. หมวด ยา DUE
+                        // 📌 1. หมวด ยา DUE (เอา truncate ออก แล้วใส่ leading-tight และให้ป้ายยาเป็น inline-block จะได้ไม่ฉีกคำ)
                         if (p.Meropenem === 'Y' || p.Tazocin === 'Y') {
                             let dueDrugs = [];
                             if (p.Meropenem === 'Y') dueDrugs.push('Meropenem');
                             if (p.Tazocin === 'Y') dueDrugs.push('Tazocin');
-                            catDue += `<div class="text-[9.5px] font-bold text-black truncate pl-2 mb-0.5"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-amber-600/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm">(${dueDrugs.join(', ')})</span></div>`;
+                            catDue += `<div class="text-[9.5px] font-bold text-black pl-2 mb-1 leading-tight"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-amber-600/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm inline-block mt-[1px]">(${dueDrugs.join(', ')})</span></div>`;
                         }
                         
                         // 📌 2. หมวด ยาพ่นใหม่
                         if (p.is_new_inhaler === 'Y') {
-                            let inhDrug = p.inhaler_name || p.inhaler_drug || p.inhaler_list || p.drug_name || 'ยาพ่น';
-                            catInhaler += `<div class="text-[9.5px] font-bold text-black truncate pl-2 mb-0.5"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-yellow-500/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm">(${inhDrug})</span></div>`;
+                            let inhDrug = p.inhaler_name || p.inhaler_drug || 'ยาพ่น';
+                            catInhaler += `<div class="text-[9.5px] font-bold text-black pl-2 mb-1 leading-tight"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-yellow-500/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm inline-block mt-[1px]">(${inhDrug})</span></div>`;
                         }
                         
                         // 📌 3. หมวด High Alert Drug (HAD)
                         const hadItem = globalHadList.find(h => h.bedno === bedName);
                         if (hadItem) {
-                            catHAD += `<div class="text-[9.5px] font-bold text-black truncate pl-2 mb-0.5" title="${hadItem.had_drug_list}"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-white bg-rose-500/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm">(${hadItem.had_drug_list})</span></div>`;
+                            catHAD += `<div class="text-[9.5px] font-bold text-black pl-2 mb-1 leading-tight"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-white bg-rose-500/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm inline-block mt-[1px]">(${hadItem.had_drug_list})</span></div>`;
                         }
                     }
                 }
@@ -1201,10 +1215,14 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             container.innerHTML = html;
             
             if (listContainer) {
+                let legendHtml = `<div class="text-[8.5px] font-bold text-slate-500 mb-1 flex items-center justify-end gap-1 px-1 bg-slate-100 rounded border border-slate-200">
+                    <i class="fas fa-check-circle text-emerald-500"></i> = ทำ Med Reconcile แล้ว
+                </div>`;
+
                 if (catHAD) listHtml += `<div class="text-[10px] font-black text-rose-700 mt-1 bg-rose-100 px-1 rounded shadow-sm">High Alert Drug</div>${catHAD}`;
                 if (catDue) listHtml += `<div class="text-[10px] font-black text-amber-700 mt-1 bg-amber-100 px-1 rounded shadow-sm">ยา DUE</div>${catDue}`;
                 if (catInhaler) listHtml += `<div class="text-[10px] font-black text-yellow-700 mt-1 bg-yellow-100 px-1 rounded shadow-sm">ยาพ่นใหม่</div>${catInhaler}`;
-                listContainer.innerHTML = listHtml || `<div class="text-center text-[9px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`;
+                listContainer.innerHTML = legendHtml + (listHtml || `<div class="text-center text-[9px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`);
             }
 
             const elAdmit = document.getElementById(`map-sum-admit-${suff}`);
@@ -1212,24 +1230,11 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             const elScan = document.getElementById(`map-sum-scan-${suff}`);
             const elProg = document.getElementById(`map-scan-progress-${suff}`);
             
-            if(elAdmit) elAdmit.textContent = sAdmit;
-            if(elDc) elDc.textContent = sDC;
-            if(elScan) elScan.textContent = sScan;
-            
-            if(elProg) {
-                // หลอด Progress Bar ให้นับจากคนที่ทำ Med Rec ไปแล้ว (เทียบกับ Active Case)
-                let pct = activeCount > 0 ? (sScan / activeCount) * 100 : 0;
-                elProg.style.width = `${pct}%`;
-            }
-
+            if(elAdmit) elAdmit.textContent = sAdmit; if(elDc) elDc.textContent = sDC; if(elScan) elScan.textContent = sScan;
+            if(elProg) elProg.style.width = activeCount > 0 ? `${(sScan / activeCount) * 100}%` : `0%`;
             if(suff === 'm' || suff === 'f') {
                 const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`);
-                if(occupancyEl) {
-                    const totalCardDrawn = wardArray.length;
-                    const vacant = Math.max(0, totalCardDrawn - activeCount);
-                    occupancyEl.textContent = `${activeCount}/ว่าง ${vacant}`;
-                    occupancyEl.classList.remove('hidden');
-                }
+                if(occupancyEl) { occupancyEl.textContent = `${activeCount}/ว่าง ${Math.max(0, wardArray.length - activeCount)}`; occupancyEl.classList.remove('hidden'); }
             }
         }
         function renderRxBoxesView() {
@@ -1911,14 +1916,15 @@ function renderDoctors(doctors) {
                     if(req.status === "กำลังจัดยา") stClass = "bg-sky-100 text-sky-700 border-sky-300";
                     else if(req.status === "จัดเสร็จแล้ว" || req.status === "ตรวจสอบแล้ว") stClass = "bg-emerald-100 text-emerald-700 border-emerald-300";
                     
-                    reqHtml += `<div class="flex items-center justify-between bg-white/70 p-1 rounded border shadow-sm">
-                        <div class="flex items-center gap-1.5 overflow-hidden">
-                            <span class="text-[9px] font-black text-slate-800 truncate max-w-[80px]">${req.dept}</span>
-                            <span class="text-[8px] font-bold text-slate-500">${req.time} น.</span>
-                        </div>
-                        <span class="text-[8px] font-bold ${stClass} px-1 py-0.5 rounded border leading-none whitespace-nowrap">${req.status}</span>
-                    </div>`;
-                });
+ reqHtml += `<div class="flex items-center justify-between bg-white/70 p-1 rounded border shadow-sm">
+        <div class="flex items-center gap-1.5 overflow-hidden">
+            <!-- 📌 เปลี่ยนจาก ${req.dept} เป็นชื่อกล่องยา หากตัวแปร dept คือชื่อกล่องอยู่แล้วก็ถูกต้องแล้วครับ -->
+            <span class="text-[9px] font-black text-slate-800 truncate max-w-[80px]">${req.dept}</span>
+            <span class="text-[8px] font-bold text-slate-500">${req.time} น.</span>
+        </div>
+        <span class="text-[8px] font-bold ${stClass} px-1 py-0.5 rounded border leading-none whitespace-nowrap">${req.status}</span>
+    </div>`;
+});
                 reqHtml += `</div></div>`;
             } else {
                 reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full text-center text-[10px] font-bold text-slate-500">ไม่มีรายการส่งเบิกยาใหม่วันนี้</div>`;
@@ -1948,15 +1954,46 @@ function renderDue(data) {
             const chartContainer = document.getElementById('due-chart-container');
             if(!container || !chartContainer) return;
             
-            // ซ่อนพื้นที่ Chart ทิ้งไปเลย เพราะไม่มีส่ง stats มาให้แล้ว
-            chartContainer.innerHTML = '';
-            
-            let html = ''; 
-            let hasData = false;
-            const catNames = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
-            
-            // ตรวจสอบว่ามีส่งข้อมูล lists กลับมาหรือไม่ 
-            // ถ้าระบบส่งเป็น { Oseltamivir: [...], ... } จะเข้าเคสนี้
+            // 📌 1. วาดกราฟ DUE รายเดือน (ตั้งแต่วันที่ 1)
+            if (data.monthly && data.monthly.length > 0) {
+                let maxVal = Math.max(...data.monthly.map(d => d.assessed + d.unassessed));
+                if(maxVal === 0) maxVal = 1;
+                
+                let barsHtml = '';
+                for(let d=1; d<=new Date().getDate(); d++) {
+                    const dayData = data.monthly.find(x => x.day === d) || { assessed: 0, unassessed: 0 };
+                    const total = dayData.assessed + dayData.unassessed;
+                    
+                    if(total > 0) {
+                        const hTotal = Math.max(0, (total / maxVal) * 100);
+                        const hUn = (dayData.unassessed / total) * 100;
+                        const hAs = (dayData.assessed / total) * 100;
+                        barsHtml += `
+                        <div class="flex flex-col items-center justify-end h-full w-[8px] group relative mx-[1px]">
+                            <div class="w-full flex flex-col justify-end overflow-hidden rounded-sm" style="height: ${hTotal}%;">
+                                <div class="w-full bg-rose-400 transition-all" style="height: ${hUn}%;"></div>
+                                <div class="w-full bg-emerald-500 transition-all" style="height: ${hAs}%;"></div>
+                            </div>
+                            <span class="text-[6px] text-slate-500 mt-1 leading-none">${d}</span>
+                            <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] px-1 py-0.5 rounded whitespace-nowrap z-20 shadow-md">
+                                รวม: ${total} | ประเมินแล้ว: ${dayData.assessed} | รอ: ${dayData.unassessed}
+                            </div>
+                        </div>`;
+                    } else {
+                        barsHtml += `<div class="flex flex-col items-center justify-end h-full w-[8px] mx-[1px]"><span class="text-[6px] text-slate-300 mt-1 leading-none">${d}</span></div>`;
+                    }
+                }
+                
+                chartContainer.innerHTML = `<div class="mt-2 w-full h-[50px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative">
+                    <span class="absolute top-0 left-0 text-[7px] font-bold text-slate-400">สถิติ DUE รายเดือน</span>
+                    ${barsHtml}
+                </div>`;
+            } else {
+                chartContainer.innerHTML = '';
+            }
+
+            // 📌 2. วาดรายการยาของวันนี้
+            let html = ''; let hasData = false;
             const sourceData = data.lists ? data.lists : data;
 
             const renderGroup = (title, items, color) => {
@@ -1975,11 +2012,7 @@ function renderDue(data) {
             html += renderGroup('Atorvastatin', sourceData['Atorvastatin'], 'bg-blue-500');
             html += renderGroup('Antibiotics', sourceData['Antibiotics'], 'bg-emerald-500');
             
-            if(!hasData) {
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
-            } else {
-                container.innerHTML = html;
-            }
+            container.innerHTML = !hasData ? `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>` : html;
         }
         
         function renderAlertsError() {
