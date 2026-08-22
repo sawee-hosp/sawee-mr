@@ -1715,15 +1715,15 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
             if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
         // 📌 ฟังก์ชันวาดอุบัติการณ์รายวัน (ที่หายไป)
-        function renderIncidents(incidents) {
+function renderIncidents(incidents) {
             const container = document.getElementById('incident-container');
             if(!container) return;
             let html = '';
             
-            // 1. อุบัติการณ์ห้อง ER
             html += `<div class="card-3d bg-white/90 p-2 mb-2">
                 <h3 class="text-xs font-black text-indigo-700 border-b border-indigo-200 pb-1 mb-1"><i class="fas fa-moon mr-1"></i>อุบัติการณ์ห้อง ER นอกเวลา</h3>`;
             
+            // 📌 ข้อมูล ER ของวันนี้
             if(incidents.er && incidents.er.total > 0) {
                 const perc = ((incidents.er.errors / incidents.er.total)*100).toFixed(1);
                 html += `
@@ -1741,12 +1741,13 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
                 html += `<div class="text-center text-[10px] font-bold text-indigo-500 mt-1 pb-1">ยังไม่ลงข้อมูลโดยเภสัชกรเวรเช้า</div>`;
             }
 
-            // กราฟ ER Stacked Bar
+            // 📌 กราฟ ER Stacked Bar รายเดือน (นำกลับมาแล้ว)
             if(incidents.er_monthly && incidents.er_monthly.length > 0) {
                 let maxVal = Math.max(...incidents.er_monthly.map(d => d.total));
-                if(maxVal === 0) maxVal = 1;
+                if(maxVal === 0) maxVal = 1; // กัน Error หารด้วยศูนย์
                 
                 let barsHtml = '';
+                // ลูปวาดแท่งกราฟตั้งแต่วันที่ 1 จนถึงวันปัจจุบัน
                 for(let d=1; d<=new Date().getDate(); d++) {
                     const dayData = incidents.er_monthly.find(x => x.day === d);
                     if(dayData) {
@@ -1760,21 +1761,24 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
                                 <div class="w-full bg-emerald-500 transition-all" style="height: ${hGood}%;"></div>
                             </div>
                             <span class="text-[6px] text-slate-500 mt-1 leading-none">${d}</span>
-                            <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] px-1 py-0.5 rounded whitespace-nowrap z-20">รวม: ${dayData.total} | ผิด: ${dayData.errors}</div>
+                            <div class="absolute bottom-full mb-1 hidden group-hover:block bg-slate-800 text-white text-[8px] px-1 py-0.5 rounded whitespace-nowrap z-20 shadow-md">
+                                รวม: ${dayData.total} | ผิด: ${dayData.errors}
+                            </div>
                         </div>`;
                     } else {
+                        // วันที่ไม่มีข้อมูล
                         barsHtml += `<div class="flex flex-col items-center justify-end h-full w-[8px] mx-[1px]"><span class="text-[6px] text-slate-300 mt-1 leading-none">${d}</span></div>`;
                     }
                 }
                 
-                html += `<div class="mt-2 w-full h-[80px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative">
+                html += `<div class="mt-2 w-full h-[60px] flex items-end justify-between border-b border-slate-300 pb-1 px-1 relative">
                     <span class="absolute top-0 left-0 text-[7px] text-slate-400">Total Rx</span>
                     ${barsHtml}
                 </div>`;
             }
             html += `</div>`;
 
-            // 2. อุบัติการณ์จัดยา (MR)
+            // 📌 2. อุบัติการณ์จัดยา (MR)
             html += `<div class="card-3d bg-white/90 p-2 mb-2">
                 <h3 class="text-xs font-black text-emerald-700 border-b border-emerald-200 pb-1 mb-1"><i class="fas fa-pills mr-1"></i>อุบัติการณ์จัดยาผิด</h3>`;
             if(incidents.mr && incidents.mr.length > 0) {
@@ -1791,32 +1795,101 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
             
             container.innerHTML = html;
         }
-        function renderDoctors(doctors) {
-    const container = document.getElementById('doctors-container');
-    if (!container) return;
-    
-    if (!doctors || doctors.length === 0) { 
-        container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4 font-bold">ยังไม่มีแพทย์ Login เข้าระบบ</div>`; 
-        return; 
-    }
+        
+function renderDoctors(doctors) {
+            const container = document.getElementById('doctors-container');
+            if (!container) return;
+            
+            if (!doctors || doctors.length === 0) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4 font-bold">ยังไม่มีแพทย์ Login เข้าระบบ</div>`; 
+                return; 
+            }
 
-    let html = '';
-    doctors.forEach(doc => { 
-        html += `
-        <div class="card-3d bg-white/90 py-1.5 px-2 flex flex-col justify-center shrink-0 border border-slate-200 mb-1">
-            <div class="flex items-center gap-1.5">
-                <span class="relative flex h-2.5 w-2.5 shrink-0">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-                <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}</span>
-            </div>
-            <div class="text-[8.5px] font-bold text-slate-500 leading-none truncate ml-4 mt-1">${doc.computer_and_department}</div>
-        </div>`; 
-    });
+            // 📌 Logic กรอง 1 แพทย์ 1 เครื่องล่าสุด
+            const uniqueDoctorsMap = new Map();
+            doctors.forEach(doc => {
+                // ถ้ายังไม่มีชื่อแพทย์คนนี้ใน Map ให้เพิ่มเข้าไปเลย (ยึดเครื่องแรกที่เจอ)
+                if (!uniqueDoctorsMap.has(doc.doctor_name)) {
+                    uniqueDoctorsMap.set(doc.doctor_name, doc);
+                }
+            });
 
-    container.innerHTML = html;
-}
+            // แปลงกลับจาก Map เป็น Array เพื่อนำไปวาด UI
+            const uniqueDoctors = Array.from(uniqueDoctorsMap.values());
+
+            let html = '';
+            uniqueDoctors.forEach(doc => { 
+                let timeStr = "";
+                if(doc.first_active_time) {
+                    let d = new Date(doc.first_active_time);
+                    if(!isNaN(d)) timeStr = ` <span class="text-[8px] text-slate-400 font-normal">(${("0"+d.getHours()).slice(-2)}:${("0"+d.getMinutes()).slice(-2)} น.)</span>`;
+                }
+                html += `
+                <div class="card-3d bg-white/90 py-1.5 px-2 flex flex-col justify-center shrink-0 border border-slate-200 mb-1">
+                    <div class="flex items-center gap-1.5">
+                        <span class="relative flex h-2.5 w-2.5 shrink-0">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-[11px] font-black text-slate-800 leading-none truncate">${doc.doctor_name}${timeStr}</span>
+                    </div>
+                    <div class="text-[8.5px] font-bold text-slate-500 leading-none truncate ml-4 mt-1">${doc.computer_and_department}</div>
+                </div>`; 
+            });
+
+            container.innerHTML = html;
+        }
+// 📌 ฟังก์ชันวาดกล่องยาและใบเบิก
+        function renderBoxes(boxes, requisitions) {
+            const container = document.getElementById('boxes-container');
+            if(!container) return;
+            
+            let reqHtml = '';
+            // --- ส่วนที่ 1: วาดใบเบิกยา ---
+            if(requisitions && requisitions.length > 0) {
+                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full">
+                    <div class="text-[10px] font-black text-blue-700 mb-1 flex items-center justify-center">
+                        <i class="fas fa-file-invoice mr-1"></i>ใบเบิกวันนี้
+                    </div>
+                    <div class="flex flex-col gap-1 w-full px-1 max-h-[140px] overflow-y-auto no-scrollbar">`;
+                
+                requisitions.forEach(req => {
+                    // กำหนดสีตามสถานะ
+                    let stClass = "bg-orange-100 text-orange-700 border-orange-300";
+                    if(req.status === "กำลังจัดยา") stClass = "bg-sky-100 text-sky-700 border-sky-300";
+                    else if(req.status === "จัดเสร็จแล้ว" || req.status === "ตรวจสอบแล้ว") stClass = "bg-emerald-100 text-emerald-700 border-emerald-300";
+                    
+                    reqHtml += `<div class="flex items-center justify-between bg-white/70 p-1 rounded border shadow-sm">
+                        <div class="flex items-center gap-1.5 overflow-hidden">
+                            <span class="text-[9px] font-black text-slate-800 truncate max-w-[80px]">${req.dept}</span>
+                            <span class="text-[8px] font-bold text-slate-500">${req.time} น.</span>
+                        </div>
+                        <span class="text-[8px] font-bold ${stClass} px-1 py-0.5 rounded border leading-none whitespace-nowrap">${req.status}</span>
+                    </div>`;
+                });
+                reqHtml += `</div></div>`;
+            } else {
+                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full text-center text-[10px] font-bold text-slate-500">ไม่มีรายการส่งเบิกยาใหม่วันนี้</div>`;
+            }
+
+            // --- ส่วนที่ 2: วาดกล่องยาประจำวัน (เรียงเป็น Grid 3 คอลัมน์) ---
+            if(!boxes || boxes.length === 0) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 w-full py-4">ยังไม่มีการเปลี่ยนกล่องประจำวัน</div>` + reqHtml; 
+                return; 
+            }
+
+            let html = `<div class="grid grid-cols-3 gap-2 w-full content-start">`;
+            boxes.forEach(b => {
+                html += `<div class="card-3d bg-white/80 p-1 flex flex-col items-center justify-center text-center">
+                    <img src="https://sawee-hosp.github.io/sawee-mr/box.png" class="w-8 h-8 mb-1 drop-shadow-sm">
+                    <span class="text-[9px] font-black text-slate-800 leading-tight w-full truncate">${b.name}</span>
+                    <span class="text-[8px] font-bold text-slate-500 mt-0.5">${b.time}</span>
+                    <span class="text-[7px] text-white bg-amber-600 px-1 py-[1px] rounded mt-0.5 truncate max-w-full">${b.pharm}</span>
+                </div>`;
+            });
+            html += `</div>` + reqHtml;
+            container.innerHTML = html;
+        }
 // 📌 ฟังก์ชันวาดรายการยา DUE วันนี้ (ที่ระบบตัดหายไป)
         function renderDue(data) {
             const container = document.getElementById('due-container');
