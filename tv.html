@@ -239,7 +239,8 @@
 </head>
 
 <body class="h-screen w-screen flex flex-col relative z-0" id="main-body">
-    <div id="audio-unlock-banner" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-0 pointer-events-none">
+<!-- 📌 แถบเตือนเปิดเสียงแจ้งเตือน -->
+    <div id="audio-unlock-banner" class="fixed top-0 left-0 w-full bg-rose-500 text-white text-center py-0.5 z-50 text-[10px] font-bold cursor-pointer shadow-md transition-opacity duration-500 flex items-center justify-center gap-2 opacity-100 pointer-events-auto">
         <i class="fas fa-volume-mute"></i> แตะหน้าจอเพื่อเปิดเสียงแจ้งเตือน
     </div>
 
@@ -264,6 +265,11 @@
         
         <!-- คอลัมน์ซ้าย -->
         <aside id="left-col-wrapper" class="w-[26%] min-w-[26%] max-w-[26%] shrink-0 h-full flex flex-col min-h-0 glass-panel p-2 transition-opacity duration-300 relative">
+        <!-- 📌 ปุ่ม Play/Pause สลับการ์ด -->
+            <button id="pause-toggle-btn" class="absolute top-2 right-2 w-6 h-6 bg-slate-800/60 hover:bg-slate-800 text-white rounded-full flex items-center justify-center shadow-md z-50 transition-colors opacity-30 group-hover:opacity-100">
+                <i class="fas fa-pause text-[10px]" id="pause-toggle-icon"></i>
+            </button>
+            
             <div class="w-full h-full flex flex-col min-h-0" id="col-staff" style="display: flex;">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-user-md text-indigo-600 mr-2"></i>เภสัชกรประจำวัน</h2>
@@ -747,6 +753,31 @@
             checkSwapCards(now);
         }
 
+ // 📌 ตัวแปรควบคุมการหยุด/เล่น สลับการ์ด
+        let isLeftColPaused = false;
+        let pausedColId = null;
+
+        // จับเหตุการณ์กดปุ่ม Play/Pause
+        document.addEventListener('DOMContentLoaded', () => {
+            const pauseBtn = document.getElementById('pause-toggle-btn');
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', () => {
+                    isLeftColPaused = !isLeftColPaused;
+                    const icon = document.getElementById('pause-toggle-icon');
+                    if (isLeftColPaused) {
+                        icon.classList.remove('fa-pause');
+                        icon.classList.add('fa-play');
+                        pauseBtn.classList.replace('bg-slate-800/60', 'bg-rose-600');
+                    } else {
+                        icon.classList.remove('fa-play');
+                        icon.classList.add('fa-pause');
+                        pauseBtn.classList.replace('bg-rose-600', 'bg-slate-800/60');
+                        pausedColId = null; // คืนค่าเริ่มต้นให้กลับมาหมุนตามเวลาจริง
+                    }
+                });
+            }
+        });
+
         function checkSwapCards(now) {
             const h = now.getHours(); const m = now.getMinutes(); const currentMins = (h * 60) + m;
             
@@ -838,20 +869,20 @@
 
             const secTotal = (now.getMinutes() * 60) + now.getSeconds();
             const allCols = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-weekly', 'col-incident', 'col-due', 'col-boxes', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-top-drugs', 'col-calendar'];
-const colsToLoop = [
-    'col-staff', 
-    'col-fridge-temp', 
-    'col-room-temp', 
-    'col-doctors',      // <--- สลับมาแสดงผลตรงนี้
-    'col-incident', 
-    'col-due', 
-    'col-top-drugs', 
-    'col-ipd-male', 
-    'col-ipd-female', 
-    'col-ipd-rx', 
-    'col-boxes', 
-    'col-calendar'
-];      
+            const colsToLoop = ['col-staff', 'col-fridge-temp', 'col-room-temp', 'col-doctors', 'col-incident', 'col-due', 'col-top-drugs', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx', 'col-boxes', 'col-calendar'];
+            
+            // 📌 Logic หยุดสลับหน้าจอ (Pause)
+            if (isLeftColPaused) {
+                // ถ้าถูกสั่งหยุด ให้โชว์หน้าที่ล็อกไว้ (pausedColId)
+                if (pausedColId) {
+                    allCols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
+                    const showCol = document.getElementById(pausedColId);
+                    if (showCol) showCol.style.display = 'flex';
+                }
+                return; // หยุดการทำงานส่วนลูปเวลาทิ้งไปเลย
+            }
+            
+            // ทำงานปกติตามรอบ 30 วินาที
             const cycle = Math.floor((secTotal % (colsToLoop.length * 30)) / 30);
             
             allCols.forEach(c => { const el = document.getElementById(c); if(el) el.style.display = 'none'; });
@@ -863,9 +894,12 @@ const colsToLoop = [
             if (isShiftTransition) {
                 const staffCol = document.getElementById('col-staff');
                 if (staffCol) staffCol.style.display = 'flex';
+                pausedColId = 'col-staff'; // แอบเก็บค่าไว้ เผื่อผู้ใช้กดหยุดช่วงนี้
             } else {
                 const showCol = document.getElementById(colsToLoop[cycle]);
                 if (showCol) showCol.style.display = 'flex';
+                pausedColId = colsToLoop[cycle]; // แอบเก็บค่าไว้ เผื่อผู้ใช้กดหยุด
+                
                 if ((colsToLoop[cycle] === 'col-fridge-temp' || colsToLoop[cycle] === 'col-room-temp') && window.lastTempStatusData) {
                     setTimeout(() => renderTempStatus(window.lastTempStatusData), 50);
                 }
@@ -1112,18 +1146,26 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                     if(statusAdm === 'DC') sDC++;
                     
                     let bgClass = statusAdm === "DC" ? "bed-dc text-white" : (statusAdm === "ADMIT" ? "bed-admit text-white" : "bed-cont text-white");
-                    const statN = parseInt(p.Status_N) || 0; const statY = parseInt(p.Status_Y) || 0;
-                    if(statN + statY > 0 && statusAdm !== 'DC') sScan++;
                     
-                    const scannedOverlay = (statN + statY > 0) ? `<div class="thick-scanned-bg"></div>` : '';
+                    // 📌 Logic ใหม่: เช็คจาก is_med_rec
+                    const isMedRec = (p.is_med_rec === 'Y');
+                    
+                    // ใช้นับ Progress ว่าเตียงที่ยังไม่ D/C เตียงไหนทำ Med Rec แล้วบ้าง
+                    if (isMedRec && statusAdm !== 'DC') sScan++;
+                    
+                    // ใส่ลายเส้น Overlay ถ้าทำ Med Rec แล้ว
+                    const scannedOverlay = isMedRec ? `<div class="thick-scanned-bg"></div>` : '';
+                    
+                    // 📌 Badge มุมขวาล่าง 
+                    // ถ้าทำ Med Rec แล้ว (TRUE) = เครื่องหมายถูก สีเขียว
+                    // ถ้ายังไม่ทำ (FALSE) = กากบาท สีแดงกระพริบ (ซ่อนในเคสที่ D/C แล้ว)
                     let confirmIconHtml = '';
-                    if (statN + statY > 0) {
-                        confirmIconHtml = statN > 0 
-                            ? `<i class="fas fa-times-circle text-rose-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow animate-pulse"></i>` 
-                            : `<i class="fas fa-check-circle text-emerald-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow"></i>`;
+                    if (statusAdm !== 'DC') {
+                        confirmIconHtml = isMedRec 
+                            ? `<i class="fas fa-check-circle text-emerald-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow"></i>`
+                            : `<i class="fas fa-times-circle text-rose-500 absolute -bottom-1 -right-1 z-20 text-[11px] bg-white rounded-full leading-none shadow animate-pulse"></i>`;
                     }
                     
-                    // 📌 นำ badge กล่องยามุมบนขวาออกตามคำสั่ง
                     html += `<div class="bed-box ${bgClass} h-[26px]">
                         ${scannedOverlay}
                         <span class="text-[11px] font-black leading-none drop-shadow-md z-10">${bedName}</span>
@@ -1132,16 +1174,25 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
 
                     if (statusAdm !== 'DC') {
                         let nameTxt = p.patient_name || '--';
+                        
+                        // 📌 1. หมวด ยา DUE
                         if (p.Meropenem === 'Y' || p.Tazocin === 'Y') {
-                            catDue += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt}</div>`;
-                        }
-                        if (p.is_new_inhaler === 'Y') {
-                            catInhaler += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt}</div>`;
+                            let dueDrugs = [];
+                            if (p.Meropenem === 'Y') dueDrugs.push('Meropenem');
+                            if (p.Tazocin === 'Y') dueDrugs.push('Tazocin');
+                            catDue += `<div class="text-[9.5px] font-bold text-black truncate pl-2 mb-0.5"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-amber-600/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm">(${dueDrugs.join(', ')})</span></div>`;
                         }
                         
+                        // 📌 2. หมวด ยาพ่นใหม่
+                        if (p.is_new_inhaler === 'Y') {
+                            let inhDrug = p.inhaler_name || p.inhaler_drug || p.inhaler_list || p.drug_name || 'ยาพ่น';
+                            catInhaler += `<div class="text-[9.5px] font-bold text-black truncate pl-2 mb-0.5"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8px] text-white bg-yellow-500/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm">(${inhDrug})</span></div>`;
+                        }
+                        
+                        // 📌 3. หมวด High Alert Drug (HAD)
                         const hadItem = globalHadList.find(h => h.bedno === bedName);
                         if (hadItem) {
-                            catHAD += `<div class="text-[9.5px] font-bold text-slate-700 truncate pl-2" title="${hadItem.had_drug_list}"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-slate-400 drop-shadow-sm">(${hadItem.had_drug_list})</span></div>`;
+                            catHAD += `<div class="text-[9.5px] font-bold text-black truncate pl-2 mb-0.5" title="${hadItem.had_drug_list}"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8px] text-white bg-rose-500/90 px-1 rounded shadow-sm ml-0.5 drop-shadow-sm">(${hadItem.had_drug_list})</span></div>`;
                         }
                     }
                 }
@@ -1164,7 +1215,9 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             if(elAdmit) elAdmit.textContent = sAdmit;
             if(elDc) elDc.textContent = sDC;
             if(elScan) elScan.textContent = sScan;
+            
             if(elProg) {
+                // หลอด Progress Bar ให้นับจากคนที่ทำ Med Rec ไปแล้ว (เทียบกับ Active Case)
                 let pct = activeCount > 0 ? (sScan / activeCount) * 100 : 0;
                 elProg.style.width = `${pct}%`;
             }
@@ -1179,7 +1232,6 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                 }
             }
         }
-
         function renderRxBoxesView() {
             const container = document.getElementById('ipd-rx-grid');
             if(!container) return;
@@ -1891,47 +1943,25 @@ function renderDoctors(doctors) {
             container.innerHTML = html;
         }
 // 📌 ฟังก์ชันวาดรายการยา DUE วันนี้ (ที่ระบบตัดหายไป)
-        function renderDue(data) {
+function renderDue(data) {
             const container = document.getElementById('due-container');
             const chartContainer = document.getElementById('due-chart-container');
             if(!container || !chartContainer) return;
             
-            let html = ''; let hasData = false;
+            // ซ่อนพื้นที่ Chart ทิ้งไปเลย เพราะไม่มีส่ง stats มาให้แล้ว
+            chartContainer.innerHTML = '';
             
+            let html = ''; 
+            let hasData = false;
             const catNames = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
             
-            let chartHtml = `<div class="card-3d bg-white/90 p-1.5 w-full flex flex-col gap-1.5">`;
-            catNames.forEach(cat => {
-                const stats = data.stats[cat] || { assessed: 0, unassessed: 0, total: 0 };
-                const total = stats.total;
-                if(total > 0) {
-                    hasData = true;
-                    const unPct = (stats.unassessed / total) * 100;
-                    const asPct = (stats.assessed / total) * 100;
-                    
-                    chartHtml += `
-                    <div class="flex items-center text-[9px] font-bold w-full">
-                        <div class="w-[60px] truncate text-slate-700">${cat}</div>
-                        <div class="flex-1 flex h-3.5 bg-slate-200 rounded overflow-hidden shadow-inner mx-1">
-                            <div class="bg-rose-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${unPct}%">${stats.unassessed > 0 ? stats.unassessed : ''}</div>
-                            <div class="bg-emerald-500 transition-all duration-500 flex items-center justify-center text-white text-[7px]" style="width:${asPct}%">${stats.assessed > 0 ? stats.assessed : ''}</div>
-                        </div>
-                        <div class="w-8 text-right text-slate-600">${total}</div>
-                    </div>`;
-                }
-            });
-            chartHtml += `</div>`;
-            
-            if(!hasData) {
-                chartContainer.innerHTML = '';
-                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
-                return;
-            }
-            
-            chartContainer.innerHTML = chartHtml;
+            // ตรวจสอบว่ามีส่งข้อมูล lists กลับมาหรือไม่ 
+            // ถ้าระบบส่งเป็น { Oseltamivir: [...], ... } จะเข้าเคสนี้
+            const sourceData = data.lists ? data.lists : data;
 
             const renderGroup = (title, items, color) => {
                 if(!items || items.length === 0) return '';
+                hasData = true;
                 let g = `<div class="mb-2"><div class="text-[10px] font-black text-white ${color} px-2 py-0.5 rounded-t inline-block">${title}</div><div class="bg-white/90 border border-${color.split('-')[1]}-200 rounded-b rounded-tr p-1">`;
                 items.forEach(d => { 
                     let statusClass = d.status === 'ประเมินแล้ว' || d.status === 'Completed' ? 'text-emerald-500' : 'text-rose-500';
@@ -1940,20 +1970,109 @@ function renderDoctors(doctors) {
                 return g + `</div></div>`;
             };
 
-            html += renderGroup('Oseltamivir', data.lists['Oseltamivir'], 'bg-purple-500');
-            html += renderGroup('Covids', data.lists['Covids'], 'bg-rose-500');
-            html += renderGroup('Atorvastatin', data.lists['Atorvastatin'], 'bg-blue-500');
-            html += renderGroup('Antibiotics', data.lists['Antibiotics'], 'bg-emerald-500');
+            html += renderGroup('Oseltamivir', sourceData['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', sourceData['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', sourceData['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', sourceData['Antibiotics'], 'bg-emerald-500');
             
-            container.innerHTML = html;
+            if(!hasData) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>`;
+            } else {
+                container.innerHTML = html;
+            }
         }
+        
         function renderAlertsError() {
             const container = document.getElementById('alerts-container');
             if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
                 container.innerHTML = `<div class="text-center text-rose-500 text-[10px] mt-4 font-bold bg-rose-100 p-2 rounded shadow-sm border border-rose-300 mx-2"><i class="fas fa-exclamation-triangle"></i> ขัดข้องฝั่ง Server</div>`;
             }
         }
+// 📌 1. ฟังก์ชันวาดตารางยา LASA (มีพื้นหลังขาวกึ่งโปร่งใสเพื่อให้อ่านง่าย)
+        function renderLasa(lasaList) {
+            const container = document.getElementById('lasa-append-target');
+            if (!container) return;
+            if (!lasaList || lasaList.length === 0) return;
+            
+            let html = `<div class="mt-2 pt-2 border-t border-slate-300 w-full">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-[11px] font-black text-amber-700">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>TOP 5 LASAs (30 วัน)
+                    </h3>
+                </div>`;
+                
+            lasaList.forEach((item, index) => {
+                const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
+                html += `<div class="flex items-center text-[10px] bg-white/80 p-1.5 rounded shadow-sm border border-slate-200 mb-1">
+                    <i class="fas fa-pills ${rColor} mr-1.5 text-[10px] opacity-80"></i>
+                    <span class="font-bold text-slate-700 truncate max-w-[42%]">${item.d1}</span>
+                    <span class="text-slate-400 font-bold mx-1">-</span>
+                    <span class="font-bold text-slate-700 truncate max-w-[42%] flex-1">${item.d2}</span>
+                    <span class="font-black ${rColor} shrink-0 text-right">${item.count}</span>
+                </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
 
+        // 📌 2. ฟังก์ชันวาดตารางเวร 5 วัน
+        function renderWeekly(weeklyList) {
+            const container = document.getElementById('weekly-container');
+            if (!container) return;
+            if (!weeklyList || weeklyList.length !== 5) { 
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">ไม่พบข้อมูลรายสัปดาห์</div>`; 
+                return; 
+            }
+
+            const roles = [
+                { id: 'key', label: 'คีย์' }, { id: 'ipd', label: 'ใน' }, { id: 'tech', label: 'จพ.เช้า' }, 
+                { id: 'check1', label: 'เช็ค1' }, { id: 'check2', label: 'เช็ค2' }, { id: 'check3', label: 'เช็ค3' }, 
+                { id: 'dispense1', label: 'จ่าย1' }, { id: 'dispense2', label: 'จ่าย2' }, 
+                { id: 'afternoon_pharm', label: 'ภ.บ่าย' }, { id: 'afternoon_tech1', label: 'จพ.บ่าย' }, 
+                { id: 'oncall', label: 'Oncall' }
+            ];
+            const colorPalette = [
+                'bg-rose-100 text-rose-800 border-rose-300', 'bg-blue-100 text-blue-800 border-blue-300', 
+                'bg-emerald-100 text-emerald-800 border-emerald-300', 'bg-amber-100 text-amber-800 border-amber-300', 
+                'bg-purple-100 text-purple-800 border-purple-300', 'bg-cyan-100 text-cyan-800 border-cyan-300', 
+                'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300', 'bg-orange-100 text-orange-800 border-orange-300', 
+                'bg-lime-100 text-lime-800 border-lime-300', 'bg-pink-100 text-pink-800 border-pink-300'
+            ];
+            let nameColorMap = {}; let colorIndex = 0;
+
+            let html = `<table class="w-full h-full text-center border-collapse table-fixed"><thead><tr><th class="w-[15%] pb-1 border-b border-slate-300"></th>`;
+            weeklyList.forEach(day => { 
+                html += `<th class="w-[17%] font-black align-middle py-1 border-b border-slate-300 ${day.isToday ? 'bg-indigo-500 text-white shadow-md rounded-t' : 'bg-slate-200/70 text-slate-700 rounded-t'}">${day.dayName}</th>`; 
+            });
+            html += `</tr></thead><tbody>`;
+
+            roles.forEach((role, i) => {
+                const isLast = i === roles.length - 1;
+                html += `<tr class="${isLast ? '' : 'border-b border-slate-200/50'}"><td class="text-[9px] font-bold text-slate-600 text-right pr-1 align-middle">${role.label}</td>`;
+                weeklyList.forEach(day => {
+                    const bg = day.isToday ? 'bg-indigo-50 shadow-[inset_0_0_4px_rgba(0,0,0,0.05)]' : '';
+                    const rB = (day.isToday && isLast) ? 'rounded-b' : '';
+                    const rD = day.roles ? day.roles[role.id] : null;
+                    let pUrl = '', sName = '';
+                    if (rD) { 
+                        if (typeof rD === 'string') pUrl = rD; 
+                        else { pUrl = rD.photo; sName = rD.name || ''; } 
+                    }
+                    
+                    if (sName || pUrl) {
+                        if (sName && !nameColorMap[sName]) { nameColorMap[sName] = colorPalette[colorIndex % colorPalette.length]; colorIndex++; }
+                        let nClass = sName ? nameColorMap[sName] : 'bg-white border-slate-200 text-slate-700';
+                        let pH = pUrl ? `<img src="${pUrl}" referrerpolicy="no-referrer" class="w-5 h-5 rounded-full object-cover border border-slate-300 shadow-sm mx-auto shrink-0" onerror="this.style.display='none'">` : '';
+                        let nH = sName ? `<div class="${nClass} border text-[6px] font-bold px-0.5 py-[1px] rounded-sm mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis w-10 text-center mx-auto leading-none shrink-0">${sName}</div>` : '';
+                        html += `<td class="align-middle py-0.5 ${bg} ${rB}"><div class="flex flex-col items-center justify-center min-h-[32px] w-full">${pH}${nH}</div></td>`;
+                    } else {
+                        html += `<td class="align-middle py-0.5 ${bg} ${rB}"><div class="min-h-[32px] w-full"></div></td>`;
+                    }
+                });
+                html += `</tr>`;
+            });
+            container.innerHTML = html + `</tbody></table>`;
+        }
         async function fetchSchedule() {
             try {
                 const controller = new AbortController();
