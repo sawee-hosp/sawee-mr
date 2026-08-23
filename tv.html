@@ -693,12 +693,12 @@
                     </div>
                 </div>
 
-                <!-- การ์ดขวาล่าง: สลับระหว่าง "สภาพอากาศ" กับ "ระดับน้ำคลองสวี" ทุก 30 วินาที -->
-                <div class="card-3d flex flex-col h-full min-w-[7rem] max-w-[7rem] bg-white/80 shrink-0 relative overflow-hidden">
+<!-- การ์ดสภาพอากาศ / ระดับน้ำ / เรดาร์ฝน -->
+                <div class="card-3d flex flex-col h-[100px] min-w-[5.5rem] max-w-[5.5rem] bg-white/80 shrink-0 relative overflow-hidden rounded-lg">
 
                     <!-- ชั้นที่ 1: สภาพอากาศ -->
-                    <div id="weather-layer" class="absolute inset-0 p-2 flex flex-col items-center justify-center gap-0 transition-opacity duration-500 opacity-100">
-                        <div id="weather-icon" class="text-[30px] leading-[0.8] drop-shadow-md mb-0.5">
+                    <div id="weather-layer" class="absolute inset-0 p-2 flex flex-col items-center justify-center gap-0 transition-opacity duration-500 opacity-100 z-10 bg-white/80 backdrop-blur-sm">
+                        <div id="weather-icon" class="text-[32px] leading-[0.8] drop-shadow-md mb-0.5">
                             <i class="fas fa-spinner fa-spin text-slate-400"></i>
                         </div>
                         <div class="flex flex-col items-center justify-center h-[26px] relative w-full mt-1">
@@ -711,16 +711,27 @@
                         <span id="weather-label" class="text-[7.5px] text-slate-500 font-bold leading-none mt-1 text-center">ปัจจุบัน</span>
                     </div>
 
-                    <!-- ชั้นที่ 2: ระดับน้ำคลองสวี (สถานี สวี 1 / สวี 2) -->
-                    <div id="water-layer" class="absolute inset-0 px-1.5 py-1 flex flex-col transition-opacity duration-500 opacity-0 pointer-events-none">
-                        <div class="text-[8px] font-black text-sky-800 text-center leading-none mb-1 shrink-0">
+                    <!-- ชั้นที่ 2: ระดับน้ำคลองสวี -->
+                    <div id="water-layer" class="absolute inset-0 px-1.5 py-1 flex flex-col transition-opacity duration-500 opacity-0 pointer-events-none z-10 bg-white/80 backdrop-blur-sm">
+                        <div class="text-[8px] font-black text-sky-800 text-center leading-none mb-1 shrink-0 mt-0.5">
                             <i class="fas fa-water mr-[2px]"></i>ระดับน้ำคลองสวี
                         </div>
                         <div id="water-body" class="flex-1 flex flex-col justify-center gap-1 min-h-0">
                             <div class="text-[8px] text-slate-500 text-center font-bold">กำลังโหลด...</div>
                         </div>
-                        <div id="water-time" class="text-[6.5px] text-slate-500 font-bold text-center leading-none shrink-0"></div>
+                        <div id="water-time" class="text-[6.5px] text-slate-500 font-bold text-center leading-none shrink-0 mb-0.5"></div>
                     </div>
+
+                    <!-- ชั้นที่ 3: เรดาร์ฝนชุมพร (ดึงมาจาก TMD) -->
+                    <div id="radar-layer" class="absolute inset-0 transition-opacity duration-500 opacity-0 pointer-events-none z-0 bg-black flex flex-col items-center justify-center overflow-hidden">
+                        <div class="absolute top-0 w-full bg-gradient-to-b from-black/80 to-transparent py-0.5 z-20 text-center">
+                            <span class="text-[7px] font-black text-white tracking-wider">เรดาร์ฝน</span>
+                        </div>
+                        <!-- เทคนิคการครอบรูป 50% ตรงกลาง: ใช้ Transform Scale ขยายรูปให้ใหญ่ทะลุกรอบ 
+                             และใช้ object-position จัดให้อยู่กึ่งกลาง กรอบ overflow-hidden ด้านนอกจะตัดขอบที่ล้นทิ้งเอง -->
+                        <img id="radar-image" src="" alt="Radar" class="w-full h-full object-cover transform scale-[2.2] origin-center opacity-80" onerror="this.src=''">
+                    </div>
+
                 </div>
             </div>
         </section>
@@ -1163,24 +1174,42 @@ function checkSwapCards(now) {
         }
 
         // สลับการ์ดอากาศ <-> ระดับน้ำ ทุก 30 วินาที
+let currentWeatherSlide = 0; // 0=อุณหภูมิ, 1=ระดับน้ำ, 2=เรดาร์
+        
         function toggleWeatherWater() {
-            const w = document.getElementById('weather-layer');
-            const a = document.getElementById('water-layer');
-            if (!w || !a) return;
+            const wL = document.getElementById('weather-layer');
+            const aL = document.getElementById('water-layer');
+            const rL = document.getElementById('radar-layer');
+            if (!wL || !aL || !rL) return;
 
-            // ถ้ายังไม่มีข้อมูลน้ำ ก็โชว์อากาศไปก่อน
-            if (!globalWaterLevel.length) { showingWater = false; }
-            else { showingWater = !showingWater; }
+            // เลื่อนลำดับ
+            currentWeatherSlide = (currentWeatherSlide + 1) % 3;
 
-            if (showingWater) {
-                w.classList.add('opacity-0', 'pointer-events-none');
-                a.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                a.classList.add('opacity-0', 'pointer-events-none');
-                w.classList.remove('opacity-0', 'pointer-events-none');
+            // ถ้าไม่มีข้อมูลน้ำ ให้ข้ามระดับน้ำไปเรดาร์เลย
+            if (currentWeatherSlide === 1 && (!globalWaterLevel || globalWaterLevel.length === 0)) {
+                currentWeatherSlide = 2;
+            }
+
+            // ซ่อนทุกเลเยอร์ก่อน
+            [wL, aL, rL].forEach(el => {
+                el.classList.add('opacity-0', 'pointer-events-none');
+            });
+
+            // เปิดแสดงเลเยอร์ที่ถูกเลือก
+            if (currentWeatherSlide === 0) {
+                wL.classList.remove('opacity-0', 'pointer-events-none');
+            } else if (currentWeatherSlide === 1) {
+                aL.classList.remove('opacity-0', 'pointer-events-none');
+            } else if (currentWeatherSlide === 2) {
+                rL.classList.remove('opacity-0', 'pointer-events-none');
+                
+                // อัปเดตรูปเรดาร์ใหม่เสมอ ป้องกันแคช โดยเติม Timestamp ลงท้าย
+                const radarImg = document.getElementById('radar-image');
+                if (radarImg) {
+                    radarImg.src = `https://weather.tmd.go.th/cmp/cmp240_latest.gif?t=${new Date().getTime()}`;
+                }
             }
         }
-
         // หา ward ของเตียงนั้น เพื่อรู้ว่าต้องเด้งไปการ์ดไหน
         function wardColForBed(bedName) {
             const entry = globalActiveBeds[bedName];
@@ -1583,7 +1612,7 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             }
         }
 
-        function startTopDrugsSwapAnimation() {
+function startTopDrugsSwapAnimation() {
             if (topDrugsAnimateInterval) return; 
             topDrugsAnimateInterval = setInterval(() => {
                 const container = document.getElementById('top-drugs-container');
@@ -1596,6 +1625,9 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                 const el1 = children[idx];
                 const el2 = children[idx - 1];
 
+                // 📌 เช็คความปลอดภัย: ถ้า el1 หรือ el2 หายไปจากการโหลดข้อมูลรอบใหม่ ให้ยกเลิกการสลับ
+                if (!container.contains(el1) || !container.contains(el2)) return;
+
                 el1.classList.add('animated-card-swap');
                 el2.classList.add('animated-card-swap');
 
@@ -1604,6 +1636,9 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                 el2.style.transform = `translateY(${h1}px)`;
 
                 setTimeout(() => {
+                    // 📌 เช็คความปลอดภัยอีกครั้ง ก่อนจับย้ายใน DOM (สำคัญมาก ป้องกัน Error insertBefore)
+                    if (!container.contains(el1) || !container.contains(el2)) return;
+
                     el1.classList.remove('animated-card-swap');
                     el2.classList.remove('animated-card-swap');
                     el1.style.transform = '';
@@ -1611,6 +1646,7 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                     
                     container.insertBefore(el1, el2);
                     
+                    // ปรับเลขลำดับ Rank ใหม่
                     Array.from(container.children).forEach((child, i) => {
                         const rankEl = child.querySelector('.rank-num');
                         if (rankEl) {
@@ -1757,21 +1793,18 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
             const yearTh = (year + 543).toString().substring(2);
             document.getElementById('cal-month-title').textContent = `(${thM[month]} ${yearTh})`;
             
-            // 📌 1. โหลดข้อมูลวันหยุดราชการจาก API
-            if (!window.cachedHolidays || window.cachedHolidayYear !== year) {
-                window.cachedHolidays = await fetchThaiHolidays(year);
-                window.cachedHolidayYear = year;
-            }
-            const holidays = window.cachedHolidays || [];
-            
-            // แปลงวันหยุดเป็น Set ของวันที่ในเดือนนี้ เพื่อให้เช็คง่ายๆ
+            // 📌 1. โหลดข้อมูลวันหยุดราชการจากตัวแปร globalHolidays (.ics ที่ส่งมาจาก GAS)
             const holidaysMap = new Map();
-            holidays.forEach(h => {
-                const parts = h.date.split('-'); // YYYY-MM-DD
-                if (parseInt(parts[0]) === year && parseInt(parts[1]) - 1 === month) {
-                    holidaysMap.set(parseInt(parts[2]), h.localName);
-                }
-            });
+            if (globalHolidays && Array.isArray(globalHolidays)) {
+                globalHolidays.forEach(h => {
+                    if (h.date) {
+                        const parts = h.date.split('-'); // YYYY-MM-DD
+                        if (parseInt(parts[0]) === year && parseInt(parts[1]) - 1 === month) {
+                            holidaysMap.set(parseInt(parts[2]), h.name);
+                        }
+                    }
+                });
+            }
 
             // 📌 2. คำนวณวันนัดหมาย (Heatmap)
             const apptMap = {};
@@ -1864,12 +1897,7 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
             }
 
             // ===================================================================
-            // 📌 4. วาดปฏิทิน (ออกแบบใหม่)
-            // แต่ละช่องเรียงเป็นบรรทัด ไม่ทับกัน:
-            //   บรรทัด 1  เลขวันที่ (ตัวใหญ่)
-            //   บรรทัด 2  ป้ายวันสำคัญ (ถ้ามี)
-            //   บรรทัด 3  จำนวนผู้ป่วยนัด (เห็นชัด)
-            //   บรรทัดล่างสุด  ป้ายวันเบิก (ใช้ mt-auto ไม่ใช้ absolute จะได้ไม่ทับใคร)
+            // 📌 4. วาดปฏิทิน 
             // ===================================================================
             const firstDayIndex = new Date(year, month, 1).getDay();
 
@@ -1900,15 +1928,19 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
                 // Heatmap: จำกัดความเข้มไว้ที่ 0.55 เพื่อให้ตัวหนังสือยังอ่านออก
                 let bgColorClass = 'bg-transparent';
                 let opacity = 0;
+                let countColorClass = 'text-slate-900'; // สีป้ายจำนวนคนไข้
+
                 if (count > 0) {
                     if (count < avgAppt) {
                         bgColorClass = 'bg-emerald-500';
                         opacity = 0.12 + 0.43 * (1 - (count / (avgAppt || 1)));
+                        countColorClass = 'text-emerald-800'; // ต่ำกว่าเฉลี่ย สีเขียวเข้ม
                     } else {
                         bgColorClass = 'bg-rose-500';
                         let diffMax = maxAppt - avgAppt;
                         if (diffMax === 0) diffMax = 1;
                         opacity = 0.12 + 0.43 * ((count - avgAppt) / diffMax);
+                        countColorClass = 'text-rose-800'; // เกินเฉลี่ย สีแดงเข้ม
                     }
                 }
                 opacity = Math.min(0.55, Math.max(0, opacity));
@@ -1916,17 +1948,18 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
                 const holidayName = holidaysMap.get(d);
                 const reqData = reqMap[d];
 
-                const todayRing = isToday ? 'ring-2 ring-rose-500 shadow-md z-10' : '';
+                // 📌 เปลี่ยนกรอบวันนี้ให้กระพริบแรงๆ
+                const todayRing = isToday ? 'ring-[3px] ring-rose-600 shadow-md z-10 animate-pulse' : '';
                 const dateCls   = isToday ? 'text-rose-700 text-[15px]' : 'text-slate-900 text-[13px]';
 
                 // บรรทัด 2: ป้ายวันสำคัญ
                 const holidayHtml = holidayName
-                    ? `<div class="w-full px-[2px]"><div class="bg-rose-600 text-white text-[6px] font-black leading-[1.25] rounded-[2px] px-[2px] truncate" title="${holidayName}">${holidayName}</div></div>`
+                    ? `<div class="w-full px-[2px] mt-[1px]"><div class="bg-rose-600 text-white text-[6px] font-black leading-[1.25] rounded-[2px] px-[2px] truncate" title="${holidayName}">${holidayName}</div></div>`
                     : '';
 
-                // บรรทัด 3: จำนวนผู้ป่วยนัด
+                // 📌 บรรทัด 3: จำนวนผู้ป่วยนัด (เปลี่ยนเป็นแบบลอยมุมขวาบน)
                 const countHtml = count > 0
-                    ? `<div class="bg-white/95 text-slate-900 border border-slate-300 rounded-full px-[5px] text-[9px] font-black leading-[1.3] shadow-sm">${count}</div>`
+                    ? `<div class="absolute top-[1px] right-[1px] bg-white border border-slate-300 rounded-[3px] px-[2.5px] py-[1px] text-[7px] font-black drop-shadow-md leading-none ${countColorClass} z-20">${count}</div>`
                     : '';
 
                 // บรรทัดล่างสุด: ป้ายวันเบิก
@@ -1936,10 +1969,12 @@ async function renderCalendar(monthlyApptData, todayClinicData) {
 
                 html += `<div class="relative min-h-[54px] flex flex-col items-center rounded-[4px] border border-slate-300/70 overflow-hidden bg-white/85 ${todayRing}">
                     <div class="absolute inset-0 ${bgColorClass} z-0" style="opacity:${opacity.toFixed(3)}"></div>
+                    
+                    ${countHtml} <!-- ป้ายจำนวนคนลอยทับไว้มุมขวา -->
+
                     <div class="relative z-10 flex flex-col items-center w-full flex-1 gap-[1px] pt-[1px]">
                         <div class="${dateCls} font-black leading-none">${d}</div>
                         ${holidayHtml}
-                        ${countHtml}
                     </div>
                     <div class="relative z-10 w-full mt-auto">${reqHtml}</div>
                 </div>`;
