@@ -697,7 +697,7 @@
                 <div class="card-3d flex flex-col h-[100px] min-w-[5.5rem] max-w-[5.5rem] bg-white/80 shrink-0 relative overflow-hidden rounded-lg">
 
                     <!-- ชั้นที่ 1: สภาพอากาศ -->
-                    <div id="weather-layer" class="absolute inset-0 p-2 flex flex-col items-center justify-center gap-0 transition-opacity duration-500 opacity-100 z-10 bg-white/80 backdrop-blur-sm">
+                    <div id="weather-layer" class="absolute inset-0 p-2 flex flex-col items-center justify-center gap-0 transition-opacity duration-500 opacity-100">
                         <div id="weather-icon" class="text-[32px] leading-[0.8] drop-shadow-md mb-0.5">
                             <i class="fas fa-spinner fa-spin text-slate-400"></i>
                         </div>
@@ -712,7 +712,7 @@
                     </div>
 
                     <!-- ชั้นที่ 2: ระดับน้ำคลองสวี -->
-                    <div id="water-layer" class="absolute inset-0 px-1.5 py-1 flex flex-col transition-opacity duration-500 opacity-0 pointer-events-none z-10 bg-white/80 backdrop-blur-sm">
+                    <div id="water-layer" class="absolute inset-0 px-1.5 py-1 flex flex-col transition-opacity duration-500 opacity-0 pointer-events-none">
                         <div class="text-[8px] font-black text-sky-800 text-center leading-none mb-1 shrink-0 mt-0.5">
                             <i class="fas fa-water mr-[2px]"></i>ระดับน้ำคลองสวี
                         </div>
@@ -723,12 +723,10 @@
                     </div>
 
                     <!-- ชั้นที่ 3: เรดาร์ฝนชุมพร (ดึงมาจาก TMD) -->
-                    <div id="radar-layer" class="absolute inset-0 transition-opacity duration-500 opacity-0 pointer-events-none z-0 bg-black flex flex-col items-center justify-center overflow-hidden">
-                        <div class="absolute top-0 w-full bg-gradient-to-b from-black/80 to-transparent py-0.5 z-20 text-center">
+                    <div id="radar-layer" class="absolute inset-0 transition-opacity duration-500 opacity-0 pointer-events-none bg-black flex flex-col items-center justify-center overflow-hidden">
+                        <div class="absolute top-0 w-full bg-gradient-to-b from-black/80 to-transparent py-0.5 z-10 text-center">
                             <span class="text-[7px] font-black text-white tracking-wider">เรดาร์ฝน</span>
                         </div>
-                        <!-- เทคนิคการครอบรูป 50% ตรงกลาง: ใช้ Transform Scale ขยายรูปให้ใหญ่ทะลุกรอบ 
-                             และใช้ object-position จัดให้อยู่กึ่งกลาง กรอบ overflow-hidden ด้านนอกจะตัดขอบที่ล้นทิ้งเอง -->
                         <img id="radar-image" src="" alt="Radar" class="w-full h-full object-cover transform scale-[2.2] origin-center opacity-80" onerror="this.src=''">
                     </div>
 
@@ -1174,7 +1172,7 @@ function checkSwapCards(now) {
         }
 
         // สลับการ์ดอากาศ <-> ระดับน้ำ ทุก 30 วินาที
-let currentWeatherSlide = 0; // 0=อุณหภูมิ, 1=ระดับน้ำ, 2=เรดาร์
+let currentWeatherSlide = 0; // 0 = อุณหภูมิ, 1 = เรดาร์ (สำหรับนาทีทั่วไป)
         
         function toggleWeatherWater() {
             const wL = document.getElementById('weather-layer');
@@ -1182,31 +1180,41 @@ let currentWeatherSlide = 0; // 0=อุณหภูมิ, 1=ระดับน
             const rL = document.getElementById('radar-layer');
             if (!wL || !aL || !rL) return;
 
-            // เลื่อนลำดับ
-            currentWeatherSlide = (currentWeatherSlide + 1) % 3;
+            const now = new Date();
+            const currentMinute = now.getMinutes();
 
-            // ถ้าไม่มีข้อมูลน้ำ ให้ข้ามระดับน้ำไปเรดาร์เลย
-            if (currentWeatherSlide === 1 && (!globalWaterLevel || globalWaterLevel.length === 0)) {
-                currentWeatherSlide = 2;
-            }
-
-            // ซ่อนทุกเลเยอร์ก่อน
-            [wL, aL, rL].forEach(el => {
-                el.classList.add('opacity-0', 'pointer-events-none');
-            });
-
-            // เปิดแสดงเลเยอร์ที่ถูกเลือก
-            if (currentWeatherSlide === 0) {
-                wL.classList.remove('opacity-0', 'pointer-events-none');
-            } else if (currentWeatherSlide === 1) {
-                aL.classList.remove('opacity-0', 'pointer-events-none');
-            } else if (currentWeatherSlide === 2) {
-                rL.classList.remove('opacity-0', 'pointer-events-none');
+            // เงื่อนไข: นาทีที่ 00 - 01 (ต้นชั่วโมง) ให้แสดงเฉพาะระดับน้ำ
+            if (currentMinute === 0 || currentMinute === 1) {
                 
-                // อัปเดตรูปเรดาร์ใหม่เสมอ ป้องกันแคช โดยเติม Timestamp ลงท้าย
-                const radarImg = document.getElementById('radar-image');
-                if (radarImg) {
-                    radarImg.src = `https://weather.tmd.go.th/cmp/cmp240_latest.gif?t=${new Date().getTime()}`;
+                wL.classList.add('opacity-0', 'pointer-events-none');
+                rL.classList.add('opacity-0', 'pointer-events-none');
+                
+                // ถ้าระดับน้ำไม่มีข้อมูล ก็ให้กลับไปหน้าอุณหภูมิแทน
+                if (!globalWaterLevel || globalWaterLevel.length === 0) {
+                    aL.classList.add('opacity-0', 'pointer-events-none');
+                    wL.classList.remove('opacity-0', 'pointer-events-none');
+                } else {
+                    aL.classList.remove('opacity-0', 'pointer-events-none');
+                }
+
+            } else {
+                // นาทีอื่นๆ: ซ่อนระดับน้ำ แล้วสลับ (Toggle) ระหว่างอุณหภูมิ กับ เรดาร์
+                aL.classList.add('opacity-0', 'pointer-events-none');
+
+                currentWeatherSlide = (currentWeatherSlide === 0) ? 1 : 0;
+
+                if (currentWeatherSlide === 0) {
+                    // โชว์อุณหภูมิ
+                    rL.classList.add('opacity-0', 'pointer-events-none');
+                    wL.classList.remove('opacity-0', 'pointer-events-none');
+                } else {
+                    // โชว์เรดาร์
+                    wL.classList.add('opacity-0', 'pointer-events-none');
+                    rL.classList.remove('opacity-0', 'pointer-events-none');
+                    
+                    // โหลดภาพเรดาร์ใหม่เสมอ
+                    const radarImg = document.getElementById('radar-image');
+                    if (radarImg) radarImg.src = `https://weather.tmd.go.th/cmp/cmp240_latest.gif?t=${new Date().getTime()}`;
                 }
             }
         }
@@ -2367,21 +2375,49 @@ function renderIncidents(data) {
                 let erText = tErr > 0 ? "text-rose-600" : "text-emerald-600";
                 let monthlyText = mErr > 0 ? "text-rose-600" : "text-emerald-600";
 
-                // 📌 กราฟแท่งรายเดือน (Chart)
+                // 📌 กราฟแท่งรายเดือน (Stack Bar Chart)
                 let chartHtml = '';
                 if (data.er_monthly && data.er_monthly.length > 0) {
-                    const maxErr = Math.max(...data.er_monthly.map(d => d.errors), 1);
+                    const maxDailyTotal = Math.max(...data.er_monthly.map(d => d.total), 1); // หาเสาที่สูงที่สุดเพื่อเป็นฐาน 100%
+                    
                     let bars = '';
                     data.er_monthly.forEach(d => {
-                        const hPct = (d.errors / maxErr) * 100;
-                        const barColor = d.errors > 0 ? 'bg-rose-500' : 'bg-emerald-400';
-                        bars += `<div class="flex-1 flex flex-col justify-end group relative" title="วันที่ ${d.day}: ${d.errors} error">
-                                    <div class="w-full ${barColor} rounded-t-[1px] opacity-80" style="height: ${Math.max(hPct, 5)}%;"></div>
-                                 </div>`;
+                        const t = d.total || 0;
+                        const e = d.errors || 0;
+                        const ok = Math.max(0, t - e);
+
+                        // คำนวณความสูงโดยรวมของเสานี้ (เทียบกับวันที่ยอดเยอะสุด)
+                        const totalHeightPct = (t / maxDailyTotal) * 100;
+                        
+                        // คำนวณสัดส่วนสีแดง/เขียว ภายในเสา
+                        const errPct = t > 0 ? (e / t) * 100 : 0;
+                        const okPct = t > 0 ? (ok / t) * 100 : 0;
+
+                        if (t > 0) {
+                            bars += `<div class="flex-1 flex flex-col justify-end group relative items-center mx-[0.5px]" title="วันที่ ${d.day}: ตรวจ ${t} พบ ${e} Error">
+                                        <!-- เสาหลัก (กำหนดความสูงตามยอดรวมของวัน) -->
+                                        <div class="w-full flex flex-col justify-end opacity-90 rounded-t-[2px] overflow-hidden" style="height: ${Math.max(totalHeightPct, 5)}%;">
+                                            <!-- ชั้น Error (สีแดง) อยู่บน -->
+                                            <div class="w-full bg-rose-500" style="height: ${errPct}%;"></div>
+                                            <!-- ชั้น ปกติ (สีเขียว) อยู่ล่าง -->
+                                            <div class="w-full bg-emerald-400" style="height: ${okPct}%;"></div>
+                                        </div>
+                                     </div>`;
+                        } else {
+                            // วันที่ไม่มีข้อมูล
+                            bars += `<div class="flex-1 flex flex-col justify-end items-center mx-[0.5px]" title="วันที่ ${d.day}: ไม่มีข้อมูล">
+                                        <div class="w-full bg-slate-300 rounded-t-[2px] opacity-30" style="height: 5%;"></div>
+                                     </div>`;
+                        }
                     });
+
                     chartHtml = `
-                    <div class="mt-1.5 border-t border-slate-300/50 pt-1">
-                        <div class="h-6 flex items-end gap-[1px] w-full px-1">${bars}</div>
+                    <div class="mt-1 border-t border-slate-300/50 pt-1.5 pb-0.5">
+                        <div class="flex justify-between text-[7px] font-bold text-slate-500 mb-0.5 leading-none px-0.5">
+                            <span>วันที่ 1</span>
+                            <span>วันนี้</span>
+                        </div>
+                        <div class="h-[28px] flex items-end w-full px-0.5">${bars}</div>
                     </div>`;
                 }
 
@@ -2426,7 +2462,7 @@ function renderIncidents(data) {
                 </div>`;
             }
 
-            // 📌 2. อุบัติการณ์จัดยา (MR Error)
+            // ... (ส่วนของ MR ERROR ถัดจากนี้ ไม่เปลี่ยนแปลง)
             if (data.mr && data.mr.length > 0) {
                 let mrHtml = `<div class="card-3d bg-slate-50/70 backdrop-blur-md p-2 flex flex-col gap-1 border border-white/60 mb-2">
                     <div class="text-[10px] font-black text-slate-700 border-b border-slate-300/50 pb-1 mb-1"><i class="fas fa-pills text-amber-500 mr-1"></i>อุบัติการณ์จัดยา (MR Error)</div>`;
@@ -2444,7 +2480,6 @@ function renderIncidents(data) {
 
             container.innerHTML = html || `<div class="text-center text-xs text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>`;
             
-            // 📌 3. สุดท้ายตามด้วย LASA 
             if (appendTarget && window.lastLasaHtml) { appendTarget.innerHTML = window.lastLasaHtml; }
         }
 
@@ -3005,8 +3040,9 @@ function renderDue(data) {
 
             setInterval(() => { fetchWeather(); updateBackground(); }, 3600 * 1000);
 
-            // สลับการ์ดอากาศ <-> ระดับน้ำคลองสวี ทุก 30 วินาที
-            setInterval(toggleWeatherWater, 30000);
+// สลับการ์ดอากาศ/น้ำ/เรดาร์ ทุกๆ 1 นาที (60 วินาที)
+            setInterval(toggleWeatherWater, 60000);
+            toggleWeatherWater(); // เรียกใช้ครั้งแรกทันที
         }
 
         if (document.readyState === 'loading') {
