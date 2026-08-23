@@ -3009,5 +3009,436 @@ function renderDue(data) {
             startDashboard();
         }
     </script>
+    <!-- ============================================================
+     PATCH BLOCK  v1  (ER chart + ปฏิทินนัดหมาย)
+     วางบล็อกนี้ "ก่อนบรรทัด </body>" ของไฟล์เดิม
+     ไม่ต้องแก้/ลบโค้ดเดิมแม้แต่บรรทัดเดียว
+     ถ้าอยากยกเลิก = ลบทั้งบล็อกนี้ทิ้ง จบ
+     ============================================================ -->
+<style>
+/* วันนี้ในปฏิทิน: กระพริบแรง ๆ ที่กรอบ + เงา */
+@keyframes cal-today-blink {
+    0%, 100% { box-shadow: 0 0 0 2px #f43f5e, 0 0 8px 1px rgba(244,63,94,0.75); }
+    50%      { box-shadow: 0 0 0 3px #fda4af, 0 0 22px 7px rgba(244,63,94,1); }
+}
+.cal-today-blink { animation: cal-today-blink 0.7s infinite ease-in-out; }
+
+/* เลขวันที่ + ตัวเลขจำนวนคนของวันนี้ เต้นตาม */
+@keyframes cal-today-pop {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.25); }
+}
+.cal-today-pop { animation: cal-today-pop 0.7s infinite ease-in-out; }
+</style>
+
+<script>
+/* ============================================================
+   1) วันหยุดไทย: GAS -> iCal ผ่าน CORS Proxy -> API สำรอง -> วันที่ตายตัว
+      (หน้าเว็บยิง .ics ตรงไม่ได้ เพราะ Google ไม่ส่ง CORS header)
+   ============================================================ */
+const PATCH_ICS_URL = 'https://calendar.google.com/calendar/ical/th.th%23holiday%40group.v.calendar.google.com/public/basic.ics';
+
+const PATCH_CORS_PROXIES = [
+    function(u){ return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+    function(u){ return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+    function(u){ return 'https://r.jina.ai/' + u; }
+];
+
+/* วันหยุดที่วันที่ตายตัวทุกปี ใช้เมื่อทุกช่องทางล่ม จะได้ไม่มีจอว่าง */
+const PATCH_HOLIDAY_STATIC = [
+    ['01-01','วันขึ้นปีใหม่'], ['04-06','วันจักรี'], ['04-13','วันสงกรานต์'],
+    ['04-14','วันสงกรานต์'], ['04-15','วันสงกรานต์'], ['05-01','วันแรงงาน'],
+    ['05-04','วันฉัตรมงคล'], ['06-03','วันเฉลิมฯ พระราชินี'], ['07-28','วันเฉลิมฯ ร.10'],
+    ['08-12','วันแม่แห่งชาติ'], ['10-13','วันนวมินทรมหาราช'], ['10-23','วันปิยมหาราช'],
+    ['12-05','วันพ่อแห่งชาติ'], ['12-10','วันรัฐธรรมนูญ'], ['12-31','วันสิ้นปี']
+];
+
+let patchHolidayMemo = { key: '', list: [] };
+
+function patchParseICS(text, year, month) {
+    const out = [];
+    /* ICS ตัดบรรทัดที่ 75 ตัวอักษร ต้อง unfold ก่อน ไม่งั้นชื่อวันหยุดขาด */
+    const unfolded = text.replace(/\r?\n[ \t]/g, '');
+    const events = unfolded.split('BEGIN:VEVENT');
+    for (let i = 1; i < events.length; i++) {
+        const dm = events[i].match(/DTSTART[^:\r\n]*:(\d{4})(\d{2})(\d{2})/);
+        const sm = events[i].match(/SUMMARY[^:\r\n]*:([^\r\n]+)/);
+        if (!dm || !sm) continue;
+        const y = +dm[1], m = +dm[2], d = +dm[3];
+        if (y !== year || m !== month + 1) continue;
+        out.push({
+            date: y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0'),
+            localName: sm[1].replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, ' ').trim()
+        });
+    }
+    return out;
+}
+
+async function patchGetThaiHolidays(year, month) {
+    /* ชั้น 1: ใช้ของที่ GAS ดึงมาให้แล้ว (ไม่ติด CORS + cache ฝั่ง server) */
+    if (typeof globalHolidays !== 'undefined' && globalHolidays && globalHolidays.length) {
+        const fromGas = globalHolidays
+            .filter(function(h){
+                const p = String(h.date || '').split('-');
+                return (+p[0] === year && +p[1] === month + 1);
+            })
+            .map(function(h){ return { date: h.date, localName: h.localName || h.name }; });
+        if (fromGas.length) return fromGas;
+    }
+
+    const key = year + '-' + month;
+    if (patchHolidayMemo.key === key && patchHolidayMemo.list.length) return patchHolidayMemo.list;
+
+    /* ชั้น 2: ยิง iCal ผ่าน CORS Proxy (ไล่ทีละตัวจนกว่าจะได้) */
+    for (const mk of PATCH_CORS_PROXIES) {
+        try {
+            const ctl = new AbortController();
+            const tid = setTimeout(function(){ ctl.abort(); }, 8000);
+            const res = await fetch(mk(PATCH_ICS_URL), { signal: ctl.signal });
+            clearTimeout(tid);
+            if (!res.ok) continue;
+            const txt = await res.text();
+            if (txt.indexOf('BEGIN:VEVENT') === -1) continue;
+            const list = patchParseICS(txt, year, month);
+            if (list.length) { patchHolidayMemo = { key: key, list: list }; return list; }
+        } catch (e) {}
+    }
+
+    /* ชั้น 3: API สำรอง */
+    try {
+        const res = await fetch('https://date.nager.at/api/v3/PublicHolidays/' + year + '/TH');
+        if (res.ok) {
+            const j = await res.json();
+            const list = (j || [])
+                .filter(function(h){ return +String(h.date).split('-')[1] === month + 1; })
+                .map(function(h){ return { date: h.date, localName: h.localName || h.name }; });
+            if (list.length) { patchHolidayMemo = { key: key, list: list }; return list; }
+        }
+    } catch (e) {}
+
+    /* ชั้น 4: วันที่ตายตัว */
+    const list = PATCH_HOLIDAY_STATIC
+        .filter(function(h){ return +h[0].split('-')[0] === month + 1; })
+        .map(function(h){ return { date: year + '-' + h[0], localName: h[1] }; });
+    patchHolidayMemo = { key: key, list: list };
+    return list;
+}
+
+/* ============================================================
+   2) ปฏิทินนัดหมาย  (เขียนทับ renderCalendar ตัวเดิม)
+      - เลขจำนวนผู้ป่วย: สูงกว่าเฉลี่ย = แดงเข้ม / ต่ำกว่าเฉลี่ย = เขียวเข้ม
+      - วันนี้: กรอบกระพริบแรง + เลขเต้น
+   ============================================================ */
+async function renderCalendar(monthlyApptData, todayClinicData) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const todayDate = now.getDate();
+
+    /* เพิ่มจำนวนวันหยุดเข้าไปในลายเซ็นด้วย ไม่งั้นตอนวันหยุดมาถึงทีหลัง ปฏิทินจะไม่วาดใหม่ */
+    const holidayCount = (typeof globalHolidays !== 'undefined' && globalHolidays) ? globalHolidays.length : 0;
+    const calSignature = now.toDateString() + '|' +
+        JSON.stringify(monthlyApptData || []) + '|' +
+        JSON.stringify(todayClinicData || []) + '|h' + holidayCount +
+        '|c' + patchHolidayMemo.list.length;
+    if (calSignature === lastCalendarSignature) return;
+    lastCalendarSignature = calSignature;
+
+    const thM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const yearTh = (year + 543).toString().substring(2);
+    const titleEl = document.getElementById('cal-month-title');
+    if (titleEl) titleEl.textContent = '(' + thM[month] + ' ' + yearTh + ')';
+
+    /* 1. วันหยุด */
+    const holidays = await patchGetThaiHolidays(year, month);
+    const holidaysMap = new Map();
+    holidays.forEach(function(h) {
+        const parts = String(h.date).split('-');
+        if (parseInt(parts[0]) === year && parseInt(parts[1]) - 1 === month) {
+            holidaysMap.set(parseInt(parts[2]), h.localName || h.name);
+        }
+    });
+
+    /* 2. วันนัดหมาย (Heatmap) */
+    const apptMap = {};
+    let maxAppt = 0, sumAppt = 0, activeDaysCount = 0;
+    if (monthlyApptData) {
+        monthlyApptData.forEach(function(item) {
+            const dMatch = String(item.appointment_date).match(/\d{4}-\d{2}-(\d{2})/);
+            if (dMatch) {
+                const day = parseInt(dMatch[1], 10);
+                const pts = parseInt(item.total_patients) || 0;
+                apptMap[day] = pts;
+                if (pts > maxAppt) maxAppt = pts;
+                if (pts > 0) { sumAppt += pts; activeDaysCount++; }
+            }
+        });
+    }
+    const avgAppt = activeDaysCount > 0 ? sumAppt / activeDaysCount : 0;
+
+    /* 3. วันเบิกยาอัตโนมัติ (ตรรกะเดิมทุกประการ) */
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const reqMap = {};
+    const getNextValidDay = function(startDay) {
+        let d = startDay;
+        while (d <= daysInMonth) {
+            const dOfWeek = new Date(year, month, d).getDay();
+            if (dOfWeek !== 0 && dOfWeek !== 6 && !holidaysMap.has(d) && !reqMap[d]) return d;
+            d++;
+        }
+        return -1;
+    };
+    let mondays = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+        if (new Date(year, month, d).getDay() === 1) mondays.push(d);
+    }
+    [mondays[0], mondays[2]].forEach(function(mon) {
+        if (!mon) return;
+        let deptStart = getNextValidDay(mon);
+        if (deptStart !== -1) {
+            reqMap[deptStart] = { text: 'เบิกฝ่ายฯ', bg: 'bg-emerald-600 text-white' };
+            let deptNext = getNextValidDay(deptStart + 1);
+            if (deptNext !== -1) reqMap[deptNext] = { text: 'เบิกฝ่ายฯ', bg: 'bg-emerald-200 text-emerald-900' };
+        }
+        let mrStart = getNextValidDay(mon + 2);
+        if (mrStart !== -1) {
+            reqMap[mrStart] = { text: 'เบิก MR', bg: 'bg-blue-600 text-white' };
+            let mrNext = getNextValidDay(mrStart + 1);
+            if (mrNext !== -1) reqMap[mrNext] = { text: 'เบิก MR', bg: 'bg-blue-200 text-blue-900' };
+        }
+    });
+    let rphStart = getNextValidDay(25);
+    if (rphStart !== -1) {
+        reqMap[rphStart] = { text: 'เบิก รพ.สต.', bg: 'bg-orange-500 text-white' };
+        let rphNext1 = getNextValidDay(rphStart + 1);
+        if (rphNext1 !== -1) {
+            reqMap[rphNext1] = { text: 'เบิก รพ.สต.', bg: 'bg-orange-200 text-orange-900' };
+            let rphNext2 = getNextValidDay(rphNext1 + 1);
+            if (rphNext2 !== -1) reqMap[rphNext2] = { text: 'เบิก รพ.สต.', bg: 'bg-orange-200 text-orange-900' };
+        }
+    }
+
+    /* 4. วาดปฏิทิน */
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const dayHeaders = [
+        { t: 'อา', c: 'bg-rose-500/20 text-rose-800' },
+        { t: 'จ',  c: 'bg-yellow-500/25 text-yellow-900' },
+        { t: 'อ',  c: 'bg-pink-500/20 text-pink-800' },
+        { t: 'พ',  c: 'bg-emerald-500/20 text-emerald-800' },
+        { t: 'พฤ', c: 'bg-orange-500/20 text-orange-800' },
+        { t: 'ศ',  c: 'bg-blue-500/20 text-blue-800' },
+        { t: 'ส',  c: 'bg-purple-500/20 text-purple-800' }
+    ];
+
+    let html = '<div class="grid grid-cols-7 gap-[2px] text-center mb-[3px]">';
+    dayHeaders.forEach(function(d) {
+        html += '<div class="' + d.c + ' rounded-[4px] py-[2px] text-[9px] font-black leading-none backdrop-blur-sm">' + d.t + '</div>';
+    });
+    html += '</div><div class="grid grid-cols-7 gap-[2px]">';
+
+    for (let i = 0; i < firstDayIndex; i++) {
+        html += '<div class="bg-slate-200/30 rounded-[4px] min-h-[54px]"></div>';
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = d === todayDate;
+        const count = apptMap[d] || 0;
+
+        let bgColorClass = 'bg-transparent';
+        let opacity = 0;
+        if (count > 0) {
+            if (count < avgAppt) {
+                bgColorClass = 'bg-emerald-500';
+                opacity = 0.12 + 0.43 * (1 - (count / (avgAppt || 1)));
+            } else {
+                bgColorClass = 'bg-rose-500';
+                let diffMax = maxAppt - avgAppt;
+                if (diffMax === 0) diffMax = 1;
+                opacity = 0.12 + 0.43 * ((count - avgAppt) / diffMax);
+            }
+        }
+        opacity = Math.min(0.55, Math.max(0, opacity));
+
+        const holidayName = holidaysMap.get(d);
+        const reqData = reqMap[d];
+
+        /* วันนี้: กรอบกระพริบแรง (overflow-visible ไม่งั้นเงาโดนตัด) */
+        const todayRing = isToday ? 'cal-today-blink z-20' : '';
+        const dateCls = isToday ? 'text-rose-700 text-[15px] cal-today-pop' : 'text-slate-900 text-[13px]';
+
+        const holidayHtml = holidayName
+            ? '<div class="w-full px-[2px]"><div class="bg-rose-600 text-white text-[6px] font-black leading-[1.25] rounded-[2px] px-[2px] truncate" title="' + holidayName + '">' + holidayName + '</div></div>'
+            : '';
+
+        /* เลขจำนวนผู้ป่วย: เกินเฉลี่ย = แดงเข้ม, ต่ำกว่าเฉลี่ย = เขียวเข้ม */
+        let numCls = 'text-slate-800 border-slate-400';
+        if (count > 0 && avgAppt > 0) {
+            if (count > avgAppt)      numCls = 'text-[#991b1b] border-red-500';
+            else if (count < avgAppt) numCls = 'text-[#14532d] border-emerald-500';
+        }
+        const countHtml = count > 0
+            ? '<div class="bg-white ' + numCls + ' border-[1.5px] rounded-full px-[5px] text-[10.5px] font-black leading-[1.3] shadow-sm ' +
+              (isToday ? 'cal-today-pop' : '') + '" title="ผู้ป่วยนัด ' + count + ' คน (เฉลี่ย ' + avgAppt.toFixed(0) + ')">' + count + '</div>'
+            : '';
+
+        const reqHtml = reqData
+            ? '<div class="w-full ' + reqData.bg + ' text-[6.5px] font-black leading-[1.35] text-center px-[1px] truncate">' + reqData.text + '</div>'
+            : '';
+
+        html += '<div class="relative min-h-[54px] flex flex-col items-center rounded-[4px] border border-slate-300/70 overflow-visible bg-white/85 ' + todayRing + '">' +
+                    '<div class="absolute inset-0 ' + bgColorClass + ' z-0 rounded-[4px]" style="opacity:' + opacity.toFixed(3) + '"></div>' +
+                    '<div class="relative z-10 flex flex-col items-center w-full flex-1 gap-[1px] pt-[1px]">' +
+                        '<div class="' + dateCls + ' font-black leading-none">' + d + '</div>' +
+                        holidayHtml + countHtml +
+                    '</div>' +
+                    '<div class="relative z-10 w-full mt-auto overflow-hidden rounded-b-[4px]">' + reqHtml + '</div>' +
+                '</div>';
+    }
+    html += '</div>';
+    const gridEl = document.getElementById('calendar-grid');
+    if (gridEl) gridEl.innerHTML = html;
+
+    /* 5. คลินิกที่มีนัดวันนี้ (เหมือนเดิม) */
+    let clinicHtml = '';
+    if (todayClinicData && todayClinicData.length > 0) {
+        todayClinicData.forEach(function(c, idx) {
+            const color = ['bg-rose-100 text-rose-700 border-rose-200','bg-blue-100 text-blue-700 border-blue-200','bg-emerald-100 text-emerald-700 border-emerald-200','bg-amber-100 text-amber-700 border-amber-200','bg-purple-100 text-purple-700 border-purple-200'][idx % 5];
+            clinicHtml += '<div class="flex justify-between items-center text-[10px] bg-white/80 px-2 py-[3px] rounded-md border border-slate-200 shadow-sm shrink-0"><span class="font-bold text-slate-700 truncate flex-1 leading-tight mr-1">' + (c.clinic_name || c.clinic_code) + '</span><span class="' + color + ' font-black px-1.5 py-[1px] rounded border shrink-0 leading-none shadow-sm">' + parseInt(c.total_patients).toLocaleString() + '</span></div>';
+        });
+    } else {
+        clinicHtml = '<div class="text-[10px] text-slate-500 text-center py-2 font-bold">ไม่มีนัดคลินิกวันนี้</div>';
+    }
+    const clinicEl = document.getElementById('today-clinic-list');
+    if (clinicEl) clinicEl.innerHTML = clinicHtml;
+}
+
+/* ============================================================
+   3) อุบัติการณ์ ER  (เขียนทับ renderIncidents ตัวเดิม)
+      แก้บั๊ก: แท่งกราฟใช้ height เป็น % ในกล่องที่ความสูง auto
+      -> เบราว์เซอร์ตีเป็น 0 ทุกแท่ง กราฟเลยว่างเปล่า
+      ตอนนี้คำนวณเป็น px ตรง ๆ + ใส่ h-full ให้คอลัมน์
+   ============================================================ */
+function renderIncidents(data) {
+    const container = document.getElementById('incident-container');
+    const appendTarget = document.getElementById('lasa-append-target');
+    if (!container) return;
+
+    if (!data || (!data.er && !data.mr)) {
+        container.innerHTML = '<div class="text-center text-xs text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>';
+        return;
+    }
+
+    let html = '';
+
+    /* 1. ER นอกเวลา */
+    if (data.er || data.er_monthly) {
+        const erData = data.er || { total: 0, errors: 0 };
+        const tTotal = parseInt(erData.total) || 0;
+        const tErr = parseInt(erData.errors) || 0;
+        const pct = tTotal > 0 ? ((tErr / tTotal) * 100).toFixed(1) : 0;
+
+        const mSum = data.er_monthly_sum || { total: 0, errors: 0 };
+        const mTotal = parseInt(mSum.total) || 0;
+        const mErr = parseInt(mSum.errors) || 0;
+        const mPct = mTotal > 0 ? ((mErr / mTotal) * 100).toFixed(1) : 0;
+
+        const erBg = tErr > 0 ? 'bg-rose-50/70 border-rose-200' : 'bg-white/70 border-white/60';
+        const erText = tErr > 0 ? 'text-rose-600' : 'text-emerald-600';
+        const monthlyText = mErr > 0 ? 'text-rose-600' : 'text-emerald-600';
+
+        /* กราฟแท่งรายวัน (Stack Bar): แดง = Error, เขียว = ผ่าน */
+        let chartHtml = '';
+        if (data.er_monthly && Array.isArray(data.er_monthly) && data.er_monthly.length > 0) {
+            const CHART_H = 30; /* px ต้องตรงกับ h-[30px] ด้านล่าง */
+            const maxDailyTotal = Math.max.apply(null, data.er_monthly.map(function(d){ return d.total || 0; }).concat([1]));
+
+            let bars = '';
+            data.er_monthly.forEach(function(d) {
+                const t = d.total || 0;
+                const e = d.errors || 0;
+                if (t > 0) {
+                    const hPx = Math.max(3, Math.round((t / maxDailyTotal) * CHART_H));
+                    const errPx = e > 0 ? Math.max(2, Math.round((e / t) * hPx)) : 0;
+                    const okPx = Math.max(0, hPx - errPx);
+                    bars += '<div class="flex-1 h-full flex flex-col justify-end items-center mx-[0.5px]" title="วันที่ ' + d.day + ': ตรวจ ' + t + ' ใบ พบ ' + e + ' Error">' +
+                                '<div class="w-full flex flex-col justify-end rounded-t-[2px] overflow-hidden opacity-90" style="height:' + hPx + 'px;">' +
+                                    '<div class="w-full bg-rose-500 shrink-0" style="height:' + errPx + 'px;"></div>' +
+                                    '<div class="w-full bg-emerald-400 shrink-0" style="height:' + okPx + 'px;"></div>' +
+                                '</div>' +
+                            '</div>';
+                } else {
+                    bars += '<div class="flex-1 h-full flex flex-col justify-end items-center mx-[0.5px]" title="วันที่ ' + d.day + ': ไม่มีข้อมูล">' +
+                                '<div class="w-full bg-slate-400 rounded-t-[2px] opacity-30 shrink-0" style="height:2px;"></div>' +
+                            '</div>';
+                }
+            });
+
+            chartHtml = '<div class="mt-1 border-t border-slate-300/50 pt-1.5 pb-0.5">' +
+                            '<div class="flex justify-between text-[7px] font-bold text-slate-500 mb-0.5 leading-none px-0.5">' +
+                                '<span>วันที่ 1</span><span>วันนี้</span>' +
+                            '</div>' +
+                            '<div class="h-[30px] flex items-end w-full px-0.5">' + bars + '</div>' +
+                            '<div class="flex justify-center gap-2 mt-1 text-[6.5px] font-bold text-slate-500 leading-none">' +
+                                '<span class="flex items-center gap-[2px]"><span class="w-[6px] h-[6px] bg-emerald-400 rounded-[1px] inline-block"></span>ผ่าน</span>' +
+                                '<span class="flex items-center gap-[2px]"><span class="w-[6px] h-[6px] bg-rose-500 rounded-[1px] inline-block"></span>Error</span>' +
+                            '</div>' +
+                        '</div>';
+        } else {
+            chartHtml = '<div class="text-[8px] text-center text-rose-500 mt-2">ไม่สามารถโหลดกราฟรายเดือนได้</div>';
+        }
+
+        const noDataBadge = tTotal === 0
+            ? '<span class="bg-yellow-400 text-yellow-900 text-[8px] px-1.5 py-0.5 rounded-sm font-black shadow-sm shrink-0 whitespace-nowrap animate-pulse border border-yellow-500">ยังไม่ลงข้อมูลวันนี้</span>'
+            : '';
+
+        html += '<div class="card-3d ' + erBg + ' p-2 flex flex-col border mb-2 shadow-sm rounded-lg backdrop-blur-md">' +
+                    '<div class="text-[11px] font-black text-slate-700 border-b border-slate-300/50 pb-1 mb-1.5 flex items-center justify-between">' +
+                        '<span><i class="fas fa-ambulance text-rose-500 mr-1"></i>ER นอกเวลา</span>' + noDataBadge +
+                    '</div>' +
+                    '<div class="text-[10px] text-slate-700 leading-tight mb-0.5 flex justify-between w-full">' +
+                        '<div><span class="font-bold text-slate-600">ทั้งเดือน:</span> <span class="font-black text-slate-800">' + mTotal + '</span> ใบ</div>' +
+                        '<div><span class="font-bold text-slate-400 mx-0.5">|</span><span class="font-bold">รวม <span class="font-black ' + monthlyText + '">' + mErr + '</span> Err <span class="' + monthlyText + '">(' + mPct + '%)</span></span></div>' +
+                    '</div>' +
+                    '<div class="text-[10px] text-slate-700 leading-tight mb-0.5 flex justify-between w-full">' +
+                        '<div><span class="font-bold text-slate-600">วันนี้:</span> <span class="font-black text-slate-800">' + tTotal + '</span> ใบ</div>' +
+                        '<div><span class="font-bold text-slate-400 mx-0.5">|</span><span class="font-bold">รวม <span class="font-black ' + erText + '">' + tErr + '</span> Err <span class="' + erText + '">(' + pct + '%)</span></span></div>' +
+                    '</div>' +
+                    chartHtml +
+                '</div>';
+    }
+
+    /* 2. MR ERROR (เหมือนเดิม) */
+    if (data.mr && data.mr.length > 0) {
+        let mrHtml = '<div class="card-3d bg-slate-50/70 backdrop-blur-md p-2 flex flex-col gap-1 border border-white/60 mb-2">' +
+            '<div class="text-[10px] font-black text-slate-700 border-b border-slate-300/50 pb-1 mb-1"><i class="fas fa-pills text-amber-500 mr-1"></i>อุบัติการณ์จัดยา (MR Error)</div>';
+        data.mr.forEach(function(item) {
+            mrHtml += '<div class="flex justify-between items-center text-[9px] bg-white/70 backdrop-blur-sm p-1 rounded border border-white/50 shadow-sm">' +
+                '<div class="flex items-center gap-1.5 flex-1 min-w-0 pr-1">' +
+                    '<span class="font-black text-white bg-amber-600 px-1.5 py-0.5 rounded shadow-sm shrink-0 truncate max-w-[50px]">' + item.cat + '</span>' +
+                    '<span class="text-slate-700 font-bold truncate flex-1" title="' + item.detail + '">' + (item.detail || '-') + '</span>' +
+                '</div></div>';
+        });
+        mrHtml += '</div>';
+        html += mrHtml;
+    }
+
+    container.innerHTML = html || '<div class="text-center text-xs text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>';
+
+    if (appendTarget && window.lastLasaHtml) { appendTarget.innerHTML = window.lastLasaHtml; }
+}
+
+/* ============================================================
+   4) บังคับวาดใหม่ทันทีหลังโหลดหน้า (ไม่ต้องรอรอบ 30/60 วินาที)
+   ============================================================ */
+(function () {
+    console.log('[PATCH] renderIncidents + renderCalendar overridden');
+    setTimeout(function () {
+        try { lastCalendarSignature = ''; } catch (e) {}
+        try { if (typeof fetchSchedule === 'function') fetchSchedule(); } catch (e) {}
+        try { if (typeof fetchHospitalData === 'function') fetchHospitalData(); } catch (e) {}
+    }, 1200);
+})();
+</script>
+<!-- ================= END PATCH BLOCK ================= -->
 </body>
 </html>
