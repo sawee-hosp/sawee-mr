@@ -2349,29 +2349,35 @@ function renderTempStatus(tempStatus) {
 
                 // 📌 กราฟแท่งรายเดือน (Stack Bar Chart)
                 let chartHtml = '';
-                // ขยายเงื่อนไขให้ครอบคลุม ไม่ว่าข้อมูลจะมายังไงก็บังคับวาดให้ได้
                 if (data.er_monthly && Array.isArray(data.er_monthly)) {
+                    // หาค่าใบสั่งยาสูงสุดของเดือน เพื่อทำเป็นฐานความสูง (100%)
                     const maxDailyTotal = Math.max(...data.er_monthly.map(d => d.total), 1); 
                     
                     let bars = '';
                     data.er_monthly.forEach(d => {
                         const t = d.total || 0;
                         const e = d.errors || 0;
-                        const ok = Math.max(0, t - e);
+                        const ok = Math.max(0, t - e); // จำนวนใบที่ผ่าน
 
+                        // ความสูงรวมของเสานี้ (เทียบกับยอดสูงสุดของเดือน)
                         const totalHeightPct = (t / maxDailyTotal) * 100;
+                        
+                        // สัดส่วนสีแดง (Error) และสีเขียว (ผ่าน) ภายในเสา
                         const errPct = t > 0 ? (e / t) * 100 : 0;
                         const okPct = t > 0 ? (ok / t) * 100 : 0;
 
                         if (t > 0) {
                             bars += `<div class="flex-1 flex flex-col justify-end group relative items-center mx-[0.5px]" title="วันที่ ${d.day}: ตรวจ ${t} พบ ${e} Error">
-                                        <div class="w-full flex flex-col justify-end opacity-90 rounded-t-[2px] overflow-hidden" style="height: ${Math.max(totalHeightPct, 5)}%;">
+                                        <!-- ความสูงรวมของเสาวันนี้ -->
+                                        <div class="w-full flex flex-col justify-end opacity-90 rounded-t-[2px] overflow-hidden" style="height: ${Math.max(totalHeightPct, 10)}%;">
+                                            <!-- ส่วนที่ Error (สีแดง) อยู่ด้านบน -->
                                             <div class="w-full bg-rose-500" style="height: ${errPct}%;"></div>
+                                            <!-- ส่วนที่ผ่าน (สีเขียว) อยู่ด้านล่าง -->
                                             <div class="w-full bg-emerald-400" style="height: ${okPct}%;"></div>
                                         </div>
                                      </div>`;
                         } else {
-                            // วันที่ไม่มีข้อมูล ให้ขึ้นเสาเตี้ยๆ สีเทา
+                            // วันที่ยังไม่มีข้อมูล (เป็นเสาเตี้ยๆ สีเทา)
                             bars += `<div class="flex-1 flex flex-col justify-end items-center mx-[0.5px]" title="วันที่ ${d.day}: ไม่มีข้อมูล">
                                         <div class="w-full bg-slate-300 rounded-t-[2px] opacity-30" style="height: 5%;"></div>
                                      </div>`;
@@ -2390,7 +2396,6 @@ function renderTempStatus(tempStatus) {
                     chartHtml = `<div class="text-[8px] text-center text-rose-500 mt-2">ไม่สามารถโหลดกราฟรายเดือนได้</div>`;
                 }
 
-                // ป้ายเตือน
                 let noDataBadge = tTotal === 0 ? `<span class="bg-yellow-400 text-yellow-900 text-[8px] px-1.5 py-0.5 rounded-sm font-black shadow-sm shrink-0 whitespace-nowrap animate-pulse border border-yellow-500">ยังไม่ลงข้อมูลวันนี้</span>` : '';
 
                 html += `
