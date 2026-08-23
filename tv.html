@@ -197,6 +197,20 @@
             background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.15) 5px, rgba(0,0,0,0.15) 10px);
         }
 
+        /* การ์ดโปร่ง 75% สำหรับหน้าอุบัติการณ์ (ไม่ใช้ card-3d เพราะเงา inset สีขาวทำให้ดูทึบ) */
+        .soft-card {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        /* Badge ชื่อยาในรายชื่อผู้ป่วยกลุ่มพิเศษ */
+        .drug-chip { display:inline-block; border-radius:4px; padding:0 4px; font-weight:900; line-height:1.35; border:1px solid rgba(255,255,255,0.5); box-shadow:0 1px 2px rgba(0,0,0,0.18); }
+        .drug-had { background:#e11d48; color:#fff; }
+        .drug-due { background:#d97706; color:#fff; }
+        .drug-inh { background:#eab308; color:#3f2d00; }
+
         /* Badge เลขเตียงในรายชื่อผู้ป่วยกลุ่มพิเศษ (ข้อ 2) */
         .bed-chip { color:#fff; font-weight:900; border-radius:4px; padding:1px 4px; line-height:1.1; box-shadow:0 1px 2px rgba(0,0,0,0.25); }
         .chip-admit { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
@@ -388,7 +402,7 @@
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็นปัจจุบัน</h2>
                 </div>
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative">
-                    <div class="grid grid-cols-3 gap-1.5" id="temp-fridge-grid"><div class="text-center text-[14.4px] text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
+                    <div class="grid grid-cols-3 gap-1" id="temp-fridge-grid"><div class="text-center text-[14.4px] text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
                     <div id="fridge-alert-msg" class="shrink-0 mt-3 relative z-20"></div>
                 </div>
             </div>
@@ -398,7 +412,7 @@
                     <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-wind text-teal-500 mr-2"></i>อุณหภูมิห้องปัจจุบัน</h2>
                 </div>
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col relative">
-                    <div class="grid grid-cols-3 gap-1.5" id="temp-room-grid"><div class="text-center text-[14.4px] text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
+                    <div class="grid grid-cols-3 gap-1" id="temp-room-grid"><div class="text-center text-[14.4px] text-slate-500 col-span-3 py-4">กำลังโหลดข้อมูล...</div></div>
                     <div id="room-alert-msg" class="shrink-0 mt-3 relative z-20"></div>
                 </div>
             </div>
@@ -441,7 +455,7 @@
 
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-top-drugs">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
-                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-chart-line text-blue-500 mr-2"></i>ยาใช้มากสุด <span id="unique-drug-count-wrap" class="text-[13.2px] text-slate-500 font-bold hidden">(<span id="unique-drug-count">0</span> รายการ)</span></h2>
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-chart-line text-blue-500 mr-2"></i>ยาที่ใช้วันนี้ <span id="unique-drug-count-wrap" class="text-[13.2px] text-white font-bold hidden drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">(<span id="unique-drug-count">0</span> รายการ)</span></h2>
                 </div>
                 <div class="flex-1 overflow-hidden pt-1 relative" id="top-drugs-container-outer">
                     <div class="flex flex-col gap-0.5 absolute w-full top-0 left-0" id="top-drugs-container">
@@ -459,6 +473,8 @@
                         <div class="text-center text-[14.4px] text-slate-500 py-4">กำลังโหลดปฏิทิน...</div>
                     </div>
                     <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex flex-col min-h-0 flex-1">
+                        <h3 id="cal-events-title" class="text-[13.2px] font-black text-slate-700 mb-1 shrink-0 hidden"><i class="fas fa-truck-loading text-emerald-600 mr-1"></i> วันเบิกยา / วันสำคัญ</h3>
+                        <div id="cal-events-list" class="shrink-0 flex flex-col gap-[2px] mb-1 max-h-[38%] overflow-y-auto no-scrollbar"></div>
                         <h3 class="text-[13.2px] font-black text-slate-700 mb-1 shrink-0"><i class="fas fa-hospital text-blue-500 mr-1"></i> คลินิกที่มีนัดวันนี้</h3>
                         <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1 pr-1" id="today-clinic-list">
                             <div class="text-center text-[12px] text-slate-500">กำลังโหลด...</div>
@@ -805,25 +821,27 @@
             try { beep(800, 1200, 0.5, 0.4, 0); } catch (e) {}
         }
 
-        // เสียง "ตึ่ง~" สำหรับยาฉีดโดยเฉพาะ — โทนระฆังกังวานยาว ต่างจากเสียงแจ้งเตือนปกติชัดเจน
+        // เสียงแจ้งเตือนยาฉีด — โทนนุ่มนวล ไม่ทำให้คนตกใจ
+        // เสียงนุ่ม 2 โน้ต (A5 -> E5) คลื่น sine ล้วน ค่อย ๆ ดังขึ้นแล้วจางหาย
+        // ไม่มีความถี่สูงแหลม ไม่มีเสียงกระแทกตอนเริ่ม จึงไม่ทำให้คนตกใจ
         function playInjectionSound() {
             if (!audioUnlocked) return;
             try {
                 const ctx = getAudioCtx(); if (!ctx) return;
-                const t0 = ctx.currentTime;
-                const osc = ctx.createOscillator();
-                const osc2 = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
-                osc.type = 'triangle';  osc.frequency.setValueAtTime(1400, t0);
-                osc.frequency.exponentialRampToValueAtTime(600, t0 + 0.45);
-                osc2.type = 'sine';     osc2.frequency.setValueAtTime(700, t0);
-                osc2.frequency.exponentialRampToValueAtTime(300, t0 + 0.45);
-                gain.gain.setValueAtTime(0.0001, t0);
-                gain.gain.linearRampToValueAtTime(0.75, t0 + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.2);
-                osc.start(t0);  osc.stop(t0 + 1.25);
-                osc2.start(t0); osc2.stop(t0 + 1.25);
+                const softNote = function (freq, startAt, dur, peak) {
+                    const t0 = ctx.currentTime + startAt;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t0);
+                    gain.gain.setValueAtTime(0.0001, t0);
+                    gain.gain.linearRampToValueAtTime(peak, t0 + 0.12);   // attack ช้า = นุ่ม
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+                    osc.start(t0); osc.stop(t0 + dur + 0.05);
+                };
+                softNote(880, 0,    1.1, 0.22);   // A5
+                softNote(659, 0.28, 1.3, 0.20);   // E5
             } catch (e) {}
         }
 
@@ -1302,6 +1320,9 @@
             const sortBeds = (a, b) => { const nA = parseInt(a.replace(/\D/g, ''))||0; const nB = parseInt(b.replace(/\D/g, ''))||0; return a.replace(/\d/g, '') === b.replace(/\d/g, '') ? nA - nB : 0; };
             maleWard.sort(sortBeds); femaleWard.sort(sortBeds); lrWard.sort(sortBeds);
 
+            // ตามที่สั่ง: เตียงหญิง F1-F5 ถ้าไม่มีคนไข้ ไม่ต้องวาดช่องว่างทิ้งไว้ ให้เริ่มที่ F6 เลย
+            femaleWard = femaleWard.filter(b => globalActiveBeds[b] || !/^F[1-5]$/.test(b));
+
             renderIPDGrid(maleWard, 'ipd-male-grid', 'm', activeMale);
             renderIPDGrid(femaleWard, 'ipd-female-grid', 'f', activeFemale);
             if (lrWard.length > 0) {
@@ -1312,12 +1333,14 @@
         }
 
         // ข้อ 2: แถวรายชื่อผู้ป่วยกลุ่มพิเศษ — badge เลขเตียงสีตามสถานะ + ชื่อยาใหญ่ขึ้น บรรทัดเดียว ตัด ...
-        function specialRow(bedName, statusAdm, patientName, drugText, drugColorClass) {
+        // shrink-0 สำคัญมาก: ถ้าไม่ใส่ flex จะบีบแถวให้เตี้ยลงเรื่อย ๆ เมื่อคนไข้เยอะ จนอ่านไม่ออก
+        // ตอนนี้แถวคงขนาดเดิมเสมอ ถ้าล้นก็เลื่อนดูได้ (คอนเทนเนอร์เป็น overflow-y-auto อยู่แล้ว)
+        function specialRow(bedName, statusAdm, patientName, drugText, drugChipClass) {
             const chip = statusAdm === 'DC' ? 'chip-dc' : (statusAdm === 'ADMIT' ? 'chip-admit' : 'chip-cont');
-            return `<div class="flex items-center gap-1 w-full overflow-hidden leading-[1.15] py-[1px]">
+            return `<div class="flex items-center gap-1 w-full overflow-hidden leading-[1.15] py-[1px] shrink-0">
                         <span class="bed-chip ${chip} text-[10.8px] shrink-0">${bedName}</span>
-                        <span class="text-[11.4px] font-bold text-slate-800 truncate shrink-0 max-w-[36%]" title="${patientName}">${patientName}</span>
-                        <span class="text-[12.6px] font-black ${drugColorClass} truncate flex-1 min-w-0" title="${drugText}">${drugText}</span>
+                        <span class="text-[10.8px] font-bold text-slate-800 truncate shrink-0 max-w-[34%]" title="${patientName}">${patientName}</span>
+                        <span class="drug-chip ${drugChipClass} text-[10.5px] truncate flex-1 min-w-0" title="${drugText}">${drugText}</span>
                     </div>`;
         }
 
@@ -1375,16 +1398,16 @@
                             let dueDrugs = [];
                             if (p.Meropenem && p.Meropenem !== 'N' && p.Meropenem !== '') dueDrugs.push(p.Meropenem !== 'Y' ? p.Meropenem : 'Meropenem');
                             if (p.Tazocin && p.Tazocin !== 'N' && p.Tazocin !== '') dueDrugs.push(p.Tazocin !== 'Y' ? p.Tazocin : 'Tazocin');
-                            if (dueDrugs.length > 0) catDue += specialRow(bedName, statusAdm, nameTxt, dueDrugs.join(', '), 'text-amber-700');
+                            if (dueDrugs.length > 0) catDue += specialRow(bedName, statusAdm, nameTxt, dueDrugs.join(', '), 'drug-due');
                         }
 
                         if (p.is_new_inhaler === 'Y') {
                             let inhDrug = p.inhaler_name || 'ยาพ่น';
-                            catInhaler += specialRow(bedName, statusAdm, nameTxt, inhDrug, 'text-yellow-700');
+                            catInhaler += specialRow(bedName, statusAdm, nameTxt, inhDrug, 'drug-inh');
                         }
 
                         const hadItem = globalHadList.find(h => h.bedno === bedName);
-                        if (hadItem) catHAD += specialRow(bedName, statusAdm, hadItem.patient_name, hadItem.had_drug_list, 'text-rose-700');
+                        if (hadItem) catHAD += specialRow(bedName, statusAdm, hadItem.patient_name, hadItem.had_drug_list, 'drug-had');
                     }
                 }
             });
@@ -1392,9 +1415,9 @@
             container.innerHTML = html;
 
             if (listContainer) {
-                if (catHAD) listHtml += `<div class="text-[12px] font-black text-rose-700 bg-rose-100 px-1 rounded shadow-sm mt-[2px] leading-tight">High Alert Drug</div>${catHAD}`;
-                if (catDue) listHtml += `<div class="text-[12px] font-black text-amber-700 bg-amber-100 px-1 rounded shadow-sm mt-[2px] leading-tight">ยา DUE</div>${catDue}`;
-                if (catInhaler) listHtml += `<div class="text-[12px] font-black text-yellow-700 bg-yellow-100 px-1 rounded shadow-sm mt-[2px] leading-tight">ยาพ่นใหม่</div>${catInhaler}`;
+                if (catHAD) listHtml += `<div class="text-[12px] font-black text-rose-700 bg-rose-100 px-1 rounded shadow-sm mt-[2px] leading-tight shrink-0">High Alert Drug</div>${catHAD}`;
+                if (catDue) listHtml += `<div class="text-[12px] font-black text-amber-700 bg-amber-100 px-1 rounded shadow-sm mt-[2px] leading-tight shrink-0">ยา DUE</div>${catDue}`;
+                if (catInhaler) listHtml += `<div class="text-[12px] font-black text-yellow-700 bg-yellow-100 px-1 rounded shadow-sm mt-[2px] leading-tight shrink-0">ยาพ่นใหม่</div>${catInhaler}`;
                 listContainer.innerHTML = listHtml || `<div class="text-center text-[10.8px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`;
             }
 
@@ -1731,7 +1754,7 @@
             html += '</div><div class="grid grid-cols-7 gap-[2px]">';
 
             for (let i = 0; i < firstDayIndex; i++) {
-                html += '<div class="bg-slate-200/30 rounded-[4px] min-h-[42px]"></div>';
+                html += '<div class="bg-slate-200/30 rounded-[4px] min-h-[32px]"></div>';
             }
 
             for (let d = 1; d <= daysInMonth; d++) {
@@ -1759,14 +1782,6 @@
                 const todayRing = isToday ? 'cal-today-blink z-20' : '';
                 const dateCls = isToday ? 'text-rose-700 text-[15.6px] cal-today-pop' : 'text-slate-900 text-[14.4px]';
 
-                // บรรทัดที่ 2 : วันหยุด "หรือ" วันเบิกยา (ไม่ซ้ำกันอยู่แล้ว จึงใช้ช่องเดียวกัน)
-                let midHtml = '<div class="h-[12px]"></div>';
-                if (holidayName) {
-                    midHtml = '<div class="w-full px-[1px]"><div class="bg-rose-600 text-white text-[7.8px] font-black leading-[12px] h-[12px] rounded-[2px] px-[2px] truncate" title="' + holidayName + '">' + holidayName + '</div></div>';
-                } else if (reqData) {
-                    midHtml = '<div class="w-full px-[1px]"><div class="' + reqData.bg + ' text-[7.8px] font-black leading-[12px] h-[12px] rounded-[2px] text-center px-[1px] truncate">' + reqData.text + '</div></div>';
-                }
-
                 let numCls = 'text-slate-800 border-slate-400';
                 if (count > 0 && avgAppt > 0) {
                     if (count > avgAppt)      numCls = 'text-[#991b1b] border-red-500';
@@ -1777,17 +1792,47 @@
                       (isToday ? 'cal-today-pop' : '') + '" title="ผู้ป่วยนัด ' + count + ' คน (เฉลี่ย ' + avgAppt.toFixed(0) + ')">' + count + '</div>'
                     : '<div class="h-[15px]"></div>';
 
-                html += '<div class="relative min-h-[42px] flex flex-col items-center rounded-[4px] border border-slate-300/70 overflow-visible bg-white/85 ' + todayRing + '">' +
+                // ช่องปฏิทินเหลือแค่ 2 บรรทัด: เลขวันที่ + จำนวนผู้ป่วยนัด
+                // (วันเบิกยา/วันสำคัญ ย้ายไปแสดงเป็นรายการด้านล่างปฏิทินแทน)
+                html += '<div class="relative min-h-[32px] flex flex-col items-center justify-center rounded-[4px] border border-slate-300/70 overflow-visible bg-white/85 ' + todayRing + '">' +
                             '<div class="absolute inset-0 ' + bgColorClass + ' z-0 rounded-[4px]" style="opacity:' + opacity.toFixed(3) + '"></div>' +
                             '<div class="relative z-10 flex flex-col items-center w-full leading-none">' +
                                 '<div class="' + dateCls + ' font-black leading-[1.05]">' + d + '</div>' +
-                                midHtml + countHtml +
+                                countHtml +
                             '</div>' +
                         '</div>';
             }
             html += '</div>';
             const gridEl = document.getElementById('calendar-grid');
             if (gridEl) gridEl.innerHTML = html;
+
+            // รายการวันเบิกยา + วันสำคัญของเดือนนี้ (ย้ายลงมาจากในช่องปฏิทิน)
+            var eventDays = [];
+            holidaysMap.forEach(function (nm, day) {
+                eventDays.push({ day: day, text: nm, cls: 'bg-rose-600 text-white border-rose-700', icon: 'fa-star' });
+            });
+            Object.keys(reqMap).forEach(function (k) {
+                var day = parseInt(k, 10);
+                eventDays.push({ day: day, text: reqMap[k].text, cls: reqMap[k].bg + ' border-white/50', icon: 'fa-dolly' });
+            });
+            eventDays.sort(function (a, b) { return a.day - b.day; });
+
+            var evHtml = '';
+            var evTitle = document.getElementById('cal-events-title');
+            if (evTitle) evTitle.classList.toggle('hidden', eventDays.length === 0);
+            if (eventDays.length > 0) {
+                eventDays.forEach(function (ev) {
+                    var past = ev.day < todayDate;
+                    var isTd = ev.day === todayDate;
+                    evHtml += '<div class="flex items-center gap-1.5 text-[11px] px-1.5 py-[2px] rounded-md border shrink-0 ' +
+                                  (isTd ? 'bg-white border-rose-400 shadow-sm' : 'bg-white/70 border-slate-200') + '" style="' + (past ? 'opacity:0.45;' : '') + '">' +
+                                  '<span class="font-black text-slate-800 w-[42px] shrink-0 leading-none">' + ev.day + ' ' + thM[month] + '</span>' +
+                                  '<span class="' + ev.cls + ' border font-black px-1.5 py-[1px] rounded leading-none truncate text-[10.5px]" title="' + ev.text + '">' + ev.text + '</span>' +
+                              '</div>';
+                });
+            }
+            var evEl = document.getElementById('cal-events-list');
+            if (evEl) evEl.innerHTML = evHtml;
 
             let clinicHtml = '';
             if (todayClinicData && todayClinicData.length > 0) {
@@ -1987,7 +2032,7 @@
         /* ---------------- การแจ้งเตือน ---------------- */
         /* ---- ยาฉีด (INJ) : แปลงรายการจาก HOSxP เป็นการ์ดแจ้งเตือน ----
            - โชว์ทันทีที่แพทย์สั่ง แล้วหายไปเองเมื่อครบ 3 นาทีนับจากเวลาสั่ง
-           - เล่นเสียง "ตึ่ง" ครั้งเดียวต่อ 1 รายการ (จำด้วย playedInjAlerts) */
+           - เล่นเสียงนุ่ม ๆ ครั้งเดียวต่อ 1 รายการ (จำด้วย playedInjAlerts) */
         function processInjList(list) {
             if (!Array.isArray(list)) return;
             const now = Date.now();
@@ -2010,7 +2055,7 @@
                 seen[id] = {
                     id: id,
                     type: 'injection',
-                    priority: 1,
+                    priority: -1,          // อยู่บนสุดเสมอ เหนือแจ้งเตือนทุกชนิด
                     timestamp: ts,
                     expireAt: ts + INJ_ALERT_MS,
                     timeStr: m[1].padStart(2, '0') + ':' + m[2],
@@ -2051,7 +2096,7 @@
             alerts.forEach(a => {
                 // การ์ดยาฉีด: โทนส้ม-แดง ไอคอนเข็มฉีดยา / ชื่อผู้ป่วยบน + เวลาใน badge / ชื่อยาบรรทัดล่างตัวใหญ่กว่า
                 if (a.type === 'injection') {
-                    html += `<div class="card-3d bg-gradient-to-br from-orange-500 to-red-500 border border-orange-300 p-1.5 flex items-center gap-2" style="box-shadow:0 0 12px rgba(239,68,68,0.45);">
+                    html += `<div class="card-3d bg-gradient-to-br from-red-600 to-red-700 border border-red-400 p-1.5 flex items-center gap-2" style="box-shadow:0 0 12px rgba(220,38,38,0.55);">
                         <div class="w-8 flex justify-center shrink-0"><i class="fas fa-syringe text-white text-[26px] drop-shadow-lg -rotate-45"></i></div>
                         <div class="flex-1 flex flex-col justify-center overflow-hidden">
                             <div class="flex justify-between items-start">
@@ -2059,7 +2104,7 @@
                                 <span class="text-[10.8px] text-red-700 bg-white border border-red-300 font-black px-1 py-0.5 rounded shadow-sm shrink-0 leading-none ml-1 mt-0.5">${a.timeStr}</span>
                             </div>
                             <div class="text-[17px] font-black text-white drop-shadow-md leading-tight truncate mt-[1px]" title="${a.drug_name}">${a.drug_name}</div>
-                            <div class="text-[10.2px] font-bold text-orange-100 truncate mt-[1px]"><i class="fas fa-hospital-user mr-1 opacity-80"></i>${a.department}</div>
+                            <div class="text-[10.2px] font-bold text-red-100 truncate mt-[1px]"><i class="fas fa-hospital-user mr-1 opacity-80"></i>${a.department}</div>
                         </div>
                     </div>`;
                     if (!playedInjAlerts.has(a.id)) {
@@ -2134,11 +2179,11 @@
                 else if (state === 'high') tempColor = 'text-red-600';
 
                 return `
-                <div class="temp-card relative overflow-hidden flex flex-col rounded-lg ${cardClass} h-[68px] bg-white" style="${borderStyle}">
-                    <div class="w-full text-white text-[11.4px] py-[1px] px-1 text-center font-black leading-[1.15] overflow-hidden line-clamp-2 h-[28px] flex items-center justify-center" style="${headerStyle}">${item.name}</div>
-                    <div class="flex-1 flex flex-col items-center justify-center min-h-0">
-                        <span class="text-[21px] font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
-                        <span class="text-[10.8px] font-bold text-slate-600 leading-none" style="margin-top:2px;">RH: ${item.hum}%</span>
+                <div class="temp-card relative overflow-hidden flex flex-col rounded-lg ${cardClass} h-[52px] bg-white" style="${borderStyle}">
+                    <div class="w-full text-white text-[10.5px] py-0 px-1 text-center font-black leading-[1.1] overflow-hidden line-clamp-2 h-[24px] flex items-center justify-center" style="${headerStyle}">${item.name}</div>
+                    <div class="flex-1 flex flex-col items-center justify-center min-h-0 leading-none">
+                        <span class="text-[18px] font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
+                        <span class="text-[7.5px] font-bold text-slate-500 leading-none" style="margin-top:1px;">RH ${item.hum}%</span>
                     </div>
                 </div>`;
             };
@@ -2148,7 +2193,7 @@
                 let html = '';
                 const renderSection = (title, items) => {
                     if (items.length === 0) return '';
-                    let sectionHtml = `<div class="col-span-3 flex justify-center mt-1 mb-1 relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[10.2px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-200 leading-none z-10">${title}</span></div>`;
+                    let sectionHtml = `<div class="col-span-3 flex justify-center mt-[3px] mb-[2px] relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8px] font-black text-slate-500 bg-slate-50 px-1.5 py-0 rounded border border-slate-200 leading-[1.4] z-10">${title}</span></div>`;
                     sectionHtml += items.map((item) => createCard(item, isFridge)).join('');
                     return sectionHtml;
                 };
@@ -2232,31 +2277,32 @@
                     ? '<span class="bg-yellow-400 text-yellow-900 text-[9.6px] px-1.5 py-0.5 rounded-sm font-black shadow-sm shrink-0 whitespace-nowrap border border-yellow-500">ยังไม่ลงข้อมูลวันนี้</span>'
                     : '';
 
-                html += '<div class="card-3d p-2 flex flex-col border border-white/50 mb-2 shadow-sm rounded-lg" style="background:rgba(255,255,255,0.25);">' +
+                // หัวข้อ + ตัวเลข อยู่บรรทัดเดียวกัน ไม่เปลืองบรรทัด
+        var erRow = function (label, total, err, pctStr, colorCls) {
+            return '<div class="flex items-baseline gap-1 w-full leading-none mb-[3px]">' +
+                       '<span class="text-[11px] font-bold text-slate-700 shrink-0 w-[46px]">' + label + '</span>' +
+                       '<span class="text-[23px] font-black text-slate-900 leading-none">' + total + '</span>' +
+                       '<span class="text-[10px] font-bold text-slate-600">ใบ</span>' +
+                       '<span class="text-[21px] font-black ' + colorCls + ' leading-none ml-auto">' + err + '</span>' +
+                       '<span class="text-[10px] font-bold ' + colorCls + ' shrink-0">Err (' + pctStr + '%)</span>' +
+                   '</div>';
+        };
+
+        html += '<div class="soft-card p-2 flex flex-col mb-2">' +
                             '<div class="text-[13.2px] font-black text-slate-800 border-b border-slate-300/50 pb-1 mb-1.5 flex items-center justify-between">' +
                                 '<span><i class="fas fa-ambulance text-rose-500 mr-1"></i>ER นอกเวลา</span>' + noDataBadge +
                             '</div>' +
-                            '<div class="flex items-end justify-between w-full mb-1">' +
-                                '<div class="flex flex-col leading-none"><span class="text-[10.8px] font-bold text-slate-600 mb-[2px]">ทั้งเดือน</span>' +
-                                    '<div class="flex items-baseline gap-1"><span class="text-[22px] font-black text-slate-900 leading-none">' + mTotal + '</span><span class="text-[10.8px] font-bold text-slate-600">ใบ</span>' +
-                                    '<span class="text-[20.4px] font-black ' + monthlyText + ' leading-none ml-1">' + mErr + '</span><span class="text-[10.8px] font-bold ' + monthlyText + '">Err (' + mPct + '%)</span></div>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div class="flex items-end justify-between w-full">' +
-                                '<div class="flex flex-col leading-none"><span class="text-[10.8px] font-bold text-slate-600 mb-[2px]">วันนี้</span>' +
-                                    '<div class="flex items-baseline gap-1"><span class="text-[22px] font-black text-slate-900 leading-none">' + tTotal + '</span><span class="text-[10.8px] font-bold text-slate-600">ใบ</span>' +
-                                    '<span class="text-[20.4px] font-black ' + erText + ' leading-none ml-1">' + tErr + '</span><span class="text-[10.8px] font-bold ' + erText + '">Err (' + pct + '%)</span></div>' +
-                                '</div>' +
-                            '</div>' +
+                            erRow('ทั้งเดือน', mTotal, mErr, mPct, monthlyText) +
+                            erRow('วันนี้', tTotal, tErr, pct, erText) +
                             chartHtml +
                         '</div>';
             }
 
             if (data.mr && data.mr.length > 0) {
-                let mrHtml = '<div class="card-3d p-2 flex flex-col gap-1 border border-white/50 mb-2" style="background:rgba(255,255,255,0.25);">' +
+                let mrHtml = '<div class="soft-card p-2 flex flex-col gap-1 mb-2">' +
                     '<div class="text-[13.2px] font-black text-slate-800 border-b border-slate-300/50 pb-1 mb-1 flex items-center justify-between"><span><i class="fas fa-pills text-amber-500 mr-1"></i>อุบัติการณ์จัดยา (MR Error)</span><span class="text-[18px] font-black text-amber-700 leading-none">' + data.mr.length + '</span></div>';
                 data.mr.forEach(function(item) {
-                    mrHtml += '<div class="flex justify-between items-center text-[10.8px] bg-white/70 p-1 rounded border border-white/50 shadow-sm">' +
+                    mrHtml += '<div class="flex justify-between items-center text-[10.8px] bg-white/45 p-1 rounded border border-white/50 shadow-sm">' +
                         '<div class="flex items-center gap-1.5 flex-1 min-w-0 pr-1">' +
                             '<span class="font-black text-white bg-amber-600 px-1.5 py-0.5 rounded shadow-sm shrink-0 truncate max-w-[60px]">' + item.cat + '</span>' +
                             '<span class="text-slate-800 font-bold truncate flex-1" title="' + item.detail + '">' + (item.detail || '-') + '</span>' +
@@ -2277,11 +2323,11 @@
 
             let html = `<div class="mt-1 pt-2 border-t border-slate-300 w-full">
                 <div class="flex justify-between items-center mb-1">
-                    <h3 class="text-[13.2px] font-black text-amber-700"><i class="fas fa-exclamation-triangle mr-1"></i>TOP 5 LASAs (30 วัน)</h3>
+                    <h3 class="text-[13.2px] font-black text-slate-900"><i class="fas fa-exclamation-triangle mr-1 text-amber-600"></i>TOP 5 LASAs (30 วัน)</h3>
                 </div>`;
             lasaList.forEach((item, index) => {
                 const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
-                html += `<div class="flex items-center text-[12px] bg-white/80 p-1 rounded shadow-sm border border-slate-200 mb-[3px]">
+                html += `<div class="flex items-center text-[12px] bg-white/45 p-1 rounded shadow-sm border border-white/50 mb-[3px]">
                     <i class="fas fa-pills ${rColor} mr-1.5 text-[12px] opacity-80"></i>
                     <span class="font-bold text-slate-700 truncate max-w-[42%]">${item.d1}</span>
                     <span class="text-slate-400 font-bold mx-1">-</span>
@@ -2417,8 +2463,12 @@
                 hasData = true;
                 let g = `<div class="mb-1"><div class="text-[11.4px] font-black text-white ${color} px-2 py-[1px] rounded-t inline-block leading-tight">${title}</div><div class="bg-white/90 border border-slate-200 rounded-b rounded-tr px-1 py-[1px]">`;
                 items.forEach(d => {
-                    let statusClass = (d.status === 'ประเมินแล้ว') ? 'text-emerald-600' : 'text-rose-600';
-                    g += `<div class="flex justify-between items-center text-[11.4px] border-b border-dashed border-slate-200 last:border-0 leading-[1.25] py-0"><span class="font-bold text-slate-700 truncate flex-1 min-w-0" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-[46px] text-center shrink-0">${d.hn}</span><span class="font-black ${statusClass} w-[52px] text-right shrink-0">${d.status}</span></div>`;
+                    // ประหยัดที่: ประเมินแล้ว = เครื่องหมายถูก / ยังไม่ประเมิน = "รอ"
+                    const done = (d.status === 'ประเมินแล้ว');
+                    const statusHtml = done
+                        ? `<i class="fas fa-check-circle text-emerald-600 text-[12px]" title="ประเมินแล้ว"></i>`
+                        : `<span class="font-black text-rose-600 text-[10.5px]" title="ยังไม่ประเมิน">รอ</span>`;
+                    g += `<div class="flex justify-between items-center text-[11.4px] border-b border-dashed border-slate-200 last:border-0 leading-[1.25] py-0"><span class="font-bold text-slate-700 truncate flex-1 min-w-0" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-[44px] text-center shrink-0">${d.hn}</span><span class="w-[22px] text-right shrink-0 leading-none">${statusHtml}</span></div>`;
                 });
                 return g + `</div></div>`;
             };
