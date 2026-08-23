@@ -1490,23 +1490,39 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
                     if (statusAdm !== 'DC') {
                         let nameTxt = p.patient_name || '--';
                         
+                        // 📌 ยา DUE: ชื่อคนไข้ -> Badge รายการยา (อยู่ในบรรทัดเดียวกัน)
                         if (p.Meropenem || p.Tazocin) {
                             let dueDrugs = [];
                             if (p.Meropenem && p.Meropenem !== 'N' && p.Meropenem !== '') dueDrugs.push(p.Meropenem !== 'Y' ? p.Meropenem : 'Meropenem');
                             if (p.Tazocin && p.Tazocin !== 'N' && p.Tazocin !== '') dueDrugs.push(p.Tazocin !== 'Y' ? p.Tazocin : 'Tazocin');
                             
                             if (dueDrugs.length > 0) {
-                                catDue += `<div class="special-row text-[10px] font-bold leading-snug pl-2 py-[1px] text-pop text-slate-900"><span class="text-amber-800 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8.5px] text-amber-900 font-black">(${dueDrugs.join(', ')})</span></div>`;
+                                catDue += `
+                                <div class="flex items-center pl-2 py-[2px] w-full overflow-hidden border-b border-slate-200/50 last:border-0">
+                                    <span class="text-[9.5px] font-bold text-black truncate flex-1 min-w-0 pr-1"><span class="text-amber-600 font-black">${bedName}:</span> ${nameTxt}</span>
+                                    <span class="text-[8px] text-white bg-amber-600/90 px-1.5 py-[1.5px] rounded shadow-sm shrink-0 truncate max-w-[65%]" title="${dueDrugs.join(', ')}">(${dueDrugs.join(', ')})</span>
+                                </div>`;
                             }
                         }
                         
+                        // 📌 ยาพ่นใหม่: ชื่อคนไข้ -> Badge รายการยา
                         if (p.is_new_inhaler === 'Y') {
                             let inhDrug = p.inhaler_name || p.inhaler_drug || 'ยาพ่น';
-                            catInhaler += `<div class="special-row text-[10px] font-bold leading-snug pl-2 py-[1px] text-pop text-slate-900"><span class="text-yellow-800 font-black">${bedName}:</span> ${nameTxt} <span class="text-[8.5px] text-yellow-900 font-black">(${inhDrug})</span></div>`;
+                            catInhaler += `
+                            <div class="flex items-center pl-2 py-[2px] w-full overflow-hidden border-b border-slate-200/50 last:border-0">
+                                <span class="text-[9.5px] font-bold text-black truncate flex-1 min-w-0 pr-1"><span class="text-yellow-600 font-black">${bedName}:</span> ${nameTxt}</span>
+                                <span class="text-[8px] text-black bg-yellow-500/90 px-1.5 py-[1.5px] rounded shadow-sm shrink-0 truncate max-w-[65%]" title="${inhDrug}">(${inhDrug})</span>
+                            </div>`;
                         }
+
+                        // 📌 ยา High Alert (HAD): ชื่อคนไข้ -> Badge รายการยา
                         const hadItem = globalHadList.find(h => h.bedno === bedName);
                         if (hadItem) {
-                            catHAD += `<div class="special-row text-[10px] font-bold leading-snug pl-2 py-[1px] text-pop text-slate-900" title="${hadItem.had_drug_list}"><span class="text-rose-800 font-black">${bedName}:</span> ${hadItem.patient_name} <span class="text-[8.5px] text-rose-900 font-black">(${hadItem.had_drug_list})</span></div>`;
+                            catHAD += `
+                            <div class="flex items-center pl-2 py-[2px] w-full overflow-hidden border-b border-slate-200/50 last:border-0">
+                                <span class="text-[9.5px] font-bold text-black truncate flex-1 min-w-0 pr-1"><span class="text-rose-600 font-black">${bedName}:</span> ${hadItem.patient_name}</span>
+                                <span class="text-[8px] text-white bg-rose-500/90 px-1.5 py-[1.5px] rounded shadow-sm shrink-0 truncate max-w-[65%]" title="${hadItem.had_drug_list}">(${hadItem.had_drug_list})</span>
+                            </div>`;
                         }
                     }
                 }
@@ -1515,14 +1531,14 @@ function renderIPDGrid(wardArray, containerId, suff, activeCount) {
             container.innerHTML = html;
             
             if (listContainer) {
-                let legendHtml = `<div class="shrink-0 text-[8.5px] font-bold text-slate-700 text-pop mb-1 flex items-center justify-end gap-1 px-1">
-                    <i class="fas fa-check-circle text-emerald-600 bg-white rounded-full"></i> = ทำ Med Reconcile แล้ว
+                let legendHtml = `<div class="text-[8.5px] font-bold text-slate-500 mb-1 flex items-center justify-end gap-1 px-1">
+                    <i class="fas fa-check-circle text-emerald-500 bg-white rounded-full"></i> = ทำ Med Reconcile แล้ว
                 </div>`;
 
-                if (catHAD) listHtml += `<div class="special-row text-[10px] font-black text-rose-800 mt-1 bg-rose-100/80 px-1 rounded shadow-sm">High Alert Drug</div>${catHAD}`;
-                if (catDue) listHtml += `<div class="special-row text-[10px] font-black text-amber-800 mt-1 bg-amber-100/80 px-1 rounded shadow-sm">ยา DUE</div>${catDue}`;
-                if (catInhaler) listHtml += `<div class="special-row text-[10px] font-black text-yellow-800 mt-1 bg-yellow-100/80 px-1 rounded shadow-sm">ยาพ่นใหม่</div>${catInhaler}`;
-                listContainer.innerHTML = legendHtml + (listHtml || `<div class="text-center text-[9px] text-slate-600 text-pop py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`);
+                if (catHAD) listHtml += `<div class="text-[10px] font-black text-rose-700 mt-1 bg-rose-100 px-1 rounded shadow-sm">High Alert Drug</div>${catHAD}`;
+                if (catDue) listHtml += `<div class="text-[10px] font-black text-amber-700 mt-1 bg-amber-100 px-1 rounded shadow-sm">ยา DUE</div>${catDue}`;
+                if (catInhaler) listHtml += `<div class="text-[10px] font-black text-yellow-700 mt-1 bg-yellow-100 px-1 rounded shadow-sm">ยาพ่นใหม่</div>${catInhaler}`;
+                listContainer.innerHTML = legendHtml + (listHtml || `<div class="text-center text-[9px] text-slate-400 py-2">ไม่มีผู้ป่วยกลุ่มพิเศษ</div>`);
             }
 
             const elAdmit = document.getElementById(`map-sum-admit-${suff}`);
@@ -2286,7 +2302,7 @@ function renderTempStatus(tempStatus) {
             const rMsg = document.getElementById('room-alert-msg');
             if(rMsg) rMsg.innerHTML = hasRoomAlert ? `<div class="mt-4 mb-2 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 animate-pulse mx-2 relative overflow-hidden"><div class="absolute inset-0 bg-white opacity-10 rounded-xl blur-[2px]"></div><div class="text-center font-black text-white text-xs drop-shadow-md relative z-10"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>` : '';
         }
-        function renderIncidents(data) {
+function renderIncidents(data) {
             const container = document.getElementById('incident-container');
             const appendTarget = document.getElementById('lasa-append-target');
             if(!container) return;
@@ -2312,12 +2328,11 @@ function renderTempStatus(tempStatus) {
                 const mErr = parseInt(mSum.errors) || 0;
                 const mPct = mTotal > 0 ? ((mErr / mTotal) * 100).toFixed(1) : 0;
 
-                // สีกรอบ ER (โปร่งใสแบบที่ชอบ)
                 let erBg = tErr > 0 ? "bg-rose-50/70 border-rose-200" : "bg-white/70 border-white/60";
                 let erText = tErr > 0 ? "text-rose-600" : "text-emerald-600";
                 let monthlyText = mErr > 0 ? "text-rose-600" : "text-emerald-600";
 
-                // กราฟแท่งรายเดือน (Chart)
+                // 📌 กราฟแท่งรายเดือน (Chart)
                 let chartHtml = '';
                 if (data.er_monthly && data.er_monthly.length > 0) {
                     const maxErr = Math.max(...data.er_monthly.map(d => d.errors), 1);
@@ -2335,34 +2350,48 @@ function renderTempStatus(tempStatus) {
                     </div>`;
                 }
 
+                // ป้ายแจ้งเตือนถ้าวันนี้ยังไม่ลงข้อมูล
+                let noDataBadge = '';
+                if (tTotal === 0) {
+                    noDataBadge = `<span class="bg-yellow-400 text-yellow-900 text-[8px] px-1.5 py-0.5 rounded-sm font-black shadow-sm shrink-0 whitespace-nowrap animate-pulse border border-yellow-500">ยังไม่ลงข้อมูลวันนี้</span>`;
+                }
+
                 html += `
                 <div class="card-3d ${erBg} p-2 flex flex-col border mb-2 shadow-sm rounded-lg backdrop-blur-md">
                     <div class="text-[11px] font-black text-slate-700 border-b border-slate-300/50 pb-1 mb-1.5 flex items-center justify-between">
                         <span><i class="fas fa-ambulance text-rose-500 mr-1"></i>ER นอกเวลา</span>
+                        ${noDataBadge}
                     </div>
                     
                     <!-- บรรทัดที่ 1: รวมทั้งเดือน -->
-                    <div class="text-[10px] text-slate-700 leading-tight mb-0.5">
-                        <span class="font-bold text-slate-600">รวมทั้งเดือน:</span> 
-                        <span class="font-black text-slate-800">${mTotal}</span> ใบสั่งยา 
-                        <span class="font-bold text-slate-400 mx-0.5">|</span>
-                        <span class="font-bold">รวม <span class="font-black ${monthlyText}">${mErr}</span> Errors <span class="${monthlyText}">(${mPct}%)</span></span>
+                    <div class="text-[10px] text-slate-700 leading-tight mb-0.5 flex justify-between w-full">
+                        <div>
+                            <span class="font-bold text-slate-600">ทั้งเดือน:</span> 
+                            <span class="font-black text-slate-800">${mTotal}</span> ใบ 
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-400 mx-0.5">|</span>
+                            <span class="font-bold">รวม <span class="font-black ${monthlyText}">${mErr}</span> Err <span class="${monthlyText}">(${mPct}%)</span></span>
+                        </div>
                     </div>
                     
                     <!-- บรรทัดที่ 2: ของวันนี้ -->
-                    <div class="text-[10px] text-slate-700 leading-tight mb-0.5">
-                        <span class="font-bold text-slate-600">วันนี้:</span> 
-                        <span class="font-black text-slate-800">${tTotal}</span> ใบสั่งยา 
-                        <span class="font-bold text-slate-400 mx-0.5">|</span>
-                        <span class="font-bold">รวม <span class="font-black ${erText}">${tErr}</span> Errors <span class="${erText}">(${pct}%)</span></span>
+                    <div class="text-[10px] text-slate-700 leading-tight mb-0.5 flex justify-between w-full">
+                        <div>
+                            <span class="font-bold text-slate-600">วันนี้:</span> 
+                            <span class="font-black text-slate-800">${tTotal}</span> ใบ 
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-400 mx-0.5">|</span>
+                            <span class="font-bold">รวม <span class="font-black ${erText}">${tErr}</span> Err <span class="${erText}">(${pct}%)</span></span>
+                        </div>
                     </div>
 
-                    <!-- ตามด้วย Chart รายเดือน -->
                     ${chartHtml}
                 </div>`;
             }
 
-            // 📌 2. ตามด้วยอุบัติการณ์จัดยา (MR Error)
+            // 📌 2. อุบัติการณ์จัดยา (MR Error)
             if (data.mr && data.mr.length > 0) {
                 let mrHtml = `<div class="card-3d bg-slate-50/70 backdrop-blur-md p-2 flex flex-col gap-1 border border-white/60 mb-2">
                     <div class="text-[10px] font-black text-slate-700 border-b border-slate-300/50 pb-1 mb-1"><i class="fas fa-pills text-amber-500 mr-1"></i>อุบัติการณ์จัดยา (MR Error)</div>`;
@@ -2382,6 +2411,56 @@ function renderTempStatus(tempStatus) {
             
             // 📌 3. สุดท้ายตามด้วย LASA 
             if (appendTarget && window.lastLasaHtml) { appendTarget.innerHTML = window.lastLasaHtml; }
+        }
+
+        // 📌 ฟังก์ชันวาดตารางยา LASA รูปแบบใหม่ (การ์ดยาคู่กัน + สีไล่เฉด)
+        function renderLasa(lasaList) {
+            const container = document.getElementById('lasa-append-target');
+            if (!container) return;
+            if (!lasaList || lasaList.length === 0) { window.lastLasaHtml = ''; container.innerHTML = ''; return; }
+            
+            let html = `<div class="mt-2 pt-2 border-t border-slate-300 w-full">
+                <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-[11px] font-black text-rose-700 drop-shadow-sm">
+                        <i class="fas fa-bolt mr-1"></i>TOP 5 LASAs <span class="text-[9px] text-slate-500 font-bold">(30 วัน)</span>
+                    </h3>
+                </div>
+                <div class="flex flex-col gap-1.5">`;
+                
+            // หาค่า Max Count เพื่อคำนวณความเข้มของสี
+            const maxCount = Math.max(...lasaList.map(item => item.count), 1);
+
+            lasaList.forEach((item, index) => {
+                // คำนวณความโปร่งใส (Opacity) 0.15 ถึง 0.8 ตามสัดส่วนของความถี่
+                const opacity = 0.15 + (item.count / maxCount) * 0.65;
+                const bgStyle = `background-color: rgba(239, 68, 68, ${opacity.toFixed(2)}); backdrop-filter: blur(4px);`;
+
+                html += `
+                <div class="flex items-center justify-between bg-white/60 p-1 rounded-md shadow-sm border border-slate-200 relative overflow-hidden h-[28px]">
+                    
+                    <!-- สีพื้นหลังที่ปรับตามความถี่ -->
+                    <div class="absolute inset-0 z-0 transition-all" style="${bgStyle}"></div>
+                    
+                    <!-- ยาตัวซ้าย -->
+                    <div class="flex-1 flex justify-end z-10 px-1">
+                        <span class="text-[9px] font-bold text-slate-800 truncate px-1.5 bg-white/70 rounded border border-white/50 shadow-sm leading-tight max-w-full" title="${item.d1}">${item.d1}</span>
+                    </div>
+
+                    <!-- วงกลมตรงกลาง (แสดงจำนวนครั้ง) -->
+                    <div class="shrink-0 mx-1 z-20 flex flex-col items-center justify-center w-6 h-6 rounded-full bg-slate-900 border-[1.5px] border-white shadow-md transform scale-[0.85]">
+                        <span class="text-white text-[11px] font-black leading-none">${item.count}</span>
+                    </div>
+
+                    <!-- ยาตัวขวา -->
+                    <div class="flex-1 flex justify-start z-10 px-1">
+                        <span class="text-[9px] font-bold text-slate-800 truncate px-1.5 bg-white/70 rounded border border-white/50 shadow-sm leading-tight max-w-full" title="${item.d2}">${item.d2}</span>
+                    </div>
+                </div>`;
+            });
+            
+            html += `</div></div>`;
+            window.lastLasaHtml = html; 
+            container.innerHTML = html;
         }
         function renderDoctors(doctors) {
             const container = document.getElementById('doctors-container');
