@@ -199,8 +199,8 @@
 
         /* การ์ดโปร่ง 75% สำหรับหน้าอุบัติการณ์ (ไม่ใช้ card-3d เพราะเงา inset สีขาวทำให้ดูทึบ) */
         .soft-card {
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.62);
+            border: 1px solid rgba(255, 255, 255, 0.7);
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
@@ -473,9 +473,8 @@
                         <div class="text-center text-[14.4px] text-slate-500 py-4">กำลังโหลดปฏิทิน...</div>
                     </div>
                     <div class="mt-1 pt-1 border-t-2 border-slate-400/30 flex flex-col min-h-0 flex-1">
-                        <h3 id="cal-events-title" class="text-[13.2px] font-black text-slate-700 mb-1 shrink-0 hidden"><i class="fas fa-truck-loading text-emerald-600 mr-1"></i> วันเบิกยา / วันสำคัญ</h3>
-                        <div id="cal-events-list" class="shrink-0 flex flex-col gap-[2px] mb-1 max-h-[38%] overflow-y-auto no-scrollbar"></div>
                         <h3 class="text-[13.2px] font-black text-slate-700 mb-1 shrink-0"><i class="fas fa-hospital text-blue-500 mr-1"></i> คลินิกที่มีนัดวันนี้</h3>
+                        <div id="cal-events-list" class="shrink-0 flex flex-col gap-[3px] mb-1"></div>
                         <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1 pr-1" id="today-clinic-list">
                             <div class="text-center text-[12px] text-slate-500">กำลังโหลด...</div>
                         </div>
@@ -1806,31 +1805,45 @@
             const gridEl = document.getElementById('calendar-grid');
             if (gridEl) gridEl.innerHTML = html;
 
-            // รายการวันเบิกยา + วันสำคัญของเดือนนี้ (ย้ายลงมาจากในช่องปฏิทิน)
-            var eventDays = [];
-            holidaysMap.forEach(function (nm, day) {
-                eventDays.push({ day: day, text: nm, cls: 'bg-rose-600 text-white border-rose-700', icon: 'fa-star' });
-            });
-            Object.keys(reqMap).forEach(function (k) {
-                var day = parseInt(k, 10);
-                eventDays.push({ day: day, text: reqMap[k].text, cls: reqMap[k].bg + ' border-white/50', icon: 'fa-dolly' });
-            });
-            eventDays.sort(function (a, b) { return a.day - b.day; });
+            /* ---- กิจกรรมของ "วันนี้" เท่านั้น : วันเบิกยา / วันสำคัญ / เงินเดือนออก ----
+               วันเงินเดือนออก = นับถอยหลังจากวันสิ้นเดือน 4 วันทำการ (นับวันสิ้นเดือนเป็นวันที่ 1)
+               ข้ามเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์
+               ตัวอย่าง สิ้นเดือน = ศุกร์ที่ 30 -> 30(1) 29(2) 28(3) 27(4) = เงินเดือนออกวันที่ 27  */
+            var paydayDay = (function () {
+                var d = daysInMonth, steps = 0;
+                while (d >= 1) {
+                    var w = new Date(year, month, d).getDay();
+                    if (w !== 0 && w !== 6 && !holidaysMap.has(d)) {
+                        steps++;
+                        if (steps === 4) return d;
+                    }
+                    d--;
+                }
+                return -1;
+            })();
+
+            var todayEvents = [];
+            if (holidaysMap.has(todayDate)) {
+                todayEvents.push({ icon: 'fa-star', text: holidaysMap.get(todayDate), cls: 'bg-rose-600 text-white border-rose-700' });
+            }
+            if (reqMap[todayDate]) {
+                todayEvents.push({ icon: 'fa-truck-loading', text: reqMap[todayDate].text, cls: reqMap[todayDate].bg + ' border-white/60' });
+            }
+            if (paydayDay > 0) {
+                if (todayDate === paydayDay) {
+                    todayEvents.push({ icon: 'fa-money-bill-wave', text: 'วันนี้เงินเดือนออก', cls: 'bg-emerald-600 text-white border-emerald-700' });
+                } else if (todayDate === paydayDay - 1) {
+                    todayEvents.push({ icon: 'fa-money-bill-wave', text: 'พรุ่งนี้เงินเดือนออก', cls: 'bg-emerald-500 text-white border-emerald-600' });
+                }
+            }
 
             var evHtml = '';
-            var evTitle = document.getElementById('cal-events-title');
-            if (evTitle) evTitle.classList.toggle('hidden', eventDays.length === 0);
-            if (eventDays.length > 0) {
-                eventDays.forEach(function (ev) {
-                    var past = ev.day < todayDate;
-                    var isTd = ev.day === todayDate;
-                    evHtml += '<div class="flex items-center gap-1.5 text-[11px] px-1.5 py-[2px] rounded-md border shrink-0 ' +
-                                  (isTd ? 'bg-white border-rose-400 shadow-sm' : 'bg-white/70 border-slate-200') + '" style="' + (past ? 'opacity:0.45;' : '') + '">' +
-                                  '<span class="font-black text-slate-800 w-[42px] shrink-0 leading-none">' + ev.day + ' ' + thM[month] + '</span>' +
-                                  '<span class="' + ev.cls + ' border font-black px-1.5 py-[1px] rounded leading-none truncate text-[10.5px]" title="' + ev.text + '">' + ev.text + '</span>' +
-                              '</div>';
-                });
-            }
+            todayEvents.forEach(function (ev) {
+                evHtml += '<div class="flex items-center gap-1.5 px-1.5 py-[3px] rounded-md border border-slate-200 bg-white/85 shadow-sm shrink-0">' +
+                              '<i class="fas ' + ev.icon + ' text-slate-500 text-[11px] shrink-0"></i>' +
+                              '<span class="' + ev.cls + ' border font-black px-1.5 py-[2px] rounded leading-none truncate text-[11.5px]" title="' + ev.text + '">' + ev.text + '</span>' +
+                          '</div>';
+            });
             var evEl = document.getElementById('cal-events-list');
             if (evEl) evEl.innerHTML = evHtml;
 
@@ -2059,6 +2072,7 @@
                     timestamp: ts,
                     expireAt: ts + INJ_ALERT_MS,
                     timeStr: m[1].padStart(2, '0') + ':' + m[2],
+                    hn: item.hn || '',
                     patient_name: item.patient_name || '-',
                     drug_name: item.drug_name || '-',
                     department: item.department || 'ไม่ระบุแผนก'
@@ -2104,7 +2118,7 @@
                                 <span class="text-[10.8px] text-red-700 bg-white border border-red-300 font-black px-1 py-0.5 rounded shadow-sm shrink-0 leading-none ml-1 mt-0.5">${a.timeStr}</span>
                             </div>
                             <div class="text-[17px] font-black text-white drop-shadow-md leading-tight truncate mt-[1px]" title="${a.drug_name}">${a.drug_name}</div>
-                            <div class="text-[10.2px] font-bold text-red-100 truncate mt-[1px]"><i class="fas fa-hospital-user mr-1 opacity-80"></i>${a.department}</div>
+                            <div class="text-[10.2px] font-bold text-red-100 truncate mt-[1px]"><i class="fas fa-hospital-user mr-1 opacity-80"></i>${a.department}${a.hn ? ' &nbsp;·&nbsp; HN ' + a.hn : ''}</div>
                         </div>
                     </div>`;
                     if (!playedInjAlerts.has(a.id)) {
@@ -2302,7 +2316,7 @@
                 let mrHtml = '<div class="soft-card p-2 flex flex-col gap-1 mb-2">' +
                     '<div class="text-[13.2px] font-black text-slate-800 border-b border-slate-300/50 pb-1 mb-1 flex items-center justify-between"><span><i class="fas fa-pills text-amber-500 mr-1"></i>อุบัติการณ์จัดยา (MR Error)</span><span class="text-[18px] font-black text-amber-700 leading-none">' + data.mr.length + '</span></div>';
                 data.mr.forEach(function(item) {
-                    mrHtml += '<div class="flex justify-between items-center text-[10.8px] bg-white/45 p-1 rounded border border-white/50 shadow-sm">' +
+                    mrHtml += '<div class="flex justify-between items-center text-[10.8px] bg-white/80 p-1 rounded border border-white/60 shadow-sm">' +
                         '<div class="flex items-center gap-1.5 flex-1 min-w-0 pr-1">' +
                             '<span class="font-black text-white bg-amber-600 px-1.5 py-0.5 rounded shadow-sm shrink-0 truncate max-w-[60px]">' + item.cat + '</span>' +
                             '<span class="text-slate-800 font-bold truncate flex-1" title="' + item.detail + '">' + (item.detail || '-') + '</span>' +
@@ -2327,7 +2341,7 @@
                 </div>`;
             lasaList.forEach((item, index) => {
                 const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
-                html += `<div class="flex items-center text-[12px] bg-white/45 p-1 rounded shadow-sm border border-white/50 mb-[3px]">
+                html += `<div class="flex items-center text-[12px] bg-white/75 p-1 rounded shadow-sm border border-white/60 mb-[3px]">
                     <i class="fas fa-pills ${rColor} mr-1.5 text-[12px] opacity-80"></i>
                     <span class="font-bold text-slate-700 truncate max-w-[42%]">${item.d1}</span>
                     <span class="text-slate-400 font-bold mx-1">-</span>
