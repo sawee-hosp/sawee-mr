@@ -2359,6 +2359,62 @@
             container.innerHTML = html + `</tbody></table>`;
         }
 
+        // 📌 ฟังก์ชัน renderDue ที่ถูกตกหล่นไป
+        function renderDue(data) {
+            const container = document.getElementById('due-container');
+            const chartContainer = document.getElementById('due-chart-container');
+            if(!container || !chartContainer) return;
+            
+            if (data.stats) {
+                const drugs = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
+                const labels = ['Oseltamivir', 'Covid-19', 'Atorvastatin', 'Antibiotics'];
+                
+                let barsHtml = '';
+                drugs.forEach((d, idx) => {
+                    const st = data.stats[d] || { assessed: 0, unassessed: 0, total: 0 };
+                    const total = st.assessed + st.unassessed;
+                    let pAs = total > 0 ? (st.assessed / total) * 100 : 0;
+                    let pUn = total > 0 ? (st.unassessed / total) * 100 : 0;
+                    
+                    barsHtml += `
+                    <div class="mb-1.5">
+                        <div class="flex justify-between text-[8px] font-bold text-slate-600 mb-0.5">
+                            <span>${labels[idx]}</span>
+                            <span>ประเมินแล้ว ${st.assessed}/${total}</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2.5 rounded overflow-hidden flex shadow-inner">
+                            <div class="bg-rose-400 h-full transition-all" style="width: ${pUn}%" title="รอประเมิน: ${st.unassessed}"></div>
+                            <div class="bg-emerald-500 h-full transition-all" style="width: ${pAs}%" title="ประเมินแล้ว: ${st.assessed}"></div>
+                        </div>
+                    </div>`;
+                });
+                chartContainer.innerHTML = `<div class="w-full bg-white/70 p-1.5 rounded border border-slate-200 mb-2">${barsHtml}</div>`;
+            } else {
+                chartContainer.innerHTML = '';
+            }
+
+            let html = ''; let hasData = false;
+            const sourceData = data.lists ? data.lists : data;
+
+            const renderGroup = (title, items, color) => {
+                if(!items || items.length === 0) return '';
+                hasData = true;
+                let g = `<div class="mb-2"><div class="text-[10px] font-black text-white ${color} px-2 py-0.5 rounded-t inline-block">${title}</div><div class="bg-white/90 border border-${color.split('-')[1]}-200 rounded-b rounded-tr p-1">`;
+                items.forEach(d => { 
+                    let statusClass = d.status === 'ประเมินแล้ว' || d.status === 'Completed' ? 'text-emerald-500' : 'text-rose-500';
+                    g += `<div class="flex justify-between items-center text-[10px] border-b border-dashed border-slate-200 last:border-0 py-0.5"><span class="font-bold text-slate-700 truncate flex-1" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-16 text-center shrink-0">${d.hn}</span><span class="font-black ${statusClass} w-16 text-right shrink-0">${d.status}</span></div>`; 
+                });
+                return g + `</div></div>`;
+            };
+
+            html += renderGroup('Oseltamivir', sourceData['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', sourceData['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', sourceData['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', sourceData['Antibiotics'], 'bg-emerald-500');
+            
+            container.innerHTML = !hasData ? `<div class="text-center text-xs text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>` : html;
+        }
+
         window.addEventListener('load', function () {
             console.log('Dashboard starting...');
             updateClock(); 
