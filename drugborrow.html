@@ -394,9 +394,6 @@
     <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
         <h4 class="text-info m-0">📑 ทะเบียนหนังสือส่ง ฝ่ายเภสัชกรรมฯ</h4>
         <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-success text-white fw-bold" onclick="app.openAddDrugRecordModal()">
-                💊 เพิ่มข้อมูลยา
-            </button>
             <button class="btn btn-sm btn-info text-white fw-bold" onclick="app.openNewDocModal()">
                 <i class="bi bi-plus-lg"></i> ออกเลขใหม่
             </button>
@@ -425,6 +422,7 @@
                 <th>วันที่</th>
                 <th>เรื่อง</th>
                 <th>ผู้รับ (ถึง)</th>
+                <th class="text-center">ยา/ราคา</th>
             </tr>
         </thead>
         <tbody id="registryTableBody"></tbody>
@@ -610,28 +608,28 @@
   </div>
 </div>
 
-<div class="modal fade" id="addDrugRecordModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="linkDrugModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-success text-white">
-          <h5 class="modal-title">💊 เพิ่มข้อมูลยา (สร้างใบยืมยาใหม่)</h5>
+          <h5 class="modal-title">💊 เพิ่มรายการยาให้หนังสือฉบับนี้</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body bg-light">
-          <div class="alert alert-success small py-2 mb-3"><i class="bi bi-info-circle"></i> ใช้บันทึกรายการยา + ราคาที่ดำเนินการเสร็จแล้วโดยตรง จะได้เลขที่หนังสือและขึ้นในทะเบียนส่งทันที</div>
-          <label class="mt-0">ผู้ขอ / แพทย์</label>
-          <input type="text" id="adr_requester" class="form-control mb-3 border-success" placeholder="เช่น นพ.ใจดี รักสวี">
-          
+          <div class="alert alert-success small py-2 mb-3">
+              <div><b>เลขที่หนังสือ:</b> <span id="ld_docNum"></span></div>
+              <div><b>เรื่อง:</b> <span id="ld_subject"></span></div>
+          </div>
           <label class="text-dark fs-6">รายการยา</label>
-          <div id="adr_drugListContainer"></div>
-          <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold mt-2" onclick="app.addPriceDrugRow()">+ เพิ่มยา</button>
+          <div id="ld_drugListContainer"></div>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold mt-2" onclick="app.addLinkDrugRow()">+ เพิ่มยา</button>
           
           <label class="mt-3">หมายเหตุ</label>
-          <input type="text" id="adr_note" class="form-control mb-2">
+          <input type="text" id="ld_note" class="form-control mb-2">
       </div>
       <div class="modal-footer p-2 bg-white">
-          <div class="w-100 text-end fw-bold text-success me-2" id="adr_totalCost">รวม: 0 บาท</div>
-          <button type="button" class="btn btn-success w-100 rounded-pill fw-bold" onclick="app.submitDrugRecord()">บันทึก & สร้างใบยืมยา</button>
+          <div class="w-100 text-end fw-bold text-success me-2" id="ld_totalCost">รวม: 0 บาท</div>
+          <button type="button" class="btn btn-success w-100 rounded-pill fw-bold" onclick="app.submitLinkDrug()">บันทึกรายการยา</button>
       </div>
     </div>
   </div>
@@ -1286,6 +1284,7 @@ app.setupRegistryYears = function() {
     }
 };
 
+var registryData = [];
 app.loadRegistry = async function() {
     app.show('registry');
     document.getElementById('registry-loader').classList.remove('hidden');
@@ -1294,27 +1293,29 @@ app.loadRegistry = async function() {
     
     try {
         const data = await app.callApi('getRegistryList', { year: selectedYear });
+        registryData = data || [];
         document.getElementById('registry-loader').classList.add('hidden');
         
         if(!data || data.length === 0) {
-            document.getElementById('registryTableBody').innerHTML = "<tr><td colspan='5' class='text-center text-muted py-4'>ยังไม่มีข้อมูลในปีงบประมาณนี้</td></tr>";
+            document.getElementById('registryTableBody').innerHTML = "<tr><td colspan='6' class='text-center text-muted py-4'>ยังไม่มีข้อมูลในปีงบประมาณนี้</td></tr>";
             return;
         }
         
         let html = '';
-        data.forEach(d => {
+        data.forEach((d, i) => {
             html += `<tr>
                 <td class="fw-bold">${d.id}</td>
                 <td><span class="text-primary">${d.docNum}</span></td>
                 <td>${d.date}</td>
                 <td><div class="text-truncate" style="max-width: 250px;" title="${d.subject}">${d.subject}</div></td>
                 <td><div class="text-truncate" style="max-width: 150px;" title="${d.to}">${d.to}</div></td>
+                <td class="text-center"><button class="btn btn-sm btn-outline-success" onclick="app.openLinkDrugModal(${i})" title="เพิ่มรายการยา/ราคา">💊</button></td>
             </tr>`;
         });
         document.getElementById('registryTableBody').innerHTML = html;
     } catch(e) {
         document.getElementById('registry-loader').classList.add('hidden');
-        document.getElementById('registryTableBody').innerHTML = "<tr><td colspan='5' class='text-center text-danger'>เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>";
+        document.getElementById('registryTableBody').innerHTML = "<tr><td colspan='6' class='text-center text-danger'>เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>";
     }
 };
 
@@ -1355,62 +1356,67 @@ app.submitNewDoc = async function() {
     } catch(e) {}
 };
 
-// ================= เพิ่มข้อมูลยา (สร้างใบยืมยาใหม่โดยตรงจากทะเบียนส่ง) =================
-var addDrugRecordModal;
-app.openAddDrugRecordModal = function() {
-    if(!addDrugRecordModal) addDrugRecordModal = new bootstrap.Modal(document.getElementById('addDrugRecordModal'));
-    document.getElementById('adr_requester').value = currentUser ? currentUser.name : '';
-    document.getElementById('adr_note').value = '';
-    document.getElementById('adr_drugListContainer').innerHTML = '';
-    app.addPriceDrugRow();
-    app.updateAdrTotal();
-    addDrugRecordModal.show();
+// ================= เพิ่มรายการยา/ราคา ให้กับหนังสือที่มีอยู่แล้วในทะเบียนส่ง =================
+// ใช้ได้กับทุกฉบับ ทั้งที่ผ่านระบบแพทย์ขอยา (ขอสนับสนุนยา) และฉบับอื่นๆ ที่ไม่ได้ผ่านระบบเลย
+// ไม่ออกเลขหนังสือใหม่ (ใช้เลขเดิมของแถวที่คลิก) และไม่ต้องผ่านขั้นตอนอนุมัติ/ลงรับใดๆ
+var linkDrugModal;
+app.openLinkDrugModal = function(index) {
+    if(!linkDrugModal) linkDrugModal = new bootstrap.Modal(document.getElementById('linkDrugModal'));
+    const item = registryData[index];
+    document.getElementById('ld_docNum').innerText = item.docNum;
+    document.getElementById('ld_subject').innerText = item.subject;
+    document.getElementById('ld_docNum').dataset.docnum = item.docNum;
+    document.getElementById('ld_note').value = '';
+    document.getElementById('ld_drugListContainer').innerHTML = '';
+    app.addLinkDrugRow();
+    app.updateLdTotal();
+    linkDrugModal.show();
 };
-app.addPriceDrugRow = function() {
-    const id = 'adrRow_' + Date.now() + Math.floor(Math.random()*1000);
+app.addLinkDrugRow = function() {
+    const id = 'ldRow_' + Date.now() + Math.floor(Math.random()*1000);
     const html = `<div class="drug-row" id="${id}">
-        <i class="bi bi-x-circle-fill remove-btn" onclick="app.removePriceDrugRow('${id}')"></i>
+        <i class="bi bi-x-circle-fill remove-btn" onclick="app.removeLinkDrugRow('${id}')"></i>
         <div class="row g-2">
-            <div class="col-12"><label class="m-0 small text-success">ชื่อยา</label><input type="text" class="form-control form-control-sm border-success adr-name" placeholder="เช่น Levofloxacin injection"></div>
-            <div class="col-4"><label class="m-0 small">ความแรง</label><input type="text" class="form-control form-control-sm adr-strength" placeholder="เช่น 750mg"></div>
-            <div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm adr-qty" placeholder="เช่น 20 vials"></div>
-            <div class="col-4"><label class="m-0 small">ราคา (บาท)</label><input type="number" step="0.01" class="form-control form-control-sm adr-price" placeholder="0" oninput="app.updateAdrTotal()"></div>
+            <div class="col-12"><label class="m-0 small text-success">ชื่อยา</label><input type="text" class="form-control form-control-sm border-success ld-name" placeholder="เช่น Colistin injection"></div>
+            <div class="col-4"><label class="m-0 small">ความแรง</label><input type="text" class="form-control form-control-sm ld-strength" placeholder="เช่น 150mg"></div>
+            <div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm ld-qty" placeholder="เช่น 20 vials"></div>
+            <div class="col-4"><label class="m-0 small">ราคา (บาท)</label><input type="number" step="0.01" class="form-control form-control-sm ld-price" placeholder="0" oninput="app.updateLdTotal()"></div>
         </div>
     </div>`;
-    document.getElementById('adr_drugListContainer').insertAdjacentHTML('beforeend', html);
+    document.getElementById('ld_drugListContainer').insertAdjacentHTML('beforeend', html);
 };
-app.removePriceDrugRow = function(id) {
+app.removeLinkDrugRow = function(id) {
     document.getElementById(id).remove();
-    app.updateAdrTotal();
+    app.updateLdTotal();
 };
-app.updateAdrTotal = function() {
+app.updateLdTotal = function() {
     let total = 0;
-    document.querySelectorAll('#adr_drugListContainer .adr-price').forEach(el => total += (parseFloat(el.value) || 0));
-    document.getElementById('adr_totalCost').innerText = 'รวม: ' + total.toLocaleString() + ' บาท';
+    document.querySelectorAll('#ld_drugListContainer .ld-price').forEach(el => total += (parseFloat(el.value) || 0));
+    document.getElementById('ld_totalCost').innerText = 'รวม: ' + total.toLocaleString() + ' บาท';
 };
-app.submitDrugRecord = async function() {
+app.submitLinkDrug = async function() {
     let drugs = [];
-    document.querySelectorAll('#adr_drugListContainer .drug-row').forEach(r => {
-        const name = r.querySelector('.adr-name').value.trim();
+    document.querySelectorAll('#ld_drugListContainer .drug-row').forEach(r => {
+        const name = r.querySelector('.ld-name').value.trim();
         if(!name) return;
         drugs.push({
             name: name,
-            strength: r.querySelector('.adr-strength').value.trim(),
-            quantity: r.querySelector('.adr-qty').value.trim(),
-            price: parseFloat(r.querySelector('.adr-price').value) || 0
+            strength: r.querySelector('.ld-strength').value.trim(),
+            quantity: r.querySelector('.ld-qty').value.trim(),
+            price: parseFloat(r.querySelector('.ld-price').value) || 0
         });
     });
     if(drugs.length === 0) return app.showAlert("กรุณาระบุยาอย่างน้อย 1 รายการ");
     const payload = {
-        requester: document.getElementById('adr_requester').value.trim() || 'เภสัชกร',
+        docNum: document.getElementById('ld_docNum').dataset.docnum,
+        subject: document.getElementById('ld_subject').innerText,
         drugs: drugs,
-        note: document.getElementById('adr_note').value.trim()
+        note: document.getElementById('ld_note').value.trim()
     };
     try {
-        const res = await app.callApi('addDrugRecordDirect', payload);
-        addDrugRecordModal.hide();
-        app.showAlert(`✅ บันทึกสำเร็จ\nเลขที่หนังสือ: ${res.docNum}`);
-        app.loadRegistry();
+        await app.callApi('linkDrugToRegistry', payload);
+        linkDrugModal.hide();
+        app.showAlert("✅ บันทึกรายการยาเรียบร้อย");
     } catch(e) {}
 };
 
