@@ -77,8 +77,17 @@
     .menu-card.pharmacy { background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); }
     .menu-card.receive { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
     .menu-card.history { background: linear-gradient(135deg, #4b1248 0%, #8e44ad 100%); }
-    .menu-card.admin { background: linear-gradient(135deg, #146c43 0%, #1e9e5e 100%); }
-    .menu-card.present { background: linear-gradient(135deg, #8a2387 0%, #e94057 50%, #f27121 100%); }
+    
+    .icon-badge {
+        width: 66px; height: 66px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.22);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.1rem;
+        line-height: 1;
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.35), 0 4px 10px rgba(0,0,0,0.2);
+        animation: floatIcon 2.5s ease-in-out infinite;
+    }
     
     .menu-card i { 
         font-size: 3rem; 
@@ -192,10 +201,10 @@
 <!-- Navbar / Header -->
 <div class="header-glam sticky-top">
   <div class="container d-flex justify-content-between align-items-center">
-    <div class="fw-bold fs-5 pointer" onclick="app.show('home')"><i class="bi bi-hospital"></i> ระบบยานอกบัญชีโรงพยาบาลสวี</div>
+    <div class="fw-bold fs-5 pointer" onclick="app.show('home')">🏥 ระบบยานอกบัญชีโรงพยาบาลสวี</div>
     <div class="d-flex align-items-center gap-2">
-       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.loadRegistry()"><i class="bi bi-journal-bookmark-fill"></i> ทะเบียนส่ง</button>
-       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">วิธีใช้</button>
+       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.loadRegistry()">📑 ทะเบียนส่ง</button>
+       <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">❓ วิธีใช้</button>
        
        <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login</button>
        
@@ -219,40 +228,28 @@
     <div class="row g-3">
         <div class="col-6">
             <button class="w-100 menu-card doctor" onclick="app.show('doctor')">
-                <i class="bi bi-clipboard2-pulse"></i>
+                <div class="icon-badge">🩺</div>
                 <span>แพทย์<br>ขอใช้ยานอกบัญชี</span>
             </button>
         </div>
         <div class="col-6">
             <button class="w-100 menu-card pharmacy" onclick="app.show('pharmacy')">
-                <i class="bi bi-printer"></i>
+                <div class="icon-badge">🖨️</div>
                 <span>เภสัชกร<br>พิมพ์ใบยืมยา</span>
                 <span id="badge-phar" class="badge-corner">0</span>
             </button>
         </div>
         <div class="col-6">
             <button class="w-100 menu-card receive" onclick="app.show('receive')">
-                <i class="bi bi-box-seam"></i>
+                <div class="icon-badge">📦</div>
                 <span>เภสัชกร<br>ลงรับยา</span>
                 <span id="badge-rcv" class="badge-corner">0</span>
             </button>
         </div>
         <div class="col-6">
             <button class="w-100 menu-card history" onclick="app.show('history')">
-                <i class="bi bi-clock-history"></i>
+                <div class="icon-badge">🗂️</div>
                 <span>ข้อมูล<br>ยาสนับสนุนทั้งหมด</span>
-            </button>
-        </div>
-        <div class="col-6">
-            <button class="w-100 menu-card admin" onclick="app.show('drugAdmin')">
-                <i class="bi bi-capsule"></i>
-                <span>จัดการรายชื่อยา<br>และราคา</span>
-            </button>
-        </div>
-        <div class="col-6">
-            <button class="w-100 menu-card present" onclick="app.show('presentDash')">
-                <i class="bi bi-graph-up-arrow"></i>
-                <span>Dashboard<br>สรุปเพื่อนำเสนอยา</span>
             </button>
         </div>
     </div>
@@ -392,52 +389,18 @@
     <div class="d-md-none text-end fw-bold bg-dark text-white p-2 rounded mt-2">รวมเป็นเงิน: <span id="totalPriceMobile">0.00</span> บาท</div>
   </div>
 
-  <!-- 💊 จัดการรายชื่อยา + ราคา (สำหรับรวบรวมข้อมูลนำเสนอ) -->
-  <div id="drugAdmin" class="section hidden">
-    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-        <h4 class="text-success m-0"><i class="bi bi-capsule"></i> จัดการรายชื่อยา/ราคา</h4>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="app.show('home')"><i class="bi bi-house"></i> กลับหน้าแรก</button>
-    </div>
-    <button class="btn btn-success rounded-pill fw-bold mb-3" onclick="app.openDrugAdminForm()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
-    <div id="drugAdmin-loader" class="text-center py-5 hidden"><div class="spinner-border text-success"></div></div>
-    <div class="table-responsive">
-      <table class="table table-striped align-middle small">
-        <thead class="table-success">
-            <tr><th>ชื่อยา</th><th>รูปแบบ/ความแรง</th><th>บัญชียา</th><th>ราคา/หน่วย</th><th>หมายเหตุ</th><th></th></tr>
-        </thead>
-        <tbody id="drugAdminTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 📊 Dashboard สรุปเพื่อนำเสนอยาเข้าบัญชี -->
-  <div id="presentDash" class="section hidden">
-    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-        <h4 class="m-0" style="color:#e94057"><i class="bi bi-graph-up-arrow"></i> สรุปข้อมูลเพื่อนำเสนอยาเข้าบัญชี</h4>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="app.show('home')"><i class="bi bi-house"></i> กลับหน้าแรก</button>
-    </div>
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="small text-muted" id="presentDashUpdated">-</div>
-        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="app.loadPresentDashboard(true)"><i class="bi bi-arrow-clockwise"></i> รีเฟรชข้อมูลล่าสุด</button>
-    </div>
-    <div id="presentDash-loader" class="text-center py-5 hidden"><div class="spinner-border" style="color:#e94057"></div></div>
-    <div class="table-responsive">
-      <table class="table table-striped align-middle small">
-        <thead style="background:#ffe8ec">
-            <tr><th>ชื่อยา</th><th class="text-end">จำนวนครั้งที่ขอ</th><th class="text-end">รวมค่าใช้จ่าย (บ.)</th><th>ผู้ขอล่าสุด</th></tr>
-        </thead>
-        <tbody id="presentDashTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-
   <!-- 📑 ระบบทะเบียนหนังสือส่ง -->
   <div id="registry" class="section hidden">
     <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-        <h4 class="text-info m-0"><i class="bi bi-journal-bookmark-fill"></i> ทะเบียนหนังสือส่ง ฝ่ายเภสัชกรรมฯ</h4>
-        <button class="btn btn-sm btn-info text-white fw-bold" onclick="app.openNewDocModal()">
-            <i class="bi bi-plus-lg"></i> ออกเลขใหม่
-        </button>
+        <h4 class="text-info m-0">📑 ทะเบียนหนังสือส่ง ฝ่ายเภสัชกรรมฯ</h4>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-success text-white fw-bold" onclick="app.openAddDrugRecordModal()">
+                💊 เพิ่มข้อมูลยา
+            </button>
+            <button class="btn btn-sm btn-info text-white fw-bold" onclick="app.openNewDocModal()">
+                <i class="bi bi-plus-lg"></i> ออกเลขใหม่
+            </button>
+        </div>
     </div>
     <div class="row mb-3 align-items-center g-2">
         <div class="col-auto">
@@ -647,33 +610,28 @@
   </div>
 </div>
 
-<div class="modal fade" id="drugAdminModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="addDrugRecordModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-success text-white">
-          <h5 class="modal-title"><i class="bi bi-capsule"></i> รายการยา</h5>
+          <h5 class="modal-title">💊 เพิ่มข้อมูลยา (สร้างใบยืมยาใหม่)</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body bg-light">
-          <input type="hidden" id="da_rowIndex">
-          <label class="mt-0">ชื่อยา *</label>
-          <input type="text" id="da_name" class="form-control mb-2 border-success">
-          <div class="row g-2">
-              <div class="col-6"><label class="mt-0">รูปแบบ</label><input type="text" id="da_form" class="form-control mb-2"></div>
-              <div class="col-6"><label class="mt-0">ความแรง</label><input type="text" id="da_strength" class="form-control mb-2"></div>
-          </div>
-          <label class="mt-0">บัญชียา</label>
-          <input type="text" id="da_account" class="form-control mb-2">
-          <div class="row g-2">
-              <div class="col-6"><label class="mt-0">ราคา/หน่วย (บาท)</label><input type="number" step="0.01" id="da_price" class="form-control mb-2"></div>
-              <div class="col-6"><label class="mt-0">หน่วย</label><input type="text" id="da_unit" class="form-control mb-2" placeholder="เช่น เม็ด, vial"></div>
-          </div>
-          <label class="mt-0">หมายเหตุ</label>
-          <input type="text" id="da_notes" class="form-control mb-2">
+          <div class="alert alert-success small py-2 mb-3"><i class="bi bi-info-circle"></i> ใช้บันทึกรายการยา + ราคาที่ดำเนินการเสร็จแล้วโดยตรง จะได้เลขที่หนังสือและขึ้นในทะเบียนส่งทันที</div>
+          <label class="mt-0">ผู้ขอ / แพทย์</label>
+          <input type="text" id="adr_requester" class="form-control mb-3 border-success" placeholder="เช่น นพ.ใจดี รักสวี">
+          
+          <label class="text-dark fs-6">รายการยา</label>
+          <div id="adr_drugListContainer"></div>
+          <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold mt-2" onclick="app.addPriceDrugRow()">+ เพิ่มยา</button>
+          
+          <label class="mt-3">หมายเหตุ</label>
+          <input type="text" id="adr_note" class="form-control mb-2">
       </div>
       <div class="modal-footer p-2 bg-white">
-          <button type="button" class="btn btn-outline-danger" id="da_deleteBtn" onclick="app.deleteDrugAdmin()">ลบ</button>
-          <button type="button" class="btn btn-success ms-auto rounded-pill fw-bold px-4" onclick="app.saveDrugAdmin()">บันทึก</button>
+          <div class="w-100 text-end fw-bold text-success me-2" id="adr_totalCost">รวม: 0 บาท</div>
+          <button type="button" class="btn btn-success w-100 rounded-pill fw-bold" onclick="app.submitDrugRecord()">บันทึก & สร้างใบยืมยา</button>
       </div>
     </div>
   </div>
@@ -848,8 +806,6 @@ app.show = function(id) {
     if(id==='pharmacy') app.loadPharmacy();
     if(id==='receive') app.loadApproved();
     if(id==='history') app.loadHistory();
-    if(id==='drugAdmin') app.loadDrugAdmin();
-    if(id==='presentDash') app.loadPresentDashboard();
 };
 
 app.openHelp = function() { helpModal.show(); };
@@ -1399,86 +1355,63 @@ app.submitNewDoc = async function() {
     } catch(e) {}
 };
 
-// ================= จัดการรายชื่อยา/ราคา =================
-var drugAdminModal, drugAdminData = [];
-app.loadDrugAdmin = async function() {
-    if(!drugAdminModal) drugAdminModal = new bootstrap.Modal(document.getElementById('drugAdminModal'));
-    document.getElementById('drugAdmin-loader').classList.remove('hidden');
-    document.getElementById('drugAdminTableBody').innerHTML = "";
-    try {
-        drugAdminData = await app.callApi('getDrugAdminList');
-        document.getElementById('drugAdmin-loader').classList.add('hidden');
-        if(drugAdminData.length === 0) { document.getElementById('drugAdminTableBody').innerHTML = "<tr><td colspan='6' class='text-center text-muted py-4'>ยังไม่มีรายการยา</td></tr>"; return; }
-        let html = '';
-        drugAdminData.forEach((d, i) => {
-            html += `<tr>
-                <td class="fw-bold">${d.name}</td>
-                <td>${[d.form, d.strength].filter(Boolean).join(' ')}</td>
-                <td>${d.account || '-'}</td>
-                <td class="text-end">${d.price ? Number(d.price).toLocaleString() + ' / ' + (d.unit||'หน่วย') : '-'}</td>
-                <td><div class="text-truncate" style="max-width:120px">${d.notes || ''}</div></td>
-                <td><button class="btn btn-sm btn-outline-secondary" onclick="app.openDrugAdminForm(${i})"><i class="bi bi-pencil"></i></button></td>
-            </tr>`;
+// ================= เพิ่มข้อมูลยา (สร้างใบยืมยาใหม่โดยตรงจากทะเบียนส่ง) =================
+var addDrugRecordModal;
+app.openAddDrugRecordModal = function() {
+    if(!addDrugRecordModal) addDrugRecordModal = new bootstrap.Modal(document.getElementById('addDrugRecordModal'));
+    document.getElementById('adr_requester').value = currentUser ? currentUser.name : '';
+    document.getElementById('adr_note').value = '';
+    document.getElementById('adr_drugListContainer').innerHTML = '';
+    app.addPriceDrugRow();
+    app.updateAdrTotal();
+    addDrugRecordModal.show();
+};
+app.addPriceDrugRow = function() {
+    const id = 'adrRow_' + Date.now() + Math.floor(Math.random()*1000);
+    const html = `<div class="drug-row" id="${id}">
+        <i class="bi bi-x-circle-fill remove-btn" onclick="app.removePriceDrugRow('${id}')"></i>
+        <div class="row g-2">
+            <div class="col-12"><label class="m-0 small text-success">ชื่อยา</label><input type="text" class="form-control form-control-sm border-success adr-name" placeholder="เช่น Levofloxacin injection"></div>
+            <div class="col-4"><label class="m-0 small">ความแรง</label><input type="text" class="form-control form-control-sm adr-strength" placeholder="เช่น 750mg"></div>
+            <div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm adr-qty" placeholder="เช่น 20 vials"></div>
+            <div class="col-4"><label class="m-0 small">ราคา (บาท)</label><input type="number" step="0.01" class="form-control form-control-sm adr-price" placeholder="0" oninput="app.updateAdrTotal()"></div>
+        </div>
+    </div>`;
+    document.getElementById('adr_drugListContainer').insertAdjacentHTML('beforeend', html);
+};
+app.removePriceDrugRow = function(id) {
+    document.getElementById(id).remove();
+    app.updateAdrTotal();
+};
+app.updateAdrTotal = function() {
+    let total = 0;
+    document.querySelectorAll('#adr_drugListContainer .adr-price').forEach(el => total += (parseFloat(el.value) || 0));
+    document.getElementById('adr_totalCost').innerText = 'รวม: ' + total.toLocaleString() + ' บาท';
+};
+app.submitDrugRecord = async function() {
+    let drugs = [];
+    document.querySelectorAll('#adr_drugListContainer .drug-row').forEach(r => {
+        const name = r.querySelector('.adr-name').value.trim();
+        if(!name) return;
+        drugs.push({
+            name: name,
+            strength: r.querySelector('.adr-strength').value.trim(),
+            quantity: r.querySelector('.adr-qty').value.trim(),
+            price: parseFloat(r.querySelector('.adr-price').value) || 0
         });
-        document.getElementById('drugAdminTableBody').innerHTML = html;
-    } catch(e) { document.getElementById('drugAdmin-loader').classList.add('hidden'); }
-};
-app.openDrugAdminForm = function(index) {
-    if(!drugAdminModal) drugAdminModal = new bootstrap.Modal(document.getElementById('drugAdminModal'));
-    ['da_name','da_form','da_strength','da_account','da_price','da_unit','da_notes'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('da_rowIndex').value = (index === undefined) ? '' : index;
-    document.getElementById('da_deleteBtn').classList.toggle('hidden', index === undefined);
-    if(index !== undefined) {
-        const d = drugAdminData[index];
-        document.getElementById('da_name').value = d.name || '';
-        document.getElementById('da_form').value = d.form || '';
-        document.getElementById('da_strength').value = d.strength || '';
-        document.getElementById('da_account').value = d.account || '';
-        document.getElementById('da_price').value = d.price || '';
-        document.getElementById('da_unit').value = d.unit || '';
-        document.getElementById('da_notes').value = d.notes || '';
-    }
-    drugAdminModal.show();
-};
-app.saveDrugAdmin = async function() {
-    const name = document.getElementById('da_name').value.trim();
-    if(!name) return app.showAlert("กรุณาระบุชื่อยา");
-    const idxVal = document.getElementById('da_rowIndex').value;
-    const payload = {
-        rowIndex: idxVal === '' ? null : parseInt(idxVal),
-        name: name,
-        form: document.getElementById('da_form').value.trim(),
-        strength: document.getElementById('da_strength').value.trim(),
-        account: document.getElementById('da_account').value.trim(),
-        price: document.getElementById('da_price').value.trim(),
-        unit: document.getElementById('da_unit').value.trim(),
-        notes: document.getElementById('da_notes').value.trim()
-    };
-    try { await app.callApi('saveDrugAdmin', payload); drugAdminModal.hide(); app.loadDrugAdmin(); } catch(e) {}
-};
-app.deleteDrugAdmin = async function() {
-    const idxVal = document.getElementById('da_rowIndex').value;
-    if(idxVal === '') return;
-    app.showConfirm("ยืนยันลบรายการยานี้?", async () => {
-        try { await app.callApi('deleteDrugAdmin', { rowIndex: parseInt(idxVal) }); drugAdminModal.hide(); app.loadDrugAdmin(); } catch(e) {}
     });
-};
-
-// ================= Dashboard สรุปเพื่อนำเสนอยา (โหลดเร็วด้วย cache ฝั่งเซิร์ฟเวอร์) =================
-app.loadPresentDashboard = async function(forceRefresh) {
-    document.getElementById('presentDash-loader').classList.remove('hidden');
-    document.getElementById('presentDashTableBody').innerHTML = "";
+    if(drugs.length === 0) return app.showAlert("กรุณาระบุยาอย่างน้อย 1 รายการ");
+    const payload = {
+        requester: document.getElementById('adr_requester').value.trim() || 'เภสัชกร',
+        drugs: drugs,
+        note: document.getElementById('adr_note').value.trim()
+    };
     try {
-        const res = await app.callApi('getPresentationSummary', { forceRefresh: !!forceRefresh });
-        document.getElementById('presentDash-loader').classList.add('hidden');
-        document.getElementById('presentDashUpdated').innerText = "ข้อมูล ณ " + res.generatedAt + (res.fromCache ? " (จาก cache)" : " (คำนวณใหม่)");
-        if(!res.items || res.items.length === 0) { document.getElementById('presentDashTableBody').innerHTML = "<tr><td colspan='4' class='text-center text-muted py-4'>ยังไม่มีข้อมูล</td></tr>"; return; }
-        let html = '';
-        res.items.forEach(it => {
-            html += `<tr><td class="fw-bold">${it.name}</td><td class="text-end">${it.count}</td><td class="text-end">${Number(it.totalCost).toLocaleString()}</td><td>${it.lastRequester}</td></tr>`;
-        });
-        document.getElementById('presentDashTableBody').innerHTML = html;
-    } catch(e) { document.getElementById('presentDash-loader').classList.add('hidden'); }
+        const res = await app.callApi('addDrugRecordDirect', payload);
+        addDrugRecordModal.hide();
+        app.showAlert(`✅ บันทึกสำเร็จ\nเลขที่หนังสือ: ${res.docNum}`);
+        app.loadRegistry();
+    } catch(e) {}
 };
 
 window.onload = function() {
