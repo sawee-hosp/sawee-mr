@@ -77,6 +77,8 @@
     .menu-card.pharmacy { background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); }
     .menu-card.receive { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
     .menu-card.history { background: linear-gradient(135deg, #4b1248 0%, #8e44ad 100%); }
+    .menu-card.admin { background: linear-gradient(135deg, #146c43 0%, #1e9e5e 100%); }
+    .menu-card.present { background: linear-gradient(135deg, #8a2387 0%, #e94057 50%, #f27121 100%); }
     
     .menu-card i { 
         font-size: 3rem; 
@@ -146,6 +148,40 @@
         margin-top: 20px;
         border-left: 4px solid #6f42c1;
     }
+
+    /* ปุ่มบันทึกแบบ sticky ด้านล่าง (เฉพาะหน้าฟอร์มแพทย์) */
+    .sticky-save-bar {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: white;
+        padding: 12px 15px calc(12px + env(safe-area-inset-bottom));
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.12);
+        z-index: 1030;
+    }
+
+    /* Custom autocomplete รายชื่อยา (ใช้แทน <datalist> ที่ใช้ไม่ได้ดีบน iOS) */
+    .drug-suggest-box {
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        z-index: 50;
+        background: white;
+        border: 1px solid #ced4da;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 220px;
+        overflow-y: auto;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    }
+    .drug-suggest-item {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .drug-suggest-item:active, .drug-suggest-item:hover { background: #e7f1ff; }
+
+    /* Card ประวัติสำหรับจอมือถือ */
+    #historyCardList .card { border-radius: 12px; }
   </style>
 </head>
 <body>
@@ -205,6 +241,18 @@
             <button class="w-100 menu-card history" onclick="app.show('history')">
                 <i class="bi bi-clock-history"></i>
                 <span>ข้อมูล<br>ยาสนับสนุนทั้งหมด</span>
+            </button>
+        </div>
+        <div class="col-6">
+            <button class="w-100 menu-card admin" onclick="app.show('drugAdmin')">
+                <i class="bi bi-capsule"></i>
+                <span>จัดการรายชื่อยา<br>และราคา</span>
+            </button>
+        </div>
+        <div class="col-6">
+            <button class="w-100 menu-card present" onclick="app.show('presentDash')">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Dashboard<br>สรุปเพื่อนำเสนอยา</span>
             </button>
         </div>
     </div>
@@ -290,10 +338,13 @@
           </div>
       </div>
 
-      <button type="button" class="btn btn-main w-100 mt-4 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()">
-         <i class="bi bi-save"></i> บันทึกข้อมูล
-      </button>
+      <div style="height: 90px;"></div>
     </form>
+    <div class="sticky-save-bar">
+        <button type="button" class="btn btn-main w-100 py-3 fs-5 rounded-pill shadow fw-bold" onclick="app.submitData()">
+           <i class="bi bi-save"></i> บันทึกข้อมูล
+        </button>
+    </div>
     
     <!-- ประวัติการขอใช้ยาของแพทย์ -->
     <div id="myHistoryBox" class="doc-history-box hidden">
@@ -330,11 +381,52 @@
         <div class="col-5"><input type="date" id="filterEnd" class="form-control"></div>
         <div class="col-2"><button class="btn btn-primary w-100" onclick="app.loadHistory()">🔍</button></div>
     </div>
-    <div class="table-responsive">
+    <div class="table-responsive d-none d-md-block">
       <table class="table table-striped align-middle">
         <thead class="table-primary"><tr><th>วันที่</th><th>แพทย์</th><th>รายการ</th><th>ราคา</th><th>สถานะ</th></tr></thead>
         <tbody id="historyTableBody"></tbody>
         <tfoot class="table-dark"><tr><td colspan="3" class="text-end">รวมเป็นเงิน</td><td colspan="2" id="totalPrice">0.00</td></tr></tfoot>
+      </table>
+    </div>
+    <div id="historyCardList" class="d-md-none"></div>
+    <div class="d-md-none text-end fw-bold bg-dark text-white p-2 rounded mt-2">รวมเป็นเงิน: <span id="totalPriceMobile">0.00</span> บาท</div>
+  </div>
+
+  <!-- 💊 จัดการรายชื่อยา + ราคา (สำหรับรวบรวมข้อมูลนำเสนอ) -->
+  <div id="drugAdmin" class="section hidden">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <h4 class="text-success m-0"><i class="bi bi-capsule"></i> จัดการรายชื่อยา/ราคา</h4>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="app.show('home')"><i class="bi bi-house"></i> กลับหน้าแรก</button>
+    </div>
+    <button class="btn btn-success rounded-pill fw-bold mb-3" onclick="app.openDrugAdminForm()"><i class="bi bi-plus-lg"></i> เพิ่มรายการยา</button>
+    <div id="drugAdmin-loader" class="text-center py-5 hidden"><div class="spinner-border text-success"></div></div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle small">
+        <thead class="table-success">
+            <tr><th>ชื่อยา</th><th>รูปแบบ/ความแรง</th><th>บัญชียา</th><th>ราคา/หน่วย</th><th>หมายเหตุ</th><th></th></tr>
+        </thead>
+        <tbody id="drugAdminTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 📊 Dashboard สรุปเพื่อนำเสนอยาเข้าบัญชี -->
+  <div id="presentDash" class="section hidden">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <h4 class="m-0" style="color:#e94057"><i class="bi bi-graph-up-arrow"></i> สรุปข้อมูลเพื่อนำเสนอยาเข้าบัญชี</h4>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="app.show('home')"><i class="bi bi-house"></i> กลับหน้าแรก</button>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="small text-muted" id="presentDashUpdated">-</div>
+        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="app.loadPresentDashboard(true)"><i class="bi bi-arrow-clockwise"></i> รีเฟรชข้อมูลล่าสุด</button>
+    </div>
+    <div id="presentDash-loader" class="text-center py-5 hidden"><div class="spinner-border" style="color:#e94057"></div></div>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle small">
+        <thead style="background:#ffe8ec">
+            <tr><th>ชื่อยา</th><th class="text-end">จำนวนครั้งที่ขอ</th><th class="text-end">รวมค่าใช้จ่าย (บ.)</th><th>ผู้ขอล่าสุด</th></tr>
+        </thead>
+        <tbody id="presentDashTableBody"></tbody>
       </table>
     </div>
   </div>
@@ -555,6 +647,38 @@
   </div>
 </div>
 
+<div class="modal fade" id="drugAdminModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-capsule"></i> รายการยา</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body bg-light">
+          <input type="hidden" id="da_rowIndex">
+          <label class="mt-0">ชื่อยา *</label>
+          <input type="text" id="da_name" class="form-control mb-2 border-success">
+          <div class="row g-2">
+              <div class="col-6"><label class="mt-0">รูปแบบ</label><input type="text" id="da_form" class="form-control mb-2"></div>
+              <div class="col-6"><label class="mt-0">ความแรง</label><input type="text" id="da_strength" class="form-control mb-2"></div>
+          </div>
+          <label class="mt-0">บัญชียา</label>
+          <input type="text" id="da_account" class="form-control mb-2">
+          <div class="row g-2">
+              <div class="col-6"><label class="mt-0">ราคา/หน่วย (บาท)</label><input type="number" step="0.01" id="da_price" class="form-control mb-2"></div>
+              <div class="col-6"><label class="mt-0">หน่วย</label><input type="text" id="da_unit" class="form-control mb-2" placeholder="เช่น เม็ด, vial"></div>
+          </div>
+          <label class="mt-0">หมายเหตุ</label>
+          <input type="text" id="da_notes" class="form-control mb-2">
+      </div>
+      <div class="modal-footer p-2 bg-white">
+          <button type="button" class="btn btn-outline-danger" id="da_deleteBtn" onclick="app.deleteDrugAdmin()">ลบ</button>
+          <button type="button" class="btn btn-success ms-auto rounded-pill fw-bold px-4" onclick="app.saveDrugAdmin()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="helpModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -719,10 +843,13 @@ app.show = function(id) {
         app.checkRows();
         app.checkDoctorStorage();
         app.loadDrugSuggest();
+        setTimeout(() => { const c = document.getElementById('sig-canvas'); if(c && c._resize) c._resize(); }, 60);
     }
     if(id==='pharmacy') app.loadPharmacy();
     if(id==='receive') app.loadApproved();
     if(id==='history') app.loadHistory();
+    if(id==='drugAdmin') app.loadDrugAdmin();
+    if(id==='presentDash') app.loadPresentDashboard();
 };
 
 app.openHelp = function() { helpModal.show(); };
@@ -786,7 +913,7 @@ app.getDrugs = function(json) { try { const d = JSON.parse(json); return Array.i
 
 app.addDrugRow = function() {
     const id = 'row_' + Date.now();
-    const html = `<div class="drug-row" id="${id}"><i class="bi bi-x-circle-fill remove-btn" onclick="app.removeDrugRow('${id}')"></i><div class="row g-2"><div class="col-12"><label class="m-0 small text-primary">ชื่อยา</label><input type="text" class="form-control form-control-sm border-primary d-name" list="drugSuggestList" placeholder="เช่น Levofloxacin injection"></div><div class="col-4"><label class="m-0 small">ความแรง(+หน่วย)</label><input type="text" class="form-control form-control-sm d-strength" placeholder="เช่น 750mg"></div><div class="col-4"><label class="m-0 small text-muted">บัญชียา</label><input type="text" class="form-control form-control-sm d-account bg-light" readonly placeholder="Auto"></div><div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm d-qty" placeholder="เช่น 20 vials"></div><div class="col-7"><label class="m-0 small">วิธีใช้</label><input type="text" class="form-control form-control-sm d-regimen"></div><div class="col-5"><label class="m-0 small">ระยะเวลา(วัน)</label><input type="text" class="form-control form-control-sm d-duration" placeholder="เช่น 15"></div></div></div>`;
+    const html = `<div class="drug-row" id="${id}"><i class="bi bi-x-circle-fill remove-btn" onclick="app.removeDrugRow('${id}')"></i><div class="row g-2"><div class="col-12 position-relative"><label class="m-0 small text-primary">ชื่อยา</label><input type="text" class="form-control form-control-sm border-primary d-name" placeholder="เช่น Levofloxacin injection" autocomplete="off"><div class="drug-suggest-box hidden"></div></div><div class="col-4"><label class="m-0 small">ความแรง(+หน่วย)</label><input type="text" class="form-control form-control-sm d-strength" placeholder="เช่น 750mg"></div><div class="col-4"><label class="m-0 small text-muted">บัญชียา</label><input type="text" class="form-control form-control-sm d-account bg-light" readonly placeholder="Auto"></div><div class="col-4"><label class="m-0 small">จำนวน(+หน่วย)</label><input type="text" class="form-control form-control-sm d-qty" placeholder="เช่น 20 vials"></div><div class="col-7"><label class="m-0 small">วิธีใช้</label><input type="text" class="form-control form-control-sm d-regimen"></div><div class="col-5"><label class="m-0 small">ระยะเวลา(วัน)</label><input type="text" class="form-control form-control-sm d-duration" placeholder="เช่น 15"></div></div></div>`;
     document.getElementById('drugListContainer').insertAdjacentHTML('beforeend', html);
     
     app.updateAddDrugButton();
@@ -794,14 +921,34 @@ app.addDrugRow = function() {
     const rowEl = document.getElementById(id);
 
     const nameInput = rowEl.querySelector('.d-name');
+    const suggestBox = rowEl.querySelector('.drug-suggest-box');
+
     nameInput.addEventListener('input', function(e) {
-        const val = e.target.value;
-        const foundDrug = app.drugMasterList.find(d => d.display === val);
-        if(foundDrug) {
-            e.target.value = foundDrug.name;
-            rowEl.querySelector('.d-strength').value = foundDrug.strength;
-            rowEl.querySelector('.d-account').value = foundDrug.drugAccount || '';
-        }
+        const val = e.target.value.trim().toLowerCase();
+        suggestBox.innerHTML = "";
+        if(!val) { suggestBox.classList.add('hidden'); return; }
+        const matches = app.drugMasterList.filter(d => d.display.toLowerCase().includes(val)).slice(0, 15);
+        if(matches.length === 0) { suggestBox.classList.add('hidden'); return; }
+        matches.forEach(d => {
+            const item = document.createElement('div');
+            item.className = 'drug-suggest-item';
+            item.textContent = d.display;
+            item.addEventListener('mousedown', function(ev) {
+                ev.preventDefault();
+                nameInput.value = d.name;
+                rowEl.querySelector('.d-strength').value = d.strength;
+                rowEl.querySelector('.d-account').value = d.drugAccount || '';
+                suggestBox.classList.add('hidden');
+            });
+            suggestBox.appendChild(item);
+        });
+        suggestBox.classList.remove('hidden');
+    });
+    nameInput.addEventListener('focus', function(e) {
+        if(nameInput.value.trim()) nameInput.dispatchEvent(new Event('input'));
+    });
+    nameInput.addEventListener('blur', function() {
+        setTimeout(() => suggestBox.classList.add('hidden'), 150);
     });
 
     // แจ้งเตือนทันทีเมื่อช่องจำนวนไม่มีตัวอักษร (หน่วย)
@@ -851,13 +998,17 @@ app.submitData = async function() {
     ];
     
     let missingFields = [];
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
     for(let field of reqFields) {
-        if(!document.getElementById(field.id).value.trim()) {
+        const el = document.getElementById(field.id);
+        if(!el.value.trim()) {
             missingFields.push(field.name);
+            el.classList.add('is-invalid');
         }
     }
     
     if(missingFields.length > 0) {
+        document.getElementById(reqFields.find(f => document.getElementById(f.id).classList.contains('is-invalid')).id).scrollIntoView({behavior:'smooth', block:'center'});
         return app.showAlert("กรุณากรอกข้อมูลต่อไปนี้ให้ครบถ้วน:\n- " + missingFields.join('\n- '));
     }
     
@@ -1132,16 +1283,31 @@ app.confirmReceive = async function() {
 
 app.loadHistory = async function() {
     document.getElementById('historyTableBody').innerHTML = "<tr><td colspan='5' class='text-center'>Loading...</td></tr>";
+    document.getElementById('historyCardList').innerHTML = "<div class='text-center text-muted py-3'>กำลังโหลด...</div>";
     try {
         const data = await app.callApi('getAllHistory', { startDate:document.getElementById('filterStart').value, endDate:document.getElementById('filterEnd').value });
-        let html = '', total = 0;
+        let html = '', cardHtml = '', total = 0;
         data.forEach(d => {
             let cost = parseFloat(d.cost) || 0; total += cost;
             let pdf = d.pdfUrl ? `<br><a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="text-danger small"><i class="bi bi-file-pdf"></i> PDF</a>` : '';
             html += `<tr><td>${d.date}</td><td><div class="text-truncate" style="max-width:80px">${d.doctor}</div></td><td><div style="max-width:120px; font-size:0.8rem">${d.drug}</div>${pdf}</td><td class="text-end">${cost.toLocaleString()}</td><td><span class="badge bg-secondary">${d.status}</span></td></tr>`;
+            cardHtml += `<div class="card p-3 mb-2 shadow-sm border-0 border-start border-4 border-secondary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="fw-bold text-primary">${d.doctor}</span>
+                    <span class="badge bg-secondary">${d.status}</span>
+                </div>
+                <div class="small text-muted mt-1">${d.date}</div>
+                <div class="small mt-1">${d.drug}</div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="fw-bold">${cost.toLocaleString()} บาท</span>
+                    ${d.pdfUrl ? `<a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-file-pdf"></i> PDF</a>` : ''}
+                </div>
+            </div>`;
         });
         document.getElementById('historyTableBody').innerHTML = html;
+        document.getElementById('historyCardList').innerHTML = cardHtml || "<div class='text-center text-muted py-3'>ไม่พบข้อมูล</div>";
         document.getElementById('totalPrice').innerText = total.toLocaleString();
+        document.getElementById('totalPriceMobile').innerText = total.toLocaleString();
     } catch(e) {}
 };
 
@@ -1233,6 +1399,88 @@ app.submitNewDoc = async function() {
     } catch(e) {}
 };
 
+// ================= จัดการรายชื่อยา/ราคา =================
+var drugAdminModal, drugAdminData = [];
+app.loadDrugAdmin = async function() {
+    if(!drugAdminModal) drugAdminModal = new bootstrap.Modal(document.getElementById('drugAdminModal'));
+    document.getElementById('drugAdmin-loader').classList.remove('hidden');
+    document.getElementById('drugAdminTableBody').innerHTML = "";
+    try {
+        drugAdminData = await app.callApi('getDrugAdminList');
+        document.getElementById('drugAdmin-loader').classList.add('hidden');
+        if(drugAdminData.length === 0) { document.getElementById('drugAdminTableBody').innerHTML = "<tr><td colspan='6' class='text-center text-muted py-4'>ยังไม่มีรายการยา</td></tr>"; return; }
+        let html = '';
+        drugAdminData.forEach((d, i) => {
+            html += `<tr>
+                <td class="fw-bold">${d.name}</td>
+                <td>${[d.form, d.strength].filter(Boolean).join(' ')}</td>
+                <td>${d.account || '-'}</td>
+                <td class="text-end">${d.price ? Number(d.price).toLocaleString() + ' / ' + (d.unit||'หน่วย') : '-'}</td>
+                <td><div class="text-truncate" style="max-width:120px">${d.notes || ''}</div></td>
+                <td><button class="btn btn-sm btn-outline-secondary" onclick="app.openDrugAdminForm(${i})"><i class="bi bi-pencil"></i></button></td>
+            </tr>`;
+        });
+        document.getElementById('drugAdminTableBody').innerHTML = html;
+    } catch(e) { document.getElementById('drugAdmin-loader').classList.add('hidden'); }
+};
+app.openDrugAdminForm = function(index) {
+    if(!drugAdminModal) drugAdminModal = new bootstrap.Modal(document.getElementById('drugAdminModal'));
+    ['da_name','da_form','da_strength','da_account','da_price','da_unit','da_notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('da_rowIndex').value = (index === undefined) ? '' : index;
+    document.getElementById('da_deleteBtn').classList.toggle('hidden', index === undefined);
+    if(index !== undefined) {
+        const d = drugAdminData[index];
+        document.getElementById('da_name').value = d.name || '';
+        document.getElementById('da_form').value = d.form || '';
+        document.getElementById('da_strength').value = d.strength || '';
+        document.getElementById('da_account').value = d.account || '';
+        document.getElementById('da_price').value = d.price || '';
+        document.getElementById('da_unit').value = d.unit || '';
+        document.getElementById('da_notes').value = d.notes || '';
+    }
+    drugAdminModal.show();
+};
+app.saveDrugAdmin = async function() {
+    const name = document.getElementById('da_name').value.trim();
+    if(!name) return app.showAlert("กรุณาระบุชื่อยา");
+    const idxVal = document.getElementById('da_rowIndex').value;
+    const payload = {
+        rowIndex: idxVal === '' ? null : parseInt(idxVal),
+        name: name,
+        form: document.getElementById('da_form').value.trim(),
+        strength: document.getElementById('da_strength').value.trim(),
+        account: document.getElementById('da_account').value.trim(),
+        price: document.getElementById('da_price').value.trim(),
+        unit: document.getElementById('da_unit').value.trim(),
+        notes: document.getElementById('da_notes').value.trim()
+    };
+    try { await app.callApi('saveDrugAdmin', payload); drugAdminModal.hide(); app.loadDrugAdmin(); } catch(e) {}
+};
+app.deleteDrugAdmin = async function() {
+    const idxVal = document.getElementById('da_rowIndex').value;
+    if(idxVal === '') return;
+    app.showConfirm("ยืนยันลบรายการยานี้?", async () => {
+        try { await app.callApi('deleteDrugAdmin', { rowIndex: parseInt(idxVal) }); drugAdminModal.hide(); app.loadDrugAdmin(); } catch(e) {}
+    });
+};
+
+// ================= Dashboard สรุปเพื่อนำเสนอยา (โหลดเร็วด้วย cache ฝั่งเซิร์ฟเวอร์) =================
+app.loadPresentDashboard = async function(forceRefresh) {
+    document.getElementById('presentDash-loader').classList.remove('hidden');
+    document.getElementById('presentDashTableBody').innerHTML = "";
+    try {
+        const res = await app.callApi('getPresentationSummary', { forceRefresh: !!forceRefresh });
+        document.getElementById('presentDash-loader').classList.add('hidden');
+        document.getElementById('presentDashUpdated').innerText = "ข้อมูล ณ " + res.generatedAt + (res.fromCache ? " (จาก cache)" : " (คำนวณใหม่)");
+        if(!res.items || res.items.length === 0) { document.getElementById('presentDashTableBody').innerHTML = "<tr><td colspan='4' class='text-center text-muted py-4'>ยังไม่มีข้อมูล</td></tr>"; return; }
+        let html = '';
+        res.items.forEach(it => {
+            html += `<tr><td class="fw-bold">${it.name}</td><td class="text-end">${it.count}</td><td class="text-end">${Number(it.totalCost).toLocaleString()}</td><td>${it.lastRequester}</td></tr>`;
+        });
+        document.getElementById('presentDashTableBody').innerHTML = html;
+    } catch(e) { document.getElementById('presentDash-loader').classList.add('hidden'); }
+};
+
 window.onload = function() {
     helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
     approveModal = new bootstrap.Modal(document.getElementById('approveModal'));
@@ -1249,7 +1497,11 @@ window.onload = function() {
     [cvs, cvs2].forEach(c => {
         if(!c) return; // ✅ ป้องกัน Error กรณีไม่เจอ Element
         let isD = false;
-        const resize = () => { c.width = c.offsetWidth; c.height = c.offsetHeight; };
+        const resize = () => {
+            const w = c.offsetWidth, h = c.offsetHeight;
+            if(w > 0 && h > 0) { c.width = w; c.height = h; }
+        };
+        c._resize = resize;
         setTimeout(resize, 500);
         const getP = (e) => { const r = c.getBoundingClientRect(); return {x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top}; };
         const start = (e) => { isD=true; const p=getP(e); const cx = c.getContext('2d'); cx.beginPath(); cx.moveTo(p.x,p.y); e.preventDefault(); };
