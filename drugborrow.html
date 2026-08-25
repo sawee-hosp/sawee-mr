@@ -191,9 +191,47 @@
 
     /* Card ประวัติสำหรับจอมือถือ */
     #historyCardList .card { border-radius: 12px; }
+
+    /* หน้าด่านกรอกเลข ว. / รหัสผ่านกลาง ก่อนเข้าเนื้อหา */
+    #accessGate {
+        position: fixed; inset: 0; z-index: 20000;
+        background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+        color: white;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 20px;
+        text-align: center;
+    }
+    #accessGate .gate-box { max-width: 320px; width: 100%; }
+    body.gate-active { overflow: hidden; }
+
+    /* Toggle มุมมอง ข้อมูลยาสนับสนุน */
+    .hist-mode-btn.active { background: #0056b3 !important; color: white !important; border-color: #0056b3 !important; }
+    .drug-group-header {
+        cursor: pointer;
+        background: white;
+        border-radius: 10px;
+        padding: 12px 15px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        margin-bottom: 6px;
+        border-left: 5px solid #4b1248;
+    }
+    .drug-group-detail { padding: 8px 15px 15px 20px; }
   </style>
 </head>
 <body>
+
+<!-- 🔒 หน้าด่านก่อนเข้าเนื้อหา: กรอกเลข ว. หรือรหัสผ่านกลาง -->
+<div id="accessGate">
+    <div class="gate-box">
+        <div style="font-size: 3.5rem;">🏥</div>
+        <h5 class="fw-bold mb-1">ระบบยานอกบัญชี รพ.สวี</h5>
+        <div class="small text-white-50 mb-4">สำหรับบุคลากรที่ได้รับอนุญาตเท่านั้น</div>
+        <label class="text-white small">กรอกเลข ว. หรือรหัสผ่านกลาง (ตัวเลขเท่านั้น)</label>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" id="gate_code" class="form-control form-control-lg text-center mt-1" placeholder="เช่น 12345" maxlength="20">
+        <div id="gate_error" class="text-warning small mt-2 hidden">รหัสไม่ถูกต้อง กรุณาลองใหม่</div>
+        <button class="btn btn-light w-100 rounded-pill fw-bold mt-3 py-2" onclick="app.verifyAccessCode()">เข้าใช้งาน</button>
+    </div>
+</div>
 
 <!-- Datalist สำหรับ Suggest ชื่อยา -->
 <datalist id="drugSuggestList"></datalist>
@@ -205,8 +243,6 @@
     <div class="d-flex align-items-center gap-2">
        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.loadRegistry()">📑 ทะเบียนส่ง</button>
        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="app.openHelp()">❓ วิธีใช้</button>
-       
-       <button id="btnLogin" class="btn btn-sm btn-light text-primary fw-bold rounded-pill hidden" onclick="app.login()">Login</button>
        
        <div id="userProfile" class="hidden d-flex align-items-center gap-2 text-white pointer" onclick="app.openRegisterModal(true)">
            <span class="small fw-bold">Login: <span id="userName"></span></span>
@@ -373,20 +409,35 @@
         <h4 class="text-secondary m-0"><i class="bi bi-clock-history"></i> ข้อมูลยาสนับสนุนทั้งหมด</h4>
         <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="app.show('home')"><i class="bi bi-house"></i> กลับหน้าแรก</button>
     </div>
+
+    <div class="btn-group w-100 mb-3" role="group">
+        <button type="button" id="histModeList" class="btn btn-outline-secondary hist-mode-btn active" onclick="app.setHistoryMode('list')">📋 รายการทั้งหมด</button>
+        <button type="button" id="histModeDrug" class="btn btn-outline-secondary hist-mode-btn" onclick="app.setHistoryMode('drug')">💊 แยกตามชื่อยา</button>
+    </div>
+
     <div class="row mb-3 g-2">
         <div class="col-5"><input type="date" id="filterStart" class="form-control"></div>
         <div class="col-5"><input type="date" id="filterEnd" class="form-control"></div>
         <div class="col-2"><button class="btn btn-primary w-100" onclick="app.loadHistory()">🔍</button></div>
     </div>
-    <div class="table-responsive d-none d-md-block">
-      <table class="table table-striped align-middle">
-        <thead class="table-primary"><tr><th>วันที่</th><th>แพทย์</th><th>รายการ</th><th>ราคา</th><th>สถานะ</th></tr></thead>
-        <tbody id="historyTableBody"></tbody>
-        <tfoot class="table-dark"><tr><td colspan="3" class="text-end">รวมเป็นเงิน</td><td colspan="2" id="totalPrice">0.00</td></tr></tfoot>
-      </table>
+
+    <!-- โหมด: รายการทั้งหมด -->
+    <div id="historyListView">
+        <div class="table-responsive d-none d-md-block">
+          <table class="table table-striped table-hover align-middle">
+            <thead class="table-primary"><tr><th>วันที่</th><th>แพทย์</th><th>รายการ</th><th class="text-end">ราคา</th><th>สถานะ</th></tr></thead>
+            <tbody id="historyTableBody"></tbody>
+            <tfoot class="table-dark"><tr><td colspan="3" class="text-end">รวมเป็นเงิน</td><td colspan="2" id="totalPrice">0.00</td></tr></tfoot>
+          </table>
+        </div>
+        <div id="historyCardList" class="d-md-none"></div>
+        <div class="d-md-none text-end fw-bold bg-dark text-white p-2 rounded mt-2">รวมเป็นเงิน: <span id="totalPriceMobile">0.00</span> บาท</div>
     </div>
-    <div id="historyCardList" class="d-md-none"></div>
-    <div class="d-md-none text-end fw-bold bg-dark text-white p-2 rounded mt-2">รวมเป็นเงิน: <span id="totalPriceMobile">0.00</span> บาท</div>
+
+    <!-- โหมด: แยกตามชื่อยา (จับรายการยาชื่อเดียวกันมารวมกัน) -->
+    <div id="historyDrugView" class="hidden">
+        <div id="historyDrugGroups"></div>
+    </div>
   </div>
 
   <!-- 📑 ระบบทะเบียนหนังสือส่ง -->
@@ -718,7 +769,6 @@ app.checkUser = async function() {
         uid = profile.userId; dName = profile.displayName; pUrl = profile.pictureUrl;
     }
     if(uid) {
-        document.getElementById('btnLogin').classList.add('hidden');
         document.getElementById('userProfile').classList.remove('hidden');
         document.getElementById('userPic').src = pUrl;
         
@@ -1235,34 +1285,122 @@ app.confirmReceive = async function() {
     } catch(e) {}
 };
 
+var historyRawData = [];
+var historyMode = 'list';
+
+app.setHistoryMode = function(mode) {
+    historyMode = mode;
+    document.getElementById('histModeList').classList.toggle('active', mode === 'list');
+    document.getElementById('histModeDrug').classList.toggle('active', mode === 'drug');
+    document.getElementById('historyListView').classList.toggle('hidden', mode !== 'list');
+    document.getElementById('historyDrugView').classList.toggle('hidden', mode !== 'drug');
+    if(mode === 'drug') app.renderHistoryByDrug(historyRawData);
+};
+
 app.loadHistory = async function() {
     document.getElementById('historyTableBody').innerHTML = "<tr><td colspan='5' class='text-center'>Loading...</td></tr>";
     document.getElementById('historyCardList').innerHTML = "<div class='text-center text-muted py-3'>กำลังโหลด...</div>";
+    document.getElementById('historyDrugGroups').innerHTML = "<div class='text-center text-muted py-3'>กำลังโหลด...</div>";
     try {
         const data = await app.callApi('getAllHistory', { startDate:document.getElementById('filterStart').value, endDate:document.getElementById('filterEnd').value });
-        let html = '', cardHtml = '', total = 0;
-        data.forEach(d => {
-            let cost = parseFloat(d.cost) || 0; total += cost;
-            let pdf = d.pdfUrl ? `<br><a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="text-danger small"><i class="bi bi-file-pdf"></i> PDF</a>` : '';
-            html += `<tr><td>${d.date}</td><td><div class="text-truncate" style="max-width:80px">${d.doctor}</div></td><td><div style="max-width:120px; font-size:0.8rem">${d.drug}</div>${pdf}</td><td class="text-end">${cost.toLocaleString()}</td><td><span class="badge bg-secondary">${d.status}</span></td></tr>`;
-            cardHtml += `<div class="card p-3 mb-2 shadow-sm border-0 border-start border-4 border-secondary">
-                <div class="d-flex justify-content-between align-items-start">
-                    <span class="fw-bold text-primary">${d.doctor}</span>
-                    <span class="badge bg-secondary">${d.status}</span>
-                </div>
-                <div class="small text-muted mt-1">${d.date}</div>
-                <div class="small mt-1">${d.drug}</div>
-                <div class="d-flex justify-content-between align-items-center mt-2">
-                    <span class="fw-bold">${cost.toLocaleString()} บาท</span>
-                    ${d.pdfUrl ? `<a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-file-pdf"></i> PDF</a>` : ''}
-                </div>
-            </div>`;
-        });
-        document.getElementById('historyTableBody').innerHTML = html;
-        document.getElementById('historyCardList').innerHTML = cardHtml || "<div class='text-center text-muted py-3'>ไม่พบข้อมูล</div>";
-        document.getElementById('totalPrice').innerText = total.toLocaleString();
-        document.getElementById('totalPriceMobile').innerText = total.toLocaleString();
+        historyRawData = data || [];
+        app.renderHistoryList(historyRawData);
+        if(historyMode === 'drug') app.renderHistoryByDrug(historyRawData);
     } catch(e) {}
+};
+
+app.renderHistoryList = function(data) {
+    let html = '', cardHtml = '', total = 0;
+    data.forEach(d => {
+        let cost = parseFloat(d.cost) || 0; total += cost;
+        let pdf = d.pdfUrl ? `<a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="text-danger small d-inline-block mt-1"><i class="bi bi-file-pdf"></i> ดู PDF</a>` : '';
+        html += `<tr>
+            <td class="text-nowrap">${d.date}</td>
+            <td>${d.doctor}</td>
+            <td><div>${d.drug}</div>${pdf}</td>
+            <td class="text-end fw-bold">${cost.toLocaleString()}</td>
+            <td><span class="badge bg-secondary">${d.status}</span></td>
+        </tr>`;
+        cardHtml += `<div class="card p-3 mb-2 shadow-sm border-0 border-start border-4 border-secondary">
+            <div class="d-flex justify-content-between align-items-start">
+                <span class="fw-bold text-primary">${d.doctor}</span>
+                <span class="badge bg-secondary">${d.status}</span>
+            </div>
+            <div class="small text-muted mt-1">${d.date}</div>
+            <div class="small mt-1">${d.drug}</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="fw-bold">${cost.toLocaleString()} บาท</span>
+                ${d.pdfUrl ? `<a href="#" onclick="app.openPdf('${d.pdfUrl}'); return false;" class="btn btn-sm btn-outline-danger py-0"><i class="bi bi-file-pdf"></i> PDF</a>` : ''}
+            </div>
+        </div>`;
+    });
+    document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='5' class='text-center text-muted py-4'>ไม่พบข้อมูล</td></tr>";
+    document.getElementById('historyCardList').innerHTML = cardHtml || "<div class='text-center text-muted py-3'>ไม่พบข้อมูล</div>";
+    document.getElementById('totalPrice').innerText = total.toLocaleString();
+    document.getElementById('totalPriceMobile').innerText = total.toLocaleString();
+};
+
+// จับรายการยาที่ชื่อเหมือนกันมารวมกัน (แต่ละแถวอาจมีหลายยาคั่นด้วย ", " จึงต้องแยกก่อน)
+app.renderHistoryByDrug = function(data) {
+    const groups = {}; // name -> { count, totalCost, entries: [] }
+    data.forEach(d => {
+        const names = String(d.drug || "").split(',').map(n => n.trim()).filter(Boolean);
+        if(names.length === 0) return;
+        const cost = parseFloat(d.cost) || 0;
+        const costPerDrug = cost / names.length;
+        names.forEach(name => {
+            if(!groups[name]) groups[name] = { count: 0, totalCost: 0, entries: [] };
+            groups[name].count++;
+            groups[name].totalCost += costPerDrug;
+            groups[name].entries.push({ date: d.date, doctor: d.doctor, cost: costPerDrug, status: d.status, pdfUrl: d.pdfUrl, docNum: d.docNum });
+        });
+    });
+
+    const sortedNames = Object.keys(groups).sort((a, b) => groups[b].count - groups[a].count);
+    if(sortedNames.length === 0) {
+        document.getElementById('historyDrugGroups').innerHTML = "<div class='text-center text-muted py-4'>ไม่พบข้อมูล</div>";
+        return;
+    }
+
+    let html = '';
+    sortedNames.forEach((name, gi) => {
+        const g = groups[name];
+        const gid = 'grp_' + gi;
+        html += `<div class="drug-group-header" onclick="app.toggleDrugGroup('${gid}')">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-bold text-dark">${name}</span>
+                    <span class="badge bg-secondary ms-2">${g.count} ครั้ง</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold" style="color:#4b1248">${Math.round(g.totalCost).toLocaleString()} บาท</span>
+                    <i class="bi bi-chevron-down" id="${gid}_chev"></i>
+                </div>
+            </div>
+        </div>
+        <div class="drug-group-detail hidden" id="${gid}">
+            <table class="table table-sm table-borderless mb-0">
+                <thead><tr class="small text-muted"><th>วันที่</th><th>แพทย์/เรื่อง</th><th class="text-end">ราคา</th><th></th></tr></thead>
+                <tbody>
+                ${g.entries.map(e => `<tr>
+                    <td class="text-nowrap small">${e.date}</td>
+                    <td class="small">${e.doctor}</td>
+                    <td class="text-end small">${Math.round(e.cost).toLocaleString()}</td>
+                    <td class="text-end">${e.pdfUrl ? `<a href="#" onclick="app.openPdf('${e.pdfUrl}'); return false;" class="text-danger small"><i class="bi bi-file-pdf"></i></a>` : ''}</td>
+                </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    });
+    document.getElementById('historyDrugGroups').innerHTML = html;
+};
+
+app.toggleDrugGroup = function(gid) {
+    const el = document.getElementById(gid);
+    const chev = document.getElementById(gid + '_chev');
+    el.classList.toggle('hidden');
+    chev.classList.toggle('bi-chevron-down');
+    chev.classList.toggle('bi-chevron-up');
 };
 
 // ================= ระบบทะเบียนหนังสือส่ง =================
@@ -1420,6 +1558,39 @@ app.submitLinkDrug = async function() {
     } catch(e) {}
 };
 
+// ================= ด่านกรอกเลข ว. / รหัสผ่านกลาง =================
+app.verifyAccessCode = async function() {
+    const code = document.getElementById('gate_code').value.trim();
+    if(!code) return;
+    document.getElementById('gate_error').classList.add('hidden');
+    try {
+        const ok = await app.callApi('checkAccessCode', { code: code });
+        if(ok) {
+            localStorage.setItem('sawee_access_ok', '1');
+            document.getElementById('accessGate').classList.add('hidden');
+            document.body.classList.remove('gate-active');
+            app.startApp();
+        } else {
+            document.getElementById('gate_error').classList.remove('hidden');
+        }
+    } catch(e) {}
+};
+document.addEventListener('DOMContentLoaded', function() {
+    const gateInput = document.getElementById('gate_code');
+    if(gateInput) gateInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') app.verifyAccessCode(); });
+});
+
+app.startApp = function() {
+    app.updateBadges();
+    liff.init({ liffId: LIFF_ID }).then(() => { 
+        if(liff.isLoggedIn()) { app.checkUser(); }
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('page') === 'receive') app.show('receive');
+        else app.show('home');
+    });
+    app.setupRegistryYears();
+};
+
 window.onload = function() {
     helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
     approveModal = new bootstrap.Modal(document.getElementById('approveModal'));
@@ -1427,8 +1598,6 @@ window.onload = function() {
     summaryModal = new bootstrap.Modal(document.getElementById('summaryModal'));
     registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
     carModal = new bootstrap.Modal(document.getElementById('carModal'));
-
-    app.updateBadges();
 
     const cvs = document.getElementById('sig-canvas');
     const cvs2 = document.getElementById('car-sig-canvas');
@@ -1451,15 +1620,13 @@ window.onload = function() {
         ['mouseup','touchend'].forEach(ev => c.addEventListener(ev, end));
     });
 
-    liff.init({ liffId: LIFF_ID }).then(() => { 
-        if(!liff.isLoggedIn()) { document.getElementById('btnLogin').classList.remove('hidden'); }
-        else { app.checkUser(); }
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.get('page') === 'receive') app.show('receive');
-        else app.show('home');
-    });
-    
-    app.setupRegistryYears();
+    if(localStorage.getItem('sawee_access_ok') === '1') {
+        document.getElementById('accessGate').classList.add('hidden');
+        app.startApp();
+    } else {
+        document.body.classList.add('gate-active');
+        setTimeout(() => { const gi = document.getElementById('gate_code'); if(gi) gi.focus(); }, 300);
+    }
 };
 </script>
 </body>
