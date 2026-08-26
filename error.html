@@ -90,6 +90,69 @@
         ];
         
         const erRiskTypes = ["Prescribing error", "Pre-dispensing error", "Dispensing error", "Transcribing error"];
+
+        // รายการอุบัติการณ์ MR (ฝังจากฐาน RM) : หมวดย่อย (sub) -> ชื่ออุบัติการณ์ (name)
+        // ตอนบันทึกเข้าฐาน api_save.php จะแม็พ "ชื่ออุบัติการณ์" -> incident_id + โปรแกรม/หมวดย่อย ให้อัตโนมัติ
+        const EMBED_INCIDENTS = [
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "จัดยาไม่ครบ(ขาด/เกิน)" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "จัดยาผิดชนิด" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "จัดยาผิดความแรง" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "จัดยาผิดตะกร้า" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "เติม Stock ยาผิดชนิด" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "ไม่ได้จัดยา" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "ยาขาดคลัง" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "ค้างจ่ายยาผู้ป่วย" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "พบยาหมดอายุบนชั้นยา" },
+            { sub: "Predispensing error (ความคลาดเคลื่อนในการจัดยา)", name: "อุณหภูมิและความชื้นเก็บยาไม่เหมาะสม" },
+            { sub: "Transcribing error (ความคลาดเคลื่อนของการถ่ายทอดคำสั่งแพทย์การให้ยา)", name: "จ่ายยาผิดคน" },
+            { sub: "Transcribing error (ความคลาดเคลื่อนของการถ่ายทอดคำสั่งแพทย์การให้ยา)", name: "คีย์ยาผิด" },
+            { sub: "Transcribing error (ความคลาดเคลื่อนของการถ่ายทอดคำสั่งแพทย์การให้ยา)", name: "ไม่ได้คีย์" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "จ่ายยาผิดชนิด" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "จ่ายยาผิดขนาด" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "จ่ายยาผิดความแรง" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "จ่ายยาหมดอายุ" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "ไม่ได้จ่ายยา" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "จ่ายยาขาด/เกิน(จำนวน/ชนิด)" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "จ่ายยาฉลากผิด" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "ไม่คืนยาเดิมผู้ป่วย (ตอนD/C)" },
+            { sub: "Dispensing error (ความคลาดเคลื่อนในการจ่ายยา)", name: "ติดรายการยาในสมุดประจำตัวผิดเล่ม/ผิดคน" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ปฏิบัติตามข้อตกลงการประเมินใช้ยา (DUE)" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ระบุวิธีใช้" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ได้สั่งยา" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาผิด Visit" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "จำนวนยาไม่เหมาะสม (มากไป/น้อยไป)" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "วิธีใช้ผิด" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาที่ผู้ป่วยแพ้" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ระบุเหตุผลในการสั่งยาปฏิชีวนะ (DUE)" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ระบุจำนวน" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาซ้ำซ้อน" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ระบุรูปแบบยา" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ระบุความแรง" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ใช้คำย่อไม่เป็นไปตามข้อตกลง" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาผิดชนิด" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาผิดความแรง" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "รูปแบบยาไม่เหมาะสม" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาโดยไม่มีข้อบ่งใช้" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาที่ไม่จำเป็น" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "คำสั่งใช้ไม่ชัดเจน" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ขนาดยาไม่เหมาะสม (มากไป/น้อยไป)" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "วิธีใช้ไม่เหมาะสม" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาไม่ตรงกับที่ระบุในสมุดประจำตัว" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "ไม่ปฏิบัติตามแนวทาง med reconcile" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาที่ไม่มีในบัญชียา รพ." },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "สั่งยาที่เกิด drug interaction กัน" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "อุบัติการณ์การสั่งใช้ยา Fatal drug interaction" },
+            { sub: "Prescribing error (ความคลาดเคลื่อนในการสั่งยา)", name: "Adverse Drug Event จากยา" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "อุบัติการณ์การเกิด Major bleeding จากการใช้ยา warfarin" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "อุบัติการณ์การเกิด Tenofovir induced nephrotoxictity" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "อุบัติการณ์การเกิด EPS จากยาจิตเวช" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "อุบัติการณ์การเกิด Clozapine induced agranulocytosis" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "อุบัติการณ์การเกิด TB drug induced hepatitis" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "Adverse Drug Event จาก drug interaction" },
+            { sub: "อาการไม่พึงประสงค์จากการใช้ยา", name: "แพ้ยาซ้ำ" }
+        ];
+        // หมวดย่อยแบบไม่ซ้ำ (เรียงตามลำดับที่พบครั้งแรก)
+        const MR_SUBS = EMBED_INCIDENTS.reduce((a, c) => a.includes(c.sub) ? a : [...a, c.sub], []);
         const severities = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
         const severityDescriptions = {
             "A": "เหตุการณ์ซึ่งมีโอกาสก่อให้เกิดความคลาดเคลื่อน",
@@ -178,6 +241,8 @@
             const [viewMode, setViewMode] = useState('table');
             const [isLoading, setIsLoading] = useState(true);
             const [isPdfReady, setIsPdfReady] = useState(false);
+            const [dbOnline, setDbOnline] = useState(false);   // เชื่อมฐาน RM ได้ไหม (เฉพาะเครื่อง XAMPP)
+            const [dbMsg, setDbMsg] = useState('');            // ข้อความสถานะการบันทึกเข้าฐาน
             
             const [data, setData] = useState({ drugs: [], inspectors: [], doctors: [], recorders: [], history: [], errorCategories: [], lasaHistory: [], lastId: 0 });
             
@@ -302,6 +367,16 @@
                     await fetchData();
                 };
                 init();
+            }, []);
+
+            // ตรวจว่าเครื่องนี้เชื่อมฐาน RM ได้ไหม (เฉพาะเปิดจาก localhost ที่มี XAMPP)
+            useEffect(() => {
+                const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                if (!isLocal) return;
+                fetch('./api_save.php?action=ping', { cache: 'no-store' })
+                    .then(r => r.json())
+                    .then(j => { if (j && j.status === 'ok') setDbOnline(true); })
+                    .catch(() => {});
             }, []);
 
             const handleModeChange = (mode) => {
@@ -890,7 +965,26 @@
                 const payload = systemMode === 'ER' 
                     ? { ...form, systemMode, drugs: form.selectedDrugs.join(', ') }
                     : { ...form, systemMode, type: form.mrType, error: form.mrError, policy: form.policy.join(', '), shift: calculateShift(form.mrTime) };
-                
+
+                // บันทึกคู่ขนานเข้าฐาน RM (เฉพาะเครื่อง XAMPP ที่ต่อฐานได้) — ไม่บล็อกการลง Sheet
+                if (dbOnline) {
+                    fetch('./api_save.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                        .then(r => r.json())
+                        .then(j => {
+                            if (j.status === 'success') {
+                                setDbMsg('✓ เข้าฐาน RM เลขที่ ' + j.risk_id + (j.matched ? '' : ' (ยังไม่ได้ระบุ incident)'));
+                            } else {
+                                setDbMsg('⚠ ฐาน RM: ' + (j.message || 'บันทึกไม่สำเร็จ'));
+                            }
+                            setTimeout(() => setDbMsg(''), 4000);
+                        })
+                        .catch(() => { setDbMsg('⚠ บันทึกเข้าฐาน RM ไม่สำเร็จ'); setTimeout(() => setDbMsg(''), 4000); });
+                }
+
                 setShowModal(true);
                 setIsSubmitting(false);
 
@@ -903,6 +997,7 @@
                 
                 setTimeout(() => setShowModal(false), 1500);
 
+                // บันทึกเข้า Google Sheet (เหมือนเดิมทุกอย่าง)
                 fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
                     .then(res => res.json())
                     .then(json => {
@@ -940,6 +1035,15 @@
                     
                     <header className="pt-8 pb-4 text-center">
                         <h1 className="text-3xl md:text-4xl font-black text-white drop-shadow-lg tracking-tight">ศูนย์จัดการอุบัติการณ์ ฝ่ายเภสัชกรรม รพ.สวี</h1>
+                        {dbOnline && (
+                            <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-white/90 bg-black/25 px-3 py-1 rounded-full backdrop-blur-sm">
+                                <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_0_3px_rgba(74,222,128,.25)]"></span>
+                                เชื่อมฐาน RM · บันทึกเข้าฐานอัตโนมัติ
+                            </div>
+                        )}
+                        {dbMsg && (
+                            <div className="mt-2 text-[11px] font-bold text-white bg-black/30 inline-block px-3 py-1 rounded-full backdrop-blur-sm animate-fadeIn">{dbMsg}</div>
+                        )}
                     </header>
 
                     <main className="max-w-6xl mx-auto relative mt-2 px-2 md:px-0">
@@ -1266,7 +1370,7 @@
                                                     <label className="text-xs md:text-sm font-black text-slate-400 uppercase mb-1.5 block">ความคลาดเคลื่อน (Type)</label>
                                                     <select value={form.mrType} onChange={e=>setForm({...form, mrType: e.target.value, mrError: ''})} className="w-full compact-input text-sm md:text-base font-bold border-emerald-200 cursor-pointer focus:ring-2 focus:ring-emerald-100 !py-2.5" required>
                                                         <option value="" disabled>-- เลือกชนิดความคลาดเคลื่อน --</option>
-                                                        {[...new Set(data.errorCategories.map(c => c.type))].map(type => (
+                                                        {MR_SUBS.map(type => (
                                                             <option key={type} value={type}>{type}</option>
                                                         ))}
                                                     </select>
@@ -1275,7 +1379,7 @@
                                                     <label className="text-xs md:text-sm font-black text-slate-400 uppercase mb-1.5 block">ระบุ Error</label>
                                                     <select value={form.mrError} onChange={e=>setForm({...form, mrError: e.target.value})} className="w-full compact-input text-sm md:text-base font-bold disabled:opacity-50 border-emerald-200 cursor-pointer focus:ring-2 focus:ring-emerald-100 !py-2.5" disabled={!form.mrType} required>
                                                         <option value="" disabled>-- {form.mrType ? 'เลือกรายการ Error' : 'โปรดเลือกความคลาดเคลื่อนก่อน'} --</option>
-                                                        {data.errorCategories.filter(c => c.type === form.mrType).map(e => (<option key={e.id} value={e.error}>{e.error}</option>))}
+                                                        {EMBED_INCIDENTS.filter(c => c.sub === form.mrType).map((e, idx) => (<option key={idx} value={e.name}>{e.name}</option>))}
                                                     </select>
                                                 </div>
                                             </div>
@@ -1504,7 +1608,7 @@
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <span className="text-xs font-bold text-emerald-700 w-20">Error Type:</span>
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {[...new Set(data.errorCategories.map(c => c.type))].map(t => {
+                                                            {MR_SUBS.map(t => {
                                                                 const isSel = filterErrorTypeArray.includes(t);
                                                                 return (
                                                                     <button key={t} onClick={()=>toggleFilterArray(setFilterErrorTypeArray, t)} 
