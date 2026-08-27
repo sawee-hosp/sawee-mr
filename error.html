@@ -153,6 +153,71 @@
         ];
         // หมวดย่อยแบบไม่ซ้ำ (เรียงตามลำดับที่พบครั้งแรก)
         const MR_SUBS = EMBED_INCIDENTS.reduce((a, c) => a.includes(c.sub) ? a : [...a, c.sub], []);
+
+        // ===== master ฐาน RM (จากฐานจริง) สำหรับ dropdown ในฟอร์ม =====
+        const RM_PROGRAMS = [
+            "โปรแกรมยาและความคลาดเคลื่อนทางยา (PTC)",
+            "โปรแกรมการป้องกันและควบคุมการติดเชื้อ (IC)",
+            "โปรแกรมบุคลากร (HRD)",
+            "โปรแกรมสารสนเทศ (IM)",
+            "โปรแกรมสิ่งแวดล้อมและความปลอดภัย (ENV)"
+        ];
+        const RM_SOURCES = [
+            { id: "3", name: "รายงานอุบัติการ" },
+            { id: "4", name: "ตู้รับฟังความคิดเห็น" },
+            { id: "5", name: "Round Grand round/RM round/IC&ENV round" },
+            { id: "8", name: "กิจกรรมทบทวน/การทบทวนทางคลินิก/ทบทวนความรู้วิชาการ" },
+            { id: "11", name: "Tracer การตามรอยทางคลินิก" }
+        ];
+        const RM_CLINICS = [
+            { id: "1", name: "Clinic" }, { id: "2", name: "Specific clinical risk" }, { id: "3", name: "Non Clinic" }
+        ];
+        const RM_BORNS = [
+            { id: "1", name: "2-5 ครั้ง / ปี" }, { id: "2", name: "1 ครั้ง / ปี" }, { id: "3", name: ">= 1 ครั้ง / ปี" },
+            { id: "4", name: ">= 1 ครั้ง / เดือน" }, { id: "5", name: ">= 1 ครั้ง / สัปดาห์" }, { id: "6", name: ">= 1 ครั้ง / วัน" }
+        ];
+        const RM_VISIT_TYPES = [
+            { id: "1", name: "วันราชการ-เวรเช้า" }, { id: "2", name: "วันราชการ-เวรบ่าย" }, { id: "3", name: "วันราชการ-เวรดึก" },
+            { id: "4", name: "วันหยุดราชการ-เวรเช้า" }, { id: "5", name: "วันหยุดราชการ-เวรดึก" }, { id: "6", name: "วันหยุดราชการ-เวรบ่าย" },
+            { id: "7", name: "วันหยุดนักขัตฤกษ์-เวรดึก" }, { id: "8", name: "วันหยุดนักขัตฤกษ์-เวรเช้า" }, { id: "9", name: "วันหยุดนักขัตฤกษ์-เวรบ่าย" }
+        ];
+        const RM_SEXES = [ { id: "M", name: "ชาย" }, { id: "F", name: "หญิง" }, { id: "O", name: "เพศทางเลือก" } ];
+        const RM_PATIENT_TYPES = [ { id: "RER01", name: "รายบุคคล" }, { id: "RER02", name: "กลุ่มบุคคล" }, { id: "RER03", name: "หน่วยงาน/องค์กร" } ];
+        const RM_TEAMS = [
+            { id: "16", name: "ทีม PCT" }, { id: "17", name: "ทีม PTC" }, { id: "18", name: "ทีม IC" }, { id: "21", name: "ทีม IM" },
+            { id: "22", name: "ทีม ENV" }, { id: "20", name: "ทีม HRD" }, { id: "19", name: "ทีมเครื่องมือ" }, { id: "13", name: "ทีมบริหารความเสี่ยง (RM)" },
+            { id: "15", name: "องค์กรพยาบาล (NUR)" }, { id: "14", name: "องค์กรแพทย์ (MSO)" }, { id: "12", name: "งานบริหารงานทั่วไป" }
+        ];
+        const RM_DEPS = [
+            { id: "30", name: "งานเภสัชกรรม" }, { id: "11", name: "งานการพยาบาลผู้ป่วยอุบัติเหตุและฉุกเฉิน (ER)" },
+            { id: "1019", name: "งานการพยาบาลผู้ป่วยนอก (OPD)" }, { id: "1003", name: "งานการพยาบาลผู้ป่วยในชาย" }, { id: "1004", name: "งานการพยาบาลผู้ป่วยในหญิง" },
+            { id: "17", name: "งานการพยาบาลผู้คลอด (LR)" }, { id: "49", name: "งานการพยาบาลผู้ป่วยผ่าตัดและวิสัญญีพยาบาล (OR)" }, { id: "18", name: "งานจ่ายกลาง" },
+            { id: "16", name: "ห้องจ่ายเงินผู้ป่วยนอก" }, { id: "25", name: "Clinic Asthma/COPD" }, { id: "37", name: "งานสุขภาพจิต" }, { id: "22", name: "แพทย์" },
+            { id: "52", name: "Clinic TB" }, { id: "34", name: "Clinic สุขภาพเด็กดี" }, { id: "1005", name: "Clinic DM" }, { id: "1006", name: "Clinic ARV" },
+            { id: "1016", name: "Clinic ANC" }, { id: "1028", name: "CKD clinic" }, { id: "1029", name: "Warfarin clinic" }, { id: "1030", name: "งานยาเสพติด" },
+            { id: "1017", name: "คัดกรอง" }, { id: "1025", name: "กลุ่มการพยาบาล" }, { id: "1008", name: "งานทันตกรรม" }, { id: "1009", name: "งานกายภาพบำบัด" },
+            { id: "1010", name: "งานแพทย์แผนไทย" }, { id: "1012", name: "งานเวชศาสตร์ครอบครัวและบริการด้านปฐมภูมิ" }, { id: "1013", name: "งานเวชระเบียนและสถิติ" },
+            { id: "1014", name: "งานเทคนิคการแพทย์ (Lab)" }, { id: "1015", name: "งานรังสีวิทยา (x-ray)" }, { id: "1026", name: "งานโภชนาการ" }, { id: "1027", name: "งานซักฟอก" },
+            { id: "1007", name: "ฝ่ายบริหารทั่วไป" }, { id: "1011", name: "ศูนย์คอมพิวเตอร์" }, { id: "1020", name: "งานการเงินและบัญชี" }, { id: "1021", name: "งานพัสดุ" },
+            { id: "1022", name: "งานธุรการ" }, { id: "1023", name: "งานซ่อมบำรุง" }, { id: "1024", name: "งานยานพาหนะ" }
+        ];
+
+        // ค่าเริ่มต้นฟิลด์ฐาน RM ตามโหมด
+        const rmDefaults = (mode) => ({
+            rmProgram: "โปรแกรมยาและความคลาดเคลื่อนทางยา (PTC)",
+            rmInTime: "ทัน",
+            rmBorn: "4",
+            rmSource: "3",
+            rmClinic: "1",
+            rmAge: "35",
+            rmSex: "M",
+            rmPatientType: "RER01",
+            rmNum: "1",
+            rmVisitType: mode === "MR" ? "1" : "2",
+            rmDep: mode === "MR" ? "30" : "11",
+            rmTeam: "16",
+            rmKeyword: mode === "MR" ? "การจัดยา, LASA" : "การจ่ายยานอกเวลา"
+        });
         const severities = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
         const severityDescriptions = {
             "A": "เหตุการณ์ซึ่งมีโอกาสก่อให้เกิดความคลาดเคลื่อน",
@@ -254,7 +319,11 @@
                 errorType: erErrorOptions[0], hn: '', selectedDrugs: [], details: '', riskType: '', severity: '', action: '',
                 inspector: '', doctor: '', recorder: '',
                 mrType: '', mrError: '', drug1: '', drug2: '', qty: '', department: '', policy: [],
-                shift: 'เวรเช้า', basketQty: '', pharmacistCount: '', reportStatus: 'รายงานตัวเอง'
+                shift: 'เวรเช้า', basketQty: '', pharmacistCount: '', reportStatus: 'รายงานตัวเอง',
+                // ฟิลด์ฐาน RM (ค่าเริ่มต้นโหมด ER)
+                rmProgram: "โปรแกรมยาและความคลาดเคลื่อนทางยา (PTC)", rmInTime: "ทัน", rmBorn: "4", rmSource: "3", rmClinic: "1",
+                rmAge: "35", rmSex: "M", rmPatientType: "RER01", rmNum: "1", rmVisitType: "2", rmDep: "11", rmTeam: "16",
+                rmKeyword: "การจ่ายยานอกเวลา"
             };
 
             const [form, setForm] = useState(initialFormState);
@@ -393,6 +462,7 @@
                     lastAutoText.current = ''; // Force clear tracking on mode change
                     setForm(prev => ({
                         ...initialFormState,
+                        ...rmDefaults(mode),
                         date: prev.date,
                         time: prev.time,
                         mrTime: prev.mrTime,
@@ -403,7 +473,7 @@
 
             const handleDateChange = (e) => {
                 const newDate = e.target.value;
-                setForm(prev => ({ ...initialFormState, date: newDate, time: prev.time, mrTime: prev.mrTime, shift: calculateShift(prev.mrTime), errorType: erErrorOptions[0] }));
+                setForm(prev => ({ ...initialFormState, ...rmDefaults(systemMode), date: newDate, time: prev.time, mrTime: prev.mrTime, shift: calculateShift(prev.mrTime), errorType: erErrorOptions[0] }));
             };
 
             useEffect(() => { if (!isDrugDropdownOpen) setErDrugSearch(''); }, [isDrugDropdownOpen]);
@@ -1008,6 +1078,56 @@
                     .catch(e => console.error(e));
             };
 
+            // กล่องฟิลด์ฐาน RM (ค่าเริ่มต้น แก้ไขได้) — ใช้ร่วมทั้ง MR และ ER
+            const rmSelect = (label, key, list, valueKey) => (
+                <div>
+                    <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">{label}</label>
+                    <select value={form[key]} onChange={e=>setForm({...form, [key]: e.target.value})}
+                        className="w-full compact-input text-xs md:text-sm font-bold border-slate-300 bg-white !py-2 cursor-pointer">
+                        {list.map((o, i) => {
+                            const val = valueKey === 'plain' ? o : o.id;
+                            const txt = valueKey === 'plain' ? o : o.name;
+                            return <option key={i} value={val}>{txt}</option>;
+                        })}
+                    </select>
+                </div>
+            );
+            const renderRMFields = () => (
+                <div className="bg-slate-50 border border-slate-200 p-4 md:p-5 rounded-2xl shadow-inner space-y-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-4 h-1.5 bg-slate-400 rounded-full"></div>
+                        <span className="text-xs md:text-sm font-black text-slate-500 uppercase tracking-widest">ข้อมูลสำหรับฐาน RM (ค่าเริ่มต้น แก้ไขได้)</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {rmSelect('โปรแกรมความเสี่ยง', 'rmProgram', RM_PROGRAMS, 'plain')}
+                        {rmSelect('ลักษณะการเกิด', 'rmBorn', RM_BORNS)}
+                        {rmSelect('แหล่งที่ทำให้ทราบ', 'rmSource', RM_SOURCES)}
+                        {rmSelect('ประเภทคลินิก', 'rmClinic', RM_CLINICS)}
+                        {rmSelect('ประเภทการรับบริการ', 'rmVisitType', RM_VISIT_TYPES)}
+                        <div>
+                            <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">ช่วงเวลา</label>
+                            <input type="text" value={form.rmInTime} onChange={e=>setForm({...form, rmInTime: e.target.value})} className="w-full compact-input text-xs md:text-sm font-bold border-slate-300 !py-2" />
+                        </div>
+                        {rmSelect('หน่วยงานที่เกิดเหตุ', 'rmDep', RM_DEPS)}
+                        {rmSelect('กลุ่มงาน', 'rmTeam', RM_TEAMS)}
+                        {rmSelect('ประเภทผู้ได้รับผลกระทบ', 'rmPatientType', RM_PATIENT_TYPES)}
+                        {rmSelect('เพศ', 'rmSex', RM_SEXES)}
+                        <div>
+                            <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">อายุ (ปี)</label>
+                            <input type="number" value={form.rmAge} onChange={e=>setForm({...form, rmAge: e.target.value})} className="w-full compact-input text-xs md:text-sm font-bold border-slate-300 !py-2" />
+                        </div>
+                        <div>
+                            <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">จำนวนครั้ง</label>
+                            <input type="number" value={form.rmNum} onChange={e=>setForm({...form, rmNum: e.target.value})} className="w-full compact-input text-xs md:text-sm font-bold border-slate-300 !py-2" />
+                        </div>
+                        <div className="md:col-span-3">
+                            <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-1 block">Key word / สาเหตุหลัก</label>
+                            <input type="text" value={form.rmKeyword} onChange={e=>setForm({...form, rmKeyword: e.target.value})} className="w-full compact-input text-xs md:text-sm font-bold border-slate-300 !py-2" />
+                        </div>
+                    </div>
+                </div>
+            );
+
             const renderCalendar = () => {
                 const [y, m] = filterMonth.split('-').map(Number);
                 const first = new Date(y, m - 1, 1).getDay();
@@ -1524,6 +1644,9 @@
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* ฟิลด์ฐาน RM (แสดงทั้ง ER และ MR) */}
+                                    {renderRMFields()}
 
                                     {/* พนักงาน Section */}
                                     {systemMode === 'ER' ? (
