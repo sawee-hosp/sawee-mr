@@ -224,12 +224,14 @@
 <div id="accessGate">
     <div class="gate-box">
         <div style="font-size: 3.5rem;">🏥</div>
-        <h5 class="fw-bold mb-1">ระบบยานอกบัญชี รพ.สวี</h5>
-        <div class="small text-white-50 mb-4">สำหรับบุคลากรที่ได้รับอนุญาตเท่านั้น</div>
-        <label class="text-white small">กรอกเลข ว. หรือรหัสผ่านกลาง (ตัวเลขเท่านั้น)</label>
-        <input type="tel" inputmode="numeric" pattern="[0-9]*" id="gate_code" class="form-control form-control-lg text-center mt-1" placeholder="เช่น 12345" maxlength="20">
-        <div id="gate_error" class="text-warning small mt-2 hidden">รหัสไม่ถูกต้อง กรุณาลองใหม่</div>
+        <h5 class="fw-bold mb-1">ระบบยืมยานอกบัญชี รพ.สวี</h5>
+        <div class="small text-white-50 mb-4">กรุณากรอกเลข ว. แพทย์ เพื่อทำการยืมยา</div>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" id="gate_code" class="form-control form-control-lg text-center mt-1" placeholder="เลข ว. แพทย์" maxlength="20" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        <div id="gate_error" class="text-warning small mt-2 hidden">ไม่พบเลข ว. นี้ในระบบ กรุณาตรวจสอบอีกครั้ง</div>
         <button class="btn btn-light w-100 rounded-pill fw-bold mt-3 py-2" onclick="app.verifyAccessCode()">เข้าใช้งาน</button>
+        <div class="small text-white-50 mt-4">
+            Log in ไม่ได้? โปรดโทร <a href="tel:0945854252" class="text-white fw-bold">เบอร์โทรห้องยา</a>
+        </div>
     </div>
 </div>
 
@@ -1564,9 +1566,13 @@ app.verifyAccessCode = async function() {
     if(!code) return;
     document.getElementById('gate_error').classList.add('hidden');
     try {
-        const ok = await app.callApi('checkAccessCode', { code: code });
-        if(ok) {
+        const res = await app.callApi('checkAccessCode', { code: code });
+        if(res && res.ok) {
             localStorage.setItem('sawee_access_ok', '1');
+            if(res.doctorName) {
+                localStorage.setItem('sawee_doc_lic', code);
+                localStorage.setItem('sawee_doc_name', res.doctorName);
+            }
             document.getElementById('accessGate').classList.add('hidden');
             document.body.classList.remove('gate-active');
             app.startApp();
