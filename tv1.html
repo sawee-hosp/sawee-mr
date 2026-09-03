@@ -1,103 +1,590 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIVI1 - เภสัชกร AI</title>
+<title>VIVI - เภสัชกร AI</title>
+
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
   html, body {
-    height:100%;
+    height: 100%;
     font-family: 'Tahoma', 'Sarabun', sans-serif;
     background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-    color:#fff;
-    overflow:hidden;
+    color: #fff;
+    overflow: hidden;
   }
+
+  /* =========================
+     TOP BAR
+  ========================= */
   #topBar {
-    position:fixed;
-    top:0; left:0; right:0;
-    background:#d32f2f;
-    color:#fff;
-    text-align:center;
-    padding:16px 0;
-    font-size:24px;
-    font-weight:bold;
-    letter-spacing:1px;
-    z-index:1000;
-    box-shadow:0 2px 10px rgba(0,0,0,0.4);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    background: #d32f2f;
+    color: #fff;
+    text-align: center;
+
+    padding: 16px 0;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 1px;
+
+    z-index: 1000;
+
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+
     animation: pulse 2s infinite;
   }
+
   @keyframes pulse {
-    0%,100% { background:#d32f2f; }
-    50% { background:#ff5252; }
-  }
-  #main {
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding-top:70px;
-    cursor:pointer;
-    user-select:none;
-  }
-  .logo { font-size:80px; margin-bottom:20px; }
-  h1 { font-size:56px; margin-bottom:10px; }
-  p.subtitle { font-size:26px; opacity:0.85; }
-  #status { margin-top:30px; font-size:20px; color:#4caf50; height:28px; }
-</style>
-</head>
-<body>
-
-  <div id="topBar">🔊 คลิกเพื่อเปิดเสียง</div>
-
-  <div id="main">
-    <div class="logo">💊</div>
-    <h1>VIVI</h1>
-    <p class="subtitle">เภสัชกรเอไอ คอยช่วยเหลือคุณ</p>
-    <div id="status"></div>
-  </div>
-
-  <audio id="maleAudio" src="male_pharmacist.mp3" preload="auto"></audio>
-  <audio id="femaleAudio" src="female_pharmacist.mp3" preload="auto"></audio>
-
-  <script>
-    const maleAudio = document.getElementById('maleAudio');
-    const femaleAudio = document.getElementById('femaleAudio');
-    const statusEl = document.getElementById('status');
-    const mainArea = document.getElementById('main');
-
-    let isPlaying = false;
-
-    function playSequence() {
-      if (isPlaying) return;
-      isPlaying = true;
-      statusEl.textContent = '🔊 กำลังเล่นเสียง...';
-
-      maleAudio.currentTime = 0;
-      femaleAudio.currentTime = 0;
-
-      maleAudio.play().catch(err => {
-        console.error('เล่นเสียงชายไม่ได้:', err);
-        isPlaying = false;
-      });
+    0%,100% {
+      background: #d32f2f;
     }
 
-    maleAudio.onended = () => {
-      femaleAudio.play().catch(err => {
-        console.error('เล่นเสียงหญิงไม่ได้:', err);
-        isPlaying = false;
-      });
-    };
+    50% {
+      background: #ff5252;
+    }
+  }
 
-    femaleAudio.onended = () => {
+  /* =========================
+     MAIN
+  ========================= */
+  #main {
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding-top: 70px;
+
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .logo {
+    font-size: 80px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 56px;
+    margin-bottom: 10px;
+  }
+
+  p.subtitle {
+    font-size: 26px;
+    opacity: 0.85;
+  }
+
+  #status {
+    margin-top: 30px;
+    font-size: 20px;
+    color: #4caf50;
+    height: 28px;
+  }
+
+
+  /* =========================
+     RAIN CONTAINER
+     อยู่บนสุดของทุกองค์ประกอบ
+  ========================= */
+  #rainContainer {
+    position: fixed;
+    inset: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    z-index: 99999;
+
+    pointer-events: none;
+
+    overflow: hidden;
+
+    opacity: 0;
+
+    transition: opacity 1.5s ease;
+  }
+
+  #rainContainer.active {
+    opacity: 1;
+  }
+
+
+  /* =========================
+     RAIN DROP
+  ========================= */
+  .rain {
+    position: absolute;
+
+    top: -120px;
+
+    width: 2px;
+    height: 70px;
+
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0),
+      rgba(255,255,255,0.45)
+    );
+
+    transform: rotate(12deg);
+
+    animation-name: rainFall;
+
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes rainFall {
+
+    0% {
+      transform:
+        translate3d(0, -120px, 0)
+        rotate(12deg);
+    }
+
+    100% {
+      transform:
+        translate3d(-120px, 120vh, 0)
+        rotate(12deg);
+    }
+
+  }
+
+  /* เพิ่มความมืดเล็กน้อยเมื่อฝนตก */
+  #rainOverlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0,0,20,0.08);
+
+    z-index: 99998;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    transition: opacity 1.5s ease;
+  }
+
+  #rainOverlay.active {
+    opacity: 1;
+  }
+
+</style>
+
+</head>
+
+<body>
+
+  <div id="topBar">
+    🔊 คลิกเพื่อเปิดเสียง
+  </div>
+
+  <div id="main">
+
+```
+<div class="logo">
+  💊
+</div>
+
+<h1>
+  VIVI
+</h1>
+
+<p class="subtitle">
+  เภสัชกรเอไอ คอยช่วยเหลือคุณ
+</p>
+
+<div id="status"></div>
+```
+
+  </div>
+
+  <!-- =========================
+       RAIN
+  ========================= -->
+
+  <div id="rainOverlay"></div>
+
+  <div id="rainContainer"></div>
+
+  <!-- =========================
+       AUDIO
+  ========================= -->
+
+<audio
+ id="maleAudio"
+ src="male_pharmacist.mp3"
+ preload="auto"> </audio>
+
+<audio
+ id="femaleAudio"
+ src="female_pharmacist.mp3"
+ preload="auto"> </audio>
+
+<script>
+
+  const maleAudio =
+    document.getElementById('maleAudio');
+
+  const femaleAudio =
+    document.getElementById('femaleAudio');
+
+  const statusEl =
+    document.getElementById('status');
+
+  const mainArea =
+    document.getElementById('main');
+
+  const rainContainer =
+    document.getElementById('rainContainer');
+
+  const rainOverlay =
+    document.getElementById('rainOverlay');
+
+
+  let isPlaying = false;
+
+
+  /* =====================================================
+     RAIN SYSTEM
+  ===================================================== */
+
+  function createRain() {
+
+    const numberOfDrops = 180;
+
+    for (let i = 0; i < numberOfDrops; i++) {
+
+      const drop = document.createElement('div');
+
+      drop.className = 'rain';
+
+
+      // ตำแหน่งแนวนอนแบบสุ่ม
+      drop.style.left =
+        Math.random() * 110 + 'vw';
+
+
+      // ความสูงของหยด
+      const height =
+        40 + Math.random() * 70;
+
+      drop.style.height =
+        height + 'px';
+
+
+      // ความเร็วตก
+      const duration =
+        0.45 + Math.random() * 0.8;
+
+      drop.style.animationDuration =
+        duration + 's';
+
+
+      // หน่วงเวลาแต่ละหยด
+      const delay =
+        Math.random() * 2;
+
+      drop.style.animationDelay =
+        '-' + delay + 's';
+
+
+      // ความโปร่งใส
+      drop.style.opacity =
+        0.15 + Math.random() * 0.45;
+
+
+      rainContainer.appendChild(drop);
+
+    }
+
+  }
+
+
+  /*
+     สร้างฝนตั้งแต่โหลดหน้า
+     แต่ยังซ่อนอยู่
+  */
+  createRain();
+
+
+  /*
+     หลังโหลด 30 วินาที
+     เริ่มแสดงฝน
+  */
+  setTimeout(() => {
+
+    rainContainer.classList.add('active');
+
+    rainOverlay.classList.add('active');
+
+  }, 30000);
+
+
+
+  /* =====================================================
+     DING SOUND
+     สร้างเสียง "จิ้ง" ด้วย Web Audio API
+  ===================================================== */
+
+  let audioContext = null;
+
+
+  function playDing() {
+
+    try {
+
+      if (!audioContext) {
+
+        audioContext =
+          new (
+            window.AudioContext ||
+            window.webkitAudioContext
+          )();
+
+      }
+
+
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+
+
+      const now =
+        audioContext.currentTime;
+
+
+      /*
+         oscillator ตัวแรก
+         ให้เสียงใสเหมือน "จิ้ง"
+      */
+      const osc1 =
+        audioContext.createOscillator();
+
+      const gain1 =
+        audioContext.createGain();
+
+
+      osc1.type = 'sine';
+
+      osc1.frequency.setValueAtTime(
+        1500,
+        now
+      );
+
+      osc1.frequency.exponentialRampToValueAtTime(
+        2200,
+        now + 0.08
+      );
+
+
+      /*
+         เสียงเบามาก
+      */
+      gain1.gain.setValueAtTime(
+        0.0001,
+        now
+      );
+
+      gain1.gain.exponentialRampToValueAtTime(
+        0.08,
+        now + 0.015
+      );
+
+      gain1.gain.exponentialRampToValueAtTime(
+        0.0001,
+        now + 0.35
+      );
+
+
+      osc1.connect(gain1);
+      gain1.connect(audioContext.destination);
+
+
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+
+      /*
+         เพิ่มเสียงปลายใส ๆ อีกตัว
+      */
+      const osc2 =
+        audioContext.createOscillator();
+
+      const gain2 =
+        audioContext.createGain();
+
+
+      osc2.type = 'sine';
+
+      osc2.frequency.setValueAtTime(
+        2400,
+        now
+      );
+
+
+      gain2.gain.setValueAtTime(
+        0.0001,
+        now
+      );
+
+      gain2.gain.exponentialRampToValueAtTime(
+        0.035,
+        now + 0.02
+      );
+
+      gain2.gain.exponentialRampToValueAtTime(
+        0.0001,
+        now + 0.25
+      );
+
+
+      osc2.connect(gain2);
+      gain2.connect(audioContext.destination);
+
+
+      osc2.start(now);
+      osc2.stop(now + 0.25);
+
+
+    } catch (err) {
+
+      console.error(
+        'ไม่สามารถเล่นเสียงจิ้ง:',
+        err
+      );
+
+    }
+
+  }
+
+
+
+  /* =====================================================
+     PLAY SEQUENCE
+  ===================================================== */
+
+  async function playSequence() {
+
+    if (isPlaying) return;
+
+    isPlaying = true;
+
+    statusEl.textContent =
+      '🔊 กำลังเล่นเสียง...';
+
+
+    /*
+       Reset audio
+    */
+    maleAudio.currentTime = 0;
+    femaleAudio.currentTime = 0;
+
+
+    /*
+       1. เล่นเสียง "จิ้ง"
+    */
+    playDing();
+
+
+    /*
+       เว้นจังหวะเล็กน้อย
+       ให้เสียงจิ้งดังนำก่อน
+    */
+    await new Promise(resolve =>
+      setTimeout(resolve, 180)
+    );
+
+
+    /*
+       2. เสียงเภสัชกรชาย
+    */
+    try {
+
+      await maleAudio.play();
+
+    } catch (err) {
+
+      console.error(
+        'เล่นเสียงชายไม่ได้:',
+        err
+      );
+
       isPlaying = false;
+
       statusEl.textContent = '';
+
+      return;
+
+    }
+
+
+    /*
+       3. รอเสียงชายจบ
+       แล้วเล่นเสียงหญิง
+    */
+    maleAudio.onended = async () => {
+
+      try {
+
+        await femaleAudio.play();
+
+      } catch (err) {
+
+        console.error(
+          'เล่นเสียงหญิงไม่ได้:',
+          err
+        );
+
+        isPlaying = false;
+
+        statusEl.textContent = '';
+
+      }
+
     };
 
-    mainArea.addEventListener('click', playSequence);
-  </script>
+
+    /*
+       4. เสียงหญิงจบ
+    */
+    femaleAudio.onended = () => {
+
+      isPlaying = false;
+
+      statusEl.textContent = '';
+
+    };
+
+  }
+
+
+  /*
+     คลิกเพื่อเริ่ม
+  */
+  mainArea.addEventListener(
+    'click',
+    playSequence
+  );
+
+</script>
 
 </body>
 </html>
