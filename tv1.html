@@ -2131,15 +2131,20 @@
             if (!view) return;
 
             let list = Array.isArray(doctors) ? doctors.slice() : [];
-            // เรียงตามเวลา login (เก่า -> ใหม่)
-            list.sort((a, b) => String(a.login_time || '').localeCompare(String(b.login_time || '')));
+            // เรียงความสำคัญ: แพทย์ (doctor) ขึ้นก่อนเภสัช (mr) แล้วค่อยเรียงตามเวลา login (เก่า -> ใหม่)
+            list.sort((a, b) => {
+                const rank = (x) => (x && x.user_type === 'doctor') ? 0 : 1;
+                const r = rank(a) - rank(b);
+                if (r !== 0) return r;
+                return String(a.login_time || '').localeCompare(String(b.login_time || ''));
+            });
 
-            // ตัดคำนำหน้าออก เอาเฉพาะชื่อ
+            // ตัดคำนำหน้าออก เอาเฉพาะชื่อ (รองรับทั้งแบบเต็มและแบบย่อ มี/ไม่มีจุด เช่น น.ส. / นส / พญ)
             const shortName = (n) => {
-                let s = String(n || '-')
-                    .replace(/แพทย์หญิง|นายแพทย์|เภสัชกรหญิง|เภสัชกร|นางสาว|นาย|นาง/g, '')
-                    .replace(/พญ\.|นพ\.|ภก\.|ภญ\./g, '')
-                    .trim();
+                let s = String(n || '-');
+                s = s.replace(/แพทย์หญิง|นายแพทย์|ทันตแพทย์หญิง|ทันตแพทย์|เภสัชกรหญิง|เภสัชกร|นางสาว|ว่าที่ร้อยตรี|นาย|นาง/g, '');
+                s = s.replace(/(ทพญ|ทพ|พญ|นพ|ภญ|ภก|ดร|น\s*\.?\s*ส|นส|พ\s*\.?\s*ต|ร\s*\.?\s*ต)\s*\.?\s*/g, '');
+                s = s.replace(/^[\s.\-]+/, '').trim();
                 return s.split(/\s+/)[0] || '-';
             };
             // แยก "ชื่อคอม" กับ "หน่วยงาน" ออกจากฟิลด์เดิม computer_and_department
@@ -2164,14 +2169,14 @@
                 const subCls  = isDoc ? 'text-emerald-900/80' : 'text-[#4d4d00]/80';
                 const cd = splitCompDep(doc.computer_and_department);
                 const t = doc.login_time || '--:--';
-                html += `<div class="flex-1 min-w-0 rounded-md border shadow-sm px-1 py-[2px] flex flex-col justify-center overflow-hidden" style="${cardBg}">
-                    <div class="flex items-center gap-1 min-w-0">
-                        <i class="fas fa-desktop text-[9px] ${subCls} shrink-0"></i>
-                        <span class="text-[11.4px] font-black ${nameCls} truncate leading-none flex-1" title="${doc.doctor_name || ''}">${shortName(doc.doctor_name)}</span>
+                html += `<div class="flex-1 min-w-0 rounded-md border shadow-sm px-[3px] py-[2px] flex flex-col justify-center overflow-hidden" style="${cardBg}">
+                    <div class="flex items-center gap-[2px] min-w-0">
+                        <i class="fas fa-desktop text-[8px] ${subCls} shrink-0"></i>
+                        <span class="text-[9.6px] font-black ${nameCls} truncate leading-none flex-1 min-w-0" title="${doc.doctor_name || ''}">${shortName(doc.doctor_name)}</span>
                     </div>
-                    <div class="text-[8.6px] font-bold ${subCls} truncate leading-tight mt-[1px]" title="${cd.comp}">${cd.comp}</div>
-                    <div class="text-[8.6px] font-bold ${subCls} truncate leading-tight" title="${cd.dep}">${cd.dep || '&nbsp;'}</div>
-                    <div class="text-[9px] font-black ${nameCls} leading-none mt-[1px]"><i class="far fa-clock mr-[2px] opacity-70"></i>${t}</div>
+                    <div class="text-[8px] font-bold ${subCls} truncate leading-tight mt-[1px]" title="${cd.comp}">${cd.comp}</div>
+                    <div class="text-[8px] font-bold ${subCls} truncate leading-tight" title="${cd.dep}">${cd.dep || '&nbsp;'}</div>
+                    <div class="text-[8.4px] font-black ${nameCls} leading-none mt-[1px]"><i class="far fa-clock mr-[2px] opacity-70"></i>${t}</div>
                 </div>`;
             }
             view.innerHTML = html;
