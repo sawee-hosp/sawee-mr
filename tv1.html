@@ -683,6 +683,10 @@
             const ctx = getAudioCtx(); if (!ctx) return;
             beep(880, 1320, 0.28, 0.32, 0);
         }
+        function playNotificationSound() {
+            if (!canSpeak()) return;
+            try { beep(800, 1200, 0.5, 0.4, 0); } catch (e) {}
+        }
         function playInjectionSound() {
             if (!canSpeak()) return;
             try {
@@ -843,6 +847,21 @@
             if (t < r.lo) return 'low';
             if (t > r.hi) return 'high';
             return 'ok';
+        }
+
+        // col-temp : ตารางรวม ตู้เย็น+ห้อง มองง่ายว่าใบไหนผิดปกติ (แสดงเฉพาะตอนมี alert)
+        function renderTempCombined(data) {
+            const c = document.getElementById('temp-combined-container'); if (!c) return;
+            const mkCard = (item, isF) => {
+                const st = tempState(item.temp, isF); const alert = (st === 'low' || st === 'high');
+                const numCls = st === 'low' ? 'text-blue-600' : st === 'high' ? 'text-red-600' : st === 'nodata' ? 'text-slate-400' : 'text-slate-900';
+                const border = alert ? 'border-2 border-rose-500 temp-alert-card' : 'border border-slate-300';
+                return `<div class="bg-white ${border} rounded-md px-1 py-1 flex flex-col items-center justify-center min-h-[46px]"><span class="text-[9px] font-black text-slate-600 leading-tight text-center line-clamp-2">${(item && item.name) || ''}</span><span class="text-[16px] font-black ${numCls} leading-none mt-0.5">${item.temp}°</span></div>`;
+            };
+            const section = (title, arr, isF) => (!arr || !arr.length) ? '' : `<div><div class="text-[11px] font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded mb-1">${title}</div><div class="grid grid-cols-4 gap-1">${arr.map(i => mkCard(i, isF)).join('')}</div></div>`;
+            let html = section('ตู้เย็น (2-8°C)', data && data.fridge, true) + section('ห้อง (20-30°C)', data && data.room, false);
+            if (hasTempAlert()) html = `<div class="py-1.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-lg shadow border border-red-300 text-center font-black text-white text-[13px] mb-1"><i class="fas fa-exclamation-circle mr-1"></i>เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div>` + html;
+            c.innerHTML = html || `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีข้อมูล</div>`;
         }
 
         function decideLoopColumn(now, secTotal) {
@@ -1643,439 +1662,727 @@
     </script>
 
     <script>
-        /* =====================================================================
-           ผูกข้อมูล (DATA BINDING)
-           ท่อนนี้เขียนแบบกันพัง + เดาชื่อ field หลายแบบ
-           >>> ถ้าจุดไหนไม่ขึ้นข้อมูล ให้เทียบชื่อ field กับ payload จริงจาก doGet
-               แล้วแก้เฉพาะชื่อคีย์ (โครงสร้าง/หน้าตา UI เดิมครบแล้ว)
-           ===================================================================== */
-        function pick(obj) { for (let i = 1; i < arguments.length; i++) { const k = arguments[i]; if (obj && obj[k] !== undefined && obj[k] !== null) return obj[k]; } return undefined; }
-        function setTxt(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.textContent = val; }
+        /* ================== DATA BINDING (ต้นฉบับเดิม + patch เฉพาะจุด) ================== */
 
-        /* ---------------- ยาฉีดด่วน / HAD (การ์ดอย่างเดียว ไม่มีเสียงพูด) ---------------- */
+        /* ---- ยาฉีด (INJ/HAD) : การ์ดเดิม + เพิ่ม alert_type + เน้น HN + ไม่ truncate ชื่อยา ---- */
         function processInjList(list) {
-            if (!Array.isArray(list)) { refreshAlertsDisplay(); return; }
+            if (!Array.isArray(list)) return;
             const now = Date.now();
+            const seen = {};
+            globalInjAlerts.forEach(a => { seen[a.id] = a; });
+
             list.forEach(item => {
-                const hn = pick(item, 'hn') || '';
-                const drug = pick(item, 'drug_name', 'drug') || '';
-                const rxTime = pick(item, 'rx_time', 'time') || '';
-                const room = pick(item, 'room_name', 'department', 'room') || '';
-                const alertType = String(pick(item, 'alert_type') || 'URGENT').toUpperCase();
-                const id = 'inj_' + hn + '_' + drug + '_' + rxTime;
-                if (globalInjAlerts.find(a => a.id === id)) return;
-                globalInjAlerts.push({
-                    id, type: 'injection', priority: (alertType === 'HAD' ? -3 : -1),
-                    timestamp: now, expireAt: now + INJ_ALERT_MS,
-                    timeStr: rxTime, hn, patient_name: pick(item, 'patient_name', 'name') || '',
-                    drug_name: drug, department: room, alert_type: alertType
-                });
-                if (!playedInjAlerts.has(id)) { playedInjAlerts.add(id); playInjectionSound(); } // แค่เสียง chime เบา ๆ ไม่ใช่ VIVI พูด
+                const rxTime = String(item.rx_time || '').trim();
+                const m = rxTime.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+                if (!m) return;
+
+                const d = new Date();
+                d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3] || '0', 10), 0);
+                const ts = d.getTime();
+                if (now - ts > INJ_ALERT_MS || now - ts < -60000) return;
+
+                const alertType = String(item.alert_type || 'URGENT').toUpperCase();
+                const id = 'inj-' + item.hn + '-' + rxTime + '-' + (item.drug_name || '');
+                if (seen[id]) return;
+
+                seen[id] = {
+                    id: id,
+                    type: 'injection',
+                    alert_type: alertType,
+                    priority: (alertType === 'HAD' ? -2 : -1),   // HAD อยู่บนสุด
+                    timestamp: ts,
+                    expireAt: ts + INJ_ALERT_MS,
+                    timeStr: m[1].padStart(2, '0') + ':' + m[2],
+                    hn: item.hn || '',
+                    patient_name: item.patient_name || '-',
+                    drug_name: item.drug_name || '-',
+                    department: item.department || item.room_name || 'ไม่ระบุแผนก'
+                };
             });
+
+            globalInjAlerts = Object.keys(seen).map(k => seen[k]).filter(a => a.expireAt > now);
             refreshAlertsDisplay();
         }
+
         function expireInjAlerts() {
-            const now = Date.now(); const before = globalInjAlerts.length;
+            if (globalInjAlerts.length === 0) return;
+            const now = Date.now();
+            const before = globalInjAlerts.length;
             globalInjAlerts = globalInjAlerts.filter(a => a.expireAt > now);
             if (globalInjAlerts.length !== before) refreshAlertsDisplay();
         }
 
-        /* ---------------- Trigger (โครงอนาคต : หมอสั่งยาแปลก ๆ) แสดง 3 นาที ---------------- */
+        /* ---- Trigger (โครงอนาคต) แสดง 3 นาที ---- */
         function processTriggers(list) {
             if (!Array.isArray(list) || !list.length) return;
             const now = Date.now();
+            const seen = {};
+            globalTriggerAlerts.forEach(a => { seen[a.id] = a; });
             list.forEach(item => {
-                const id = 'trig_' + (pick(item,'hn')||'') + '_' + (pick(item,'topic','title')||'') + '_' + (pick(item,'time','rx_time')||'');
-                if (globalTriggerAlerts.find(a => a.id === id)) return;
-                globalTriggerAlerts.push({
-                    id, type: 'trigger', priority: -2, timestamp: now, expireAt: now + TRIGGER_ALERT_MS,
-                    hn: pick(item,'hn')||'', timeStr: pick(item,'time','rx_time')||'',
-                    topic: pick(item,'topic','title')||'', detail: pick(item,'detail','drug_lab','drug_name')||'',
-                    doctor: pick(item,'doctor','doctor_name')||''
-                });
-                // TODO(อนาคต): if (canSpeak()) viviEnqueue(['beep','trigger.mp3']);
+                const id = 'trig-' + (item.hn || '') + '-' + (item.topic || item.title || '') + '-' + (item.time || item.rx_time || '');
+                if (seen[id]) return;
+                seen[id] = {
+                    id: id, type: 'trigger', priority: -3, timestamp: now, expireAt: now + TRIGGER_ALERT_MS,
+                    hn: item.hn || '', timeStr: item.time || item.rx_time || '',
+                    topic: item.topic || item.title || '', detail: item.detail || item.drug_lab || item.drug_name || '',
+                    doctor: item.doctor || item.doctor_name || ''
+                };
             });
+            globalTriggerAlerts = Object.keys(seen).map(k => seen[k]).filter(a => a.expireAt > now);
             refreshAlertsDisplay();
+            // TODO(อนาคต): if (canSpeak()) viviEnqueue(['beep','trigger.mp3']);
         }
         function expireTriggerAlerts() {
-            const now = Date.now(); const before = globalTriggerAlerts.length;
+            if (globalTriggerAlerts.length === 0) return;
+            const now = Date.now();
+            const before = globalTriggerAlerts.length;
             globalTriggerAlerts = globalTriggerAlerts.filter(a => a.expireAt > now);
             if (globalTriggerAlerts.length !== before) refreshAlertsDisplay();
         }
 
         function refreshAlertsDisplay() {
-            const all = [].concat(globalTriggerAlerts, globalInjAlerts, globalSystemAlerts);
-            all.sort((a, b) => (a.priority - b.priority) || (b.timestamp - a.timestamp));
-            renderAlerts(all);
+            const combined = globalTriggerAlerts.concat(globalInjAlerts, globalSystemAlerts);
+            combined.sort((a, b) => {
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                return b.timestamp - a.timestamp;
+            });
+            renderAlerts(combined);
         }
 
-        /* ---------------- แสดงการ์ดแจ้งเตือน (ขวาบน) + VIVI พูดเตือน ---------------- */
         function renderAlerts(alerts) {
             const container = document.getElementById('alerts-container');
-            if (!container) return;
-            if (!alerts || alerts.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-500 text-[16.8px] mt-4 font-bold"><i class="fas fa-check-circle text-emerald-400 mr-1"></i>ไม่มีการแจ้งเตือนใหม่</div>`;
-            } else {
-                let html = '';
-                alerts.forEach(a => {
-                    if (a.type === 'injection') {
-                        const isHAD = a.alert_type === 'HAD';
-                        const badge = isHAD
-                            ? `<span class="bg-rose-600 text-white text-[11px] font-black px-2 py-0.5 rounded shadow border border-rose-700">สั่งใช้ ยา HAD</span>`
-                            : `<span class="bg-amber-500 text-black text-[11px] font-black px-2 py-0.5 rounded shadow border border-amber-600">สั่งยาฉีดด่วน</span>`;
-                        const cardCls = isHAD ? 'border-rose-500 bg-rose-50' : 'border-amber-400 bg-amber-50';
-                        html += `<div class="rounded-lg border-2 ${cardCls} shadow-sm p-2 fade-in">
-                                <div class="flex items-center justify-between mb-1">${badge}<span class="text-[11px] font-bold text-slate-500">${a.timeStr || ''}</span></div>
-                                <div class="flex items-baseline gap-2 leading-none">
-                                    <span class="text-[11px] font-bold text-slate-500">HN</span>
-                                    <span class="text-[26px] font-black font-mono text-slate-900 tracking-wide">${a.hn || '-'}</span>
-                                </div>
-                                <div class="text-[13px] font-bold text-slate-800 truncate mt-0.5">${a.patient_name || ''}</div>
-                                <div class="flex items-center justify-between mt-1 gap-1">
-                                    <span class="text-[12px] font-black text-blue-800 bg-blue-100 border border-blue-300 px-1.5 py-0.5 rounded truncate flex-1" title="${a.drug_name || ''}">${a.drug_name || ''}</span>
-                                    <span class="text-[11px] font-bold text-slate-600 shrink-0"><i class="fas fa-location-dot mr-1 opacity-70"></i>${a.department || ''}</span>
-                                </div>
-                            </div>`;
-                    } else if (a.type === 'trigger') {
-                        html += `<div class="rounded-lg border-2 border-fuchsia-500 bg-fuchsia-50 shadow-sm p-2 fade-in">
-                                <div class="flex items-center justify-between mb-1"><span class="bg-fuchsia-600 text-white text-[11px] font-black px-2 py-0.5 rounded shadow"><i class="fas fa-triangle-exclamation mr-1"></i>ตรวจสอบการสั่งยา</span><span class="text-[11px] font-bold text-slate-500">${a.timeStr || ''}</span></div>
-                                <div class="flex items-baseline gap-2 leading-none"><span class="text-[11px] font-bold text-slate-500">HN</span><span class="text-[22px] font-black font-mono text-slate-900">${a.hn || '-'}</span></div>
-                                <div class="text-[12px] font-black text-fuchsia-800 mt-0.5">${a.topic || ''}</div>
-                                <div class="text-[12px] font-bold text-slate-700 mt-0.5 truncate" title="${a.detail || ''}">${a.detail || ''}</div>
-                                <div class="text-[11px] font-bold text-slate-500 mt-0.5"><i class="fas fa-user-md mr-1 opacity-70"></i>${a.doctor || ''}</div>
-                            </div>`;
-                    } else {
-                        // system alert (จาก GAS schedule live)
-                        const type = a.type || 'info';
-                        const iconMap = { line: 'fa-comment-dots', temperature: 'fa-temperature-high', requisition: 'fa-box', leave: 'fa-plane-departure', non_formulary: 'fa-prescription-bottle', expiry: 'fa-hourglass-end', checked: 'fa-clipboard-check' };
-                        const colorMap = { line: 'border-green-400 bg-green-50', temperature: 'border-red-400 bg-red-50', requisition: 'border-blue-400 bg-blue-50', leave: 'border-slate-400 bg-slate-50', non_formulary: 'border-orange-400 bg-orange-50', expiry: 'border-yellow-400 bg-yellow-50', checked: 'border-teal-400 bg-teal-50' };
-                        const icon = iconMap[type] || 'fa-bell'; const col = colorMap[type] || 'border-slate-300 bg-white';
-                        const title = pick(a, 'title', 'header') || '';
-                        const msg = pick(a, 'message', 'text', 'detail', 'body') || '';
-                        html += `<div class="rounded-lg border-2 ${col} shadow-sm p-2 fade-in">
-                                <div class="flex items-center gap-2 mb-0.5"><i class="fas ${icon} text-slate-500"></i><span class="text-[13px] font-black text-slate-800 flex-1 truncate">${title}</span></div>
-                                <div class="text-[12px] font-bold text-slate-600 leading-tight">${msg}</div>
-                            </div>`;
+            if(!container) return;
+            if(!alerts || alerts.length === 0) { container.innerHTML = `<div class="card-3d bg-slate-50/90 p-2 flex items-center justify-center h-full"><span class="text-slate-500 font-bold text-[16.8px]">ไม่มีการแจ้งเตือนใหม่</span></div>`; return; }
+            let html = '';
+            const firstAlertsRender = !viviAlertsInitDone;
+
+            alerts.forEach(a => {
+                // การ์ด Trigger (หมอสั่งยาแปลก ๆ) — โครงอนาคต
+                if (a.type === 'trigger') {
+                    html += `<div class="card-3d bg-gradient-to-br from-fuchsia-600 to-fuchsia-700 border border-fuchsia-400 p-1.5 flex items-center gap-2" style="box-shadow:0 0 12px rgba(192,38,211,0.5);">
+                        <div class="w-8 flex justify-center shrink-0"><i class="fas fa-triangle-exclamation text-white text-[24px] drop-shadow-lg"></i></div>
+                        <div class="flex-1 flex flex-col justify-center overflow-hidden">
+                            <div class="flex justify-between items-start"><span class="text-[13.2px] font-black text-white">ตรวจสอบการสั่งยา</span><span class="text-[10.8px] text-fuchsia-700 bg-white font-black px-1 py-0.5 rounded shrink-0 ml-1">${a.timeStr}</span></div>
+                            <div class="text-[15.6px] font-black text-white leading-tight mt-[1px]">HN ${a.hn} · ${a.topic}</div>
+                            <div class="text-[11.4px] font-bold text-fuchsia-100 line-clamp-2 leading-tight mt-[1px]" title="${a.detail}">${a.detail}</div>
+                            ${a.doctor ? `<div class="text-[10.2px] font-bold text-fuchsia-200 mt-[1px]"><i class="fas fa-user-md mr-1 opacity-80"></i>${a.doctor}</div>` : ''}
+                        </div>
+                    </div>`;
+                    if (firstAlertsRender) spokenAlerts.add(a.id);
+                    return;
+                }
+
+                // การ์ดยาฉีด/HAD: โทนแดง (HAD = ม่วงเข้ม) ไอคอนเข็มฉีดยา
+                //  - HN ตัวใหญ่ อ่านครบ ไม่ถูกตัด
+                //  - ชื่อยา wrap 2 บรรทัด (ไม่ truncate)
+                if (a.type === 'injection') {
+                    const isHAD = (a.alert_type === 'HAD');
+                    const grad = isHAD ? 'from-fuchsia-700 to-purple-800 border-fuchsia-400' : 'from-red-600 to-red-700 border-red-400';
+                    const glow = isHAD ? 'rgba(147,51,234,0.6)' : 'rgba(220,38,38,0.55)';
+                    const badgeTxt = isHAD ? 'สั่งใช้ยา HAD' : 'สั่งยาฉีดด่วน';
+                    const badgeCls = isHAD ? 'text-fuchsia-800 bg-white border-fuchsia-300' : 'text-red-700 bg-white border-red-300';
+                    html += `<div class="card-3d bg-gradient-to-br ${grad} border p-1.5 flex items-center gap-2" style="box-shadow:0 0 12px ${glow};">
+                        <div class="w-8 flex justify-center shrink-0"><i class="fas fa-syringe text-white text-[26px] drop-shadow-lg -rotate-45"></i></div>
+                        <div class="flex-1 flex flex-col justify-center overflow-hidden">
+                            <div class="flex justify-between items-center gap-1">
+                                <span class="text-[10.8px] font-black px-1 py-0.5 rounded border shadow-sm shrink-0 ${badgeCls}">${badgeTxt}</span>
+                                <span class="text-[10.8px] text-white/90 font-black shrink-0">${a.timeStr}</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-[2px] leading-none">
+                                <span class="text-[10.8px] font-bold text-white/80 shrink-0">HN</span>
+                                <span class="text-[19px] font-black font-mono text-white drop-shadow-sm tracking-wide">${a.hn || '-'}</span>
+                                <span class="text-[12px] font-bold text-white/90 truncate ml-1" title="${a.patient_name}">${a.patient_name}</span>
+                            </div>
+                            <div class="text-[15.6px] font-black text-white drop-shadow-md leading-tight line-clamp-2 mt-[1px]" title="${a.drug_name}">${a.drug_name}</div>
+                            <div class="text-[10.2px] font-bold text-white/80 truncate mt-[1px]"><i class="fas fa-hospital-user mr-1 opacity-80"></i>${a.department}</div>
+                        </div>
+                    </div>`;
+                    if (!playedInjAlerts.has(a.id)) {
+                        playedInjAlerts.add(a.id);
+                        playInjectionSound();   // แค่เสียง chime เบา ๆ (ไม่มี VIVI พูดสำหรับ inj/HAD)
                     }
-                });
-                container.innerHTML = html;
-            }
+                    return;
+                }
 
-            // VIVI พูดเตือน (เฉพาะ system alert ที่ map เสียงไว้) — inj/HAD ไม่พูด (มีแค่การ์ด)
-            if (!viviAlertsInitDone) {
-                (alerts || []).forEach(a => { if (a && a.id) spokenAlerts.add(a.id); });
-                viviAlertsInitDone = true;
-            } else {
-                (alerts || []).forEach(a => {
-                    if (!a || !a.id || spokenAlerts.has(a.id)) return;
+                let bg, ic, tc, dc, tiC, tT = a.title, dT = a.desc;
+                if (a.type === 'leave') { bg='bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200'; tc='text-amber-900'; dc='text-amber-800 font-bold'; ic='<i class="fas fa-calendar-times text-amber-600 text-xl drop-shadow-sm"></i>'; tiC='text-amber-800 bg-white border-amber-200'; }
+                else if (a.type === 'non_formulary') { bg='bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200'; tc='text-purple-900'; dc='text-purple-800'; ic='<i class="fas fa-file-medical text-purple-600 text-xl drop-shadow-sm"></i>'; tiC='text-purple-800 bg-white border-purple-200'; }
+                else if (a.type === 'requisition') { bg='bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'; tc='text-blue-900'; dc='text-blue-800'; ic='<i class="fas fa-box-open text-blue-700 text-xl drop-shadow-sm"></i>'; tiC='text-blue-800 bg-white border-blue-200'; }
+                else if (a.type === 'temperature') { bg='bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 temp-alert-card'; tc='text-orange-900 font-black'; dc='text-red-800 font-extrabold text-[12px]'; ic='<i class="fas fa-temperature-high text-orange-600 text-xl drop-shadow-sm"></i>'; tiC='text-orange-800 bg-white border-orange-200'; }
+                else if (a.type === 'line') { bg='bg-gradient-to-br from-[#f2fcf2] to-[#e6f9e6] border-[#00B900]/30'; tc='text-[#009900]'; dc='text-[#007700]'; ic='<i class="fab fa-line text-[#00B900] text-xl drop-shadow-sm"></i>'; tiC='text-[#009900] bg-white border-[#00B900]/30'; }
+                else if (a.type === 'expiry') { bg='bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200'; tc='text-rose-900'; dc='text-rose-800'; ic='<i class="fas fa-exclamation-triangle text-rose-600 text-xl drop-shadow-sm"></i>'; tiC='text-rose-800 bg-white border-rose-200'; }
+                else if (a.type === 'checked') { bg='bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200'; tc='text-teal-900'; dc='text-teal-800'; ic='<i class="fas fa-box text-teal-600 text-xl drop-shadow-sm"></i>'; tiC='text-teal-800 bg-white border-teal-200'; tT = a.title.replace(/เช็คพร้อมใช้แล้ว|พร้อมใช้:|พร้อมใช้/g, '').trim() + " เช็คพร้อมใช้แล้ว"; dT = a.desc + " | " + a.timeStr; }
+                else { bg='bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200'; tc='text-slate-900'; dc='text-slate-700'; ic='<i class="fas fa-info-circle text-slate-500 text-xl"></i>'; tiC='text-slate-700 bg-white border-slate-200'; }
+
+                html += `<div class="card-3d ${bg} p-1.5 flex items-center gap-2"><div class="w-7 flex justify-center shrink-0">${ic}</div><div class="flex-1 flex flex-col justify-center overflow-hidden"><div class="flex justify-between items-start mb-0.5"><span class="text-[14.4px] font-black ${tc} truncate">${tT}</span><span class="text-[10.8px] ${tiC} font-black px-1 py-0.5 rounded shadow-sm border shrink-0 leading-none mt-0.5">${a.timeStr}</span></div><span class="text-[12px] font-bold ${dc} line-clamp-2 leading-tight">${dT}</span></div></div>`;
+
+                // VIVI พูดเตือน (เฉพาะ system alert ที่ map เสียงไว้) ; ที่เหลือใช้ beep เดิม
+                if (!spokenAlerts.has(a.id)) {
                     spokenAlerts.add(a.id);
-                    const snd = VIVI_ALERT_SOUND[a.type];
-                    if (snd) viviEnqueue(['beep', snd]);
-                });
-            }
+                    if (!firstAlertsRender) {
+                        const snd = VIVI_ALERT_SOUND[a.type];
+                        if (snd) { if (canSpeak()) viviEnqueue(['beep', snd]); }
+                        else if (a.type !== 'expiry' && canSpeak()) playNotificationSound();
+                    }
+                }
+            });
+            container.innerHTML = html;
+            if (firstAlertsRender) viviAlertsInitDone = true;   // รอบแรก seed เงียบ ๆ
         }
 
-        /* ---------------- อุณหภูมิ : เก็บข้อมูล + เติมกริดเดิม (ซ่อน) ---------------- */
-        function renderTempStatus(data) {
-            window.lastTempStatusData = data || null;
-            const build = (arr, isF) => {
-                if (!arr || !arr.length) return `<div class="text-center text-[13px] text-slate-500 col-span-3 py-3">ไม่มีข้อมูล</div>`;
-                return arr.map(i => {
-                    const st = tempState(i.temp, isF);
-                    const alert = (st === 'low' || st === 'high');
-                    const numCls = st === 'low' ? 'text-blue-600' : st === 'high' ? 'text-red-600' : st === 'nodata' ? 'text-slate-400' : 'text-slate-900';
-                    const border = alert ? 'border-2 border-rose-500 temp-alert-card' : 'border border-slate-300';
-                    return `<div class="bg-white ${border} rounded-md px-1 py-1 flex flex-col items-center justify-center min-h-[46px]"><span class="text-[10px] font-black text-slate-600 leading-tight text-center line-clamp-2">${pick(i,'name','label')||''}</span><span class="text-[17px] font-black ${numCls} leading-none mt-0.5">${i.temp}°</span></div>`;
-                }).join('');
-            };
-            const fGrid = document.getElementById('temp-fridge-grid'); if (fGrid) fGrid.innerHTML = build(data && data.fridge, true);
-            const rGrid = document.getElementById('temp-room-grid'); if (rGrid) rGrid.innerHTML = build(data && data.room, false);
-        }
-        /* col-temp : ตารางรวม ตู้เย็น+ห้อง มองง่ายว่าใบไหนผิดปกติ */
-        function renderTempCombined(data) {
-            const c = document.getElementById('temp-combined-container'); if (!c) return;
-            const mkCard = (item, isF) => {
-                const st = tempState(item.temp, isF); const alert = (st === 'low' || st === 'high');
-                const numCls = st === 'low' ? 'text-blue-600' : st === 'high' ? 'text-red-600' : st === 'nodata' ? 'text-slate-400' : 'text-slate-900';
-                const border = alert ? 'border-2 border-rose-500 temp-alert-card' : 'border border-slate-300';
-                return `<div class="bg-white ${border} rounded-md px-1 py-1 flex flex-col items-center justify-center min-h-[46px]"><span class="text-[9px] font-black text-slate-600 leading-tight text-center line-clamp-2">${pick(item,'name','label')||''}</span><span class="text-[16px] font-black ${numCls} leading-none mt-0.5">${item.temp}°</span></div>`;
-            };
-            const section = (title, arr, isF) => (!arr || !arr.length) ? '' : `<div><div class="text-[11px] font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded mb-1">${title}</div><div class="grid grid-cols-4 gap-1">${arr.map(i => mkCard(i, isF)).join('')}</div></div>`;
-            let html = section('ตู้เย็น (2-8°C)', data && data.fridge, true) + section('ห้อง (20-30°C)', data && data.room, false);
-            if (hasTempAlert()) html = `<div class="py-1.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-lg shadow border border-red-300 text-center font-black text-white text-[13px] mb-1"><i class="fas fa-exclamation-circle mr-1"></i>เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div>` + html;
-            c.innerHTML = html || `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีข้อมูล</div>`;
-        }
+        /* ---- อุณหภูมิ : ต้นฉบับเดิม (เติมกริดเดิม + set lastTempStatusData) ---- */
+        function renderTempStatus(tempStatus) {
+            window.lastTempStatusData = tempStatus;
+            let hasFridgeAlert = false; let hasRoomAlert = false;
 
-        /* ---------------- อุบัติการณ์ (dashboard) + VIVI เตือนเมื่อมีรายงาน MR ใหม่ ---------------- */
-        function renderIncidents(data) {
-            const container = document.getElementById('incident-container'); if (!container) return;
-            const stats = pick(data, 'stats', 'summary') || data || {};
-            const mrList = pick(data, 'mr_errors', 'mr', 'incidents', 'list') || [];
-            const totalToday = pick(stats, 'today', 'total_today', 'count_today');
-            const totalMonth = pick(stats, 'month', 'total_month', 'count_month');
-            let html = `<div class="grid grid-cols-2 gap-2 mb-2">
-                    <div class="card-3d p-2 text-center"><div class="text-[12px] font-bold text-slate-500">วันนี้</div><div class="text-3xl font-black text-rose-600">${totalToday !== undefined ? totalToday : (Array.isArray(mrList) ? mrList.length : 0)}</div></div>
-                    <div class="card-3d p-2 text-center"><div class="text-[12px] font-bold text-slate-500">เดือนนี้</div><div class="text-3xl font-black text-slate-700">${totalMonth !== undefined ? totalMonth : '-'}</div></div>
+            const createCard = (item, isFridge) => {
+                const range = isFridge ? TEMP_RANGE.fridge : TEMP_RANGE.room;
+                const t = parseFloat(item.temp);
+                const hasData = !(item.temp === '--' || item.temp === '' || isNaN(t));
+                let state = 'normal';
+                if (hasData) { if (t < range.lo) state = 'low'; else if (t > range.hi) state = 'high'; }
+                const isAlert = hasData && state !== 'normal';
+                if (isAlert) { if (isFridge) hasFridgeAlert = true; else hasRoomAlert = true; }
+
+                let borderStyle, headerStyle;
+                if (!hasData) { borderStyle = 'border: 2px solid #cbd5e1;'; headerStyle = 'background: #94a3b8;'; }
+                else if (isAlert) { borderStyle = 'border: 2px solid #dc2626;'; headerStyle = 'background: linear-gradient(to right, #dc2626, #991b1b);'; }
+                else if (isFridge) { borderStyle = 'border: 2px solid #1d4ed8;'; headerStyle = 'background: linear-gradient(to right, #1d4ed8, #1e3a8a);'; }
+                else { borderStyle = 'border: 2px solid #059669;'; headerStyle = 'background: linear-gradient(to right, #047857, #065f46);'; }
+
+                const cardClass = isAlert ? 'temp-alert-card' : '';
+                let tempColor = 'text-slate-900';
+                if (!hasData) tempColor = 'text-slate-400';
+                else if (state === 'low') tempColor = 'text-blue-600';
+                else if (state === 'high') tempColor = 'text-red-600';
+
+                return `
+                <div class="temp-card relative overflow-hidden flex flex-col rounded-lg ${cardClass} h-[52px] bg-white" style="${borderStyle}">
+                    <div class="w-full text-white text-[10.5px] py-0 px-1 text-center font-black leading-[1.1] overflow-hidden line-clamp-2 h-[24px] flex items-center justify-center" style="${headerStyle}">${item.name}</div>
+                    <div class="flex-1 flex flex-col items-center justify-center min-h-0 leading-none">
+                        <span class="text-[18px] font-black ${tempColor} leading-none tracking-tight">${item.temp}°C</span>
+                        <span class="text-[7.5px] font-bold text-slate-500 leading-none" style="margin-top:1px;">RH ${item.hum}%</span>
+                    </div>
                 </div>`;
-            if (Array.isArray(mrList) && mrList.length) {
-                html += `<div class="text-[12px] font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded mb-1">รายการคลาดเคลื่อน (MR)</div>`;
-                mrList.slice(0, 12).forEach(m => {
-                    const t = pick(m, 'topic', 'type', 'title', 'error_type') || 'ไม่ระบุ';
-                    const d = pick(m, 'detail', 'note', 'desc', 'ward') || '';
-                    html += `<div class="flex items-start gap-2 text-[12px] bg-white/80 border border-slate-200 rounded px-2 py-1 mb-1 shadow-sm"><i class="fas fa-circle-exclamation text-rose-500 mt-0.5"></i><div class="flex-1 min-w-0"><div class="font-bold text-slate-800 truncate">${t}</div>${d ? `<div class="text-slate-500 truncate">${d}</div>` : ''}</div></div>`;
-                });
-            } else {
-                html += `<div class="text-center text-[13px] text-emerald-600 font-bold py-4"><i class="fas fa-shield-heart mr-1"></i>วันนี้ยังไม่มีอุบัติการณ์</div>`;
-            }
-            container.innerHTML = html;
-
-            // VIVI: มีรายงาน MR ใหม่ -> "มีคนรายงานอุบัติการณ์ห้องเราอีกแล้วค่ะ"
-            const sig = Array.isArray(mrList) ? mrList.length + '|' + JSON.stringify(mrList.slice(0, 3)) : '';
-            if (!viviIncidentInit) { viviIncidentSig = sig; viviIncidentInit = true; }
-            else if (sig !== viviIncidentSig) { viviIncidentSig = sig; viviEnqueue(['beep', 'incident.mp3']); }
-        }
-
-        function renderLasa(list) {
-            const target = document.getElementById('lasa-append-target'); if (!target) return;
-            if (!Array.isArray(list) || !list.length) { target.innerHTML = ''; return; }
-            let html = `<div class="text-[12px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded mb-1 mt-2">ยา LASA ที่พบวันนี้</div>`;
-            list.slice(0, 10).forEach(x => { html += `<div class="text-[12px] font-bold text-slate-700 bg-white/80 border border-slate-200 rounded px-2 py-1 mb-1 truncate">${pick(x,'drug_name','name','text')||''}</div>`; });
-            target.innerHTML = html;
-        }
-
-        function renderDoctors(list) {
-            const container = document.getElementById('doctors-container'); if (!container) return;
-            if (!Array.isArray(list) || !list.length) { container.innerHTML = `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีแพทย์ออนไลน์ขณะนี้</div>`; return; }
-            let html = '';
-            list.forEach(d => {
-                const name = pick(d, 'doctor_name', 'name') || '-';
-                const clinic = pick(d, 'clinic_name', 'room', 'department') || '';
-                const cnt = pick(d, 'patient_count', 'queue', 'count');
-                html += `<div class="flex items-center justify-between bg-white/70 border border-white/60 rounded-lg px-2 py-1.5 shadow-sm"><div class="min-w-0"><div class="text-[13px] font-black text-slate-800 truncate">${name}</div>${clinic ? `<div class="text-[11px] font-bold text-slate-500 truncate">${clinic}</div>` : ''}</div>${cnt !== undefined ? `<span class="text-[12px] font-black text-white bg-indigo-500 px-2 py-0.5 rounded shadow shrink-0">${cnt} คิว</span>` : ''}</div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function renderDue(list, chart) {
-            const container = document.getElementById('due-container'); if (!container) return;
-            const chartEl = document.getElementById('due-chart-container');
-            if (chartEl) chartEl.innerHTML = '';
-            if (!Array.isArray(list) || !list.length) { container.innerHTML = `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีรายการยา DUE วันนี้</div>`; return; }
-            let html = '';
-            list.forEach(x => {
-                const bed = pick(x, 'bedno', 'bed') || '';
-                const name = pick(x, 'patient_name', 'name') || '';
-                const drug = pick(x, 'drug_name', 'due_drug', 'drug') || '';
-                html += `<div class="flex items-center gap-1 bg-white/70 border border-white/60 rounded px-2 py-1 shadow-sm"><span class="bed-chip chip-cont text-[11px] shrink-0">${bed}</span><span class="text-[11px] font-bold text-slate-700 truncate max-w-[35%]">${name}</span><span class="drug-chip drug-due text-[11px] truncate flex-1">${drug}</span></div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function renderBoxes(list) {
-            const container = document.getElementById('boxes-container'); if (!container) return;
-            if (!Array.isArray(list) || !list.length) { container.innerHTML = `<div class="text-center text-[14.4px] text-slate-500 py-4">ยังไม่มีการใช้กล่องยาวันนี้</div>`; return; }
-            let html = `<div class="grid grid-cols-2 gap-1.5">`;
-            list.forEach(x => {
-                const bx = pick(x, 'box_no', 'box', 'no') || '';
-                const bed = pick(x, 'bedno', 'bed') || '';
-                html += `<div class="bg-white/80 border border-slate-200 rounded px-2 py-1 flex justify-between items-center shadow-sm"><span class="text-[12px] font-bold text-slate-500">กล่อง ${bx}</span><span class="text-[13px] font-black text-blue-700">${bed}</span></div>`;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
-        }
-
-        /* ---------------- ตารางเวร (staff) ---------------- */
-        function updateStaffUI(sd) {
-            if (!sd) return;
-            scheduleLoaded = true;
-            const holiday = pick(sd, 'is_holiday', 'isHoliday', 'holiday');
-            if (holiday !== undefined) isHolidayToday = (holiday === true || holiday === 'Y' || holiday === 1 || holiday === '1');
-            globalPicMap = pick(sd, 'pic_map', 'photos', 'pics') || globalPicMap || {};
-            const staff = pick(sd, 'staff', 'roles', 'today') || sd;
-            // map role-key -> card element id (ปรับชื่อคีย์ให้ตรง payload จริงได้)
-            const map = {
-                'card-key': ['key','pharm_key','ภคีย์'], 'card-ipd': ['ipd','pharm_ipd','ภใน'],
-                'card-tech': ['tech','tech_morning','จพเช้า'],
-                'card-check1': ['check1','check_1'], 'card-check2': ['check2','check_2'], 'card-check3': ['check3','check_3'],
-                'card-dispense1': ['dispense1','dispense_1'], 'card-dispense2': ['dispense2','dispense_2'],
-                'card-clinic': ['clinic','pharm_clinic'],
-                'card-aft-pharm': ['aft_pharm','afternoon_pharm','pharm_aft'],
-                'card-aft-tech1': ['aft_tech','afternoon_tech','tech_aft'],
-                'card-oncall': ['oncall','on_call'],
-                'card-hol-pharm': ['hol_pharm','holiday_pharm'],
-                'card-hol-tech-allday': ['hol_tech_allday','holiday_tech_allday'],
-                'card-hol-tech-morn': ['hol_tech_morning','holiday_tech_morning']
             };
-            Object.keys(map).forEach(cardId => {
-                const el = document.getElementById(cardId); if (!el) return;
-                let val;
-                for (const k of map[cardId]) { if (staff && staff[k] !== undefined && staff[k] !== null && staff[k] !== '') { val = staff[k]; break; } }
-                if (val === undefined) { el.style.display = 'none'; return; }
-                const name = (typeof val === 'object') ? (pick(val, 'name', 'fullname') || '') : val;
-                const pic = (typeof val === 'object') ? (pick(val, 'pic', 'photo', 'img') || '') : (globalPicMap[name] || '');
-                if (!name) { el.style.display = 'none'; return; }
-                el.style.display = 'flex';
-                const nmEl = el.querySelector('.staff-name'); if (nmEl) nmEl.textContent = name;
-                const imgEl = el.querySelector('.staff-img'); if (imgEl && pic) imgEl.src = pic;
-            });
-        }
 
-        /* ---------------- ดึงข้อมูลหลัก (core: bed/scan/inj/ยา) ---------------- */
-        async function fetchHospitalData() {
-            try {
-                const res = await fetch(API_URL);
-                const core = await res.json();
-                if (!core) return;
+            const renderGroup = (data, isFridge) => {
+                if (!data || data.length === 0) return '';
+                let html = '';
+                const renderSection = (title, items) => {
+                    if (items.length === 0) return '';
+                    let sectionHtml = `<div class="col-span-3 flex justify-center mt-[3px] mb-[2px] relative"><div class="divider-gradient absolute top-1/2 left-0 right-0 -translate-y-1/2 w-full mx-0"></div><span class="relative text-[8px] font-black text-slate-500 bg-slate-50 px-1.5 py-0 rounded border border-slate-200 leading-[1.4] z-10">${title}</span></div>`;
+                    sectionHtml += items.map((item) => createCard(item, isFridge)).join('');
+                    return sectionHtml;
+                };
+                html += renderSection('ห้องยา', data.filter(i => i.room === 'ห้องยา'));
+                html += renderSection('คลังยา', data.filter(i => i.room === 'คลังยา'));
+                html += renderSection('หน่วยงานอื่นๆ', data.filter(i => i.room !== 'ห้องยา' && i.room !== 'คลังยา'));
+                return html;
+            };
 
-                globalHadList = pick(core, 'had_list', 'had') || [];
+            const fGrid = document.getElementById('temp-fridge-grid');
+            if(fGrid) fGrid.innerHTML = (tempStatus.fridge && tempStatus.fridge.length) ? renderGroup(tempStatus.fridge, true) : `<div class="text-center text-[14.4px] text-slate-500 col-span-3 py-4">ไม่มีข้อมูลตู้เย็น</div>`;
+            const rGrid = document.getElementById('temp-room-grid');
+            if(rGrid) rGrid.innerHTML = (tempStatus.room && tempStatus.room.length) ? renderGroup(tempStatus.room, false) : `<div class="text-center text-[14.4px] text-slate-500 col-span-3 py-4">ไม่มีข้อมูลอุณหภูมิห้อง</div>`;
 
-                // เตียง (ต้องก่อน renderData เพื่อให้ bedListByAN พร้อม)
-                const bedList = pick(core, 'bed_list', 'beds') || [];
-                processBedsData(bedList);
-
-                // แผนที่ช่องเก็บยาเดิม (rx_box)
-                rxBoxMap = {}; globalBoxByBedMap = {};
-                bedList.forEach(b => {
-                    const box = String(pick(b, 'rx_box', 'box') || '').replace(/\D/g, '');
-                    if (box) { rxBoxMap[parseInt(box, 10)] = b.bedno; globalBoxByBedMap[b.bedno] = box; }
-                });
-                renderRxBoxesView();
-
-                // สแกนใบสั่งยา IPD (+ VIVI)
-                renderData(pick(core, 'scan_list', 'scans') || []);
-
-                // ยาที่ใช้วันนี้
-                renderTopDrugs(pick(core, 'top_drugs', 'topDrugs') || []);
-
-                // flow/หมอ/คลินิก ด้านล่างกลาง
-                renderSliderData(core);
-
-                // สรุปตัวเลข (ปรับชื่อ field ให้ตรง payload ได้)
-                const s = pick(core, 'summary', 'sums') || core;
-                setTxt('sum-appointment', pick(s, 'appointment', 'appt', 'sum_appointment'));
-                setTxt('sum-opd-er', pick(s, 'opd_er', 'opder', 'sum_opd_er'));
-                setTxt('sum-clinic-other', pick(s, 'clinic_other', 'sum_clinic_other'));
-                setTxt('sum-prepare', pick(s, 'prepare', 'wait_dispense', 'sum_prepare'));
-                setTxt('sum-dispense', pick(s, 'dispense', 'dispensed', 'sum_dispense'));
-                setTxt('sum-basket', pick(s, 'basket', 'sum_basket'));
-                setTxt('sum-rx-item', pick(s, 'rx_item', 'sum_rx_item'));
-                const tp = pick(s, 'time_prepare', 'prepare_time'); if (tp) setTxt('time-prepare', formatWaitTime(tp).text);
-                const td = pick(s, 'time_dispense', 'dispense_time'); if (td) setTxt('time-dispense', formatWaitTime(td).text);
-
-                // วันนัด (การ์ดขวาล่าง)
-                const appts = pick(core, 'appointments', 'appt_list');
-                if (Array.isArray(appts)) globalAppointments = appts;
-
-                // ยาฉีดด่วน/HAD : ใช้ inj_list_v2 (tv1) ถ้ามี ไม่งั้น fallback inj_list
-                processInjList(pick(core, 'inj_list_v2', 'inj_list') || []);
-
-                // Trigger (อนาคต)
-                processTriggers(pick(core, 'trigger_list') || []);
-
-                const upd = document.getElementById('last-update-time');
-                if (upd) upd.innerHTML = `<i class="fas fa-check text-emerald-500 mr-1"></i>อัปเดต ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-            } catch (e) { console.warn('fetchHospitalData error', e); }
-        }
-
-        /* ---------------- ดึงข้อมูลจาก GAS schedule ---------------- */
-        async function fetchSchedulePart(part) {
-            try { const res = await fetch(GAS_SCHEDULE_API_URL + '?part=' + part); return await res.json(); }
-            catch (e) { console.warn('schedule fetch error', part, e); return null; }
-        }
-        async function fetchScheduleLive() {
-            const data = await fetchSchedulePart('live');
-            if (!data) return;
-            if (data.staff) updateStaffUI(data.staff); else updateStaffUI(data);
-            globalSystemAlerts = (pick(data, 'alerts', 'system_alerts') || []).map(a => Object.assign({ priority: 0, timestamp: Date.now() }, a));
-            refreshAlertsDisplay();
-            if (data.tempStatus || data.temp) { renderTempStatus(data.tempStatus || data.temp); renderTempCombined(window.lastTempStatusData); }
-            if (data.doctors) renderDoctors(data.doctors);
-        }
-        async function fetchScheduleSlow() {
-            const data = await fetchSchedulePart('slow');
-            if (!data) return;
-            globalHolidays = pick(data, 'holidays') || globalHolidays;
-            if (data.incidents !== undefined || data.incident) renderIncidents(data.incident || data.incidents || data);
-            if (data.lasa) renderLasa(data.lasa);
-            if (data.due) renderDue(data.due, data.due_chart);
-            if (data.boxes) renderBoxes(data.boxes);
-            if (data.appointments) globalAppointments = data.appointments;
-            renderCalendar(pick(data, 'monthly_appt', 'calendar') || [], pick(data, 'today_clinic', 'clinics') || []);
-        }
-
-        /* ---------------- Rule-base VIVI (โครงอนาคต : ชวนคุย/ให้กำลังใจ) ---------------- */
-        function viviRuleCheck() {
-            if (!canSpeak()) return;
-            // TODO(อนาคต): เช่น หมอออกช้า/น้อย, คนไข้เยอะใน 1 ชม., ไม่มีสแกนเกิน 1 ชม. -> พูดให้กำลังใจ
-            // ตัวอย่างโครง (ยังไม่เปิดใช้):
-            // if (Date.now() - lastScanActivityTs > 60*60*1000) { /* viviEnqueue([...]) */ }
+            const warnHtml = `<div class="mt-3 mb-2 py-2 bg-gradient-to-r from-rose-500 to-red-600 rounded-xl shadow-lg border-2 border-red-300 mx-2"><div class="text-center font-black text-white text-[14.4px] drop-shadow-md"><i class="fas fa-exclamation-circle mr-1"></i> เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div></div>`;
+            const fMsg = document.getElementById('fridge-alert-msg'); if(fMsg) fMsg.innerHTML = hasFridgeAlert ? warnHtml : '';
+            const rMsg = document.getElementById('room-alert-msg'); if(rMsg) rMsg.innerHTML = hasRoomAlert ? warnHtml : '';
         }
     </script>
 
     <script>
-        /* ---------------- ปุ่ม Pause คอลัมน์ซ้าย ---------------- */
-        (function () {
-            const btn = document.getElementById('pause-toggle-btn');
-            if (btn) btn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                isLeftColPaused = !isLeftColPaused;
-                const icon = document.getElementById('pause-toggle-icon');
-                if (isLeftColPaused) { pausedColId = currentVisibleColId; if (icon) icon.className = 'fas fa-play text-[12px]'; btn.classList.add('bg-rose-600'); }
-                else { currentVisibleColId = null; if (icon) icon.className = 'fas fa-pause text-[12px]'; btn.classList.remove('bg-rose-600'); }
+        /* ---- อุบัติการณ์ : ต้นฉบับเดิม + VIVI เตือนเมื่อมี MR ใหม่ ---- */
+        function renderIncidents(data) {
+            const container = document.getElementById('incident-container');
+            const appendTarget = document.getElementById('lasa-append-target');
+            if (!container) return;
+
+            if (!data || (!data.er && !data.mr)) {
+                container.innerHTML = '<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>';
+                return;
+            }
+
+            let html = '';
+
+            if (data.er || data.er_monthly) {
+                const erData = data.er || { total: 0, errors: 0 };
+                const tTotal = parseInt(erData.total) || 0;
+                const tErr = parseInt(erData.errors) || 0;
+                const pct = tTotal > 0 ? ((tErr / tTotal) * 100).toFixed(1) : 0;
+
+                const mSum = data.er_monthly_sum || { total: 0, errors: 0 };
+                const mTotal = parseInt(mSum.total) || 0;
+                const mErr = parseInt(mSum.errors) || 0;
+                const mPct = mTotal > 0 ? ((mErr / mTotal) * 100).toFixed(1) : 0;
+
+                const erText = tErr > 0 ? 'text-rose-600' : 'text-emerald-600';
+                const monthlyText = mErr > 0 ? 'text-rose-600' : 'text-emerald-600';
+
+                let chartHtml = '';
+                if (data.er_monthly && Array.isArray(data.er_monthly) && data.er_monthly.length > 0) {
+                    const CHART_H = 32;
+                    const maxDailyTotal = Math.max.apply(null, data.er_monthly.map(function(d){ return d.total || 0; }).concat([1]));
+                    let bars = '';
+                    data.er_monthly.forEach(function(d) {
+                        const t = d.total || 0;
+                        const e = d.errors || 0;
+                        if (t > 0) {
+                            const hPx = Math.max(3, Math.round((t / maxDailyTotal) * CHART_H));
+                            const errPx = e > 0 ? Math.max(2, Math.round((e / t) * hPx)) : 0;
+                            const okPx = Math.max(0, hPx - errPx);
+                            bars += '<div class="flex-1 h-full flex flex-col justify-end items-center mx-[0.5px]" title="วันที่ ' + d.day + ': ตรวจ ' + t + ' ใบ พบ ' + e + ' Error">' +
+                                        '<div class="w-full flex flex-col justify-end rounded-t-[2px] overflow-hidden opacity-90" style="height:' + hPx + 'px;">' +
+                                            '<div class="w-full bg-rose-500 shrink-0" style="height:' + errPx + 'px;"></div>' +
+                                            '<div class="w-full bg-emerald-400 shrink-0" style="height:' + okPx + 'px;"></div>' +
+                                        '</div>' +
+                                    '</div>';
+                        } else {
+                            bars += '<div class="flex-1 h-full flex flex-col justify-end items-center mx-[0.5px]"><div class="w-full bg-slate-400 rounded-t-[2px] opacity-30 shrink-0" style="height:2px;"></div></div>';
+                        }
+                    });
+                    chartHtml = '<div class="mt-1 border-t border-slate-300/50 pt-1">' +
+                                    '<div class="flex justify-between text-[8.4px] font-bold text-slate-500 mb-0.5 leading-none px-0.5"><span>วันที่ 1</span><span>วันนี้</span></div>' +
+                                    '<div class="h-[32px] flex items-end w-full px-0.5">' + bars + '</div>' +
+                                '</div>';
+                } else {
+                    chartHtml = '<div class="text-[9.6px] text-center text-rose-500 mt-2">ไม่สามารถโหลดกราฟรายเดือนได้</div>';
+                }
+
+                const noDataBadge = tTotal === 0
+                    ? '<span class="bg-yellow-400 text-yellow-900 text-[9.6px] px-1.5 py-0.5 rounded-sm font-black shadow-sm shrink-0 whitespace-nowrap border border-yellow-500">ยังไม่ลงข้อมูลวันนี้</span>'
+                    : '';
+
+                var erRow = function (label, total, err, pctStr, colorCls) {
+                    return '<div class="flex items-baseline gap-1 w-full leading-none mb-[3px]">' +
+                               '<span class="text-[11px] font-bold text-slate-700 shrink-0 w-[46px]">' + label + '</span>' +
+                               '<span class="text-[23px] font-black text-slate-900 leading-none">' + total + '</span>' +
+                               '<span class="text-[10px] font-bold text-slate-600">ใบ</span>' +
+                               '<span class="text-[21px] font-black ' + colorCls + ' leading-none ml-auto">' + err + '</span>' +
+                               '<span class="text-[10px] font-bold ' + colorCls + ' shrink-0">Err (' + pctStr + '%)</span>' +
+                           '</div>';
+                };
+
+                html += '<div class="soft-card p-2 flex flex-col mb-2">' +
+                            '<div class="text-[13.2px] font-black text-slate-800 border-b border-slate-300/50 pb-1 mb-1.5 flex items-center justify-between">' +
+                                '<span><i class="fas fa-ambulance text-rose-500 mr-1"></i>ER นอกเวลา</span>' + noDataBadge +
+                            '</div>' +
+                            erRow('ทั้งเดือน', mTotal, mErr, mPct, monthlyText) +
+                            erRow('วันนี้', tTotal, tErr, pct, erText) +
+                            chartHtml +
+                        '</div>';
+            }
+
+            if (data.mr && data.mr.length > 0) {
+                let mrHtml = '<div class="soft-card p-2 flex flex-col gap-1 mb-2">' +
+                    '<div class="text-[13.2px] font-black text-slate-800 border-b border-slate-300/50 pb-1 mb-1 flex items-center justify-between"><span><i class="fas fa-pills text-amber-500 mr-1"></i>อุบัติการณ์จัดยา (MR Error)</span><span class="text-[18px] font-black text-amber-700 leading-none">' + data.mr.length + '</span></div>';
+                data.mr.forEach(function(item) {
+                    mrHtml += '<div class="flex justify-between items-center text-[10.8px] bg-white/80 p-1 rounded border border-white/60 shadow-sm">' +
+                        '<div class="flex items-center gap-1.5 flex-1 min-w-0 pr-1">' +
+                            '<span class="font-black text-white bg-amber-600 px-1.5 py-0.5 rounded shadow-sm shrink-0 truncate max-w-[60px]">' + item.cat + '</span>' +
+                            '<span class="text-slate-800 font-bold truncate flex-1" title="' + item.detail + '">' + (item.detail || '-') + '</span>' +
+                        '</div></div>';
+                });
+                mrHtml += '</div>';
+                html += mrHtml;
+            }
+
+            container.innerHTML = html || '<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีข้อมูลอุบัติการณ์</div>';
+            if (appendTarget && window.lastLasaHtml) { appendTarget.innerHTML = window.lastLasaHtml; }
+
+            // VIVI: มีรายงาน MR ใหม่ -> "มีคนรายงานอุบัติการณ์ห้องเราอีกแล้วค่ะ"
+            const mrArr = (data.mr && Array.isArray(data.mr)) ? data.mr : [];
+            const sig = mrArr.length + '|' + JSON.stringify(mrArr.slice(0, 3));
+            if (!viviIncidentInit) { viviIncidentSig = sig; viviIncidentInit = true; }
+            else if (sig !== viviIncidentSig) { viviIncidentSig = sig; if (canSpeak()) viviEnqueue(['beep', 'incident.mp3']); }
+        }
+
+        function renderLasa(lasaList) {
+            const container = document.getElementById('lasa-append-target');
+            if (!container) return;
+            if (!lasaList || lasaList.length === 0) { window.lastLasaHtml = ''; container.innerHTML = ''; return; }
+            let html = `<div class="mt-1 pt-2 border-t border-slate-300 w-full"><div class="flex justify-between items-center mb-1"><h3 class="text-[13.2px] font-black text-slate-900"><i class="fas fa-exclamation-triangle mr-1 text-amber-600"></i>TOP 5 LASAs (30 วัน)</h3></div>`;
+            lasaList.forEach((item, index) => {
+                const rColor = ['text-rose-600', 'text-orange-500', 'text-amber-500', 'text-blue-500', 'text-slate-500'][index] || 'text-slate-500';
+                html += `<div class="flex items-center text-[12px] bg-white/75 p-1 rounded shadow-sm border border-white/60 mb-[3px]"><i class="fas fa-pills ${rColor} mr-1.5 text-[12px] opacity-80"></i><span class="font-bold text-slate-700 truncate max-w-[42%]">${item.d1}</span><span class="text-slate-400 font-bold mx-1">-</span><span class="font-bold text-slate-700 truncate max-w-[42%] flex-1">${item.d2}</span><span class="font-black ${rColor} shrink-0 text-right">${item.count}</span></div>`;
             });
-        })();
+            html += `</div>`;
+            window.lastLasaHtml = html;
+            container.innerHTML = html;
+        }
+
+        function renderDoctors(doctors) {
+            const container = document.getElementById('doctors-container');
+            if(!container) return;
+            if(!doctors || doctors.length === 0) { container.innerHTML = `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีแพทย์/ห้องยา Online ขณะนี้</div>`; return; }
+            let html = '';
+            doctors.forEach(doc => {
+                const isDoc = (doc.user_type === 'doctor');
+                const bgClass = isDoc ? 'bg-[#f0fdf4]/60' : 'bg-[#fefce8]/60';
+                const borderClass = isDoc ? 'border-emerald-200/70' : 'border-yellow-200/70';
+                const iconColor = isDoc ? 'text-emerald-600' : 'text-yellow-700';
+                const iconClass = isDoc ? 'fa-user-md' : 'fa-prescription-bottle-alt';
+                const timeText = doc.login_time || '--:--';
+                html += `<div class="${bgClass} py-1 px-1.5 flex items-center gap-1.5 border ${borderClass} rounded-md shadow-sm mb-[3px]"><div class="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center border border-slate-300 shadow-sm shrink-0"><i class="fas ${iconClass} ${iconColor} text-[13.2px]"></i></div><div class="flex-1 min-w-0 flex flex-col justify-center leading-none"><div class="flex justify-between items-center w-full"><span class="text-[14.4px] font-black text-slate-900 truncate">${doc.doctor_name}</span><span class="text-[10.8px] font-black text-slate-700 shrink-0 ml-1 bg-white/80 px-1 py-[1px] rounded shadow-sm border border-slate-300"><i class="far fa-clock mr-0.5"></i>${timeText}</span></div><span class="text-[11.4px] text-slate-700 truncate font-bold mt-[2px]"><i class="fas fa-desktop mr-1 text-slate-600"></i>${doc.computer_and_department}</span></div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        /* ---- กล่องยา + ใบเบิก : ต้นฉบับเดิม + ไม่ truncate ชื่อกล่อง (wrap 2 บรรทัด) ---- */
+        function renderBoxes(boxes, requisitions) {
+            const container = document.getElementById('boxes-container');
+            if(!container) return;
+
+            let reqHtml = '';
+            if(requisitions && requisitions.length > 0) {
+                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full"><div class="text-[12px] font-black text-blue-700 mb-1 flex items-center justify-center"><i class="fas fa-file-invoice mr-1"></i>ใบเบิกวันนี้</div><div class="flex flex-col gap-1 w-full px-1 max-h-[140px] overflow-y-auto no-scrollbar">`;
+                requisitions.forEach(req => {
+                    let stClass = "bg-orange-100 text-orange-700 border-orange-300";
+                    if(req.status === "กำลังจัดยา") stClass = "bg-sky-100 text-sky-700 border-sky-300";
+                    else if(req.status === "จัดเสร็จแล้ว" || req.status === "ตรวจสอบแล้ว") stClass = "bg-emerald-100 text-emerald-700 border-emerald-300";
+                    reqHtml += `<div class="flex items-center justify-between bg-white/70 p-1 rounded border shadow-sm"><div class="flex items-center gap-1.5 overflow-hidden"><span class="text-[10.8px] font-black text-slate-800 truncate max-w-[80px]">${req.dept}</span><span class="text-[9.6px] font-bold text-slate-500">${req.time} น.</span></div><span class="text-[9.6px] font-bold ${stClass} px-1 py-0.5 rounded border leading-none whitespace-nowrap">${req.status}</span></div>`;
+                });
+                reqHtml += `</div></div>`;
+            } else {
+                reqHtml = `<div class="mt-2 pt-2 border-t border-slate-300 w-full text-center text-[12px] font-bold text-slate-500">ไม่มีรายการส่งเบิกยาใหม่วันนี้</div>`;
+            }
+
+            if(!boxes || boxes.length === 0) {
+                container.innerHTML = `<div class="text-center text-[14.4px] text-slate-500 w-full py-4">ยังไม่มีการเปลี่ยนกล่องประจำวัน</div>` + reqHtml;
+                return;
+            }
+
+            let html = `<div class="grid grid-cols-3 gap-2 w-full content-start">`;
+            boxes.forEach(b => {
+                html += `<div class="card-3d bg-white/80 p-1 flex flex-col items-center justify-center text-center"><img src="https://sawee-hosp.github.io/sawee-mr/box.png" class="w-8 h-8 mb-1 drop-shadow-sm" loading="lazy"><span class="text-[10.8px] font-black text-slate-800 leading-tight w-full line-clamp-2">${b.name}</span><span class="text-[9.6px] font-bold text-slate-500 mt-0.5">${b.time}</span><span class="text-[8.4px] text-white bg-amber-600 px-1 py-[1px] rounded mt-0.5 line-clamp-1 max-w-full">${b.pharm}</span></div>`;
+            });
+            html += `</div>` + reqHtml;
+            container.innerHTML = html;
+        }
+
+        function renderDue(data) {
+            const container = document.getElementById('due-container');
+            const chartContainer = document.getElementById('due-chart-container');
+            if(!container || !chartContainer) return;
+
+            if (data && data.stats) {
+                const drugs = ['Oseltamivir', 'Covids', 'Atorvastatin', 'Antibiotics'];
+                const labels = ['Oseltamivir', 'Covid-19', 'Atorvastatin', 'Antibiotics'];
+                let barsHtml = '';
+                drugs.forEach((d, idx) => {
+                    const st = data.stats[d] || { assessed: 0, unassessed: 0 };
+                    const total = st.assessed + st.unassessed;
+                    let pAs = total > 0 ? (st.assessed / total) * 100 : 0;
+                    let pUn = total > 0 ? (st.unassessed / total) * 100 : 0;
+                    barsHtml += `<div class="flex items-center gap-1 mb-[3px] w-full"><span class="w-[62px] shrink-0 text-[10.2px] font-black text-slate-700 truncate leading-none" title="${labels[idx]}">${labels[idx]}</span><div class="flex-1 min-w-0 bg-slate-200 h-[11px] rounded overflow-hidden flex shadow-inner"><div class="bg-rose-400 h-full" style="width: ${pUn}%" title="รอประเมิน: ${st.unassessed}"></div><div class="bg-emerald-500 h-full" style="width: ${pAs}%" title="ประเมินแล้ว: ${st.assessed}"></div></div><span class="w-[38px] shrink-0 text-[9.6px] font-bold text-slate-600 text-right leading-none">${st.assessed}/${total}</span></div>`;
+                });
+                chartContainer.innerHTML = `<div class="w-full bg-white/70 p-1.5 rounded border border-slate-200">${barsHtml}</div>`;
+            } else { chartContainer.innerHTML = ''; }
+
+            let html = ''; let hasData = false;
+            const sourceData = (data && data.lists) ? data.lists : (data || {});
+            const renderGroup = (title, items, color) => {
+                if(!items || items.length === 0) return '';
+                hasData = true;
+                let g = `<div class="mb-1"><div class="text-[11.4px] font-black text-white ${color} px-2 py-[1px] rounded-t inline-block leading-tight">${title}</div><div class="bg-white/90 border border-slate-200 rounded-b rounded-tr px-1 py-[1px]">`;
+                items.forEach(d => {
+                    const done = (d.status === 'ประเมินแล้ว');
+                    const statusHtml = done ? `<i class="fas fa-check-circle text-emerald-600 text-[12px]" title="ประเมินแล้ว"></i>` : `<span class="font-black text-rose-600 text-[10.5px]" title="ยังไม่ประเมิน">รอ</span>`;
+                    g += `<div class="flex justify-between items-center text-[11.4px] border-b border-dashed border-slate-200 last:border-0 leading-[1.25] py-0"><span class="font-bold text-slate-700 truncate flex-1 min-w-0" title="${d.drug}">${d.drug}</span><span class="text-slate-500 w-[44px] text-center shrink-0">${d.hn}</span><span class="w-[22px] text-right shrink-0 leading-none">${statusHtml}</span></div>`;
+                });
+                return g + `</div></div>`;
+            };
+            html += renderGroup('Oseltamivir', sourceData['Oseltamivir'], 'bg-purple-500');
+            html += renderGroup('Covids', sourceData['Covids'], 'bg-rose-500');
+            html += renderGroup('Atorvastatin', sourceData['Atorvastatin'], 'bg-blue-500');
+            html += renderGroup('Antibiotics', sourceData['Antibiotics'], 'bg-emerald-500');
+            container.innerHTML = !hasData ? `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีรายการ DUE ค้างวันนี้</div>` : html;
+        }
+
+        /* ---- ตารางเวร : ต้นฉบับเดิม ---- */
+        function updateStaffUI(data) {
+            if(!data) return;
+            const mapData = (elId, prop, defRole) => {
+                const el = document.getElementById(elId); if(!el) return;
+                const st = data[prop];
+                if(!st || !st.name || st.name.trim() === "") el.style.display = 'none';
+                else {
+                    el.style.display = 'flex';
+                    let dName = prop !== 'clinic' ? st.name.split('(')[0].trim() : st.name;
+                    const nEl = el.querySelector('.staff-name'); if(nEl) nEl.textContent = dName;
+                    const iEl = el.querySelector('.staff-img');
+                    if(iEl) {
+                        iEl.setAttribute("referrerpolicy", "no-referrer");
+                        const wantSrc = st.photo || `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(dName.substring(0, 2))}`;
+                        if (iEl.getAttribute('src') !== wantSrc) iEl.src = wantSrc;
+                    }
+                    const rEl = el.querySelector('.staff-role-text'); if(rEl && !rEl.classList.contains('countdown-text')) rEl.textContent = defRole;
+                    if(prop === 'clinic' && st.clinicLabel) el.querySelector('.staff-clinic').textContent = st.clinicLabel;
+                }
+            };
+            mapData('card-key', 'key', 'ภ.คีย์');
+            mapData('card-ipd', 'ipd', 'ภ.ใน');
+            mapData('card-tech', 'tech_morning', 'จพ.เช้า');
+            mapData('card-check1', 'check1', 'ภ.เช็ค1');
+            mapData('card-check2', 'check2', 'ภ.เช็ค2');
+            mapData('card-check3', 'check3', 'ภ.เช็ค3');
+            mapData('card-dispense1', 'dispense1', 'ภ.จ่าย1');
+            mapData('card-dispense2', 'dispense2', 'ภ.จ่าย2');
+            mapData('card-clinic', 'clinic', 'ภ.คลินิก');
+
+            const mapAlways = (elId, prop) => {
+                const el = document.getElementById(elId); if (!el) return;
+                el.style.display = 'flex';
+                const st = data[prop];
+                const nm = (st && st.name) ? st.name.split('(')[0].trim() : '';
+                const nEl = el.querySelector('.staff-name');
+                if (nEl) nEl.textContent = nm || '-';
+            };
+            mapAlways('card-aft-pharm', 'afternoon_pharm');
+            mapAlways('card-aft-tech1', 'afternoon_tech1');
+            mapAlways('card-oncall', 'oncall');
+
+            isHolidayToday = (typeof data.is_holiday === 'boolean') ? data.is_holiday : null;
+
+            const holData = data['holiday_staff'];
+            let holStr = "";
+            if (holData && holData.name) holStr = holData.name;
+            if (holData && Array.isArray(holData.members)) {
+                holData.members.forEach(mb => { if (mb && mb.name) globalPicMap[mb.name] = mb.photo || ''; });
+            }
+            const holNames = holStr ? holStr.trim().split(/\s+/) : [];
+            const mapHoliday = (elId, nameStr) => {
+                const el = document.getElementById(elId); if(!el) return;
+                if(!nameStr || nameStr === '--') { el.style.display = 'none'; }
+                else {
+                    el.style.display = 'flex';
+                    const nEl = el.querySelector('.staff-name'); if(nEl) nEl.textContent = nameStr;
+                    const iEl = el.querySelector('.staff-img');
+                    if(iEl) {
+                        iEl.setAttribute("referrerpolicy", "no-referrer");
+                        const wantSrc = globalPicMap[nameStr] || `https://placehold.co/150x150/e2e8f0/64748b?text=${encodeURIComponent(nameStr.substring(0, 2))}`;
+                        if (iEl.getAttribute('src') !== wantSrc) iEl.src = wantSrc;
+                    }
+                }
+            };
+            mapHoliday('card-hol-pharm', holNames[0] || '');
+            mapHoliday('card-hol-tech-allday', holNames[1] || '');
+            mapHoliday('card-hol-tech-morn', holNames[2] || '');
+            ['div-aft-tech1', 'div-oncall'].forEach(id => { const dv = document.getElementById(id); if (dv) dv.style.display = 'block'; });
+            scheduleLoaded = true;
+        }
+    </script>
+
+    <script>
+        /* ---- ดึงข้อมูลหลัก : ต้นฉบับเดิม + inj_list_v2 + trigger_list ---- */
+        async function fetchHospitalData() {
+            const timeEl = document.getElementById('last-update-time');
+            if(timeEl) timeEl.innerHTML = `<i class="fas fa-sync-alt fa-spin mr-1.5 text-slate-500"></i>กำลังโหลด...`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            try {
+                const res = await fetch(API_URL, { signal: controller.signal, cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const responseData = await res.json();
+                if (responseData.error) throw new Error(responseData.error);
+
+                const coreData = responseData.data ? responseData.data : responseData;
+                const timestamp = responseData.timestamp || null;
+
+                if (coreData && typeof coreData === 'object') {
+                    if (coreData.rx_boxes && Array.isArray(coreData.rx_boxes)) {
+                        rxBoxMap = {}; globalBoxByBedMap = {};
+                        coreData.rx_boxes.forEach(r => {
+                            if(r.bedno && r.rx_box) { rxBoxMap[String(r.rx_box)] = r.bedno; globalBoxByBedMap[r.bedno] = String(r.rx_box).replace(/\D/g, ''); }
+                        });
+                    }
+                    if (coreData.doctor_summary && Array.isArray(coreData.doctor_summary)) renderDoctors(coreData.doctor_summary);
+                    if (coreData.had_list && Array.isArray(coreData.had_list)) globalHadList = coreData.had_list;
+                    if (coreData.bed_list && Array.isArray(coreData.bed_list)) processBedsData(coreData.bed_list);
+                    renderRxBoxesView();
+
+                    if (coreData.top_drugs && Array.isArray(coreData.top_drugs)) renderTopDrugs(coreData.top_drugs);
+
+                    if (coreData.available_rx_boxes) {
+                        const avBoxEl = document.getElementById('available-rx-boxes');
+                        if (avBoxEl) avBoxEl.textContent = `ช่องเก็บยาว่าง : ${coreData.available_rx_boxes.join(', ')}`;
+                    }
+
+                    renderData(coreData.scan_list || []);
+
+                    if (coreData.opd_summary) {
+                        updateValueWithAnimation('sum-appointment', parseInt(coreData.opd_summary.appointment) || 0);
+                        updateValueWithAnimation('sum-opd-er', parseInt(coreData.opd_summary.er_opd) || 0);
+                        updateValueWithAnimation('sum-clinic-other', parseInt(coreData.opd_summary.clinic_other) || 0);
+                    }
+                    if (coreData.rx_summary) {
+                        updateValueWithAnimation('sum-prepare', parseInt(coreData.rx_summary.prepare) || 0);
+                        updateValueWithAnimation('sum-dispense', parseInt(coreData.rx_summary.dispense) || 0);
+                    }
+                    if (coreData.basket_summary) {
+                        updateValueWithAnimation('sum-basket', parseInt(coreData.basket_summary.total_patients) || 0);
+                        updateValueWithAnimation('sum-rx-item', parseInt(coreData.basket_summary.total_prescribed_items) || 0);
+                        const uqEl = document.getElementById('unique-drug-count');
+                        const uqWrap = document.getElementById('unique-drug-count-wrap');
+                        if(uqEl && coreData.basket_summary.unique_drug_count) {
+                            uqEl.textContent = parseInt(coreData.basket_summary.unique_drug_count).toLocaleString();
+                            if(uqWrap) uqWrap.classList.remove('hidden');
+                        }
+                    }
+
+                    renderSliderData(coreData);
+
+                    if (coreData.monthly_appointments || coreData.today_clinic_appointments) {
+                        renderCalendar(coreData.monthly_appointments, coreData.today_clinic_appointments);
+                    }
+                    if (coreData.appointments && Array.isArray(coreData.appointments)) globalAppointments = coreData.appointments;
+
+                    // ยาฉีด/HAD : ใช้ inj_list_v2 (tv1) ถ้ามี ไม่งั้น fallback inj_list เดิม
+                    processInjList(coreData.inj_list_v2 || coreData.inj_list || []);
+
+                    // Trigger (อนาคต)
+                    if (coreData.trigger_list) processTriggers(coreData.trigger_list);
+                }
+
+                if(timeEl) {
+                    let finalTimeStr = '';
+                    if (timestamp) {
+                        if (timestamp.includes('T') && timestamp.includes('Z')) {
+                            const dateObj = new Date(timestamp);
+                            if (!isNaN(dateObj.getTime())) finalTimeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')} น.`;
+                        } else {
+                            const match = String(timestamp).match(/(\d{2}):(\d{2})/);
+                            if(match) finalTimeStr = `${match[1]}:${match[2]} น.`;
+                        }
+                    }
+                    if (!finalTimeStr) { const now = new Date(); finalTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`; }
+                    timeEl.innerHTML = `<i class="fas fa-check-circle mr-1.5 text-emerald-600"></i>อัปเดต ${finalTimeStr}`;
+                }
+            } catch (error) {
+                console.warn("fetchHospitalData error:", error);
+                if(timeEl) timeEl.innerHTML = `<i class="fas fa-exclamation-circle mr-1 text-rose-500"></i> รอโหลดใหม่`;
+            } finally { clearTimeout(timeoutId); }
+        }
+
+        /* ---- GAS schedule : ต้นฉบับเดิม + เรียก renderTempCombined ให้ col-temp ---- */
+        async function fetchSchedulePart(part, timeoutMs) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 45000);
+            try {
+                const res = await fetch(GAS_SCHEDULE_API_URL + '?part=' + part, { signal: controller.signal, cache: 'no-store' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                return data;
+            } finally { clearTimeout(timeoutId); }
+        }
+
+        async function fetchScheduleLive() {
+            try {
+                const data = await fetchSchedulePart('live', 45000);
+                if(data.today) updateStaffUI(data.today);
+                globalSystemAlerts = data.alerts || [];
+                refreshAlertsDisplay();
+                if(data.tempStatus) { renderTempStatus(data.tempStatus); renderTempCombined(window.lastTempStatusData); }
+                window.lastRequisitions = data.requisitions || [];
+                renderBoxes(window.lastBoxes || [], window.lastRequisitions);
+            } catch(error) {
+                const container = document.getElementById('alerts-container');
+                if(container && container.innerHTML.includes('กำลังตรวจสอบข้อมูล')) {
+                    container.innerHTML = `<div class="text-center text-rose-500 text-[12px] mt-4 font-bold"><i class="fas fa-wifi"></i> กำลังเชื่อมต่อ Google Sheet...<br>(${error.message})</div>`;
+                }
+            }
+        }
+
+        async function fetchScheduleSlow() {
+            try {
+                const data = await fetchSchedulePart('slow', 60000);
+                if(data.holidays) { globalHolidays = data.holidays; lastCalendarSignature = ''; }
+                if(data.incidents) renderIncidents(data.incidents);
+                if(data.lasa) renderLasa(data.lasa);
+                if(data.due) renderDue(data.due);
+                window.lastBoxes = data.boxes || [];
+                renderBoxes(window.lastBoxes, window.lastRequisitions || []);
+            } catch(error) {
+                renderIncidents({ er: {total:0, errors:0}, mr: [], er_monthly: [] });
+                renderDue({ stats: {}, lists: {} });
+            }
+        }
+
+        /* ---- Rule-base VIVI (โครงอนาคต) ---- */
+        function viviRuleCheck() {
+            if (!canSpeak()) return;
+            // TODO(อนาคต): หมอออกช้า/น้อย, คนไข้เยอะใน 1 ชม., ไม่มีสแกนเกิน 1 ชม. -> พูดให้กำลังใจ
+        }
 
         /* ---------------- เริ่มระบบ ---------------- */
         function startDashboard() {
-            buildRainDrops();                 // เตรียมเม็ดฝนไว้ล่วงหน้า
-            updateBackground();
+            buildRainDrops();          // เตรียมเม็ดฝนไว้ล่วงหน้า
             updateClock();
-            startSliders();
+            updateBackground();
 
-            // โหลดข้อมูลรอบแรก
+            const pauseBtn = document.getElementById('pause-toggle-btn');
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();   // กันไป toggle VIVI
+                    isLeftColPaused = !isLeftColPaused;
+                    const icon = document.getElementById('pause-toggle-icon');
+                    if (isLeftColPaused) {
+                        icon.classList.remove('fa-pause'); icon.classList.add('fa-play');
+                        pauseBtn.classList.replace('bg-slate-800/60', 'bg-rose-600');
+                    } else {
+                        icon.classList.remove('fa-play'); icon.classList.add('fa-pause');
+                        pauseBtn.classList.replace('bg-rose-600', 'bg-slate-800/60');
+                        pausedColId = null; currentVisibleColId = null;
+                    }
+                });
+            }
+
+            fetchWeather().catch(() => {});
             fetchHospitalData();
             fetchScheduleLive();
             fetchScheduleSlow();
-            fetchWeather();
             initNewsSystem();
-            checkRain();                      // เช็คฝนรอบแรก
+            startSliders();
+            checkRain();               // เช็คฝนรอบแรก
 
-            // นาฬิกา + สลับคอลัมน์ (ทุก 1 วิ)
-            setInterval(updateClock, 1000);
-            setInterval(updateBackground, 60 * 1000);
-
-            // รีเฟรชข้อมูล
-            setInterval(fetchHospitalData, 30 * 1000);
-            setInterval(fetchScheduleLive, 30 * 1000);
-            setInterval(fetchScheduleSlow, 5 * 60 * 1000);
-            setInterval(fetchWeather, 10 * 60 * 1000);
-
-            // หมดอายุการ์ด (inj + trigger) ทุก 5 วิ
-            setInterval(function () { expireInjAlerts(); expireTriggerAlerts(); }, 5 * 1000);
-
-            // สลับ temp current/next ในการ์ดอากาศ
-            setInterval(function () {
+            // สลับ temp ปัจจุบัน/ถัดไป ในการ์ดอากาศ
+            setInterval(() => {
                 const cur = document.getElementById('weather-temp-current');
                 const nxt = document.getElementById('weather-temp-next');
-                if (!cur || !nxt) return;
+                const lbl = document.getElementById('weather-label');
+                if(!cur || !nxt) return;
                 if (cur.classList.contains('opacity-100')) {
-                    cur.classList.remove('opacity-100', 'translate-y-0'); cur.classList.add('opacity-0', '-translate-y-full');
-                    nxt.classList.remove('opacity-0', 'translate-y-full'); nxt.classList.add('opacity-100', 'translate-y-0');
+                    cur.classList.replace('opacity-100', 'opacity-0'); cur.classList.replace('translate-y-0', '-translate-y-full');
+                    nxt.classList.replace('opacity-0', 'opacity-100'); nxt.classList.replace('translate-y-full', 'translate-y-0');
+                    if(lbl) lbl.textContent = "ใน 1 ชม.";
                 } else {
-                    nxt.classList.remove('opacity-100', 'translate-y-0'); nxt.classList.add('opacity-0', 'translate-y-full');
-                    cur.classList.remove('opacity-0', '-translate-y-full'); cur.classList.add('opacity-100', 'translate-y-0');
+                    nxt.classList.replace('opacity-100', 'opacity-0'); nxt.classList.replace('translate-y-0', 'translate-y-full');
+                    cur.classList.replace('opacity-0', 'opacity-100'); cur.classList.replace('-translate-y-full', 'translate-y-0');
+                    if(lbl) lbl.textContent = "อ.สวี ปัจจุบัน";
                 }
             }, 5000);
 
-            // ฝนตกจริง : เช็คทุก 3 นาที
-            setInterval(checkRain, 3 * 60 * 1000);
+            setInterval(updateClock, 1000);
 
-            // rule-base VIVI (อนาคต) : เช็คทุก 5 นาที
+            const isVisible = () => document.visibilityState !== 'hidden';
+            setInterval(() => { if (isVisible()) fetchHospitalData(); }, 30000);
+            setTimeout(() => { setInterval(() => { if (isVisible()) fetchScheduleLive(); }, 60000); }, 15000);
+            setTimeout(() => { setInterval(() => { if (isVisible()) fetchScheduleSlow(); }, 600000); }, 30000);
+            document.addEventListener('visibilitychange', () => { if (isVisible()) { fetchHospitalData(); fetchScheduleLive(); } });
+
+            setInterval(() => { fetchWeather(); updateBackground(); }, 3600 * 1000);
+            setInterval(checkRain, 3 * 60 * 1000);                                  // ฝนจริง ทุก 3 นาที
+            setInterval(() => { expireInjAlerts(); expireTriggerAlerts(); }, 5000); // เก็บกวาดการ์ดหมดอายุ
             setInterval(viviRuleCheck, 5 * 60 * 1000);
         }
 
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startDashboard);
-        else startDashboard();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startDashboard, { once: true });
+        } else {
+            startDashboard();
+        }
     </script>
 </body>
 </html>
