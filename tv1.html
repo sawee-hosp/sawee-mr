@@ -253,7 +253,7 @@
             <!-- อุณหภูมิรวม (ตู้เย็น+ห้อง) : แสดงเฉพาะเมื่อมี alert -->
             <div class="w-full h-full flex flex-col min-h-0 hidden" id="col-temp">
                 <div class="flex justify-between items-center border-b-2 border-slate-400/30 pb-1 mb-1 shrink-0">
-                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-triangle-exclamation text-rose-500 mr-2"></i>อุณหภูมิผิดปกติ</h2>
+                    <h2 class="text-lg font-black text-slate-800 drop-shadow-sm"><i class="fas fa-snowflake text-sky-500 mr-2"></i>อุณหภูมิตู้เย็น</h2>
                 </div>
                 <div class="flex-1 overflow-y-auto no-scrollbar pt-1 flex flex-col gap-2" id="temp-combined-container">
                     <div class="text-center text-[14.4px] text-slate-500 py-4">กำลังโหลดข้อมูล...</div>
@@ -513,6 +513,7 @@
                     <div id="view-flow" class="absolute inset-0 flex justify-between gap-0.5 w-full fade-in"></div>
                     <div id="view-doctors" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
                     <div id="view-clinics" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
+                    <div id="view-online" class="absolute inset-0 hidden justify-between gap-1 w-full fade-in"></div>
                 </div>
             </footer>
         </section>
@@ -558,7 +559,10 @@
 
     <!-- VIVI overlays -->
     <div id="rainContainer"></div>
-    <img id="vivi-gif" src="./meds-dr.gif" alt="VIVI" onerror="this.style.display='none'">
+    <!-- ถ้าไฟล์ในโฟลเดอร์ไม่เจอ ให้สลับไปใช้ URL บน GitHub อัตโนมัติ (ไม่ซ่อนทิ้งถาวร) -->
+    <img id="vivi-gif" src="./meds-dr.gif" alt="VIVI"
+         data-fallback="https://raw.githubusercontent.com/sawee-hosp/sawee-mr/refs/heads/main/meds-dr.gif"
+         onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src=this.dataset.fallback;}else{this.style.visibility='hidden';}">
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw75ELvZom2PKT6XM6hJM0aknVZ9d6622R2aRPaYmVaPfX3TKDisRDcM3v65gjOmEJkag/exec";
@@ -642,7 +646,24 @@
         let pausedColId = null;
 
         let rainTimer = null;
-        let lastScanActivityTs = Date.now();  // สำหรับ rule-base (อนาคต)
+        let lastScanActivityTs = Date.now();
+
+        /* ---- ตัวแปรสำหรับ rule-base ของ VIVI ---- */
+        let wardScanStat = { m: { scanned: 0, active: 0, pct: 0 }, f: { scanned: 0, active: 0, pct: 0 } };
+        let viviSaidWardDone = {};          // กันพูดซ้ำ ward ละครั้ง/วัน
+        let viviSaidQuietAt = 0;            // พูด "สงบแบบนี้ชอบนะคะ" ล่าสุดเมื่อไหร่
+        const QUIET_MS = 2 * 60 * 60 * 1000;   // ไม่มีสแกน 2 ชม.
+
+        /* ---- แจ้งเตือนใหม่: Telemedicine / ยาเสพติด / อุบัติการณ์ RM ---- */
+        let globalTelemedAlert = [];        // สรุปยอดรายวัน (การ์ดเดียว)
+        let globalNarcoticAlerts = [];      // ย.ส. OPD+IPD
+        let globalRiskAlerts = [];          // อุบัติการณ์ใหม่จากฐาน rm
+        const TELEMED_ALERT_MS = 2 * 60 * 1000;      // เตือนรายเคส 2 นาที (กรณี fallback)
+        const NARCOTIC_ALERT_MS = 3 * 60 * 1000;
+        const RISK_ALERT_MS = 60 * 60 * 1000;        // อุบัติการณ์ใหม่ ค้าง 1 ชม.
+        let lastTelemedCount = -1;
+        let viviRiskInit = false;
+        let knownRiskIds = new Set();
 
         const ALL_COLS = ['col-staff','col-temp','col-fridge-temp','col-room-temp','col-doctors','col-incident','col-due','col-boxes','col-ipd-male','col-ipd-female','col-ipd-rx','col-top-drugs','col-calendar'];
         const SHIFT_TRANSITION_TIMES = [11*60, 11*60+30, 12*60, 12*60+30, 13*60, 13*60+30, 16*60];
@@ -788,9 +809,15 @@
         }
         function onScreenTap(e) {
             if (e && e.target && e.target.closest && e.target.closest('#pause-toggle-btn')) return; // ปุ่ม pause ไม่ toggle
-            if (!audioUnlocked) { audioUnlocked = true; viviEnabled = true; getAudioCtx(); hideViviBar(); playDing(); return; }
+            if (!audioUnlocked) {
+                audioUnlocked = true; viviEnabled = true; getAudioCtx(); hideViviBar();
+                // แนะนำตัวครั้งแรก: "สวัสดีค่ะ วีวีเป็นเภสัชกร AI คอยช่วยเหลือคุณนะคะ
+                //                   ถ้าไม่อยากเปิดเสียง ให้คลิกหน้าจออีกครั้งได้เลยค่ะ"
+                viviEnqueue(['beep', 'intro.mp3']);
+                return;
+            }
             viviEnabled = !viviEnabled;
-            if (viviEnabled) { hideViviBar(); getAudioCtx(); playDing(); }
+            if (viviEnabled) { hideViviBar(); getAudioCtx(); viviEnqueue(['beep', 'wakeup.mp3']); }
             else { showViviBar(); stopVivi(); }
         }
         window.addEventListener('click', onScreenTap);
@@ -814,6 +841,8 @@
                 viviScanInitDone = false; viviAlertsInitDone = false;
                 viviIncidentInit = false; viviIncidentSig = '';
                 incidentSummaryDone = false;
+                viviSaidWardDone = {}; viviSaidQuietAt = 0;   // rule-base เริ่มนับใหม่ทุกวัน
+                lastTelemedCount = -1; globalTelemedAlert = [];
                 lastTopDrugsSignature = ''; lastCalendarSignature = '';
             }
             const clockEl = document.getElementById('clock-display');
@@ -852,13 +881,31 @@
         // col-temp : ตารางรวม ตู้เย็น+ห้อง มองง่ายว่าใบไหนผิดปกติ (แสดงเฉพาะตอนมี alert)
         function renderTempCombined(data) {
             const c = document.getElementById('temp-combined-container'); if (!c) return;
+            // การ์ด 2 ชั้น: แถบสีอ่อนด้านบน = ชื่อ / พื้นขาวด้านล่าง = ตัวเลข (ดูมีมิติแต่ไม่แสบตา)
             const mkCard = (item, isF) => {
-                const st = tempState(item.temp, isF); const alert = (st === 'low' || st === 'high');
+                const st = tempState(item.temp, isF);
+                const alert = (st === 'low' || st === 'high');
                 const numCls = st === 'low' ? 'text-blue-600' : st === 'high' ? 'text-red-600' : st === 'nodata' ? 'text-slate-400' : 'text-slate-900';
-                const border = alert ? 'border-2 border-rose-500 temp-alert-card' : 'border border-slate-300';
-                return `<div class="bg-white ${border} rounded-md px-1 py-1 flex flex-col items-center justify-center min-h-[46px]"><span class="text-[9px] font-black text-slate-600 leading-tight text-center line-clamp-2">${(item && item.name) || ''}</span><span class="text-[16px] font-black ${numCls} leading-none mt-0.5">${item.temp}°</span></div>`;
+                let bandStyle, outer;
+                if (alert) {
+                    bandStyle = 'background:linear-gradient(180deg,#fecaca,#fca5a5);color:#7f1d1d;';
+                    outer = 'border:1.5px solid #ef4444;';
+                } else if (isF) {
+                    bandStyle = 'background:linear-gradient(180deg,#e0f2fe,#bae6fd);color:#0c4a6e;';
+                    outer = 'border:1px solid #cbd5e1;';
+                } else {
+                    bandStyle = 'background:linear-gradient(180deg,#dcfce7,#bbf7d0);color:#14532d;';
+                    outer = 'border:1px solid #cbd5e1;';
+                }
+                return `<div class="rounded-md overflow-hidden bg-white shadow-sm flex flex-col ${alert ? 'temp-alert-card' : ''}" style="${outer}">
+                    <div class="px-1 py-[2px] text-[8.6px] font-black leading-[1.1] text-center line-clamp-2 h-[22px] flex items-center justify-center" style="${bandStyle}">${(item && item.name) || ''}</div>
+                    <div class="flex-1 flex flex-col items-center justify-center bg-white py-[2px] leading-none">
+                        <span class="text-[15px] font-black ${numCls} leading-none">${item.temp}°</span>
+                        ${item.hum !== undefined ? `<span class="text-[7px] font-bold text-slate-400 leading-none mt-[1px]">RH ${item.hum}%</span>` : ''}
+                    </div>
+                </div>`;
             };
-            const section = (title, arr, isF) => (!arr || !arr.length) ? '' : `<div><div class="text-[11px] font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded mb-1">${title}</div><div class="grid grid-cols-4 gap-1">${arr.map(i => mkCard(i, isF)).join('')}</div></div>`;
+            const section = (title, arr, isF) => (!arr || !arr.length) ? '' : `<div><div class="text-[11px] font-black text-slate-700 bg-slate-200/70 border border-slate-300 px-2 py-0.5 rounded mb-1 shadow-sm">${title}</div><div class="grid grid-cols-4 gap-1">${arr.map(i => mkCard(i, isF)).join('')}</div></div>`;
             let html = section('ตู้เย็น (2-8°C)', data && data.fridge, true) + section('ห้อง (20-30°C)', data && data.room, false);
             if (hasTempAlert()) html = `<div class="py-1.5 bg-gradient-to-r from-rose-500 to-red-600 rounded-lg shadow border border-red-300 text-center font-black text-white text-[13px] mb-1"><i class="fas fa-exclamation-circle mr-1"></i>เภสัชกรโปรดติดตามอุณหภูมิด่วน!!</div>` + html;
             c.innerHTML = html || `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีข้อมูล</div>`;
@@ -885,7 +932,7 @@
             if (h >= 9 && m === 1 && s < 30) return 'col-calendar';
 
             // 6) วนหลัก 30 วิ/ใบ
-            let loop = ['col-doctors', 'col-due', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx'];
+            let loop = ['col-due', 'col-ipd-male', 'col-ipd-female', 'col-ipd-rx'];
             if (h < 9) loop.push('col-calendar');       // ก่อน 9 โมง ปฏิทินวนบ่อยหน่อย
             if (hasTempAlert()) loop.push('col-temp');  // อุณหภูมิ เฉพาะตอนมี alert
             let cycle = Math.floor((secTotal % (loop.length * 30)) / 30);
@@ -1003,7 +1050,7 @@
         function startSliders() {
             if(sliderInterval) clearInterval(sliderInterval);
             sliderInterval = setInterval(() => {
-                const views = ['view-flow','view-doctors','view-clinics']; currentSlide = (currentSlide + 1) % 3;
+                const views = ['view-flow','view-doctors','view-clinics','view-online']; currentSlide = (currentSlide + 1) % views.length;
                 views.forEach((v, idx) => {
                     const el = document.getElementById(v);
                     if(el) {
@@ -1298,6 +1345,11 @@
             if(elDc) elDc.textContent = sDC;
             if(elScan) elScan.textContent = sScan;
             if(elProg) elProg.style.width = activeCount > 0 ? `${(sScan / activeCount) * 100}%` : `0%`;
+
+            // เก็บสัดส่วนการสแกนไว้ให้ VIVI ใช้ตัดสินใจ (rule-base)
+            if (suff === 'm' || suff === 'f') {
+                wardScanStat[suff] = { scanned: sScan, active: activeCount, pct: activeCount > 0 ? (sScan / activeCount) * 100 : 0 };
+            }
             if(suff === 'm' || suff === 'f') { const occupancyEl = document.getElementById(`${suff === 'm' ? 'male' : 'female'}-occupancy-badge`); if(occupancyEl) { occupancyEl.textContent = `${activeCount}/ว่าง ${Math.max(0, wardArray.length - activeCount)}`; occupancyEl.classList.remove('hidden'); } }
         }
 
@@ -1741,7 +1793,9 @@
         }
 
         function refreshAlertsDisplay() {
-            const combined = globalTriggerAlerts.concat(globalInjAlerts, globalSystemAlerts);
+            const combined = globalTriggerAlerts.concat(
+                globalNarcoticAlerts, globalRiskAlerts, globalInjAlerts,
+                globalSystemAlerts, globalTelemedAlert);
             combined.sort((a, b) => {
                 if (a.priority !== b.priority) return a.priority - b.priority;
                 return b.timestamp - a.timestamp;
@@ -1766,6 +1820,64 @@
                             <div class="text-[15.6px] font-black text-white leading-tight mt-[1px]">HN ${a.hn} · ${a.topic}</div>
                             <div class="text-[11.4px] font-bold text-fuchsia-100 line-clamp-2 leading-tight mt-[1px]" title="${a.detail}">${a.detail}</div>
                             ${a.doctor ? `<div class="text-[10.2px] font-bold text-fuchsia-200 mt-[1px]"><i class="fas fa-user-md mr-1 opacity-80"></i>${a.doctor}</div>` : ''}
+                        </div>
+                    </div>`;
+                    if (firstAlertsRender) spokenAlerts.add(a.id);
+                    return;
+                }
+
+                // การ์ดยาเสพติด (ย.ส.) — เน้นข้อความ "กรุณาเช็คใบ ย.ส. ด้วย"
+                if (a.type === 'narcotic') {
+                    html += `<div class="card-3d bg-gradient-to-br from-violet-600 to-violet-800 border border-violet-400 p-1.5 flex items-center gap-2" style="box-shadow:0 0 12px rgba(124,58,237,0.55);">
+                        <div class="w-8 flex justify-center shrink-0"><i class="fas fa-file-signature text-white text-[24px] drop-shadow-lg"></i></div>
+                        <div class="flex-1 flex flex-col justify-center overflow-hidden">
+                            <div class="flex justify-between items-center gap-1">
+                                <span class="text-[12px] font-black px-1 py-0.5 rounded border shadow-sm shrink-0 bg-white text-violet-800 border-violet-300">กรุณาเช็คใบ ย.ส. ด้วย</span>
+                                <span class="text-[10.8px] font-black text-white/90 shrink-0">${a.depType}${a.timeStr ? ' · ' + a.timeStr : ''}</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-[2px] leading-none">
+                                <span class="text-[10.8px] font-bold text-white/80 shrink-0">HN</span>
+                                <span class="text-[18px] font-black font-mono text-white tracking-wide">${a.hn || '-'}</span>
+                                <span class="text-[12px] font-bold text-white/90 truncate ml-1" title="${a.patient_name}">${a.patient_name}</span>
+                            </div>
+                            <div class="text-[14.4px] font-black text-white leading-tight line-clamp-2 mt-[1px]" title="${a.drug_name}">${a.drug_name} <span class="text-[11px] font-bold text-violet-200">× ${a.qty}</span></div>
+                        </div>
+                    </div>`;
+                    if (firstAlertsRender) spokenAlerts.add(a.id);
+                    return;
+                }
+
+                // การ์ดอุบัติการณ์ใหม่ (ฐาน rm) — ค้าง 1 ชั่วโมง
+                if (a.type === 'risk_new') {
+                    html += `<div class="card-3d bg-gradient-to-br from-rose-50 to-rose-100 border border-rose-300 p-1.5 flex items-center gap-2">
+                        <div class="w-7 flex justify-center shrink-0"><i class="fas fa-clipboard-list text-rose-600 text-xl drop-shadow-sm"></i></div>
+                        <div class="flex-1 flex flex-col justify-center overflow-hidden">
+                            <div class="flex justify-between items-start mb-0.5">
+                                <span class="text-[13.2px] font-black text-rose-900">ได้รับอุบัติการณ์ใหม่</span>
+                                ${a.severity ? `<span class="text-[10.2px] font-black bg-rose-600 text-white px-1 py-0.5 rounded shadow-sm shrink-0 ml-1">ระดับ ${a.severity}</span>` : ''}
+                            </div>
+                            <div class="text-[12.6px] font-black text-rose-800 leading-tight line-clamp-1" title="${a.keyword}">${a.keyword}</div>
+                            <div class="text-[11.4px] font-bold text-slate-700 leading-tight line-clamp-3 mt-[1px]" title="${a.detail}">${a.detail}</div>
+                            <div class="text-[10.2px] font-bold text-slate-500 mt-[2px]"><i class="far fa-clock mr-1 opacity-70"></i>${a.dateStr}</div>
+                        </div>
+                    </div>`;
+                    if (firstAlertsRender) spokenAlerts.add(a.id);
+                    return;
+                }
+
+                // การ์ด Telemedicine — สรุปยอดรวมของวัน
+                if (a.type === 'telemedicine') {
+                    html += `<div class="card-3d bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-300 p-1.5 flex items-center gap-2">
+                        <div class="w-7 flex justify-center shrink-0"><i class="fas fa-video text-cyan-600 text-xl drop-shadow-sm"></i></div>
+                        <div class="flex-1 flex items-center justify-between overflow-hidden">
+                            <div class="flex flex-col leading-none">
+                                <span class="text-[13.2px] font-black text-cyan-900">ผู้ป่วย Telemedicine</span>
+                                <span class="text-[10.8px] font-bold text-cyan-700 mt-[2px]">ยอดสะสมวันนี้ (ส่งยาทางไปรษณีย์)</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 shrink-0">
+                                <span class="text-[26px] font-black text-cyan-700 leading-none">${a.count}</span>
+                                <span class="text-[11px] font-bold text-cyan-800">ราย</span>
+                            </div>
                         </div>
                     </div>`;
                     if (firstAlertsRender) spokenAlerts.add(a.id);
@@ -2012,21 +2124,61 @@
             container.innerHTML = html;
         }
 
+        /* ---- แพทย์/เภสัช ที่ Online : ย้ายมาอยู่แถบกลางล่าง เป็นหน้าที่ 4 (แถวละ 8 การ์ด) ----
+           แพทย์ = พื้นเขียว / เภสัช = พื้นเขียวอมเหลือง ; เรียงตามเวลา login ; ช่องที่ไม่มีข้อมูล = ว่างเปล่า */
         function renderDoctors(doctors) {
-            const container = document.getElementById('doctors-container');
-            if(!container) return;
-            if(!doctors || doctors.length === 0) { container.innerHTML = `<div class="text-center text-[14.4px] text-slate-500 py-4">ไม่มีแพทย์/ห้องยา Online ขณะนี้</div>`; return; }
+            const view = document.getElementById('view-online');
+            if (!view) return;
+
+            let list = Array.isArray(doctors) ? doctors.slice() : [];
+            // เรียงตามเวลา login (เก่า -> ใหม่)
+            list.sort((a, b) => String(a.login_time || '').localeCompare(String(b.login_time || '')));
+
+            // ตัดคำนำหน้าออก เอาเฉพาะชื่อ
+            const shortName = (n) => {
+                let s = String(n || '-')
+                    .replace(/แพทย์หญิง|นายแพทย์|เภสัชกรหญิง|เภสัชกร|นางสาว|นาย|นาง/g, '')
+                    .replace(/พญ\.|นพ\.|ภก\.|ภญ\./g, '')
+                    .trim();
+                return s.split(/\s+/)[0] || '-';
+            };
+            // แยก "ชื่อคอม" กับ "หน่วยงาน" ออกจากฟิลด์เดิม computer_and_department
+            const splitCompDep = (txt) => {
+                const s = String(txt || '').trim();
+                if (!s) return { comp: '-', dep: '' };
+                const parts = s.split(/\s*[\(\[\|\-–]\s*/);
+                const comp = (parts[0] || '-').trim();
+                const dep = (parts.slice(1).join(' ') || '').replace(/[\)\]]/g, '').trim();
+                return { comp: comp || '-', dep: dep };
+            };
+
             let html = '';
-            doctors.forEach(doc => {
+            for (let i = 0; i < 8; i++) {
+                const doc = list[i];
+                if (!doc) { html += `<div class="flex-1"></div>`; continue; }   // ช่องว่าง ไม่มีการ์ด
                 const isDoc = (doc.user_type === 'doctor');
-                const bgClass = isDoc ? 'bg-[#f0fdf4]/60' : 'bg-[#fefce8]/60';
-                const borderClass = isDoc ? 'border-emerald-200/70' : 'border-yellow-200/70';
-                const iconColor = isDoc ? 'text-emerald-600' : 'text-yellow-700';
-                const iconClass = isDoc ? 'fa-user-md' : 'fa-prescription-bottle-alt';
-                const timeText = doc.login_time || '--:--';
-                html += `<div class="${bgClass} py-1 px-1.5 flex items-center gap-1.5 border ${borderClass} rounded-md shadow-sm mb-[3px]"><div class="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center border border-slate-300 shadow-sm shrink-0"><i class="fas ${iconClass} ${iconColor} text-[13.2px]"></i></div><div class="flex-1 min-w-0 flex flex-col justify-center leading-none"><div class="flex justify-between items-center w-full"><span class="text-[14.4px] font-black text-slate-900 truncate">${doc.doctor_name}</span><span class="text-[10.8px] font-black text-slate-700 shrink-0 ml-1 bg-white/80 px-1 py-[1px] rounded shadow-sm border border-slate-300"><i class="far fa-clock mr-0.5"></i>${timeText}</span></div><span class="text-[11.4px] text-slate-700 truncate font-bold mt-[2px]"><i class="fas fa-desktop mr-1 text-slate-600"></i>${doc.computer_and_department}</span></div></div>`;
-            });
-            container.innerHTML = html;
+                const cardBg = isDoc
+                    ? 'background:linear-gradient(160deg,#bbf7d0,#4ade80);border-color:#16a34a;'      // แพทย์ = เขียว
+                    : 'background:linear-gradient(160deg,#ecfccb,#bef264);border-color:#a3a300;';     // เภสัช = เขียวอมเหลือง
+                const nameCls = isDoc ? 'text-emerald-950' : 'text-[#3f3f00]';
+                const subCls  = isDoc ? 'text-emerald-900/80' : 'text-[#4d4d00]/80';
+                const cd = splitCompDep(doc.computer_and_department);
+                const t = doc.login_time || '--:--';
+                html += `<div class="flex-1 min-w-0 rounded-md border shadow-sm px-1 py-[2px] flex flex-col justify-center overflow-hidden" style="${cardBg}">
+                    <div class="flex items-center gap-1 min-w-0">
+                        <i class="fas fa-desktop text-[9px] ${subCls} shrink-0"></i>
+                        <span class="text-[11.4px] font-black ${nameCls} truncate leading-none flex-1" title="${doc.doctor_name || ''}">${shortName(doc.doctor_name)}</span>
+                    </div>
+                    <div class="text-[8.6px] font-bold ${subCls} truncate leading-tight mt-[1px]" title="${cd.comp}">${cd.comp}</div>
+                    <div class="text-[8.6px] font-bold ${subCls} truncate leading-tight" title="${cd.dep}">${cd.dep || '&nbsp;'}</div>
+                    <div class="text-[9px] font-black ${nameCls} leading-none mt-[1px]"><i class="far fa-clock mr-[2px] opacity-70"></i>${t}</div>
+                </div>`;
+            }
+            view.innerHTML = html;
+
+            // คอลัมน์ซ้ายเดิม (col-doctors) ไม่ใช้แล้ว แต่คงไว้กันพัง
+            const oldC = document.getElementById('doctors-container');
+            if (oldC) oldC.innerHTML = `<div class="text-center text-[12px] text-slate-500 py-4">ย้ายไปแสดงที่แถบกลางด้านล่างแล้ว</div>`;
         }
 
         /* ---- กล่องยา + ใบเบิก : ต้นฉบับเดิม + ไม่ truncate ชื่อกล่อง (wrap 2 บรรทัด) ---- */
@@ -2243,6 +2395,11 @@
 
                     // Trigger (อนาคต)
                     if (coreData.trigger_list) processTriggers(coreData.trigger_list);
+
+                    // Telemedicine (สรุปยอดวัน) / ยาเสพติด OPD+IPD / อุบัติการณ์ใหม่จากฐาน rm
+                    processTelemed(coreData);
+                    if (coreData.narcotic_list) processNarcotics(coreData.narcotic_list);
+                    if (coreData.risk_list) processRiskList(coreData.risk_list);
                 }
 
                 if(timeEl) {
@@ -2310,10 +2467,143 @@
             }
         }
 
-        /* ---- Rule-base VIVI (โครงอนาคต) ---- */
+        /* ---- Rule-base VIVI : ตัดสินใจพูดเองจากข้อมูลที่มีอยู่แล้ว ---- */
         function viviRuleCheck() {
             if (!canSpeak()) return;
-            // TODO(อนาคต): หมอออกช้า/น้อย, คนไข้เยอะใน 1 ชม., ไม่มีสแกนเกิน 1 ชม. -> พูดให้กำลังใจ
+            const now = Date.now();
+            const h = new Date().getHours();
+
+            // กฎ 1: สแกนเตียงเกิน 90% ของ ward -> "การสแกนใกล้สิ้นสุดแล้วนะคะ สำหรับวอร์ด xx"
+            //       พูด ward ละครั้งต่อวัน และต้องมีผู้ป่วยอย่างน้อย 3 เตียงถึงจะนับ
+            [['m', 'ward_male.mp3'], ['f', 'ward_female.mp3']].forEach(function (pair) {
+                const key = pair[0], wardSnd = pair[1];
+                const st = wardScanStat[key];
+                if (!st || st.active < 3) return;
+                if (st.pct < 90) return;
+                if (viviSaidWardDone[key]) return;
+                viviSaidWardDone[key] = true;
+                viviEnqueue(['beep', 'scan_almost_done.mp3', wardSnd]);
+            });
+
+            // กฎ 2: ไม่มีการสแกนติดต่อกันเกิน 2 ชม. -> "สงบแบบนี้ VIVI ชอบนะคะ"
+            //       เฉพาะเวลาราชการ (8-16 น.) และพูดซ้ำได้ไม่ถี่กว่า 2 ชม.
+            if (h >= 8 && h < 16) {
+                if ((now - lastScanActivityTs) > QUIET_MS && (now - viviSaidQuietAt) > QUIET_MS) {
+                    viviSaidQuietAt = now;
+                    viviEnqueue(['beep', 'quiet.mp3']);
+                }
+            }
+        }
+
+        /* ---- Telemedicine : สรุปเป็นยอดรวมของวัน (การ์ดเดียว ไม่เตือนรายเคส) ----
+           pusher.php ควรส่ง telemed_count (ตัวเลข) มา ; ถ้าส่งมาเป็น list ก็นับความยาวให้
+           ถ้าไม่มี field เลย -> ไม่แสดงการ์ด */
+        function processTelemed(coreData) {
+            let count = null;
+            if (coreData.telemed_count !== undefined && coreData.telemed_count !== null) {
+                count = parseInt(coreData.telemed_count) || 0;
+            } else if (Array.isArray(coreData.telemed_list)) {
+                count = coreData.telemed_list.length;
+            }
+            if (count === null) return;
+
+            if (count <= 0) { globalTelemedAlert = []; lastTelemedCount = 0; return; }
+
+            globalTelemedAlert = [{
+                id: 'telemed-summary',
+                type: 'telemedicine',
+                priority: 1,                       // อยู่ใต้การ์ดด่วน
+                timestamp: Date.now(),
+                expireAt: Date.now() + 24 * 3600 * 1000,   // ค้างทั้งวัน (เป็นยอดสรุป)
+                count: count
+            }];
+
+            // มีเคสใหม่เพิ่ม -> ให้ VIVI บอกครั้งเดียวต่อการเปลี่ยนแปลง
+            if (lastTelemedCount !== -1 && count > lastTelemedCount && canSpeak()) {
+                viviEnqueue(['beep', 'telemed.mp3']);
+            }
+            lastTelemedCount = count;
+        }
+
+        /* ---- ยาเสพติด (ย.ส.) ครอบคลุม OPD + IPD, เฉพาะ qty > 0 ----
+           pusher.php ควรส่ง narcotic_list: [{hn, patient_name, drug_name, qty, dep_type:'OPD'|'IPD', rx_time}] */
+        function processNarcotics(list) {
+            if (!Array.isArray(list)) return;
+            const now = Date.now();
+            const seen = {};
+            globalNarcoticAlerts.forEach(a => { seen[a.id] = a; });
+
+            list.forEach(item => {
+                const qty = parseFloat(item.qty !== undefined ? item.qty : item.quantity);
+                if (!(qty > 0)) return;                       // ต้องมีจำนวนมากกว่า 0 เท่านั้น
+                const rxTime = String(item.rx_time || item.time || '').trim();
+                const m = rxTime.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+                let ts = now;
+                if (m) {
+                    const d = new Date();
+                    d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3] || '0', 10), 0);
+                    ts = d.getTime();
+                    if (now - ts > NARCOTIC_ALERT_MS || now - ts < -60000) return;
+                }
+                const id = 'narc-' + (item.hn || '') + '-' + rxTime + '-' + (item.drug_name || '');
+                if (seen[id]) return;
+                seen[id] = {
+                    id: id, type: 'narcotic', priority: -2, timestamp: ts, expireAt: ts + NARCOTIC_ALERT_MS,
+                    timeStr: m ? (m[1].padStart(2, '0') + ':' + m[2]) : '',
+                    hn: item.hn || '', patient_name: item.patient_name || '-',
+                    drug_name: item.drug_name || '-', qty: qty,
+                    depType: String(item.dep_type || item.type || '').toUpperCase() || 'OPD'
+                };
+            });
+            globalNarcoticAlerts = Object.keys(seen).map(k => seen[k]).filter(a => a.expireAt > now);
+            refreshAlertsDisplay();
+        }
+
+        /* ---- อุบัติการณ์ใหม่จากฐาน rm : แสดงค้าง 1 ชั่วโมง ----
+           pusher.php ควรส่ง risk_list: [{risk_id, date_risk, date_stamp, incident_detail, severity_level, report_keyword}] */
+        function processRiskList(list) {
+            if (!Array.isArray(list)) return;
+            const now = Date.now();
+
+            // รอบแรก: จำ id ที่มีอยู่ไว้เฉย ๆ ไม่ต้องเด้งย้อนหลังทั้งเดือน
+            if (!viviRiskInit) {
+                list.forEach(r => knownRiskIds.add(String(r.risk_id)));
+                viviRiskInit = true;
+                return;
+            }
+
+            let hasNew = false;
+            list.forEach(r => {
+                const rid = String(r.risk_id);
+                if (knownRiskIds.has(rid)) return;
+                knownRiskIds.add(rid);
+                hasNew = true;
+                globalRiskAlerts.push({
+                    id: 'risk-' + rid,
+                    type: 'risk_new',
+                    priority: -1,
+                    timestamp: now,
+                    expireAt: now + RISK_ALERT_MS,
+                    keyword: r.report_keyword || r['สรุปปัญหา/คีย์เวิร์ด'] || 'ไม่ระบุหัวข้อ',
+                    detail: r.incident_detail || r['รายละเอียดอุบัติการณ์'] || '-',
+                    severity: r.severity_level || r['ระดับความรุนแรง (A-I)'] || '',
+                    dateStr: String(r.date_risk || r['วันที่เกิดเหตุ'] || '').replace('T', ' ').substring(0, 16)
+                });
+            });
+
+            globalRiskAlerts = globalRiskAlerts.filter(a => a.expireAt > now);
+            if (hasNew) {
+                if (canSpeak()) viviEnqueue(['beep', 'incident.mp3']);
+                refreshAlertsDisplay();
+            }
+        }
+
+        function expireExtraAlerts() {
+            const now = Date.now();
+            const b1 = globalNarcoticAlerts.length, b2 = globalRiskAlerts.length;
+            globalNarcoticAlerts = globalNarcoticAlerts.filter(a => a.expireAt > now);
+            globalRiskAlerts = globalRiskAlerts.filter(a => a.expireAt > now);
+            if (globalNarcoticAlerts.length !== b1 || globalRiskAlerts.length !== b2) refreshAlertsDisplay();
         }
 
         /* ---------------- เริ่มระบบ ---------------- */
@@ -2374,7 +2664,7 @@
 
             setInterval(() => { fetchWeather(); updateBackground(); }, 3600 * 1000);
             setInterval(checkRain, 3 * 60 * 1000);                                  // ฝนจริง ทุก 3 นาที
-            setInterval(() => { expireInjAlerts(); expireTriggerAlerts(); }, 5000); // เก็บกวาดการ์ดหมดอายุ
+            setInterval(() => { expireInjAlerts(); expireTriggerAlerts(); expireExtraAlerts(); }, 5000); // เก็บกวาดการ์ดหมดอายุ
             setInterval(viviRuleCheck, 5 * 60 * 1000);
         }
 
