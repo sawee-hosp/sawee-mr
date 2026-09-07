@@ -680,7 +680,12 @@
         }
         function playShiftChangeMelody() {
             if (!canSpeak()) return;
-            try { beep(523,523,0.25,0.3,0); beep(659,659,0.25,0.3,0.15); beep(784,784,0.25,0.3,0.30); beep(1046,1046,0.5,0.3,0.45); } catch (e) {}
+            // เสียงหมดคาบสั้น (≤3 วินาที) ใช้ไฟล์ shift.mp3
+            try {
+                let a = audioCache['shift.mp3'];
+                if (!a) { a = new Audio(AUDIO_BASE + 'shift.mp3'); audioCache['shift.mp3'] = a; }
+                a.currentTime = 0; a.play().catch(() => {});
+            } catch (e) {}
         }
         /* ---------------- VIVI queue engine ---------------- */
         function viviEnqueue(steps) {
@@ -760,7 +765,7 @@
             if (b) { b.classList.add('opacity-0'); b.classList.remove('pointer-events-auto'); setTimeout(() => b.style.display = 'none', 500); }
         }
         function onScreenTap(e) {
-            if (e && e.target && e.target.closest && (e.target.closest('#pause-toggle-btn') || e.target.closest('#skip-btn'))) return; // ปุ่ม pause/skip ไม่ toggle
+            if (e && e.target && e.target.closest && (e.target.closest('#pause-toggle-btn') || e.target.closest('#skip-btn') || e.target.closest('#doc-next-btn'))) return; // ปุ่ม pause/skip/next ไม่ toggle
             if (!audioUnlocked) {
                 audioUnlocked = true; viviEnabled = true; getAudioCtx(); hideViviBar();
                 // แนะนำตัวครั้งแรก: "สวัสดีค่ะ วีวีเป็นเภสัชกร AI คอยช่วยเหลือคุณนะคะ
@@ -1034,7 +1039,8 @@
                 const cardStyleClass = isConfirmed ? "card-3d" : "alert-danger";
                 const fullName = item.patient_name || "";
                 let chronicBadge = '';
-                if (scanItem.chronic_clinic && String(scanItem.chronic_clinic).trim() !== '') {
+                const isAdmitOrDC = (statusAdm === 'ADM' || statusAdm === 'ADMIT' || statusAdm === 'DC');
+                if (isAdmitOrDC && scanItem.chronic_clinic && String(scanItem.chronic_clinic).trim() !== '') {
                     const chronicTxt = String(scanItem.chronic_clinic).trim();
                     chronicBadge = `<span class="inline-flex items-center bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-300 text-[9.6px] font-black px-1 rounded-[3px] shadow-sm leading-none shrink-0 max-w-[165px]" title="${chronicTxt}"><i class="fas fa-stethoscope mr-[2px] opacity-70"></i><span class="truncate">${chronicTxt}</span></span>`;
                 }
@@ -1992,23 +1998,34 @@
             window.lastLasaHtml = html;
             container.innerHTML = html;
         }
-        /* ---- แพทย์/เภสัช ที่ Online : ย้ายมาอยู่แถบกลางล่าง เป็นหน้าที่ 4 (แถวละ 8 การ์ด) ----
-           แพทย์ = พื้นเขียว / เภสัช = พื้นเขียวอมเหลือง ; เรียงตามเวลา login ; ช่องที่ไม่มีข้อมูล = ว่างเปล่า */
+        /* ---- แพทย์/เภสัช ที่ Online : แถบกลางล่าง เป็นหน้าที่ 4 ----
+           card แรก = จำนวนรวม ; card 2-8 = รายชื่อ (เรียง doctor ก่อน mr)
+           ถ้าเกิน 8 คน -> auto-scroll ช้าๆ ; ปุ่ม ▸ เลื่อนทันที */
+        let _docScrollOffset = 0;
+        let _docScrollTimer = null;
+        let _docAllCards = [];         // เก็บ HTML ของการ์ดทั้งหมด (ไม่รวม card นับ)
+        const DOC_VISIBLE = 7;        // จำนวน card ที่แสดงพร้อมกัน (ไม่นับ card นับ)
+        const DOC_SCROLL_MS = 4000;   // auto-scroll ทุก 4 วินาที
+
         function renderDoctors(doctors) {
             const view = document.getElementById('view-online');
             if (!view) return;
             let list = Array.isArray(doctors) ? doctors.slice() : [];
-            // เรียงตามเวลา login (เก่า -> ใหม่)
-            list.sort((a, b) => String(a.login_time || '').localeCompare(String(b.login_time || '')));
-            // ตัดคำนำหน้าออก เอาเฉพาะชื่อ
+            // เรียง: doctor ก่อน mr/เภสัช ; ภายในกลุ่มเรียงตาม login_time
+            list.sort((a, b) => {
+                const aIsDoc = (a.user_type === 'doctor') ? 0 : 1;
+                const bIsDoc = (b.user_type === 'doctor') ? 0 : 1;
+                if (aIsDoc !== bIsDoc) return aIsDoc - bIsDoc;
+                return String(a.login_time || '').localeCompare(String(b.login_time || ''));
+            });
+            // ตัดคำนำหน้าออก เอาเฉพาะชื่อ (ลบ น.ส. ด้วย)
             const shortName = (n) => {
                 let s = String(n || '-')
-                    .replace(/แพทย์หญิง|นายแพทย์|เภสัชกรหญิง|เภสัชกร|นางสาว|นาย|นาง/g, '')
+                    .replace(/แพทย์หญิง|นายแพทย์|เภสัชกรหญิง|เภสัชกร|นางสาว|น\.ส\.|นาย|นาง/g, '')
                     .replace(/พญ\.|นพ\.|ภก\.|ภญ\./g, '')
                     .trim();
                 return s.split(/\s+/)[0] || '-';
             };
-            // แยก "ชื่อคอม" กับ "หน่วยงาน" ออกจากฟิลด์เดิม computer_and_department
             const splitCompDep = (txt) => {
                 const s = String(txt || '').trim();
                 if (!s) return { comp: '-', dep: '' };
@@ -2017,19 +2034,26 @@
                 const dep = (parts.slice(1).join(' ') || '').replace(/[\)\]]/g, '').trim();
                 return { comp: comp || '-', dep: dep };
             };
-            let html = '';
-            for (let i = 0; i < 8; i++) {
-                const doc = list[i];
-                if (!doc) { html += `<div class="flex-1"></div>`; continue; }   // ช่องว่าง ไม่มีการ์ด
+            // นับจำนวน doctor จริง (ไม่นับ เภสัช/mr)
+            const docCount = list.filter(d => d.user_type === 'doctor').length;
+            // สร้างการ์ดนับจำนวน (card แรก)
+            const countCard = `<div class="shrink-0 rounded-md border shadow-sm flex flex-col items-center justify-center overflow-hidden" style="width:50px;min-width:50px;background:linear-gradient(160deg,#dbeafe,#93c5fd);border-color:#3b82f6;">
+                <i class="fas fa-user-md text-blue-700 text-[14px] leading-none"></i>
+                <span class="text-[18px] font-black text-blue-800 leading-none mt-[2px]">${docCount}</span>
+                <span class="text-[7.5px] font-bold text-blue-700/80 leading-none">Online</span>
+            </div>`;
+            // สร้าง HTML ของการ์ดแต่ละคน
+            _docAllCards = [];
+            list.forEach(doc => {
                 const isDoc = (doc.user_type === 'doctor');
                 const cardBg = isDoc
-                    ? 'background:linear-gradient(160deg,#bbf7d0,#4ade80);border-color:#16a34a;'      // แพทย์ = เขียว
-                    : 'background:linear-gradient(160deg,#ecfccb,#bef264);border-color:#a3a300;';     // เภสัช = เขียวอมเหลือง
+                    ? 'background:linear-gradient(160deg,#bbf7d0,#4ade80);border-color:#16a34a;'
+                    : 'background:linear-gradient(160deg,#ecfccb,#bef264);border-color:#a3a300;';
                 const nameCls = isDoc ? 'text-emerald-950' : 'text-[#3f3f00]';
                 const subCls  = isDoc ? 'text-emerald-900/80' : 'text-[#4d4d00]/80';
                 const cd = splitCompDep(doc.computer_and_department);
                 const t = doc.login_time || '--:--';
-                html += `<div class="flex-1 min-w-0 rounded-md border shadow-sm px-1 py-[2px] flex flex-col justify-center overflow-hidden" style="${cardBg}">
+                _docAllCards.push(`<div class="shrink-0 min-w-0 rounded-md border shadow-sm px-1 py-[2px] flex flex-col justify-center overflow-hidden" style="flex:1 1 0%;max-width:calc((100% - 50px - 26px - ${DOC_VISIBLE-1}*4px) / ${DOC_VISIBLE});${cardBg}">
                     <div class="flex items-center gap-1 min-w-0">
                         <i class="fas fa-desktop text-[9px] ${subCls} shrink-0"></i>
                         <span class="text-[11.4px] font-black ${nameCls} truncate leading-none flex-1" title="${doc.doctor_name || ''}">${shortName(doc.doctor_name)}</span>
@@ -2037,12 +2061,49 @@
                     <div class="text-[8.6px] font-bold ${subCls} truncate leading-tight mt-[1px]" title="${cd.comp}">${cd.comp}</div>
                     <div class="text-[8.6px] font-bold ${subCls} truncate leading-tight" title="${cd.dep}">${cd.dep || '&nbsp;'}</div>
                     <div class="text-[9px] font-black ${nameCls} leading-none mt-[1px]"><i class="far fa-clock mr-[2px] opacity-70"></i>${t}</div>
-                </div>`;
+                </div>`);
+            });
+            _docScrollOffset = 0;
+            _renderDocSlice(view, countCard);
+            // auto-scroll ถ้ามีเกิน DOC_VISIBLE คน
+            if (_docScrollTimer) clearInterval(_docScrollTimer);
+            if (list.length > DOC_VISIBLE) {
+                _docScrollTimer = setInterval(() => { _docAdvance(view, countCard); }, DOC_SCROLL_MS);
             }
-            view.innerHTML = html;
             // คอลัมน์ซ้ายเดิม (col-doctors) ไม่ใช้แล้ว แต่คงไว้กันพัง
             const oldC = document.getElementById('doctors-container');
             if (oldC) oldC.innerHTML = `<div class="text-center text-[12px] text-slate-500 py-4">ย้ายไปแสดงที่แถบกลางด้านล่างแล้ว</div>`;
+        }
+        function _docAdvance(view, countCard) {
+            if (_docAllCards.length <= DOC_VISIBLE) return;
+            _docScrollOffset = (_docScrollOffset + 1) % _docAllCards.length;
+            _renderDocSlice(view, countCard);
+        }
+        function _renderDocSlice(view, countCard) {
+            let cards = [];
+            for (let i = 0; i < Math.min(DOC_VISIBLE, _docAllCards.length); i++) {
+                cards.push(_docAllCards[(_docScrollOffset + i) % _docAllCards.length]);
+            }
+            // เติมช่องว่างถ้ายังไม่ครบ DOC_VISIBLE
+            while (cards.length < DOC_VISIBLE) cards.push('<div class="flex-1"></div>');
+            // ปุ่ม next (▸) เฉพาะตอนมีเกิน DOC_VISIBLE คน
+            const nextBtn = (_docAllCards.length > DOC_VISIBLE)
+                ? `<button id="doc-next-btn" class="shrink-0 w-[22px] h-full rounded-md bg-slate-700/40 hover:bg-slate-700/70 text-white flex items-center justify-center transition-colors" title="ถัดไป"><i class="fas fa-chevron-right text-[10px]"></i></button>`
+                : '';
+            view.innerHTML = countCard + cards.join('') + nextBtn;
+            // bind event ปุ่ม next
+            const btn = document.getElementById('doc-next-btn');
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();   // ไม่ trigger VIVI toggle
+                    _docAdvance(view, countCard);
+                    // reset auto-scroll timer
+                    if (_docScrollTimer) clearInterval(_docScrollTimer);
+                    if (_docAllCards.length > DOC_VISIBLE) {
+                        _docScrollTimer = setInterval(() => { _docAdvance(view, countCard); }, DOC_SCROLL_MS);
+                    }
+                });
+            }
         }
         /* ---- กล่องยา + ใบเบิก : ต้นฉบับเดิม + ไม่ truncate ชื่อกล่อง (wrap 2 บรรทัด) ---- */
         function renderBoxes(boxes, requisitions) {
