@@ -352,15 +352,30 @@
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2 items-end">
-                        <div><label>Date Started</label><input type="datetime-local" id="anti_Date_started" class="editable-input text-xs"></div>
-                        <div><label>Date End</label><input type="datetime-local" id="anti_Date_end" class="editable-input text-xs"></div>
+                        <div><label>Date Started</label><input type="datetime-local" id="anti_Date_started" class="editable-input text-xs" onchange="calcAntiDuration()"></div>
+                        <div><label>Date End</label><input type="datetime-local" id="anti_Date_end" class="editable-input text-xs" onchange="calcAntiDuration()"></div>
                         <div>
-                            <label>Total Dose</label>
-                            <div class="flex items-center gap-2 bg-white rounded-lg pr-2 border border-gray-300">
-                                <input type="number" id="anti_Total_dose" class="editable-input border-none shadow-none text-center" style="width:80px;" oninput="calcAntiValue()">
-                                <span id="anti_Value_Display" class="text-red-600 font-bold text-xs whitespace-nowrap"></span>
-                            </div>
-                        </div>
+<div>
+    <label>Total Dose</label>
+    <div class="flex items-center gap-2 bg-white rounded-lg pr-2 border border-gray-300">
+        <input type="number" id="anti_Total_dose" class="editable-input border-none shadow-none text-center" style="width:80px;" oninput="calcAntiValue()">
+        <span id="anti_Value_Display" class="text-red-600 font-bold text-xs whitespace-nowrap"></span>
+    </div>
+</div>
+<div class="sm:col-span-3 grid grid-cols-3 gap-2 mt-1">
+    <div class="inner-card p-2 border border-emerald-200 bg-emerald-50">
+        <label class="text-center text-emerald-700">จำนวนวัน (Duration)</label>
+        <input type="number" id="anti_Duration_days" class="w-full bg-transparent text-center text-emerald-700 outline-none font-bold" readonly>
+    </div>
+    <div class="inner-card p-2 border border-blue-200 bg-blue-50">
+        <label class="text-center text-blue-700">Total Qty (vials)</label>
+        <input type="number" id="anti_Total_Qty" class="w-full bg-transparent text-center text-blue-700 outline-none font-bold" oninput="calcAntiValue()">
+    </div>
+    <div class="inner-card p-2 border border-red-200 bg-red-50">
+        <label class="text-center text-red-700">Total Price (บาท)</label>
+        <input type="number" id="anti_Total_price" class="w-full bg-transparent text-center text-red-700 outline-none font-bold" readonly>
+    </div>
+</div>
                     </div>
 
                     <div class="inner-card p-3 mt-3 border border-yellow-300 bg-gradient-to-br from-yellow-50 to-white shadow-sm">
@@ -807,8 +822,8 @@
                 <div class="flex flex-col sm:flex-row gap-4 mb-6 bg-indigo-50 p-4 rounded-xl">
                     <div class="flex-1 flex">
                         <span class="bg-indigo-200 px-4 py-2 rounded-l-xl font-bold border border-indigo-300 border-r-0 text-indigo-800">ว.</span>
-                        <input type="number" id="searchLicense" placeholder="พิมพ์เลข ว.เฉพาะตัวเลขตรงนี้" class="flex-1 px-4 py-2 border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-lg" onkeypress="if(event.key === 'Enter') searchDoctor()">
-                        <button onclick="searchDoctor()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 font-bold transition">ค้นหา</button>
+                        <input type="number" id="searchLicense" placeholder="พิมพ์เลข ว.เฉพาะตัวเลขตรงนี้" class="flex-1 px-4 py-2 border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-lg" onkeypress="if(event.key === 'Enter') ()">
+                        <button onclick="()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 font-bold transition">ค้นหา</button>
                         <button onclick="clearDoctorZoom()" class="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 px-4 py-2 rounded-r-xl font-bold transition">กลับไปดูทุกคน</button>
                     </div>
                     <select id="docMonthSelector" onchange="renderDocSummaryChart()" class="editable-input sm:w-48 font-bold border-indigo-300">
@@ -1630,14 +1645,18 @@
             } catch(e) { console.error("Error fetching doctor summary"); }
         }
 
-        function searchDoctor() {
-            const val = document.getElementById('searchLicense').value.trim();
-            if(globalDocsMap[val]) {
-                revealedLicense = val;
-                renderDocSummaryChart();
-                renderDoctorPatientList(val);
-            }
-        }
+function searchDoctor() {
+    const val = document.getElementById('searchLicense').value.trim();
+    if(!val) { showToast('กรุณาพิมพ์เลข ว.', 'error'); return; }
+    if(val in globalDocsMap) {
+        revealedLicense = val;
+        renderDocSummaryChart();
+        renderDoctorPatientList(val);
+        showToast('พบข้อมูลแพทย์: ' + (globalDocsMap[val] || 'ว.'+val), 'success');
+    } else {
+        showToast('ไม่พบข้อมูลแพทย์เลข ว.' + val + ' ในระบบ', 'error');
+    }
+}
         
         function clearDoctorZoom() {
             revealedLicense = null;
@@ -2152,17 +2171,59 @@
         }
 
         // --- Data Handling & Forms ---
-        function calcAntiValue() {
-            const drug = document.getElementById('anti_Drug_name').value;
-            const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
-            let val = 0;
-            const drugLow = drug ? drug.toLowerCase() : '';
-            if (drugLow.includes('meropenem')) val = dose * 130;
-            else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) val = dose * 100;
-            
-            const el = document.getElementById('anti_Value_Display');
-            if(el) el.textContent = val > 0 ? `มูลค่า: ${val.toLocaleString()} บ.` : '';
-        }
+function calcAntiValue() {
+    const drug = document.getElementById('anti_Drug_name').value;
+    const dose = parseFloat(document.getElementById('anti_Total_dose').value) || 0;
+    let pricePerDose = 0;
+    const drugLow = drug ? drug.toLowerCase() : '';
+    if (drugLow.includes('meropenem')) pricePerDose = 130;
+    else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) pricePerDose = 100;
+    
+    let totalPrice = dose * pricePerDose;
+    
+    const el = document.getElementById('anti_Value_Display');
+    if(el) el.textContent = totalPrice > 0 ? `มูลค่า: ${totalPrice.toLocaleString()} บ.` : '';
+    
+    // เขียนลง Total_price field
+    const priceEl = document.getElementById('anti_Total_price');
+    if(priceEl) priceEl.value = totalPrice > 0 ? totalPrice : '';
+    
+    // sync Total_Qty ถ้ายังว่าง
+    const qtyEl = document.getElementById('anti_Total_Qty');
+    if(qtyEl && !qtyEl.value && dose > 0) qtyEl.value = dose;
+}
+        function calcAntiDuration() {
+    const startEl = document.getElementById('anti_Date_started');
+    const endEl = document.getElementById('anti_Date_end');
+    const durationEl = document.getElementById('anti_Duration_days');
+    const totalDoseEl = document.getElementById('anti_Total_dose');
+    const totalQtyEl = document.getElementById('anti_Total_Qty');
+    const drugName = document.getElementById('anti_Drug_name').value;
+    
+    if(!startEl.value || !endEl.value) return;
+    
+    const startDate = new Date(startEl.value);
+    const endDate = new Date(endEl.value);
+    const diffMs = endDate - startDate;
+    const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    
+    durationEl.value = days;
+    
+    // คำนวณ doses per day ตามชื่อยา
+    let dosesPerDay = 3; // default q8hr
+    const drugLow = drugName.toLowerCase();
+    if (drugLow.includes('meropenem')) {
+        dosesPerDay = 3; // 1g q8hr
+    } else if (drugLow.includes('tazocin') || drugLow.includes('piperacillin')) {
+        dosesPerDay = 3; // 4.5g q8hr (ปกติ q6-8hr แล้วแต่ case)
+    }
+    
+    const totalDose = days * dosesPerDay;
+    totalDoseEl.value = totalDose;
+    totalQtyEl.value = totalDose; // Total_Qty = จำนวน vials เท่ากับ dose
+    
+    calcAntiValue(); // จะคำนวณ Total_price ให้ด้วย
+}
 
         function calcOselValue() {
             const drug = document.getElementById('osel_Drug_name').value;
@@ -2203,34 +2264,56 @@
             }
         }
 
-        function renderAntibioticIndications() {
-            const drugInput = document.getElementById('anti_Drug_name');
-            if(!drugInput) return;
-            const drugName = drugInput.value;
-            const container = document.getElementById('anti_indication_container');
-            
-            let html = '';
-            if (drugName === 'Meropenem 1 gm') {
-                html = `
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่สงสัย nosocomial infection from multidrug resistance gram negative bacteria" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis สงสัย nosocomial infection from MDR</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่ี่เคยได้ยาในกลุ่ม 3rd generation cephalosporin มาก่อนภายใน 3 เดือน" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis เคยได้ 3rd gen cephalosporin ใน 3 เดือน</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>
-                `;
-            } else if (drugName === 'Tazocin 4.5g. inj') {
-                html = `
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative infection in febrile neutropenia" class="peer sr-only radio-custom" required onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg infection in febrile neutropenia</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative failed with 3rd cephalosporins" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg failed with 3rd cephalosporins</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected serious nosocomial infection" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected serious nosocomial infection</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label>
-                    <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti')"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>
-                `;
-            } else {
-                html = `<div class="text-slate-500 text-center py-2">กรุณาเลือกชื่อยาด้านบน เพื่อโหลดเหตุผล</div>`;
-            }
-            container.innerHTML = html;
+function renderAntibioticIndications() {
+    const drugInput = document.getElementById('anti_Drug_name');
+    if(!drugInput) return;
+    const drugName = drugInput.value;
+    const container = document.getElementById('anti_indication_container');
+    
+    // ตัวเลือก "ไม่ได้ระบุ" ที่ใช้ร่วมกันทุกยา
+    const noIndicationOption = `
+        <label class="relative cursor-pointer">
+            <input type="radio" name="anti_indication" value="ไม่ได้ระบุ" class="peer sr-only radio-color-gray" onchange="handleIndication('anti'); autoSelectNoData('anti');">
+            <div class="p-2 border-2 border-gray-400 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold">⬜ ไม่ได้ระบุ (แพทย์ไม่ได้เขียน Indication)</div>
+        </label>`;
+    
+    let html = '';
+    if (drugName === 'Meropenem 1 gm') {
+        html = `
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่สงสัย nosocomial infection from multidrug resistance gram negative bacteria" class="peer sr-only radio-custom" required onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis สงสัย nosocomial infection from MDR</div></label>
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Septic shock or severe sepsis ที่ี่เคยได้ยาในกลุ่ม 3rd generation cephalosporin มาก่อนภายใน 3 เดือน" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Septic shock/severe sepsis เคยได้ 3rd gen cephalosporin ใน 3 เดือน</div></label>
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label>
+            ${noIndicationOption}
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>
+        `;
+    } else if (drugName === 'Tazocin 4.5g. inj') {
+        html = `
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative infection in febrile neutropenia" class="peer sr-only radio-custom" required onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg infection in febrile neutropenia</div></label>
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected gram negative failed with 3rd cephalosporins" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected gram neg failed with 3rd cephalosporins</div></label>
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Empiric: Suspected serious nosocomial infection" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">Empiric: Suspected serious nosocomial infection</div></label>
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="Specific (ระบุเชื้อ)" id="anti_radio_specific" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-purple-200 bg-purple-50 text-purple-800 rounded">Specific (ระบุเชื้อ)</div></label>
+            ${noIndicationOption}
+            <label class="relative cursor-pointer"><input type="radio" name="anti_indication" value="อื่นๆ" id="anti_radio_other" class="peer sr-only radio-custom" onchange="handleIndication('anti'); clearAutoEval('anti');"><div class="p-2 border border-slate-200 rounded hover:bg-slate-50">อื่นๆ (ระบุ)</div></label>
+        `;
+    } else {
+        html = `<div class="text-slate-500 text-center py-2">กรุณาเลือกชื่อยาด้านบน เพื่อโหลดเหตุผล</div>`;
+    }
+    container.innerHTML = html;
+}
+// เมื่อเลือก "ไม่ได้ระบุ" จะ auto-select ประเมินไม่ได้
+function autoSelectNoData(prefix) {
+    const radios = document.getElementsByName(`${prefix}_evaluation`);
+    radios.forEach(r => {
+        if(r.value === 'ประเมินไม่ได้ เนื่องจากข้อมูลไม่ครบ') {
+            r.checked = true;
         }
-
+    });
+}
+// เมื่อเลือก indication อื่นที่ไม่ใช่ "ไม่ได้ระบุ" ให้ล้าง auto-select evaluation
+function clearAutoEval(prefix) {
+    // ไม่ต้อง force uncheck — แค่ให้เภสัชเลือกเองได้อิสระ
+}
+        
         function renderCovidIndications() {
             const drugInput = document.getElementById('covd_Drug_name');
             if(!drugInput) return;
@@ -2664,7 +2747,9 @@
                             r.checked = true; matched = true; 
                         } 
                     });
-                    
+                    if(!matched && v === 'ไม่ได้ระบุ') {
+    radios.forEach(r => { if(r.value === 'ไม่ได้ระบุ') { r.checked = true; matched = true; } });
+}
                     if(!matched && (v.includes('เชื้อ') || v.includes('Specific'))) {
                          const spRadio = document.getElementById(`${prefix}_radio_specific`);
                          if(spRadio) { spRadio.checked = true; matched = true; if(specificInput) specificInput.value = v; }
