@@ -179,7 +179,7 @@ animation:sp .8s linear infinite;margin:40px auto}
 
 <script>
 /* ═════════ ตั้งค่า ═════════ */
-const API = 'https://script.google.com/macros/s/AKfycbzd7AyDe-ChL4K-RZBGiffX06pxZsqwFHlOl18H0Er95K2ytveOtVoqGLeSiYLhSpz5yw/exec';   // ← วาง URL Apps Script ของคุณ
+const API = 'https://script.google.com/macros/s/AKfycbzd7AyDe-ChL4K-RZBGiffX06pxZsqwFHlOl18H0Er95K2ytveOtVoqGLeSiYLhSpz5yw/exec';
 
 /* ═════════ ตัวช่วย ═════════ */
 let TOKEN = localStorage.getItem('swi_tk') || '';
@@ -221,13 +221,12 @@ $('fLogin').onsubmit = async e => {
   }catch(ex){ showErr('errLogin', ex.message); }
   b.disabled=false; b.textContent='เข้าสู่ระบบ';
 };
+/* รหัสผ่านอิสระ — ไม่บังคับความยาว/รูปแบบ ครั้งแรกตั้งอย่างไรก็ได้ */
 $('fSetup').onsubmit = async e => {
   e.preventDefault(); $('errSetup').style.display='none';
   const f = Object.fromEntries(new FormData(e.target)), un = e.target.dataset.u;
+  if(!f.password) return showErr('errSetup','กรุณากรอกรหัสผ่าน');
   if(f.password !== f.confirm) return showErr('errSetup','รหัสผ่านทั้งสองช่องไม่ตรงกัน');
-  if(f.password.length < 8) return showErr('errSetup','รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร');
-  if(!/[a-zA-Z]/.test(f.password) || !/\d/.test(f.password))
-    return showErr('errSetup','ต้องมีทั้งตัวอักษรและตัวเลข');
   const b = e.target.querySelector('button'); b.disabled=true; b.textContent='กำลังบันทึก…';
   try{ start(await call('setPassword', {username:un, password: await sha(un, f.password)})); }
   catch(ex){ showErr('errSetup', ex.message); }
@@ -236,16 +235,28 @@ $('fSetup').onsubmit = async e => {
 function start(r){ TOKEN=r.token; localStorage.setItem('swi_tk',TOKEN); ME=r.me;
   go('App'); boot(); setInterval(refresh, 45000); }
 
-/* ═════════ Boot ═════════ */
+/* ═════════ Boot (กัน undefined ทุกจุด) ═════════ */
 async function boot(){
   $('page').innerHTML = '<div class="spin"></div>';
   const d = await call('boot');
-  ME=d.me; APPS=d.apps; POSTS=d.posts; DOCS=d.docs; NOTIS=d.notis;
+  ME    = d.me    || ME;
+  APPS  = d.apps  || [];
+  POSTS = d.posts || [];
+  DOCS  = d.docs  || [];
+  NOTIS = d.notis || [];
   renderUser(); renderNav(); renderNoti(); page(PAGE);
 }
-async function refresh(){ try{ const d = await call('boot');
-  APPS=d.apps; POSTS=d.posts; DOCS=d.docs; NOTIS=d.notis;
-  renderNav(); renderNoti(); if(['home','board','docs'].indexOf(PAGE)>-1) page(PAGE); }catch(e){} }
+async function refresh(){
+  try{
+    const d = await call('boot');
+    APPS  = d.apps  || [];
+    POSTS = d.posts || [];
+    DOCS  = d.docs  || [];
+    NOTIS = d.notis || [];
+    renderNav(); renderNoti();
+    if(['home','board','docs'].indexOf(PAGE) > -1) page(PAGE);
+  }catch(e){}
+}
 function renderUser(){
   $('userBox').innerHTML =
    '<div class="uinfo" style="text-align:right;line-height:1.25">' +
@@ -255,9 +266,10 @@ function renderUser(){
    '<button class="btn ghost sm" onclick="logout()">ออก</button>';
 }
 function renderNav(){
-  const newP = POSTS.filter(p=>p.isNew).length, newD = DOCS.filter(d=>d.isNew).length;
+  const newP = (POSTS||[]).filter(p=>p.isNew).length;
+  const newD = (DOCS ||[]).filter(d=>d.isNew).length;
   const items = [{k:'home',t:'🏠 หน้าหลัก'},{k:'board',t:'📢 ประกาศ',n:newP},{k:'docs',t:'📁 เอกสาร & ฟอร์ม',n:newD}]
-    .concat(APPS.slice(0,5).map(a=>({k:'app:'+a.id, t:(a.icon||'▪️')+' '+a.name, n:a.unread})));
+    .concat((APPS||[]).slice(0,5).map(a=>({k:'app:'+a.id, t:(a.icon||'▪️')+' '+a.name, n:a.unread})));
   $('navLinks').innerHTML = items.map(i =>
     '<a class="'+(PAGE===i.k?'active':'')+'" onclick="page(\''+i.k+'\')">'+esc(i.t)+
     (i.n ? '<span class="dot">'+i.n+'</span>' : '')+'</a>').join('');
@@ -280,14 +292,14 @@ const DBG = {'ฟอร์ม':'var(--g-btn)','คู่มือ':'var(--g-lila
 
 /* ── หน้าหลัก ── */
 function pHome(){
-  const gs = {}; APPS.forEach(a => (gs[a.group] = gs[a.group]||[]).push(a));
-  const fresh = POSTS.filter(p=>p.isNew||p.pin).slice(0,3);
-  const nd = DOCS.filter(d=>d.isNew).slice(0,4);
+  const gs = {}; (APPS||[]).forEach(a => (gs[a.group] = gs[a.group]||[]).push(a));
+  const fresh = (POSTS||[]).filter(p=>p.isNew||p.pin).slice(0,3);
+  const nd = (DOCS||[]).filter(d=>d.isNew).slice(0,4);
   const hr = new Date().getHours();
   $('page').innerHTML =
    '<h1>'+(hr<12?'อรุณสวัสดิ์':hr<17?'สวัสดีตอนบ่าย':'สวัสดีตอนเย็น')+', '+esc(ME.fullname)+' 👋</h1>' +
-   '<p class="sub" style="margin-bottom:26px">'+APPS.length+' แอป · '+POSTS.length+' ประกาศ · ' +
-     DOCS.length+' เอกสาร · '+NOTIS.filter(n=>!n.read).length+' แจ้งเตือนใหม่</p>' +
+   '<p class="sub" style="margin-bottom:26px">'+(APPS||[]).length+' แอป · '+(POSTS||[]).length+' ประกาศ · ' +
+     (DOCS||[]).length+' เอกสาร · '+(NOTIS||[]).filter(n=>!n.read).length+' แจ้งเตือนใหม่</p>' +
    (fresh.length ? '<div class="glass" style="padding:20px 22px;margin-bottom:22px">' +
      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
      '<h2>📌 ประกาศล่าสุด</h2><button class="btn ghost sm" onclick="page(\'board\')">ดูทั้งหมด →</button></div>' +
@@ -321,7 +333,7 @@ const postRow = p =>
 
 function pBoard(){
   const cats = ['ทั้งหมด'].concat(uniq(POSTS,'category'));
-  const list = POSTS.filter(p => FP==='ทั้งหมด' || p.category===FP);
+  const list = (POSTS||[]).filter(p => FP==='ทั้งหมด' || p.category===FP);
   $('page').innerHTML =
    '<h1>📢 ประกาศ & แนวปฏิบัติ</h1>' +
    '<p class="sub" style="margin-bottom:18px">ข้อมูลกลางจากกลุ่มงานเภสัชกรรม รพ.สวี</p>' +
@@ -340,7 +352,7 @@ function md(t){ return esc(t)
   .replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br>'); }
 
 function openPost(id){
-  const p = POSTS.filter(x=>x.id===id)[0]; if(!p) return;
+  const p = (POSTS||[]).filter(x=>x.id===id)[0]; if(!p) return;
   $('mTitle').textContent = p.title;
   $('mBody').innerHTML = '<div style="padding:26px 32px;max-width:800px;margin:0 auto">' +
     '<div style="margin-bottom:14px"><span class="tag" style="background:'+(PBG[p.type]||'var(--g-mint)')+'">'+esc(p.type)+'</span>' +
@@ -359,7 +371,7 @@ function openPost(id){
   $('modal').classList.add('open');
 }
 async function doAck(id){ await call('ackPost',{id:id});
-  POSTS.filter(p=>p.id===id).forEach(p=>p.acked=true); openPost(id); }
+  (POSTS||[]).filter(p=>p.id===id).forEach(p=>p.acked=true); openPost(id); }
 async function ackRep(id){ const r = await call('ackReport',{id:id});
   alert('รับทราบแล้ว '+r.acked+'/'+r.total+' คน\n\nยังไม่รับทราบ:\n'+(r.pending.join('\n')||'— ครบทุกคน —')); }
 async function delPost(id){ if(!confirm('ยืนยันลบประกาศนี้?')) return;
@@ -379,7 +391,7 @@ const docRow = d =>
 
 function pDocs(){
   const cats = ['ทั้งหมด'].concat(uniq(DOCS,'category'));
-  const list = DOCS.filter(d => FD==='ทั้งหมด' || d.category===FD);
+  const list = (DOCS||[]).filter(d => FD==='ทั้งหมด' || d.category===FD);
   const gs = {}; list.forEach(d => (gs[d.kind] = gs[d.kind]||[]).push(d));
   $('page').innerHTML =
    '<h1>📁 คลังเอกสาร ฟอร์ม และลิงก์ระบบ</h1>' +
@@ -395,7 +407,7 @@ function pDocs(){
 
 /* ── แอปย่อย ── */
 function openApp(id){
-  const a = APPS.filter(x=>x.id===id)[0]; if(!a) return;
+  const a = (APPS||[]).filter(x=>x.id===id)[0]; if(!a) return;
   if(a.target === 'blank'){ window.open(a.url,'_blank'); return page('home'); }
   $('page').innerHTML =
    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
@@ -408,10 +420,10 @@ function openApp(id){
 
 /* ═════════ แจ้งเตือน ═════════ */
 function renderNoti(){
-  const un = NOTIS.filter(n=>!n.read).length;
+  const un = (NOTIS||[]).filter(n=>!n.read).length;
   $('bellCount').classList.toggle('hide', !un);
   $('bellCount').textContent = un>99 ? '99+' : un;
-  $('notiList').innerHTML = NOTIS.length ? NOTIS.map(n =>
+  $('notiList').innerHTML = (NOTIS||[]).length ? NOTIS.map(n =>
     '<div class="noti '+(n.read?'':'unread')+'" onclick="hitNoti(\''+n.id+'\',\''+n.app_id+'\')">' +
     '<div class="bar '+esc(n.level)+'"></div><div style="flex:1">' +
     '<h5>'+esc(n.title)+'</h5><p>'+esc(n.message)+'</p>' +
@@ -419,14 +431,14 @@ function renderNoti(){
     : '<p class="sub" style="padding:30px;text-align:center">ไม่มีการแจ้งเตือน 🎉</p>';
 }
 async function hitNoti(id, app){
-  await call('markRead',{id:id}); NOTIS.filter(n=>n.id===id).forEach(n=>n.read=true); renderNoti();
+  await call('markRead',{id:id}); (NOTIS||[]).filter(n=>n.id===id).forEach(n=>n.read=true); renderNoti();
   $('notiPanel').classList.remove('open');
   if(app==='board') page('board'); else if(app==='docs') page('docs');
-  else if(APPS.some(a=>a.id===app)) page('app:'+app);
+  else if((APPS||[]).some(a=>a.id===app)) page('app:'+app);
 }
 $('bellBtn').onclick = () => $('notiPanel').classList.toggle('open');
 $('readAll').onclick = async e => { e.stopPropagation(); await call('markRead',{all:true});
-  NOTIS.forEach(n=>n.read=true); renderNoti(); await refresh(); };
+  (NOTIS||[]).forEach(n=>n.read=true); renderNoti(); await refresh(); };
 document.addEventListener('click', e => { if(!e.target.closest('#bellBtn,#notiPanel'))
   $('notiPanel').classList.remove('open'); });
 
@@ -475,17 +487,17 @@ const rmApp = async id => { if(!confirm('ลบแอป '+id+' ?')) return;
 
 async function admPosts(){
   $('adm').innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:14px">' +
-    '<h2>ประกาศ / แนวปฏิบัติ ('+POSTS.length+')</h2>' +
+    '<h2>ประกาศ / แนวปฏิบัติ ('+(POSTS||[]).length+')</h2>' +
     '<button class="btn sm" onclick="edPost()">＋ เขียนใหม่</button></div>' +
     '<table><thead><tr><th>ประเภท</th><th>เรื่อง</th><th>หมวด</th><th>วันที่</th><th>รับทราบ</th><th></th></tr></thead><tbody>' +
-    POSTS.map(p => '<tr><td><span class="tag" style="background:'+(PBG[p.type]||'var(--g-mint)')+'">'+esc(p.type)+'</span></td>' +
+    (POSTS||[]).map(p => '<tr><td><span class="tag" style="background:'+(PBG[p.type]||'var(--g-mint)')+'">'+esc(p.type)+'</span></td>' +
       '<td><b>'+esc(p.title)+'</b>'+(p.pin?' 📌':'')+(p.isNew?' 🆕':'')+'</td><td>'+esc(p.category)+'</td>' +
       '<td>'+thDate(p.created_at)+'</td><td>'+(p.ack_required?'✅':'—')+'</td>' +
       '<td><button class="btn ghost sm" onclick="edPost(\''+p.id+'\')">แก้ไข</button></td></tr>').join('') +
     '</tbody></table>';
 }
 function edPost(id){
-  const p = POSTS.filter(x=>x.id===id)[0] || {type:'ประกาศ'};
+  const p = (POSTS||[]).filter(x=>x.id===id)[0] || {type:'ประกาศ'};
   form('ประกาศ / แนวปฏิบัติ',[
     ['type','ประเภท','select',p.type,'',Object.keys(PIC).map(k=>[k,PIC[k]+' '+k])],
     ['category','หมวดหมู่','text',p.category,'ความปลอดภัยด้านยา / บริการ / คลังยา'],
@@ -502,10 +514,10 @@ function edPost(id){
 }
 async function admDocs(){
   $('adm').innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:14px">' +
-    '<h2>เอกสาร ฟอร์ม และลิงก์ ('+DOCS.length+')</h2>' +
+    '<h2>เอกสาร ฟอร์ม และลิงก์ ('+(DOCS||[]).length+')</h2>' +
     '<button class="btn sm" onclick="edDoc()">＋ เพิ่มรายการ</button></div>' +
     '<table><thead><tr><th></th><th>ชื่อ</th><th>ประเภท</th><th>หมวด</th><th>อัปเดต</th><th></th></tr></thead><tbody>' +
-    DOCS.map(d => '<tr><td style="font-size:18px">'+esc(d.icon)+'</td>' +
+    (DOCS||[]).map(d => '<tr><td style="font-size:18px">'+esc(d.icon)+'</td>' +
       '<td><b>'+esc(d.title)+'</b>'+(d.isNew?' 🆕':'')+'</td>' +
       '<td><span class="tag" style="background:'+(DBG[d.kind]||'var(--g-btn)')+'">'+esc(d.kind)+'</span></td>' +
       '<td>'+esc(d.category)+'</td><td>'+thDate(d.updated_at)+'</td>' +
@@ -514,7 +526,7 @@ async function admDocs(){
     '</tbody></table>';
 }
 function edDoc(id){
-  const d = DOCS.filter(x=>x.id===id)[0] || {kind:'ฟอร์ม', icon:'📋', order:10};
+  const d = (DOCS||[]).filter(x=>x.id===id)[0] || {kind:'ฟอร์ม', icon:'📋', order:10};
   form('เอกสาร / ฟอร์ม / ลิงก์',[
     ['kind','ประเภท','select',d.kind,'',
       ['ฟอร์ม','คู่มือ','SOP','แบบบันทึก','ลิงก์ระบบ'].map(k=>[k,k])],
@@ -537,7 +549,7 @@ async function admUsers(){
   $('adm').innerHTML = '<div style="display:flex;justify-content:space-between;margin-bottom:8px">' +
     '<h2>ผู้ใช้งาน ('+U.length+')</h2><button class="btn sm" onclick="edUser()">＋ เพิ่มผู้ใช้</button></div>' +
     '<p class="sub" style="margin-bottom:14px">เพิ่มชื่อไว้ก่อน → ผู้ใช้เข้าเว็บครั้งแรกแล้วตั้งรหัสผ่านเอง ' +
-    '(ระบบเก็บเป็นค่าเข้ารหัส ผู้ดูแลดูรหัสจริงไม่ได้)</p>' +
+    '(รหัสผ่านยาว/สั้น/รูปแบบใดก็ได้ตามใจผู้ใช้ ระบบเก็บเป็นค่าเข้ารหัส ผู้ดูแลดูรหัสจริงไม่ได้)</p>' +
     '<table><thead><tr><th>ชื่อ-สกุล</th><th>username</th><th>สิทธิ์</th><th>รหัสผ่าน</th><th>เข้าล่าสุด</th><th></th></tr></thead><tbody>' +
     U.map(u => '<tr><td><b>'+esc(u.fullname)+'</b><br><span class="sub" style="font-size:10.5px">'+esc(u.position||'')+'</span></td>' +
       '<td>'+esc(u.username)+'</td>' +
