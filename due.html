@@ -151,8 +151,8 @@
                 <button onclick="togglePharmaPage()" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs px-4 py-1.5 rounded-full shadow-md hover:shadow-lg transition font-bold">หน้าเภสัชกร</button>
             </div>
             <div class="flex gap-2 bg-gray-200/50 p-1.5 rounded-2xl shadow-inner overflow-x-auto w-full md:w-auto" id="mainTabs">
-                <button onclick="switchTab('Oseltamivir')" id="tab-Oseltamivir" class="tab-btn tab-active px-6 py-2 rounded-xl transition-all whitespace-nowrap">Antibiotics</button>
-                <button onclick="switchTab('Antibiotics')" id="tab-Antibiotics" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap">Oseltamivir</button>
+                <button onclick="switchTab('Oseltamivir')" id="tab-Oseltamivir" class="tab-btn tab-active px-6 py-2 rounded-xl transition-all whitespace-nowrap font-bold">Oseltamivir</button>
+                <button onclick="switchTab('Antibiotics')" id="tab-Antibiotics" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap font-bold">Antibiotics</button>
                 <button onclick="switchTab('Atorvastatin')" id="tab-Atorvastatin" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap">Atorvastatin</button>
                 <button onclick="switchTab('Covids')" id="tab-Covids" class="tab-btn tab-inactive px-6 py-2 rounded-xl transition-all whitespace-nowrap">Covids</button>
             </div>
@@ -788,7 +788,12 @@ function searchDoctor(){
     const val=document.getElementById('searchLicense').value.trim();
     if(!val){showToast('กรุณาพิมพ์เลข ว.','error');return}
     if(val in globalDocsMap){
-        revealedLicense=val;renderDocSummaryChart();renderDoctorPatientList(val);
+        revealedLicense=val;
+        // ★ FIX: reset เดือนเป็น "ทุกช่วง" เพื่อให้เห็น data ทั้งหมดของหมอ
+        const selM=document.getElementById('docMonthSelector');
+        if(selM)selM.value='all';
+        renderDocSummaryChart();
+        renderDoctorPatientList(val);
         showToast('พบข้อมูลแพทย์: '+(globalDocsMap[val]||'ว.'+val),'success');
     }else{showToast('ไม่พบข้อมูลแพทย์เลข ว.'+val,'error')}
 }
@@ -816,7 +821,11 @@ function renderDocSummaryChart(){
     if(se('stat-ator'))se('stat-ator').textContent=`${stats['Atorvastatin'].total} / ${stats['Atorvastatin'].eval} (${pct(stats['Atorvastatin'].eval,stats['Atorvastatin'].total)}%)`;
     if(se('stat-covd'))se('stat-covd').textContent=`${stats['Covids'].total} / ${stats['Covids'].eval} (${pct(stats['Covids'].eval,stats['Covids'].total)}%)`;
     let activeLic=licenses.filter(l=>(agg[l].pass+agg[l].fail+agg[l].none)>0);
-    if(revealedLicense&&activeLic.includes(revealedLicense))activeLic=[revealedLicense];
+    // ★ FIX: ถ้าค้นหาหมอ → แสดงเฉพาะหมอคนนั้น (แม้ไม่มี data ในเดือนที่เลือก)
+    if(revealedLicense){
+        if(!activeLic.includes(revealedLicense))activeLic.push(revealedLicense);
+        activeLic=[revealedLicense];
+    }
     const typedLic=document.getElementById('searchLicense')?document.getElementById('searchLicense').value.trim():'';
     // ★ Quality indicators
     let qOI=0,qOO=0,qAI=0,qAS=0,qNI=0,qCI=0;
