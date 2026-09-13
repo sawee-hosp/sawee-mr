@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ระบบยา รพ.สวี</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232f6bff'/><stop offset='1' stop-color='%2300c6ff'/></linearGradient></defs><rect x='11' y='2' width='10' height='28' rx='3' fill='url(%23g)'/><rect x='2' y='11' width='28' height='10' rx='3' fill='url(%23g)'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══ Root & Reset ═══ */
@@ -72,6 +72,30 @@ a{color:var(--pri);text-decoration:none}
 @keyframes floatA{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,40px)}}
 @keyframes floatB{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
 
+/* molecular dot grid on login */
+.login-mol{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.09) 1.5px,transparent 1.5px);
+  background-size:36px 36px;
+  animation:molDrift 40s linear infinite;
+}
+@keyframes molDrift{0%{background-position:0 0}100%{background-position:36px 36px}}
+/* floating CSS capsule shapes */
+.login-caps{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.login-cap{
+  position:absolute;border-radius:100px;overflow:hidden;
+  animation:capFall linear infinite;
+}
+.login-cap::before,.login-cap::after{
+  content:'';position:absolute;top:0;width:50%;height:100%;
+}
+.login-cap::before{left:0}
+.login-cap::after{right:0}
+@keyframes capFall{
+  0%{transform:translateY(-40px) rotate(0deg)}
+  100%{transform:translateY(calc(100vh + 40px)) rotate(200deg)}
+}
+
 .login-card{
   background:rgba(255,255,255,.95);backdrop-filter:blur(20px);
   border-radius:var(--radius-lg);padding:48px 40px;
@@ -81,7 +105,7 @@ a{color:var(--pri);text-decoration:none}
   animation:cardIn .5s ease;
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.login-logo{font-size:56px;margin-bottom:8px;filter:drop-shadow(0 4px 8px rgba(47,107,255,.3))}
+.login-logo{margin-bottom:12px}
 .login-card h1{font-size:28px;font-weight:800;margin-bottom:4px}
 .login-subtitle{color:var(--text2);font-size:14px;margin-bottom:32px}
 .login-card .form-group{text-align:left;margin-bottom:20px}
@@ -142,7 +166,7 @@ a{color:var(--pri);text-decoration:none}
   background:var(--grad);
 }
 .nav-brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.nav-brand .logo{font-size:28px}
+.nav-brand .logo{display:flex;align-items:center}
 .nav-brand .title{font-family:'Prompt';font-weight:700;font-size:18px}
 .nav-menu{
   display:flex;align-items:center;gap:4px;
@@ -155,6 +179,7 @@ a{color:var(--pri);text-decoration:none}
   font-family:'Prompt';font-weight:500;font-size:14px;
   color:var(--text2);white-space:nowrap;
   transition:.2s;position:relative;background:none;
+  display:flex;align-items:center;gap:6px;
 }
 .nav-item:hover{color:var(--pri);background:rgba(47,107,255,.06)}
 .nav-item.active{color:var(--pri);background:rgba(47,107,255,.1)}
@@ -194,9 +219,9 @@ a{color:var(--pri);text-decoration:none}
   width:40px;height:40px;border-radius:10px;
   background:none;font-size:20px;position:relative;
   display:flex;align-items:center;justify-content:center;
-  transition:.2s;
+  transition:.2s;color:var(--text2);
 }
-.nav-icon-btn:hover{background:rgba(47,107,255,.08)}
+.nav-icon-btn:hover{background:rgba(47,107,255,.08);color:var(--pri)}
 .noti-badge{
   position:absolute;top:2px;right:2px;
   min-width:18px;height:18px;padding:0 5px;
@@ -259,9 +284,19 @@ a{color:var(--pri);text-decoration:none}
 }
 .stat-card .val{font-family:'Prompt';font-weight:800;font-size:32px;line-height:1}
 .stat-card .lbl{font-size:13px;opacity:.9;margin-top:4px}
+.stat-card .stat-deco{
+  position:absolute;bottom:10px;right:14px;opacity:.2;color:#fff;
+  display:flex;align-items:center;
+}
+.stat-card .stat-deco svg{width:40px;height:40px}
 .sec-title{
   font-family:'Prompt';font-weight:700;font-size:18px;
   margin-bottom:16px;display:flex;align-items:center;gap:8px;
+  color:var(--text);
+}
+.sec-title::before{
+  content:'';display:inline-block;width:4px;height:20px;
+  border-radius:2px;background:var(--grad);flex-shrink:0;
 }
 
 /* ═══ App Grid ═══ */
@@ -309,10 +344,10 @@ a{color:var(--pri);text-decoration:none}
 .post-type[data-type="ข่าวสาร"]{background:#f3e8ff;color:#6b21a8}
 .post-title{font-family:'Prompt';font-weight:600;font-size:15px}
 .post-summary{font-size:13px;color:var(--text2);margin-top:2px}
-.post-meta{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--text3);flex-wrap:wrap}
+.post-meta{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--text3);flex-wrap:wrap;align-items:center}
 .post-ack-btn{
   padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;
-  transition:.2s;
+  transition:.2s;display:inline-flex;align-items:center;gap:4px;
 }
 .post-ack-btn.pending{background:var(--grad);color:#fff}
 .post-ack-btn.done{background:#dcfce7;color:#15803d;cursor:default}
@@ -333,9 +368,9 @@ a{color:var(--pri);text-decoration:none}
 #noti-panel.show{right:0}
 .noti-header{
   padding:20px 24px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
-.noti-header h3{font-size:18px}
+.noti-header h3{font-size:18px;display:flex;align-items:center;gap:8px}
 .noti-close{
   width:36px;height:36px;border-radius:8px;
   background:none;font-size:18px;color:var(--text2);transition:.2s;
@@ -351,7 +386,7 @@ a{color:var(--pri);text-decoration:none}
 .noti-item.unread{background:#eff6ff;border-left-color:var(--pri)}
 .noti-item.level-warn{border-left-color:var(--warn)}
 .noti-item.level-crit{border-left-color:var(--err)}
-.noti-item .noti-title{font-weight:600;font-size:14px;margin-bottom:2px}
+.noti-item .noti-title{font-weight:600;font-size:14px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
 .noti-item .noti-msg{font-size:13px;color:var(--text2)}
 .noti-item .noti-time{font-size:11px;color:var(--text3);margin-top:4px}
 .noti-empty{text-align:center;padding:40px;color:var(--text3)}
@@ -367,20 +402,22 @@ a{color:var(--pri);text-decoration:none}
   padding:8px 14px;border-radius:8px;
   background:none;font-size:14px;font-weight:500;
   color:var(--text2);transition:.2s;
+  display:flex;align-items:center;gap:4px;
 }
 .btn-back:hover{background:#e2e8f0;color:var(--text)}
 .app-title-bar{font-family:'Prompt';font-weight:600;font-size:15px}
 .local-warn{
   margin-left:auto;padding:6px 14px;border-radius:8px;
   background:#fef3c7;color:#92400e;font-size:12px;
+  display:flex;align-items:center;gap:4px;
 }
 #app-iframe{flex:1;border:none;width:100%}
 .iframe-error{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:40px;text-align:center;
+  padding:40px;text-align:center;color:var(--text2);
 }
-.iframe-error .icon{font-size:64px;margin-bottom:16px}
-.iframe-error h3{font-size:20px;margin-bottom:8px}
+.iframe-error svg{margin-bottom:16px;color:var(--text3)}
+.iframe-error h3{font-size:20px;margin-bottom:8px;color:var(--text)}
 .iframe-error p{color:var(--text2);max-width:400px}
 
 /* ═══ Admin Panel ═══ */
@@ -389,9 +426,11 @@ a{color:var(--pri);text-decoration:none}
   padding:10px 20px;border-radius:10px;
   font-family:'Prompt';font-weight:500;font-size:14px;
   background:none;color:var(--text2);transition:.2s;
+  display:inline-flex;align-items:center;gap:6px;
 }
 .admin-tab:hover{background:rgba(47,107,255,.06);color:var(--pri)}
 .admin-tab.active{background:var(--grad);color:#fff}
+.admin-tab.active svg{stroke:#fff}
 .admin-card{
   background:var(--card);border-radius:var(--radius);
   padding:24px;border:1px solid var(--border);margin-bottom:16px;
@@ -411,7 +450,7 @@ a{color:var(--pri);text-decoration:none}
 .btn-sm{
   padding:8px 16px;border-radius:8px;
   font-family:'Prompt';font-weight:500;font-size:13px;
-  transition:.2s;
+  transition:.2s;display:inline-flex;align-items:center;gap:4px;
 }
 .btn-sm.primary{background:var(--grad);color:#fff}
 .btn-sm.primary:hover{box-shadow:0 4px 12px rgba(47,107,255,.3)}
@@ -440,6 +479,10 @@ a{color:var(--pri);text-decoration:none}
 .role-badge.staff{background:#f1f5f9;color:var(--text2)}
 .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 .status-dot.on{background:var(--ok)}.status-dot.off{background:var(--text3)}
+
+/* ═══ Level indicator dots ═══ */
+.lv-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;flex-shrink:0}
+.lv-dot.info{background:var(--pri)}.lv-dot.warn{background:var(--warn)}.lv-dot.crit{background:var(--err)}
 
 /* ═══ Post Modal ═══ */
 .modal-overlay{
@@ -490,7 +533,7 @@ a{color:var(--pri);text-decoration:none}
 .toast.info{background:var(--grad)}
 .toast.warn{background:linear-gradient(135deg,#d97706,#f59e0b)}
 
-/* ═══ Loading ═══ */
+/* ═══ Loading — Pharmacy Themed ═══ */
 .spinner{
   width:40px;height:40px;
   border:4px solid rgba(47,107,255,.15);
@@ -502,8 +545,23 @@ a{color:var(--pri);text-decoration:none}
 .loading-overlay{
   position:fixed;inset:0;z-index:980;
   background:rgba(255,255,255,.7);backdrop-filter:blur(4px);
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
 }
+.pill-loader{display:flex;gap:8px;align-items:end}
+.pill-loader .pill{
+  width:16px;border-radius:8px;background:var(--grad);
+  animation:pillBounce .6s ease-in-out infinite alternate;
+}
+.pill-loader .pill:nth-child(1){height:28px;animation-delay:0s}
+.pill-loader .pill:nth-child(2){height:20px;animation-delay:.1s;background:var(--grad-warm)}
+.pill-loader .pill:nth-child(3){height:32px;animation-delay:.2s;background:var(--grad-mint)}
+.pill-loader .pill:nth-child(4){height:24px;animation-delay:.3s}
+.pill-loader .pill:nth-child(5){height:18px;animation-delay:.4s;background:var(--grad-warm)}
+@keyframes pillBounce{
+  0%{transform:scaleY(1);opacity:.6}
+  100%{transform:scaleY(1.4);opacity:1}
+}
+.loading-text{font-family:'Prompt';font-size:14px;color:var(--text2);font-weight:500}
 
 /* ═══ Skeleton Loading ═══ */
 @keyframes shimmer{
@@ -591,15 +649,28 @@ a{color:var(--pri);text-decoration:none}
 <!-- Toast -->
 <div id="toast-box"></div>
 
-<!-- Loading -->
+<!-- Loading — Pharmacy Pills -->
 <div id="loading-el" class="loading-overlay" hidden>
-  <div class="spinner"></div>
+  <div class="pill-loader">
+    <div class="pill"></div><div class="pill"></div><div class="pill"></div><div class="pill"></div><div class="pill"></div>
+  </div>
+  <div class="loading-text">กำลังโหลด...</div>
 </div>
 
 <!-- ═══════════════ LOGIN ═══════════════ -->
 <div id="screen-login">
+  <!-- Molecular dot grid + floating capsules -->
+  <div class="login-mol"></div>
+  <div class="login-caps" id="login-caps"></div>
   <div class="login-card">
-    <div class="login-logo">💊</div>
+    <div class="login-logo">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+        <defs><linearGradient id="rlg" x1="0" y1="0" x2="72" y2="72"><stop offset="0" stop-color="#2f6bff"/><stop offset="1" stop-color="#00c6ff"/></linearGradient></defs>
+        <circle cx="36" cy="36" r="34" stroke="url(#rlg)" stroke-width="2" fill="rgba(47,107,255,.08)"/>
+        <rect x="28" y="14" width="16" height="44" rx="5" fill="url(#rlg)"/>
+        <rect x="14" y="28" width="44" height="16" rx="5" fill="url(#rlg)"/>
+      </svg>
+    </div>
     <h1 class="gt">ระบบยา รพ.สวี</h1>
     <p class="login-subtitle">กลุ่มงานเภสัชกรรม โรงพยาบาลสวี จ.ชุมพร</p>
 
@@ -626,7 +697,7 @@ a{color:var(--pri);text-decoration:none}
         <label>ตั้งรหัสผ่าน</label>
         <input type="password" id="inp-setpw" placeholder="อย่างน้อย 4 ตัวอักษร" autocomplete="new-password">
       </div>
-      <div class="login-hint">💡 ใช้รหัสที่จำได้ง่าย — จะใช้ login ทุกครั้ง</div>
+      <div class="login-hint">ใช้รหัสที่จำได้ง่าย — จะใช้ login ทุกครั้ง</div>
       <button class="btn-primary" onclick="A.setPassword()" style="margin-top:12px">ยืนยันและเข้าสู่ระบบ</button>
       <button class="btn-link" onclick="A.backToUser()">← เปลี่ยนชื่อผู้ใช้</button>
     </div>
@@ -658,19 +729,29 @@ a{color:var(--pri);text-decoration:none}
   <!-- Navbar -->
   <nav id="main-nav">
     <div class="nav-brand">
-      <span class="logo">💊</span>
+      <span class="logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <defs><linearGradient id="nlg" x1="0" y1="0" x2="32" y2="32"><stop offset="0" stop-color="#2f6bff"/><stop offset="1" stop-color="#00c6ff"/></linearGradient></defs>
+          <rect x="11" y="2" width="10" height="28" rx="3" fill="url(#nlg)"/>
+          <rect x="2" y="11" width="28" height="10" rx="3" fill="url(#nlg)"/>
+        </svg>
+      </span>
       <span class="title gt">รพ.สวี</span>
     </div>
     <button class="hamburger" onclick="document.getElementById('nav-menu').classList.toggle('open')">
       <span></span><span></span><span></span>
     </button>
     <div id="nav-menu" class="nav-menu">
-      <button class="nav-item active" data-view="dashboard" onclick="A.go('dashboard')">🏠 หน้าหลัก</button>
+      <button class="nav-item active" data-view="dashboard" onclick="A.go('dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>
+        หน้าหลัก
+      </button>
       <!-- app groups inserted here -->
     </div>
     <div class="nav-actions">
       <button class="nav-icon-btn" onclick="A.toggleNoti()" title="การแจ้งเตือน">
-        🔔<span id="noti-badge" class="noti-badge" hidden>0</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span id="noti-badge" class="noti-badge" hidden>0</span>
       </button>
       <div class="nav-user">
         <button class="nav-user-btn">
@@ -678,8 +759,8 @@ a{color:var(--pri);text-decoration:none}
           <span class="nav-user-name" id="nav-uname"></span>
         </button>
         <div class="nav-user-dd">
-          <button id="btn-admin" onclick="A.go('admin')" hidden>⚙️ จัดการระบบ</button>
-          <button onclick="A.logout()">🚪 ออกจากระบบ</button>
+          <button id="btn-admin" onclick="A.go('admin')" hidden>จัดการระบบ</button>
+          <button onclick="A.logout()">ออกจากระบบ</button>
         </div>
       </div>
     </div>
@@ -693,11 +774,11 @@ a{color:var(--pri);text-decoration:none}
     </div>
     <div class="stats-row" id="dash-stats"></div>
     <div id="dash-pinned"></div>
-    <h3 class="sec-title">📱 แอปพลิเคชัน</h3>
+    <h3 class="sec-title">แอปพลิเคชัน</h3>
     <div class="app-grid" id="dash-apps"></div>
-    <h3 class="sec-title">🔔 แจ้งเตือนล่าสุด</h3>
+    <h3 class="sec-title">แจ้งเตือนล่าสุด</h3>
     <div id="dash-noti" class="post-list" style="margin-bottom:32px"></div>
-    <h3 class="sec-title">📢 ประกาศและเอกสาร</h3>
+    <h3 class="sec-title">ประกาศและเอกสาร</h3>
     <div id="dash-posts" class="post-list"></div>
   </div>
 
@@ -706,11 +787,14 @@ a{color:var(--pri);text-decoration:none}
     <div class="app-toolbar">
       <button class="btn-back" onclick="A.closeApp()">← กลับหน้าหลัก</button>
       <span class="app-title-bar" id="app-bar-title"></span>
-      <span class="local-warn" id="local-warn" hidden>⚠️ เครือข่ายภายใน — ใช้ได้จากเครื่องที่อนุมัติเท่านั้น</span>
+      <span class="local-warn" id="local-warn" hidden>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        เครือข่ายภายใน — ใช้ได้จากเครื่องที่อนุมัติเท่านั้น
+      </span>
     </div>
     <iframe id="app-iframe" allow="clipboard-write"></iframe>
     <div id="iframe-err" class="iframe-error" hidden>
-      <div class="icon">🔒</div>
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       <h3>ไม่สามารถเข้าถึงแอปนี้ได้</h3>
       <p>แอปนี้ทำงานบนเครือข่ายภายในโรงพยาบาล กรุณาเข้าใช้จากเครื่องที่ได้รับอนุมัติเท่านั้น</p>
       <button class="btn-sm primary" onclick="A.closeApp()" style="margin-top:16px">กลับหน้าหลัก</button>
@@ -725,7 +809,10 @@ a{color:var(--pri);text-decoration:none}
 <div id="noti-overlay" class="noti-overlay" hidden onclick="A.toggleNoti()"></div>
 <div id="noti-panel">
   <div class="noti-header">
-    <h3>🔔 การแจ้งเตือน</h3>
+    <h3>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      การแจ้งเตือน
+    </h3>
     <button class="noti-close" onclick="A.toggleNoti()">✕</button>
   </div>
   <div class="noti-list" id="noti-list"></div>
@@ -764,7 +851,7 @@ a{color:var(--pri);text-decoration:none}
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:20px">
-        <button type="submit" class="btn-sm primary" style="flex:1">💾 บันทึก</button>
+        <button type="submit" class="btn-sm primary" style="flex:1">บันทึก</button>
         <button type="button" class="btn-sm ghost" onclick="A.closeAppForm()">ยกเลิก</button>
       </div>
     </form>
@@ -777,6 +864,39 @@ a{color:var(--pri);text-decoration:none}
  * ═══════════════════════════════════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbzd7AyDe-ChL4K-RZBGiffX06pxZsqwFHlOl18H0Er95K2ytveOtVoqGLeSiYLhSpz5yw/exec';
 // เปลี่ยนเป็น URL ที่ได้จาก Deploy → Web app ของ GAS
+
+/* ═══ SVG Icon System ═══ */
+const _P={
+home:'<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/>',
+bell:'<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/>',
+out:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+clip:'<path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
+alert:'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+edit:'<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/>',
+del:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>',
+pin:'<line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1V4H8v2h1v4.76a2 2 0 01-1.11 1.79l-1.78.89A2 2 0 005 15.24z"/>',
+lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>',
+key:'<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+chk:'<polyline points="20 6 9 17 4 12"/>',
+plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+users:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',
+send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+mega:'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',
+cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+file:'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+save:'<path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+app:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+link:'<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>',
+// Stat card pharmacy decorations
+capsule:'<rect x="2" y="8" width="20" height="8" rx="4"/><line x1="12" y1="8" x2="12" y2="16"/>',
+mol:'<circle cx="12" cy="6" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><line x1="12" y1="8.5" x2="5" y2="15.5"/><line x1="12" y1="8.5" x2="19" y2="15.5"/><line x1="7.5" y1="18" x2="16.5" y2="18"/>',
+flask:'<path d="M10 2h4m-3 0v7.5L6 20a1.5 1.5 0 001.3 2h9.4a1.5 1.5 0 001.3-2l-5-10.5V2"/><circle cx="9" cy="17" r=".8"/><circle cx="13" cy="15" r=".5"/>',
+pulse:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+};
+function ic(n,s){s=s||18;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.125em;flex-shrink:0">'+(_P[n]||'')+'</svg>';}
 
 /* ═══ State ═══ */
 const S = {
@@ -903,28 +1023,29 @@ const A = {
   showSkeleton() {
     const hour = new Date().getHours();
     const greet = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
-    $('dash-greeting').textContent = `${greet} 👋`;
+    $('dash-greeting').textContent = greet;
     $('dash-date').textContent = thaiDate(new Date());
 
     // skeleton stats
-    $('dash-stats').innerHTML = Array(4).fill(0).map((_,i) =>
-      `<div class="skel skel-stat" style="opacity:${.7-i*.1}"></div>`).join('');
+    $('dash-stats').innerHTML = [0,1,2,3].map((_,i) =>
+      `<div class="skel skel-stat" style="opacity:${.8-i*.1};border-radius:16px"></div>`).join('');
 
     // skeleton apps
-    $('dash-apps').innerHTML = Array(4).fill(0).map((_,i) =>
-      `<div class="skel-card"><div class="skel skel-circle" style="margin-bottom:10px"></div>
+    $('dash-apps').innerHTML = [0,1,2,3].map((_,i) =>
+      `<div class="skel-card" style="opacity:${.9-i*.1}">
+       <div class="skel" style="width:36px;height:36px;border-radius:8px;margin-bottom:10px"></div>
        <div class="skel skel-line w60"></div><div class="skel skel-line w80"></div></div>`).join('');
 
     // skeleton noti
-    $('dash-noti').innerHTML = Array(3).fill(0).map(() =>
-      `<div class="skel-card" style="margin-bottom:8px">
-       <div class="skel skel-line w50"></div><div class="skel skel-line w80"></div>
-       <div class="skel skel-line w40"></div></div>`).join('');
+    $('dash-noti').innerHTML = [0,1,2].map((_,i) =>
+      `<div class="skel-card" style="margin-bottom:8px;opacity:${.9-i*.15}">
+       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div class="skel" style="width:8px;height:8px;border-radius:50%"></div><div class="skel skel-line w50" style="margin:0"></div></div>
+       <div class="skel skel-line w80"></div></div>`).join('');
 
     // skeleton posts
-    $('dash-posts').innerHTML = Array(3).fill(0).map(() =>
-      `<div class="skel-card" style="margin-bottom:8px">
-       <div style="display:flex;gap:8px;margin-bottom:8px"><div class="skel" style="width:60px;height:20px;border-radius:6px"></div><div class="skel skel-line w50"></div></div>
+    $('dash-posts').innerHTML = [0,1,2].map((_,i) =>
+      `<div class="skel-card" style="margin-bottom:8px;opacity:${.9-i*.15}">
+       <div style="display:flex;gap:8px;margin-bottom:8px"><div class="skel" style="width:60px;height:20px;border-radius:10px"></div><div class="skel skel-line w50" style="margin:0"></div></div>
        <div class="skel skel-line w80"></div><div class="skel skel-line w40"></div></div>`).join('');
   },
 
@@ -982,7 +1103,7 @@ const A = {
       div.innerHTML = `<button class="nav-group-btn">${g}</button>
         <div class="nav-group-dd">${groups[g].map(a => `
           <button class="nav-dd-item" onclick="A.openApp('${a.id}')">
-            <span class="dd-icon">${a.icon||'📄'}</span>
+            <span class="dd-icon">${a.icon||ic('file',20)}</span>
             <span class="dd-info"><span class="dd-name">${esc(a.name)}</span><span class="dd-desc">${esc(a.desc||'')}</span></span>
           </button>`).join('')}</div>`;
       menu.appendChild(div);
@@ -992,7 +1113,7 @@ const A = {
     ungrouped.forEach(a => {
       const btn = document.createElement('button');
       btn.className = 'nav-item';
-      btn.innerHTML = `<span class="app-icon">${a.icon||'📄'}</span> ${esc(a.name)}`;
+      btn.innerHTML = `<span class="app-icon">${a.icon||ic('file',16)}</span> ${esc(a.name)}`;
       btn.onclick = () => A.openApp(a.id);
       menu.appendChild(btn);
     });
@@ -1003,7 +1124,7 @@ const A = {
     // greeting
     const hour = new Date().getHours();
     const greet = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
-    $('dash-greeting').textContent = `${greet} 👋`;
+    $('dash-greeting').textContent = greet;
     $('dash-date').textContent = thaiDate(new Date());
 
     // stats
@@ -1013,21 +1134,25 @@ const A = {
     $('dash-stats').innerHTML = `
       <div class="stat-card" style="background:var(--grad)">
         <div class="val">${S.apps.length}</div><div class="lbl">แอปพลิเคชัน</div>
+        <span class="stat-deco">${ic('app',40)}</span>
       </div>
       <div class="stat-card" style="background:var(--grad-warm)">
         <div class="val">${unreadNoti}</div><div class="lbl">แจ้งเตือนใหม่</div>
+        <span class="stat-deco">${ic('bell',40)}</span>
       </div>
       <div class="stat-card" style="background:var(--grad-mint)">
         <div class="val">${pinnedPosts}</div><div class="lbl">ประกาศปักหมุด</div>
+        <span class="stat-deco">${ic('clip',40)}</span>
       </div>
       <div class="stat-card" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
         <div class="val">${pendingAck}</div><div class="lbl">รอรับทราบ</div>
+        <span class="stat-deco">${ic('alert',40)}</span>
       </div>`;
 
     // apps grid
     $('dash-apps').innerHTML = S.apps.map(a => `
       <div class="app-card" onclick="A.openApp('${a.id}')">
-        <div class="icon">${a.icon||'📄'}</div>
+        <div class="icon">${a.icon||ic('file',36)}</div>
         <div class="name">${esc(a.name)}</div>
         <div class="desc">${esc(a.desc||'')}</div>
         ${a.group ? `<span class="tag">${esc(a.group)}</span>` : ''}
@@ -1037,7 +1162,7 @@ const A = {
     const recent = S.notis.slice(0, 5);
     $('dash-noti').innerHTML = recent.length ? recent.map(n => `
       <div class="noti-item ${n.read?'':'unread'} level-${n.level}" onclick="A.readNoti('${n.id}')">
-        <div class="noti-title">${levelIcon(n.level)} ${esc(n.title)}</div>
+        <div class="noti-title"><span class="lv-dot ${n.level}"></span>${esc(n.title)}</div>
         <div class="noti-msg">${esc(n.message||'')}</div>
         <div class="noti-time">${timeAgo(n.created_at)}</div>
       </div>`).join('') : '<p style="color:var(--text3);padding:12px">ไม่มีการแจ้งเตือน</p>';
@@ -1047,15 +1172,15 @@ const A = {
       <div class="post-item ${p.pin?'pinned':''}" onclick="A.openPost('${p.id}')">
         <div class="post-head">
           <span class="post-type" data-type="${esc(p.type)}">${esc(p.type)}</span>
-          ${p.pin?'<span style="color:var(--warn);font-size:12px">📌 ปักหมุด</span>':''}
+          ${p.pin?'<span style="color:var(--warn);font-size:12px;display:inline-flex;align-items:center;gap:3px">'+ic('pin',12)+' ปักหมุด</span>':''}
           <span class="post-title">${esc(p.title)}</span>
         </div>
         <div class="post-summary">${esc(p.summary||'')}</div>
         <div class="post-meta">
-          <span>✍️ ${esc(p.author||'')}</span>
-          <span>📅 ${fmtDate(p.created_at)}</span>
+          <span>${esc(p.author||'')}</span>
+          <span>${fmtDate(p.created_at)}</span>
           ${p.ack_required ? `<button class="post-ack-btn ${p.acked?'done':'pending'}" onclick="event.stopPropagation();${p.acked?'':'A.ackPost(\''+p.id+'\')'}">
-            ${p.acked?'✅ รับทราบแล้ว':'☐ กดรับทราบ'}</button>` : ''}
+            ${p.acked?ic('chk',14)+' รับทราบแล้ว':'กดรับทราบ'}</button>` : ''}
         </div>
       </div>`).join('') || '<p style="color:var(--text3);padding:12px">ไม่มีประกาศ</p>';
   },
@@ -1096,7 +1221,11 @@ const A = {
     const errEl = $('iframe-err');
     hide('iframe-err');
     iframe.hidden = false;
-    iframe.src = app.url;
+
+    // ── ส่ง username, role, token ไปยัง sub-app ผ่าน URL params ──
+    const sep = app.url.includes('?') ? '&' : '?';
+    const params = `portal_user=${encodeURIComponent(S.user.username)}&portal_role=${encodeURIComponent(S.user.role)}&portal_name=${encodeURIComponent(S.user.fullname||'')}&portal_token=${encodeURIComponent(S.token||'')}`;
+    iframe.src = app.url + sep + params;
 
     // timeout fallback for localhost
     if (isLocal) {
@@ -1135,10 +1264,10 @@ const A = {
   renderNotiPanel() {
     $('noti-list').innerHTML = S.notis.length ? S.notis.map(n => `
       <div class="noti-item ${n.read?'':'unread'} level-${n.level}" onclick="A.readNoti('${n.id}')">
-        <div class="noti-title">${levelIcon(n.level)} ${esc(n.title)}</div>
+        <div class="noti-title"><span class="lv-dot ${n.level}"></span>${esc(n.title)}</div>
         <div class="noti-msg">${esc(n.message||'')}</div>
         <div class="noti-time">${timeAgo(n.created_at)}</div>
-      </div>`).join('') : '<div class="noti-empty">🔔<br>ไม่มีการแจ้งเตือน</div>';
+      </div>`).join('') : `<div class="noti-empty">${ic('bell',32)}<br>ไม่มีการแจ้งเตือน</div>`;
   },
   async readNoti(id) {
     const n = S.notis.find(x => x.id === id);
@@ -1156,13 +1285,13 @@ const A = {
     if (!p) return;
     let html = `<span class="post-type" data-type="${esc(p.type)}" style="margin-bottom:8px;display:inline-block">${esc(p.type)}</span>`;
     html += `<h2>${esc(p.title)}</h2>`;
-    html += `<div style="font-size:13px;color:var(--text2);margin-bottom:16px">✍️ ${esc(p.author||'')} · ${fmtDate(p.created_at)}</div>`;
+    html += `<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${esc(p.author||'')} · ${fmtDate(p.created_at)}</div>`;
     html += `<div class="content">${renderMd(p.content||p.summary||'')}</div>`;
-    if (p.attach_url) html += `<div style="margin-top:16px"><a href="${esc(p.attach_url)}" target="_blank" style="color:var(--pri)">📎 ไฟล์แนบ</a></div>`;
+    if (p.attach_url) html += `<div style="margin-top:16px"><a href="${esc(p.attach_url)}" target="_blank" style="color:var(--pri);display:inline-flex;align-items:center;gap:4px">${ic('link',14)} ไฟล์แนบ</a></div>`;
     if (p.ack_required && !p.acked) {
-      html += `<div style="margin-top:20px;text-align:center"><button class="btn-primary" style="max-width:260px" onclick="A.ackPost('${p.id}')">☐ กดรับทราบ</button></div>`;
+      html += `<div style="margin-top:20px;text-align:center"><button class="btn-primary" style="max-width:260px" onclick="A.ackPost('${p.id}')">กดรับทราบ</button></div>`;
     } else if (p.ack_required && p.acked) {
-      html += `<div style="margin-top:20px;text-align:center;color:var(--ok);font-weight:600">✅ คุณรับทราบประกาศนี้แล้ว</div>`;
+      html += `<div style="margin-top:20px;text-align:center;color:var(--ok);font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px">${ic('chk',18)} คุณรับทราบประกาศนี้แล้ว</div>`;
     }
     $('post-body').innerHTML = html;
     show('post-modal'); $('post-modal').classList.add('show');
@@ -1188,12 +1317,12 @@ const A = {
   async renderAdmin() {
     const el = $('view-admin');
     el.innerHTML = `
-      <div class="dash-header"><h2 class="gt">⚙️ จัดการระบบ</h2><p>เพิ่ม/แก้ไขแอป ผู้ใช้ ประกาศ และการแจ้งเตือน</p></div>
+      <div class="dash-header"><h2 class="gt">${ic('gear',22)} จัดการระบบ</h2><p>เพิ่ม/แก้ไขแอป ผู้ใช้ ประกาศ และการแจ้งเตือน</p></div>
       <div class="admin-tabs">
-        <button class="admin-tab ${S.adminTab==='apps'?'active':''}" onclick="A.adminTab('apps')">📱 แอป</button>
-        <button class="admin-tab ${S.adminTab==='users'?'active':''}" onclick="A.adminTab('users')">👥 ผู้ใช้</button>
-        <button class="admin-tab ${S.adminTab==='posts'?'active':''}" onclick="A.adminTab('posts')">📢 ประกาศ</button>
-        <button class="admin-tab ${S.adminTab==='noti'?'active':''}" onclick="A.adminTab('noti')">🔔 แจ้งเตือน</button>
+        <button class="admin-tab ${S.adminTab==='apps'?'active':''}" onclick="A.adminTab('apps')">${ic('grid',16)} แอป</button>
+        <button class="admin-tab ${S.adminTab==='users'?'active':''}" onclick="A.adminTab('users')">${ic('users',16)} ผู้ใช้</button>
+        <button class="admin-tab ${S.adminTab==='posts'?'active':''}" onclick="A.adminTab('posts')">${ic('mega',16)} ประกาศ</button>
+        <button class="admin-tab ${S.adminTab==='noti'?'active':''}" onclick="A.adminTab('noti')">${ic('bell',16)} แจ้งเตือน</button>
       </div>
       <div id="admin-content"></div>`;
     A.adminTab(S.adminTab);
@@ -1213,12 +1342,12 @@ const A = {
       if (!r.ok) return ct.innerHTML = `<p>${r.error}</p>`;
       ct.innerHTML = `
         <div class="admin-card">
-          <h4>📱 รายการแอป <button class="btn-sm primary" onclick="A.openAppForm()" style="margin-left:auto">➕ เพิ่มแอปใหม่</button></h4>
+          <h4>${ic('grid',18)} รายการแอป <button class="btn-sm primary" onclick="A.openAppForm()" style="margin-left:auto">${ic('plus',14)} เพิ่มแอปใหม่</button></h4>
           <div style="overflow-x:auto">
           <table class="admin-table">
             <tr><th>ไอคอน</th><th>ชื่อ</th><th>กลุ่ม</th><th>URL</th><th>สิทธิ์</th><th>ลำดับ</th><th>สถานะ</th><th>เปิดใน</th><th></th></tr>
             ${(r.apps||[]).map(a => `<tr>
-              <td>${a.icon||'📄'}</td>
+              <td>${a.icon||ic('file',20)}</td>
               <td><strong>${esc(a.name)}</strong><br><small style="color:var(--text3)">${esc(a.desc||'')}</small></td>
               <td>${esc(a.group||'-')}</td>
               <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis"><small>${esc(a.url)}</small></td>
@@ -1227,15 +1356,22 @@ const A = {
               <td><span class="status-dot ${a.active==='TRUE'?'on':'off'}"></span>${a.active==='TRUE'?'เปิด':'ปิด'}</td>
               <td>${a.target==='iframe'?'iframe':'แท็บใหม่'}</td>
               <td class="actions">
-                <button class="btn-sm ghost" onclick='A.editApp(${JSON.stringify(a).replace(/'/g,"&#39;")})'>✏️</button>
-                <button class="btn-sm danger" onclick="A.deleteApp('${a.id}','${esc(a.name)}')">🗑️</button>
+                <button class="btn-sm ghost" onclick='A.editApp(${JSON.stringify(a).replace(/'/g,"&#39;")})'>${ic('edit',14)}</button>
+                <button class="btn-sm danger" onclick="A.deleteApp('${a.id}','${esc(a.name)}')">${ic('del',14)}</button>
               </td>
             </tr>`).join('')}
           </table></div>
         </div>
         <div class="admin-card">
-          <h4>💡 วิธีให้ Sub-app ส่งแจ้งเตือนเข้าระบบ</h4>
-          <pre style="background:#f1f5f9;padding:16px;border-radius:8px;font-size:12px;overflow-x:auto;white-space:pre-wrap">// วางโค้ดนี้ใน Sub-app ของคุณ
+          <h4>วิธีให้ Sub-app ส่งแจ้งเตือนเข้าระบบ</h4>
+          <pre style="background:#f1f5f9;padding:16px;border-radius:8px;font-size:12px;overflow-x:auto;white-space:pre-wrap">// ── รับ username จาก Portal (ผ่าน URL params) ──
+const params = new URLSearchParams(location.search);
+const portalUser = params.get('portal_user');  // username
+const portalRole = params.get('portal_role');  // role
+const portalName = params.get('portal_name');  // ชื่อ-สกุล
+const portalToken = params.get('portal_token'); // token
+
+// ── วางโค้ดนี้ใน Sub-app เพื่อส่งแจ้งเตือน ──
 fetch('${API_URL || 'GAS_URL'}', {
   method: 'POST',
   headers: {'Content-Type':'text/plain'},
@@ -1258,7 +1394,7 @@ fetch('${API_URL || 'GAS_URL'}', {
       if (!r.ok) return ct.innerHTML = `<p>${r.error}</p>`;
       ct.innerHTML = `
         <div class="admin-card">
-          <h4>👥 รายชื่อผู้ใช้ (${(r.users||[]).length} คน)</h4>
+          <h4>${ic('users',18)} รายชื่อผู้ใช้ (${(r.users||[]).length} คน)</h4>
           <div style="overflow-x:auto">
           <table class="admin-table">
             <tr><th>Username</th><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>สิทธิ์</th><th>รหัสผ่าน</th><th>สถานะ</th><th>Login ล่าสุด</th><th></th></tr>
@@ -1267,14 +1403,14 @@ fetch('${API_URL || 'GAS_URL'}', {
               <td>${esc(u.fullname||'-')}</td>
               <td>${esc(u.position||'-')}</td>
               <td><span class="role-badge ${u.role}">${u.role}</span></td>
-              <td>${u.has_password?'✅ ตั้งแล้ว':'⏳ ยังไม่ตั้ง'}</td>
+              <td>${u.has_password?'<span style="color:var(--ok)">ตั้งแล้ว</span>':'<span style="color:var(--text3)">ยังไม่ตั้ง</span>'}</td>
               <td><span class="status-dot ${u.active==='TRUE'?'on':'off'}"></span>${u.active==='TRUE'?'ใช้งาน':'ระงับ'}</td>
               <td><small>${u.last_login?fmtDate(u.last_login):'-'}</small></td>
               <td class="actions">
                 <select onchange="A.changeRole('${esc(u.username)}',this.value)" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border)">
                   ${['staff','pharmacist','tech','admin'].map(r => `<option value="${r}" ${r===u.role?'selected':''}>${r}</option>`).join('')}
                 </select>
-                ${u.has_password?`<button class="btn-sm danger" onclick="A.resetPw('${esc(u.username)}')">🔑 รีเซ็ต</button>`:''}
+                ${u.has_password?`<button class="btn-sm danger" onclick="A.resetPw('${esc(u.username)}')">${ic('key',14)} รีเซ็ต</button>`:''}
                 <button class="btn-sm ${u.active==='TRUE'?'danger':'ghost'}" onclick="A.toggleUser('${esc(u.username)}','${u.active==='TRUE'?'FALSE':'TRUE'}')">${u.active==='TRUE'?'ระงับ':'เปิด'}</button>
               </td>
             </tr>`).join('')}
@@ -1285,7 +1421,7 @@ fetch('${API_URL || 'GAS_URL'}', {
       loading(false);
       ct.innerHTML = `
         <div class="admin-card">
-          <h4>📢 สร้างประกาศใหม่</h4>
+          <h4>${ic('mega',18)} สร้างประกาศใหม่</h4>
           <form onsubmit="return A.createPost(event)">
             <div class="form-row">
               <div class="form-group"><label>ประเภท</label>
@@ -1302,7 +1438,7 @@ fetch('${API_URL || 'GAS_URL'}', {
               <div class="form-group"><label>เฉพาะ role (ว่าง=ทุกคน)</label><input id="cp-roles"></div>
             </div>
             <div class="form-group" style="margin-bottom:16px"><label>URL ไฟล์แนบ</label><input id="cp-attach"></div>
-            <button type="submit" class="btn-sm primary">📤 เผยแพร่ประกาศ</button>
+            <button type="submit" class="btn-sm primary">${ic('send',14)} เผยแพร่ประกาศ</button>
           </form>
         </div>`;
 
@@ -1310,12 +1446,12 @@ fetch('${API_URL || 'GAS_URL'}', {
       loading(false);
       ct.innerHTML = `
         <div class="admin-card">
-          <h4>🔔 ส่งการแจ้งเตือน</h4>
+          <h4>${ic('bell',18)} ส่งการแจ้งเตือน</h4>
           <form onsubmit="return A.sendNoti(event)">
             <div class="form-row">
               <div class="form-group"><label>หัวข้อ *</label><input id="cn-title" required></div>
               <div class="form-group"><label>ระดับ</label>
-                <select id="cn-level"><option value="info">ℹ️ ข้อมูล</option><option value="warn">⚠️ เตือน</option><option value="crit">🚨 วิกฤต</option></select>
+                <select id="cn-level"><option value="info">ข้อมูล</option><option value="warn">เตือน</option><option value="crit">วิกฤต</option></select>
               </div>
             </div>
             <div class="form-group" style="margin-bottom:16px"><label>ข้อความ</label><textarea id="cn-msg" rows="3" style="resize:vertical"></textarea></div>
@@ -1323,7 +1459,7 @@ fetch('${API_URL || 'GAS_URL'}', {
               <div class="form-group"><label>ส่งถึง role (ว่าง=ทุกคน)</label><input id="cn-roles"></div>
               <div class="form-group"><label>ส่งถึง username (ว่าง=ทุกคน)</label><input id="cn-users"></div>
             </div>
-            <button type="submit" class="btn-sm primary">📤 ส่งแจ้งเตือน</button>
+            <button type="submit" class="btn-sm primary">${ic('send',14)} ส่งแจ้งเตือน</button>
           </form>
         </div>`;
     }
@@ -1447,9 +1583,6 @@ function toast(msg, type = 'info') {
   $('toast-box').appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
-function levelIcon(lv) {
-  return lv === 'crit' ? '🚨' : lv === 'warn' ? '⚠️' : 'ℹ️';
-}
 function thaiDate(d) {
   const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -1498,6 +1631,33 @@ document.addEventListener('keydown', e => {
     if (!$('app-modal').hidden) A.closeAppForm();
   }
 });
+
+/* ═══ Floating Capsules on Login ═══ */
+(function initCapsules() {
+  const box = $('login-caps');
+  if (!box) return;
+  const palettes = [
+    ['rgba(239,68,68,.7)','rgba(251,191,36,.7)'],
+    ['rgba(96,165,250,.7)','rgba(59,130,246,.7)'],
+    ['rgba(52,211,153,.7)','rgba(16,185,129,.7)'],
+    ['rgba(244,114,182,.7)','rgba(236,72,153,.7)'],
+    ['rgba(167,139,250,.7)','rgba(139,92,246,.7)'],
+    ['rgba(255,255,255,.5)','rgba(255,255,255,.25)'],
+    ['rgba(0,198,255,.6)','rgba(47,107,255,.6)'],
+    ['rgba(0,212,170,.6)','rgba(0,198,255,.6)'],
+  ];
+  for (let i = 0; i < 14; i++) {
+    const cap = document.createElement('div');
+    cap.className = 'login-cap';
+    const [c1, c2] = palettes[i % palettes.length];
+    const w = 18 + Math.random() * 28;
+    const h = w * 0.42;
+    const r = h / 2;
+    cap.style.cssText = `width:${w}px;height:${h}px;border-radius:${r}px;left:${3+Math.random()*94}%;animation-duration:${9+Math.random()*14}s;animation-delay:${-Math.random()*16}s;opacity:${.06+Math.random()*.1}`;
+    cap.innerHTML = `<span style="position:absolute;left:0;top:0;width:50%;height:100%;background:${c1};border-radius:${r}px 0 0 ${r}px"></span><span style="position:absolute;right:0;top:0;width:50%;height:100%;background:${c2};border-radius:0 ${r}px ${r}px 0"></span>`;
+    box.appendChild(cap);
+  }
+})();
 
 /* ═══ Init ═══ */
 (function init() {
