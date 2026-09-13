@@ -505,6 +505,28 @@ a{color:var(--pri);text-decoration:none}
   display:flex;align-items:center;justify-content:center;
 }
 
+/* ═══ Skeleton Loading ═══ */
+@keyframes shimmer{
+  0%{background-position:-400px 0}
+  100%{background-position:400px 0}
+}
+.skel{
+  background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 37%,#e2e8f0 63%);
+  background-size:800px 100%;
+  animation:shimmer 1.5s ease-in-out infinite;
+  border-radius:8px;
+}
+.skel-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:20px;border:1px solid var(--border);
+}
+.skel-line{height:14px;margin-bottom:10px;border-radius:6px}
+.skel-line.w60{width:60%}.skel-line.w40{width:40%}.skel-line.w80{width:80%}.skel-line.w50{width:50%}
+.skel-circle{width:48px;height:48px;border-radius:50%}
+.skel-stat{border-radius:var(--radius);height:88px}
+.skel-app{height:130px;border-radius:var(--radius)}
+.skel-post{height:90px;border-radius:var(--radius);border:1px solid var(--border)}
+
 /* ═══ Hamburger for mobile ═══ */
 .hamburger{
   display:none;width:40px;height:40px;border-radius:8px;
@@ -753,7 +775,7 @@ a{color:var(--pri);text-decoration:none}
 /* ═══════════════════════════════════════════
  *   CONFIGURATION — เปลี่ยนค่านี้ก่อนใช้งาน
  * ═══════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzd7AyDe-ChL4K-RZBGiffX06pxZsqwFHlOl18H0Er95K2ytveOtVoqGLeSiYLhSpz5yw/exec';
+const API_URL = 'https://script.google.com/macros/library/d/1WYwdySzhFPCXI9pKieOfd81-k7rvuehyt9ZgsMQkReRYkGvSstQeGkwh/7';
 // เปลี่ยนเป็น URL ที่ได้จาก Deploy → Web app ของ GAS
 
 /* ═══ State ═══ */
@@ -777,12 +799,10 @@ async function api(action, extra = {}) {
 }
 async function apiPost(data) {
   data.token = S.token || '';
-  const r = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(data),
-    redirect: 'follow',
-  });
+  // GAS web app redirects POST (302→GET) and drops the body,
+  // so we send write-actions via GET with an encoded payload param.
+  const payload = encodeURIComponent(JSON.stringify(data));
+  const r = await fetch(API_URL + '?payload=' + payload, { redirect: 'follow' });
   return r.json();
 }
 
@@ -870,11 +890,42 @@ const A = {
     $('nav-uname').textContent = S.user.fullname || S.user.username;
     if (S.user.role === 'admin') show('btn-admin');
 
+    // show skeleton while loading
+    A.showSkeleton();
+
     // load data
     await Promise.all([A.loadApps(), A.loadPosts(), A.loadNoti()]);
     A.renderDashboard();
     A.renderNavMenu();
     A.startPolling();
+  },
+
+  showSkeleton() {
+    const hour = new Date().getHours();
+    const greet = hour < 12 ? 'สวัสดีตอนเช้า' : hour < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
+    $('dash-greeting').textContent = `${greet} 👋`;
+    $('dash-date').textContent = thaiDate(new Date());
+
+    // skeleton stats
+    $('dash-stats').innerHTML = Array(4).fill(0).map((_,i) =>
+      `<div class="skel skel-stat" style="opacity:${.7-i*.1}"></div>`).join('');
+
+    // skeleton apps
+    $('dash-apps').innerHTML = Array(4).fill(0).map((_,i) =>
+      `<div class="skel-card"><div class="skel skel-circle" style="margin-bottom:10px"></div>
+       <div class="skel skel-line w60"></div><div class="skel skel-line w80"></div></div>`).join('');
+
+    // skeleton noti
+    $('dash-noti').innerHTML = Array(3).fill(0).map(() =>
+      `<div class="skel-card" style="margin-bottom:8px">
+       <div class="skel skel-line w50"></div><div class="skel skel-line w80"></div>
+       <div class="skel skel-line w40"></div></div>`).join('');
+
+    // skeleton posts
+    $('dash-posts').innerHTML = Array(3).fill(0).map(() =>
+      `<div class="skel-card" style="margin-bottom:8px">
+       <div style="display:flex;gap:8px;margin-bottom:8px"><div class="skel" style="width:60px;height:20px;border-radius:6px"></div><div class="skel skel-line w50"></div></div>
+       <div class="skel skel-line w80"></div><div class="skel skel-line w40"></div></div>`).join('');
   },
 
   async loadApps() {
