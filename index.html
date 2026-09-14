@@ -30,7 +30,7 @@
   --shadow-lg:0 8px 24px rgba(14,116,144,.12);
   --shadow-xl:0 20px 50px rgba(14,116,144,.18);
   --radius:14px;--radius-lg:20px;
-  --nav-h:62px;
+  --nav-h:46px;
 }
 html{-webkit-text-size-adjust:100%}
 body{
@@ -128,12 +128,38 @@ a{color:var(--pri-dark);text-decoration:none}
 #main-nav{
   position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:900;
   background:#fff;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 18px;gap:12px;
+  display:flex;align-items:center;padding:0 14px;gap:10px;
   box-shadow:0 1px 3px rgba(14,116,144,.06);
+  transition:transform .18s ease;will-change:transform;
 }
-#main-nav::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad)}
-.nav-brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
-.nav-brand .title{font-weight:700;font-size:16.5px;white-space:nowrap}
+#main-nav::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad)}
+.nav-brand{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.nav-brand .title{font-weight:700;font-size:15px;white-space:nowrap}
+
+/* ── โหมดซ่อนแถบอัตโนมัติ (hover ที่ขอบบนเพื่อเรียกกลับมา) ── */
+body.zen #main-nav{transform:translateY(-100%)}
+body.zen #view-app{top:0}
+body.zen .app-toolbar{max-height:0;padding-top:0;padding-bottom:0;opacity:0;border-bottom-color:transparent}
+#peek-zone{position:fixed;top:0;left:0;right:0;height:16px;z-index:895;display:none}
+body.zen #peek-zone{display:block}
+#peek-tab{
+  position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:896;display:none;
+  width:58px;height:15px;border-radius:0 0 10px 10px;background:var(--grad);
+  align-items:center;justify-content:center;cursor:pointer;opacity:.75;
+}
+#peek-tab:hover{opacity:1}
+#peek-tab::after{content:'';width:20px;height:2px;background:#fff;border-radius:2px}
+body.zen #peek-tab{display:flex}
+
+/* ── แถบสถานะเครือข่าย ── */
+#net-bar{
+  position:fixed;top:calc(var(--nav-h) + 8px);right:14px;z-index:890;
+  display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:20px;
+  background:#fff;border:1px solid var(--border);box-shadow:var(--shadow);
+  font-size:12px;color:var(--text2);
+}
+#net-bar .dot{width:7px;height:7px;border-radius:50%;background:var(--pri);animation:pulseDot 1s ease-in-out infinite}
+@keyframes pulseDot{0%,100%{opacity:.35}50%{opacity:1}}
 .nav-menu{
   display:flex;align-items:center;gap:3px;flex:1;
   overflow-x:auto;overflow-y:hidden;padding:0 4px;scrollbar-width:none;
@@ -141,7 +167,7 @@ a{color:var(--pri-dark);text-decoration:none}
 }
 .nav-menu::-webkit-scrollbar{display:none}
 .nav-item,.nav-group-btn{
-  padding:8px 13px;border-radius:9px;font-weight:500;font-size:13.5px;
+  padding:6px 11px;border-radius:8px;font-weight:500;font-size:13px;
   color:var(--text2);white-space:nowrap;background:none;
   transition:background .12s,color .12s;display:flex;align-items:center;gap:6px;flex-shrink:0;
 }
@@ -163,7 +189,7 @@ a{color:var(--pri-dark);text-decoration:none}
 }
 .nav-dd-item:hover{background:#e9f7fe;color:var(--pri-dark)}
 .dd-icon{
-  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  width:26px;height:26px;border-radius:8px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   background:#e9f7fe;color:var(--pri-dark);font-size:15px;
 }
@@ -172,7 +198,7 @@ a{color:var(--pri-dark);text-decoration:none}
 .dd-desc{font-size:11.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .nav-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .nav-icon-btn{
-  width:38px;height:38px;border-radius:10px;background:none;position:relative;
+  width:32px;height:32px;border-radius:9px;background:none;position:relative;
   display:flex;align-items:center;justify-content:center;transition:background .12s;color:var(--text2);
 }
 .nav-icon-btn:hover{background:#e9f7fe;color:var(--pri-dark)}
@@ -183,11 +209,11 @@ a{color:var(--pri-dark);text-decoration:none}
 }
 @keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
 .nav-user{position:relative}
-.nav-user-btn{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:none;transition:background .12s}
+.nav-user-btn{display:flex;align-items:center;gap:7px;padding:3px 9px 3px 3px;border-radius:10px;background:none;transition:background .12s}
 .nav-user-btn:hover{background:#e9f7fe}
 .nav-user-avatar{
-  width:32px;height:32px;border-radius:50%;background:var(--grad);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13.5px;flex-shrink:0;
+  width:28px;height:28px;border-radius:50%;background:var(--grad);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;flex-shrink:0;
 }
 .nav-user-name{font-size:13px;font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav-user-dd{
@@ -289,19 +315,22 @@ a{color:var(--pri-dark);text-decoration:none}
 .noti-empty{text-align:center;padding:36px;color:var(--text3)}
 
 /* ═══ App iframe view ═══ */
-#view-app{position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;background:#fff;z-index:50;display:flex;flex-direction:column}
+#view-app{position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;background:#fff;z-index:50;display:flex;flex-direction:column;transition:top .18s ease}
 .app-toolbar{
-  display:flex;align-items:center;gap:10px;padding:8px 16px;
-  border-bottom:1px solid var(--border);background:var(--card-soft);flex-shrink:0;flex-wrap:wrap;
+  display:flex;align-items:center;gap:6px;padding:3px 12px;overflow:hidden;max-height:44px;
+  border-bottom:1px solid var(--border);background:var(--card-soft);flex-shrink:0;flex-wrap:nowrap;
+  transition:max-height .18s ease,opacity .18s ease,padding .18s ease;
 }
 .btn-back,.tool-btn{
-  padding:7px 12px;border-radius:9px;background:none;font-size:13px;font-weight:500;
-  color:var(--text2);transition:background .12s,color .12s;display:flex;align-items:center;gap:5px;
+  padding:4px 9px;border-radius:7px;background:none;font-size:12px;font-weight:500;
+  color:var(--text2);transition:background .12s,color .12s;display:flex;align-items:center;gap:4px;
+  white-space:nowrap;
 }
 .btn-back:hover,.tool-btn:hover{background:#e2f1f9;color:var(--text)}
-.app-title-bar{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:7px}
+.app-title-bar{font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .tool-right{margin-left:auto;display:flex;align-items:center;gap:6px}
-.local-warn{padding:5px 11px;border-radius:20px;background:#fef3c7;color:#92400e;font-size:11.5px;display:flex;align-items:center;gap:4px}
+.local-warn{padding:2px 9px;border-radius:20px;background:#fef3c7;color:#92400e;font-size:11px;display:flex;align-items:center;gap:4px;white-space:nowrap}
 #frame-host{flex:1;position:relative;background:#fff;overflow:hidden}
 .appframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:none;background:#fff}
 .appframe.active{display:block}
@@ -397,7 +426,7 @@ a{color:var(--pri-dark);text-decoration:none}
 .skel-stat{border-radius:var(--radius);height:84px}
 
 /* ═══ Hamburger ═══ */
-.hamburger{display:none;width:38px;height:38px;border-radius:9px;background:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0}
+.hamburger{display:none;width:32px;height:32px;border-radius:9px;background:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0}
 .hamburger span{display:block;width:19px;height:2px;background:var(--text);border-radius:2px}
 
 @media(max-width:820px){
@@ -454,43 +483,18 @@ a{color:var(--pri-dark);text-decoration:none}
     <h1 class="gt">ระบบยา รพ.สวี</h1>
     <p class="login-subtitle">กลุ่มงานเภสัชกรรม โรงพยาบาลสวี จ.ชุมพร</p>
 
-    <div id="step-user">
+    <form id="step-login" onsubmit="return A.auth(event)">
       <div class="form-group">
         <label>ชื่อผู้ใช้ (HOSxP Login)</label>
-        <input type="text" id="inp-un" placeholder="ระบุ username" autocomplete="username" autofocus>
-      </div>
-      <button class="btn-primary" onclick="A.checkUser()">ถัดไป</button>
-    </div>
-
-    <div id="step-setpw" hidden>
-      <div class="login-welcome">
-        <div class="avatar" id="sp-avatar"></div>
-        <div class="info">
-          <strong id="sp-name"></strong>
-          <span id="sp-pos"></span><br>เข้าใช้ครั้งแรก — กรุณาตั้งรหัสผ่าน
-        </div>
-      </div>
-      <div class="form-group">
-        <label>ตั้งรหัสผ่าน</label>
-        <input type="password" id="inp-setpw" placeholder="อย่างน้อย 4 ตัวอักษร" autocomplete="new-password">
-      </div>
-      <div class="login-hint">ใช้รหัสที่จำได้ง่าย — จะใช้ login ทุกครั้ง</div>
-      <button class="btn-primary" onclick="A.setPassword()" style="margin-top:12px">ยืนยันและเข้าสู่ระบบ</button>
-      <button class="btn-link" onclick="A.backToUser()">← เปลี่ยนชื่อผู้ใช้</button>
-    </div>
-
-    <div id="step-login" hidden>
-      <div class="login-welcome">
-        <div class="avatar" id="lp-avatar"></div>
-        <div class="info"><strong id="lp-name"></strong><span id="lp-pos"></span></div>
+        <input type="text" id="inp-un" placeholder="เช่น dent65" autocomplete="username" autofocus>
       </div>
       <div class="form-group">
         <label>รหัสผ่าน</label>
         <input type="password" id="inp-pw" placeholder="ใส่รหัสผ่าน" autocomplete="current-password">
       </div>
-      <button class="btn-primary" onclick="A.login()">เข้าสู่ระบบ</button>
-      <button class="btn-link" onclick="A.backToUser()">← เปลี่ยนชื่อผู้ใช้</button>
-    </div>
+      <button type="submit" class="btn-primary" id="btn-auth">เข้าสู่ระบบ</button>
+      <div class="login-hint">เข้าใช้ครั้งแรก — รหัสที่กรอกจะถูกตั้งเป็นรหัสประจำตัวของคุณทันที</div>
+    </form>
 
     <div id="login-err" hidden class="login-error"></div>
   </div>
@@ -498,6 +502,10 @@ a{color:var(--pri-dark);text-decoration:none}
 
 <!-- ═══════════════ MAIN ═══════════════ -->
 <div id="screen-app" hidden>
+
+  <div id="peek-zone"></div>
+  <div id="peek-tab" title="แสดงแถบเมนู"></div>
+  <div id="net-bar" hidden><span class="dot"></span><span id="net-text">กำลังโหลดข้อมูล...</span></div>
 
   <nav id="main-nav">
     <div class="nav-brand">
@@ -555,8 +563,9 @@ a{color:var(--pri-dark);text-decoration:none}
       <span class="app-title-bar" id="app-bar-title"></span>
       <span class="tool-right">
         <span class="local-warn" id="local-warn" hidden>เครือข่ายภายใน</span>
-        <button class="tool-btn" onclick="A.reloadApp()" title="โหลดใหม่">โหลดใหม่</button>
-        <button class="tool-btn" onclick="A.openInTab()" title="เปิดแท็บใหม่">แท็บใหม่</button>
+        <button class="tool-btn" onclick="A.reloadApp()" title="โหลดหน้าแอปใหม่">โหลดใหม่</button>
+        <button class="tool-btn" onclick="A.openInTab()" title="เปิดในแท็บใหม่">แท็บใหม่</button>
+        <button class="tool-btn" id="zen-btn" onclick="Z.toggleAuto()" title="ซ่อน/ตรึงแถบด้านบน">ซ่อนแถบ</button>
       </span>
     </div>
     <div id="frame-host">
@@ -631,7 +640,7 @@ a{color:var(--pri-dark);text-decoration:none}
 /* ═══════════════════════════════════════════
  *   CONFIG
  * ═══════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzd7AyDe-ChL4K-RZBGiffX06pxZsqwFHlOl18H0Er95K2ytveOtVoqGLeSiYLhSpz5yw/exec';
+const API_URL = 'YOUR_GAS_DEPLOYMENT_URL_HERE';
 
 const CACHE_KEY  = 'pharma_cache_v2';
 const SESS_KEY   = 'pharma_session';
@@ -782,6 +791,47 @@ const F = {
   hideLoader(){ clearTimeout(F.timer); hide('frame-loading'); },
 };
 
+/* ═══ Zen mode — ซ่อนแถบบนอัตโนมัติ, hover ขอบบนเพื่อเรียกกลับ ═══ */
+const Z = {
+  auto:true, peeking:false, t:null,
+  init(){
+    try{ Z.auto = localStorage.getItem('pharma_zen') !== '0'; }catch(e){}
+    const nav = $('main-nav'), tb = document.querySelector('.app-toolbar');
+    const stay = ()=>{ clearTimeout(Z.t); };
+    ['mouseenter','touchstart'].forEach(ev=>{
+      $('peek-zone').addEventListener(ev, ()=>Z.show(), {passive:true});
+      $('peek-tab').addEventListener(ev, ()=>Z.show(), {passive:true});
+    });
+    [nav, tb].forEach(el=>{
+      if(!el) return;
+      el.addEventListener('mouseenter', stay);
+      el.addEventListener('mouseleave', ()=>Z.hideSoon(500));
+    });
+    Z.apply();
+  },
+  active(){ return Z.auto && !!S.currentApp; },
+  apply(){
+    document.body.classList.toggle('zen', Z.active() && !Z.peeking);
+    const b = $('zen-btn');
+    if(b) b.textContent = Z.auto ? 'ตรึงแถบ' : 'ซ่อนแถบ';
+  },
+  show(){ clearTimeout(Z.t); Z.peeking = true; Z.apply(); Z.hideSoon(2600); },
+  hideSoon(ms){
+    clearTimeout(Z.t);
+    Z.t = setTimeout(()=>{
+      if(document.querySelector('.nav-group.open') || $('nav-user').classList.contains('open'))
+        return Z.hideSoon(1200);
+      Z.peeking = false; Z.apply();
+    }, ms||600);
+  },
+  toggleAuto(){
+    Z.auto = !Z.auto;
+    try{ localStorage.setItem('pharma_zen', Z.auto?'1':'0'); }catch(e){}
+    Z.peeking = false; Z.apply();
+    toast(Z.auto ? 'ซ่อนแถบอัตโนมัติ — เลื่อนเมาส์ไปขอบบนเพื่อเรียกกลับ' : 'ตรึงแถบไว้ตลอด', 'info');
+  },
+};
+
 /* ═══ preconnect to sub-app origins (ลด handshake ตอนเปิดครั้งแรก) ═══ */
 const _pc = new Set();
 function preconnect(u){
@@ -800,54 +850,35 @@ function preconnect(u){
 /* ═══════════════ APP ═══════════════ */
 const A = {
 
-  /* ─── Auth ─── */
-  async checkUser(){
+  /* ─── Auth: ขั้นตอนเดียว username + password ─── */
+  async auth(e){
+    if(e) e.preventDefault();
     const un = $('inp-un').value.trim();
-    if(!un) return showErr('กรุณาระบุชื่อผู้ใช้');
-    hideErr(); loading(true);
-    try{
-      const r = await api('check_user', {username:un});
-      loading(false);
-      if(!r.ok) return showErr(r.error);
-      S._un = un;
-      const initials = (r.fullname||un).charAt(0).toUpperCase();
-      if(!r.has_password){
-        $('sp-avatar').textContent = initials;
-        $('sp-name').textContent = r.fullname||un;
-        $('sp-pos').textContent = r.position||'';
-        hide('step-user'); show('step-setpw'); $('inp-setpw').focus();
-      }else{
-        $('lp-avatar').textContent = initials;
-        $('lp-name').textContent = r.fullname||un;
-        $('lp-pos').textContent = r.position||'';
-        hide('step-user'); show('step-login'); $('inp-pw').focus();
-      }
-    }catch(e){ loading(false); showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้'); }
-  },
-
-  async setPassword(){
-    const pw = $('inp-setpw').value;
-    if(!pw) return showErr('กรุณากรอกรหัสผ่าน');
-    if(pw.length < 4) return showErr('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
-    hideErr(); loading(true);
-    try{
-      const r = await apiPost({action:'set_password', username:S._un, password:pw});
-      loading(false);
-      if(!r.ok) return showErr(r.error);
-      A.onLogin(r);
-    }catch(e){ loading(false); showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้'); }
-  },
-
-  async login(){
     const pw = $('inp-pw').value;
-    if(!pw) return showErr('กรุณากรอกรหัสผ่าน');
-    hideErr(); loading(true);
+    if(!un) { showErr('กรุณาระบุชื่อผู้ใช้'); return false; }
+    if(!pw) { showErr('กรุณากรอกรหัสผ่าน'); return false; }
+    hideErr(); authBusy(true);
     try{
-      const r = await apiPost({action:'login', username:S._un, password:pw});
-      loading(false);
-      if(!r.ok) return showErr(r.error);
+      let r = await apiPost({action:'auth', username:un, password:pw});
+      // รองรับ GAS เวอร์ชันเก่าที่ยังไม่มี action 'auth'
+      if(r && !r.ok && /unknown action/i.test(String(r.error||''))) r = await A.authLegacy(un, pw);
+      authBusy(false);
+      if(!r || !r.ok) { showErr((r&&r.error) || 'เข้าสู่ระบบไม่สำเร็จ'); return false; }
+      S._un = un;
+      if(r.first_time) toast('ตั้งรหัสผ่านให้เรียบร้อยแล้ว — ครั้งต่อไปใช้รหัสนี้', 'ok');
       A.onLogin(r);
-    }catch(e){ loading(false); showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้'); }
+    }catch(err){
+      authBusy(false);
+      showErr('เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ — ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง');
+    }
+    return false;
+  },
+  async authLegacy(un, pw){
+    const c = await api('check_user', {username:un});
+    if(!c.ok) return c;
+    return c.has_password
+      ? apiPost({action:'login', username:un, password:pw})
+      : apiPost({action:'set_password', username:un, password:pw});
   },
 
   onLogin(r){
@@ -855,7 +886,7 @@ const A = {
     S.user = {username:S._un, fullname:r.fullname, role:r.role, position:r.position};
     try{ localStorage.setItem(SESS_KEY, JSON.stringify({token:S.token, user:S.user})); }catch(e){}
     hide('screen-login'); show('screen-app');
-    A.initApp();
+    Z.init(); A.initApp();
   },
 
   logout(){
@@ -863,10 +894,6 @@ const A = {
     location.reload();
   },
 
-  backToUser(){
-    hide('step-setpw'); hide('step-login'); hideErr();
-    show('step-user'); $('inp-un').focus();
-  },
 
   /* ─── Init: cache-first, then revalidate ─── */
   async initApp(){
@@ -892,6 +919,7 @@ const A = {
 
   async fetchAll(renderProgressive){
     let ok = false;
+    netBusy('กำลังโหลดข้อมูล...');
     try{
       const r = await api('bootstrap');
       if(r && r.ok){
@@ -918,6 +946,7 @@ const A = {
     }
 
     S.booted = true;
+    netIdle();
     if(ok) cacheSave();
     else if(!S.apps.length){
       $('dash-apps').innerHTML = '<div class="skel-card" style="text-align:center;padding:26px;color:var(--text2)">'+
@@ -1159,6 +1188,7 @@ const A = {
 
     S.currentApp = id;
     F.show(app);
+    Z.peeking = false; Z.apply();
   },
   reloadApp(){ F.reload(); },
   openInTab(){
@@ -1168,6 +1198,7 @@ const A = {
   closeApp(){
     hide('view-app');
     F.hideLoader();
+    S.currentApp = null; Z.peeking = false; Z.apply();
     // ไม่ล้าง src → กลับเข้ามาใหม่เปิดได้ทันที
     F.map.forEach(f=>f.el.classList.remove('active'));
     S.currentApp = null;
@@ -1436,6 +1467,26 @@ function hide(id){ const el = typeof id==='string'?$(id):id; if(el) el.hidden=tr
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function isTrue(v){ return v===true || String(v).toUpperCase()==='TRUE'; }
 function loading(on){ on?show('loading-el'):hide('loading-el'); }
+function authBusy(on){
+  const b = $('btn-auth');
+  if(!b) return;
+  b.disabled = on;
+  b.textContent = on ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ';
+}
+/* แถบสถานะเครือข่าย — บอกว่ายังโหลดอยู่ ไม่ใช่เว็บค้าง */
+let _netT = null, _net0 = 0;
+function netBusy(txt){
+  _net0 = Date.now();
+  $('net-text').textContent = txt;
+  show('net-bar');
+  clearInterval(_netT);
+  _netT = setInterval(()=>{
+    const s = Math.round((Date.now()-_net0)/1000);
+    $('net-text').textContent = txt + ' ' + s + ' วิ' +
+      (s > 12 ? ' — Google Sheet ตอบช้า กำลังรอ...' : '');
+  }, 1000);
+}
+function netIdle(){ clearInterval(_netT); hide('net-bar'); }
 function showErr(m){ const el=$('login-err'); el.textContent=m; show(el); }
 function hideErr(){ hide('login-err'); }
 function notiHtml(n){
@@ -1494,11 +1545,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }, {passive:true});
 });
 document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && !$('screen-login').hidden){
-    if(!$('step-user').hidden) A.checkUser();
-    else if(!$('step-setpw').hidden) A.setPassword();
-    else if(!$('step-login').hidden) A.login();
-  }
   if(e.key==='Escape'){
     if(S.notiOpen) A.toggleNoti();
     if(!$('post-modal').hidden) A.closePost();
@@ -1538,7 +1584,7 @@ document.addEventListener('keydown', e=>{
     if(saved && saved.token && saved.user){
       S.token = saved.token; S.user = saved.user;
       hide('screen-login'); show('screen-app');
-      A.initApp();
+      Z.init(); A.initApp();
       return;
     }
   }catch(e){}
