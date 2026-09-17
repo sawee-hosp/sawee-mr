@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบพิมพ์ใบขอรับเงินค่าตอบแทนฯ รพ.สวี</title>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- docx library for DOCX generation -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@9.0.2/build/index.umd.js"></script>
+    <!-- FileSaver -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+    <!-- Google Fonts for UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* TH Sarabun New for print preview */
+        @font-face {
+            font-family: 'TH Sarabun New';
+            src: url('https://github.com/sawee-hosp/sawee-vmi/raw/refs/heads/main/font/THSarabunNew.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'TH Sarabun New';
+            src: url('https://github.com/sawee-hosp/sawee-vmi/raw/refs/heads/main/font/THSarabunNew%20Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0b5ed7;
+            --success: #198754;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #0dcaf0;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #333;
+            --text-light: #666;
+            --border: #dee2e6;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ============ UTILITY ============ */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; justify-content: center; align-items: center; }
+        .text-center { text-align: center; }
+        .text-danger { color: var(--danger); }
+        .text-success { color: var(--success); }
+        .text-primary { color: var(--primary); }
+        .text-muted { color: var(--text-light); font-size: 12px; }
+        .mt-1 { margin-top: 8px; }
+        .mt-2 { margin-top: 16px; }
+        .mt-3 { margin-top: 24px; }
+        .mb-1 { margin-bottom: 8px; }
+        .mb-2 { margin-bottom: 16px; }
+        .gap-1 { gap: 8px; }
+        .gap-2 { gap: 16px; }
+
+        /* ============ BUTTONS ============ */
+        button, .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-family: 'Sarabun'; font-size: 14px;
+            font-weight: 500; color: white; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #157347; }
+        .btn-danger { background: var(--danger); font-size: 12px; padding: 6px 12px; }
+        .btn-danger:hover { background: #bb2d3b; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-info { background: var(--info); color: #000; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        .btn-lg { padding: 16px 32px; font-size: 18px; border-radius: 12px; }
+        .btn-block { width: 100%; justify-content: center; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* ============ FORMS ============ */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+            border-radius: 6px; font-family: 'Sarabun'; font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+        }
+        .form-row { display: flex; gap: 12px; }
+        .form-row > .form-group { flex: 1; }
+        .required-mark { color: var(--danger); }
+
+        /* ============ RADIO GROUP ============ */
+        .radio-group { display: flex; gap: 16px; margin-top: 4px; }
+        .radio-group label {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 14px; font-weight: 400; color: var(--text);
+            cursor: pointer; padding: 6px 12px; border-radius: 6px;
+            border: 1px solid var(--border); transition: 0.2s;
+        }
+        .radio-group input[type="radio"] { width: auto; cursor: pointer; }
+        .radio-group label:has(input:checked) {
+            border-color: var(--primary); background: rgba(13,110,253,0.05);
+        }
+
+        /* ============ CARDS & PANELS ============ */
+        .card {
+            background: var(--card); border-radius: 12px;
+            box-shadow: var(--shadow); padding: 24px;
+        }
+        .card-header {
+            font-size: 16px; font-weight: 700; color: var(--primary);
+            border-bottom: 2px solid var(--primary); padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        /* ============ MODAL ============ */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            z-index: 10000; justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white; padding: 24px; border-radius: 12px;
+            width: 90%; max-width: 440px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .modal-box p { font-size: 15px; margin-bottom: 20px; line-height: 1.6; }
+
+        /* ============ TOOLTIP ============ */
+        .tooltip-wrapper { position: relative; display: inline-block; width: 100%; }
+        .tooltip-text {
+            visibility: hidden; background: #333; color: #fff;
+            font-size: 12px; padding: 6px 10px; border-radius: 6px;
+            position: absolute; bottom: calc(100% + 6px); left: 0;
+            white-space: nowrap; z-index: 100; opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tooltip-wrapper:hover .tooltip-text,
+        .tooltip-wrapper.show-tip .tooltip-text { visibility: visible; opacity: 1; }
+        .tooltip-text.error { background: var(--danger); }
+        .tooltip-text.success { background: var(--success); }
+
+        /* ============ PAGE: PDPA & MODE SELECTION ============ */
+        .landing-page {
+            min-height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .landing-card {
+            background: white; border-radius: 16px; padding: 40px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1); max-width: 600px;
+            width: 100%;
+        }
+        .landing-card h1 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+        .landing-card .subtitle { color: var(--text-light); margin-bottom: 24px; }
+
+        .pdpa-box {
+            background: #f8f9fa; border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; margin-bottom: 20px;
+            max-height: 300px; overflow-y: auto; font-size: 13px;
+            line-height: 1.8; text-align: left;
+        }
+        .pdpa-box h3 { color: var(--primary); margin-bottom: 8px; }
+
+        .mode-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+        .mode-btn {
+            padding: 20px; border-radius: 12px; border: 2px solid var(--border);
+            background: white; cursor: pointer; text-align: left; transition: 0.2s;
+        }
+        .mode-btn:hover { border-color: var(--primary); background: rgba(13,110,253,0.03); }
+        .mode-btn h3 { font-size: 16px; margin-bottom: 4px; }
+        .mode-btn p { font-size: 13px; color: var(--text-light); margin: 0; }
+
+        /* ============ PAGE: LOGIN ============ */
+        .login-page {
+            min-height: 100vh; display: flex; justify-content: center;
+            align-items: center; padding: 20px;
+        }
+        .login-card { max-width: 420px; width: 100%; }
+
+        /* ============ DASHBOARD LAYOUT ============ */
+        .app-header {
+            background: white; padding: 12px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .app-header h1 { font-size: 18px; color: var(--primary); }
+        .user-info { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+
+        .profile-selector {
+            background: white; padding: 12px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .profile-chip {
+            padding: 6px 16px; border-radius: 20px; font-size: 13px;
+            border: 1px solid var(--border); cursor: pointer; transition: 0.2s;
+            background: white;
+        }
+        .profile-chip:hover { border-color: var(--primary); }
+        .profile-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .profile-chip.add { border-style: dashed; color: var(--primary); }
+
+        .dashboard-grid {
+            display: grid; grid-template-columns: 1.3fr 1fr 1fr;
+            gap: 16px; padding: 16px 24px; max-width: 1400px; margin: 0 auto;
+        }
+
+        /* ============ MONTH GRID ============ */
+        .year-selector {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; background: #e9ecef; padding: 6px 12px;
+            border-radius: 8px;
+        }
+        .year-btn { background: none; color: var(--primary); font-weight: bold; font-size: 18px; padding: 4px 12px; }
+        .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .month-cell {
+            background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 6px; text-align: center; cursor: pointer;
+            font-size: 13px; transition: 0.2s;
+        }
+        .month-cell:hover { background: #e8ecef; }
+        .month-cell.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .month-cell.printed { border-color: var(--success); box-shadow: inset 0 0 0 1px var(--success); }
+        .month-status { font-size: 10px; margin-top: 4px; }
+
+        /* ============ LEAVE TABLE ============ */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th, .data-table td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+        .data-table th { background: #f8f9fa; font-weight: 500; }
+        .leave-input-area {
+            background: #fff8e1; padding: 12px; border-radius: 8px;
+            margin-bottom: 16px; border: 1px solid #ffe082;
+        }
+
+        /* ============ HOSPITAL GROUP ============ */
+        .hosp-group {
+            border: 1px dashed var(--border); padding: 12px; border-radius: 8px;
+            margin-bottom: 12px; background: #fafbfc;
+        }
+        .hosp-group-label { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+
+        /* ============ PRINT PREVIEW ============ */
+        .preview-section {
+            background: #525659; padding: 20px; border-radius: 12px;
+            margin: 16px 24px; max-width: 1400px; margin-left: auto; margin-right: auto;
+        }
+        .preview-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .preview-toolbar h2 { color: white; font-size: 16px; margin: 0; }
+
+        .preview-container {
+            width: 210mm; margin: 0 auto; background: transparent;
+        }
+        .page-preview {
+            width: 210mm; min-height: 296mm; background: white;
+            padding: 23mm 10mm 5.4mm 25mm;
+            font-family: 'TH Sarabun New', 'TH SarabunPSK', sans-serif;
+            font-weight: 300; font-size: 16pt; line-height: 0.9;
+            color: black; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: relative; overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .page-preview .title-line {
+            text-align: center; font-weight: 700; font-size: 19pt;
+            line-height: 1.3;
+        }
+        .page-preview .form-line {
+            margin-top: 6pt; display: flex; align-items: baseline;
+            flex-wrap: wrap; line-height: 1.5;
+        }
+        .page-preview .dot-field {
+            border-bottom: 1px dotted #000; display: inline-block;
+            min-width: 40px; text-align: center; font-weight: 700;
+            line-height: 1.2; padding: 0 4px;
+        }
+        .page-preview .indent { margin-left: 1cm; }
+        .page-preview .indent2 { margin-left: 2cm; }
+        .page-preview .big-indent { margin-left: 2.5cm; }
+        .page-preview .half-right { margin-left: 50%; }
+
+        .page-preview .sign-section {
+            margin-top: 12pt; display: flex; justify-content: flex-end;
+        }
+        .page-preview .sign-block { width: 50%; text-align: center; }
+
+        .page-preview .bottom-section {
+            display: flex; justify-content: space-between; margin-top: 16pt;
+        }
+        .page-preview .bottom-left { width: 45%; }
+        .page-preview .bottom-right { width: 50%; }
+
+        /* Page 2 */
+        .page-preview .leave-title { text-align: center; font-weight: 500; font-size: 20pt; margin-top: 45px; }
+        .page-preview table.leave-table {
+            width: 100%; border-collapse: collapse; margin-top: 16px;
+            border: 1px solid #000;
+        }
+        .page-preview table.leave-table th,
+        .page-preview table.leave-table td {
+            border: 1px solid #000; padding: 6px; text-align: center;
+            font-weight: 300; font-size: 16pt;
+        }
+        .page-preview table.leave-table th { font-weight: 400; }
+        .page-preview table.leave-table td { height: 35px; }
+
+        /* ============ PRINT STYLES ============ */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute; top: 0; left: 0; width: 100%;
+            }
+            .page-preview {
+                box-shadow: none !important; margin: 0 !important;
+                page-break-after: always;
+                padding: 23mm 10mm 5.4mm 25mm;
+                min-height: auto;
+            }
+            .page-preview:last-child { page-break-after: auto; }
+            @page { size: A4; margin: 0; }
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 1200px) {
+            .dashboard-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; padding: 12px; }
+            .app-header { flex-direction: column; gap: 8px; }
+            .form-row { flex-direction: column; gap: 8px; }
+            .preview-section { margin: 12px; }
+            .preview-container, .page-preview { width: 100%; min-height: auto; }
+        }
+
+        /* ============ LOADING ============ */
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .watermark { text-align: center; color: #ccc; font-size: 10px; margin-top: auto; padding-top: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- ============ ALERT MODAL ============ -->
+<div id="modal-alert" class="modal-overlay">
+    <div class="modal-box">
+        <p id="alert-msg"></p>
+        <button class="btn-primary" onclick="closeAlert()">ตกลง</button>
+    </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div id="modal-confirm" class="modal-overlay">
+    <div class="modal-box">
+        <p id="confirm-msg"></p>
+        <div style="display:flex;gap:10px;justify-content:center;">
+            <button class="btn-success" id="confirm-yes">ยืนยัน</button>
+            <button class="btn-danger" id="confirm-no" onclick="closeConfirm()" style="background:#6c757d;padding:10px 20px;font-size:14px;">ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PAGE 1: PDPA + MODE SELECTION ============ -->
+<div id="page-landing" class="landing-page">
+    <div class="landing-card">
+        <h1>🏥 แบบพิมพ์ใบขอรับเงินค่าตอบแทนฯ</h1>
+        <p class="subtitle">โรงพยาบาลสวี จังหวัดชุมพร</p>
+
+        <div class="pdpa-box">
+            <h3>📋 นโยบายความเป็นส่วนตัว (PDPA)</h3>
+            <p>ระบบนี้จัดทำขึ้นเพื่ออำนวยความสะดวกในการพิมพ์ใบขอรับเงินค่าตอบแทนเบี้ยเลี้ยงเหมาจ่ายสำหรับเจ้าหน้าที่ รพ.สวี</p>
+            <p><b>ข้อมูลที่เก็บรวบรวม:</b> ชื่อ-นามสกุล, ตำแหน่ง, ประวัติการปฏิบัติงาน, ข้อมูลวันลา, จำนวนเงินค่าตอบแทน</p>
+            <p><b>วัตถุประสงค์:</b> เพื่อจัดทำเอกสารใบขอรับเงินค่าตอบแทนเท่านั้น</p>
+            <p><b>การจัดเก็บ:</b> ข้อมูลจัดเก็บในระบบฐานข้อมูลที่มีความปลอดภัย สำหรับโหมดที่เลือกบันทึกข้อมูล ผู้ใช้สามารถขอลบข้อมูลได้ตลอดเวลา</p>
+            <p><b>ระบบไม่บันทึกเอกสาร PDF/DOCX ของท่านเลย</b> — เอกสารถูกสร้างในเบราว์เซอร์ของท่านเท่านั้น</p>
+            <p><b>โหมดไม่บันทึก:</b> ท่านสามารถเลือกใช้งานโดยไม่บันทึกข้อมูลใดๆ ลงระบบได้ ข้อมูลจะหายไปเมื่อปิดหน้าเว็บ</p>
+            <p><b>ความปลอดภัย:</b> ในโหมดบันทึกข้อมูล หากมีผู้อื่นทราบ Username ของท่าน จะสามารถเห็นข้อมูลที่ท่านบันทึกไว้ได้ กรุณาเก็บรักษา Username ไว้เป็นความลับ</p>
+        </div>
+
+        <div style="text-align:center;margin-bottom:16px;">
+            <label style="font-size:14px;cursor:pointer;">
+                <input type="checkbox" id="chk-pdpa"> ข้าพเจ้ายอมรับนโยบายความเป็นส่วนตัว
+            </label>
+        </div>
+
+        <div class="mode-buttons" id="mode-buttons" style="display:none;">
+            <div class="mode-btn" onclick="enterNoSaveMode()">
+                <h3>🔒 พิมพ์โดยไม่บันทึกใดๆ</h3>
+                <p>กรอกข้อมูลแล้วพิมพ์ทันที ข้อมูลจะไม่ถูกจัดเก็บ เหมาะสำหรับใช้ครั้งเดียว</p>
+            </div>
+            <div class="mode-btn" onclick="showPage('page-login')">
+                <h3>⚡ พิมพ์โดยจดจำค่าล่าสุด (เร็วสุดๆ)</h3>
+                <p>เข้าสู่ระบบด้วย Email + Username เลือกรายชื่อแล้วพิมพ์ได้ทันที</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PAGE 2: LOGIN ============ -->
+<div id="page-login" class="login-page hidden">
+    <div class="card login-card">
+        <div class="text-center mb-2">
+            <h2 style="color:var(--primary);">🔐 เข้าสู่ระบบ</h2>
+            <p class="text-muted">กรอก Email และ Username ที่ลงทะเบียนไว้</p>
+        </div>
+        <div class="form-group">
+            <label>Email <span class="required-mark">*</span></label>
+            <input type="email" id="login-email" placeholder="example@hospital.go.th">
+        </div>
+        <div class="form-group">
+            <label>Username <span class="required-mark">*</span></label>
+            <input type="text" id="login-username" placeholder="username ที่ตั้งไว้">
+        </div>
+        <button class="btn-primary btn-block mt-1" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+        <div class="mt-2 text-center" style="font-size:13px;">
+            <a href="#" onclick="showForgotUsername();return false;" style="color:var(--primary);">ลืม Username?</a>
+            &nbsp;|&nbsp;
+            <a href="#" onclick="showPage('page-register');return false;" style="color:var(--success);">ลงทะเบียนใหม่</a>
+            &nbsp;|&nbsp;
+            <a href="#" onclick="showPage('page-landing');return false;" style="color:var(--text-light);">กลับหน้าแรก</a>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PAGE 3: REGISTER ============ -->
+<div id="page-register" class="login-page hidden">
+    <div class="card login-card">
+        <div class="text-center mb-2">
+            <h2 style="color:var(--success);">✨ ลงทะเบียนใหม่</h2>
+            <p class="text-muted">สร้างบัญชีเพื่อจดจำข้อมูลของท่าน</p>
+        </div>
+        <div class="form-group">
+            <label>Email <span class="required-mark">*</span></label>
+            <input type="email" id="reg-email" placeholder="ใช้สำหรับกู้คืน Username">
+        </div>
+        <div class="form-group">
+            <label>ตั้ง Username <span class="required-mark">*</span> <span class="text-muted">(ใช้เป็นรหัสเข้าระบบ)</span></label>
+            <input type="text" id="reg-username" placeholder="ตั้งเป็นชื่อที่จำง่าย">
+        </div>
+        <button class="btn-success btn-block mt-1" onclick="doRegister()">ลงทะเบียน</button>
+        <div class="mt-2 text-center" style="font-size:13px;">
+            <a href="#" onclick="showPage('page-login');return false;" style="color:var(--primary);">กลับไปหน้าเข้าสู่ระบบ</a>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PAGE 4: DASHBOARD (ทั้ง No-Save และ Login mode) ============ -->
+<div id="page-dashboard" class="hidden">
+    <!-- Header -->
+    <div class="app-header">
+        <h1>🏥 แบบพิมพ์ พตส. รพ.สวี</h1>
+        <div class="user-info">
+            <span id="lbl-mode-badge" style="padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;"></span>
+            <span id="lbl-user-info"></span>
+            <button class="btn-outline" style="padding:6px 12px;font-size:12px;" onclick="doLogout()">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <!-- Profile Selector (ซ่อนใน no-save mode) -->
+    <div class="profile-selector" id="profile-bar">
+        <span style="font-size:13px;font-weight:700;color:var(--text-light);">รายชื่อ:</span>
+        <div id="profile-chips"></div>
+        <button class="profile-chip add" onclick="addNewProfile()">+ เพิ่มรายชื่อ</button>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+        <!-- Panel 1: ข้อมูลส่วนตัว -->
+        <div class="card">
+            <div class="card-header">📝 1. ข้อมูลส่วนตัว & ประวัติ</div>
+            <div id="user-form" oninput="updatePreview()">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ชื่อ (พร้อมคำนำหน้า) <span class="required-mark">*</span></label>
+                        <input type="text" id="fm-name" placeholder="เช่น นายสมชาย">
+                    </div>
+                    <div class="form-group">
+                        <label>นามสกุล <span class="required-mark">*</span></label>
+                        <input type="text" id="fm-surname">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ตำแหน่ง</label>
+                    <input type="text" id="fm-job" placeholder="เช่น เภสัชกรชำนาญการ">
+                </div>
+                <div class="form-group">
+                    <label>ประเภท (มีผลต่อแบบฟอร์ม)</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="emp-type" value="ข้าราชการ" checked onchange="updatePreview()"> ข้าราชการ</label>
+                        <label><input type="radio" name="emp-type" value="ลูกจ้าง" onchange="updatePreview()"> ลูกจ้าง</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>วันที่เริ่มทำงาน (ทั้งหมด)</label>
+                        <input type="text" id="fm-start-all" placeholder="วว/ดด/ปปปป เช่น 01/05/2555">
+                    </div>
+                    <div class="form-group">
+                        <label>จำนวนเงิน (บาท)</label>
+                        <input type="number" id="fm-money" placeholder="เช่น 6500">
+                    </div>
+                </div>
+                <div class="form-group" style="background:#e9ecef;padding:8px 12px;border-radius:6px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;color:var(--primary);font-size:13px;">
+                        <input type="checkbox" id="fm-show-fraction" onchange="updatePreview()" style="width:auto;">
+                        แสดงเศษวัน (ถ้าไม่คลิกจะแสดงเป็นเครื่องหมาย -)
+                    </label>
+                </div>
+
+                <!-- Hospital 1 -->
+                <div class="hosp-group">
+                    <div class="hosp-group-label">🏥 รพ. 1 (กรอกในข้อ 2)</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อ รพ.</label><input type="text" id="fm-hosp1"></div>
+                        <div class="form-group"><label>จังหวัด</label><input type="text" id="fm-prov1"></div>
+                        <div class="form-group"><label>ระดับ</label><input type="text" id="fm-level1"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เริ่ม</label><input type="text" id="fm-start1" placeholder="วว/ดด/ปปปป"></div>
+                        <div class="form-group"><label>สิ้นสุด <span class="text-muted">(กรณีย้ายแล้ว)</span></label><input type="text" id="fm-end1" placeholder="วว/ดด/ปปปป"></div>
+                    </div>
+                </div>
+
+                <!-- Hospital 2 -->
+                <div class="hosp-group">
+                    <div class="hosp-group-label">🏥 รพ. 2 (กรอกในข้อ 3)</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อ รพ.</label><input type="text" id="fm-hosp2"></div>
+                        <div class="form-group"><label>จังหวัด</label><input type="text" id="fm-prov2"></div>
+                        <div class="form-group"><label>ระดับ</label><input type="text" id="fm-level2"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เริ่ม</label><input type="text" id="fm-start2" placeholder="วว/ดด/ปปปป"></div>
+                        <div class="form-group"><label>สิ้นสุด</label><input type="text" id="fm-end2" placeholder="วว/ดด/ปปปป"></div>
+                    </div>
+                </div>
+
+                <!-- Hospital 3 -->
+                <div class="hosp-group">
+                    <div class="hosp-group-label">🏥 รพ. 3 (กรอกในข้อ 4)</div>
+                    <div class="form-row">
+                        <div class="form-group"><label>ชื่อ รพ.</label><input type="text" id="fm-hosp3"></div>
+                        <div class="form-group"><label>จังหวัด</label><input type="text" id="fm-prov3"></div>
+                        <div class="form-group"><label>ระดับ</label><input type="text" id="fm-level3"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>เริ่ม</label><input type="text" id="fm-start3" placeholder="วว/ดด/ปปปป"></div>
+                        <div class="form-group"><label>สิ้นสุด</label><input type="text" id="fm-end3" placeholder="วว/ดด/ปปปป"></div>
+                    </div>
+                </div>
+
+                <button id="btn-save-profile" class="btn-success btn-block mt-1" onclick="saveProfileData()">💾 บันทึกข้อมูล</button>
+            </div>
+            <div class="watermark">By Bm MR Sawee</div>
+        </div>
+
+        <!-- Panel 2: เลือกเดือน -->
+        <div class="card" id="panel-month">
+            <div class="card-header">📅 2. เลือกเดือนเพื่อคำนวณและพิมพ์</div>
+            <div class="year-selector">
+                <button class="year-btn" onclick="changeYear(-1)">◀</button>
+                <span id="display-year" style="font-weight:bold;font-size:15px;"></span>
+                <button class="year-btn" onclick="changeYear(1)">▶</button>
+            </div>
+            <div class="month-grid" id="month-grid-container"></div>
+
+            <div class="mt-2 text-center" style="background:#e9ecef;padding:16px;border-radius:8px;">
+                <h4 style="color:var(--primary);margin-bottom:12px;" id="lbl-selected-month">ยังไม่ได้เลือกเดือน</h4>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-primary" style="flex:1;" onclick="doPrint()">🖨️ พิมพ์</button>
+                    <button class="btn-success" style="flex:1;" onclick="doDownloadDocx()">⬇️ DOCX</button>
+                </div>
+                <p class="text-muted mt-1">ระบบไม่บันทึกเอกสารของท่าน — สร้างในเบราว์เซอร์เท่านั้น</p>
+            </div>
+            <div class="watermark">By Bm MR Sawee</div>
+        </div>
+
+        <!-- Panel 3: วันลา -->
+        <div class="card" id="panel-leave">
+            <div class="card-header">🏖️ 3. ข้อมูลวันลา <span id="lbl-leave-month" style="color:var(--primary);"></span></div>
+
+            <div style="font-size:12px;color:#555;margin-bottom:10px;line-height:1.6;">
+                <b>รูปแบบที่ถูกต้อง:</b><br>
+                1 วัน: <code>11 ก.ย. 69</code><br>
+                หลายวัน: <code>2, 10 ก.ย. 69</code> หรือ <code>2-10 ก.ย. 69</code> หรือ <code>2, 8-10 ก.ย. 69</code><br>
+                ครึ่งวันเช้า: <code>20 ก.ย. 69 (8-12)</code><br>
+                ครึ่งวันบ่าย: <code>20 ก.ย. 69 (13-16)</code>
+            </div>
+
+            <div class="leave-input-area">
+                <div class="form-row">
+                    <div class="form-group" style="flex:0.7;">
+                        <label>ประเภท</label>
+                        <select id="lv-type">
+                            <option value="ลาป่วย">ลาป่วย</option>
+                            <option value="ลากิจ">ลากิจ</option>
+                            <option value="ลาพักผ่อน">ลาพักผ่อน</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>ช่วงวันที่</label>
+                        <div class="tooltip-wrapper" id="lv-date-wrapper">
+                            <input type="text" id="lv-date" placeholder="เช่น 11 ก.ย. 69" oninput="validateLeaveInput()">
+                            <span class="tooltip-text" id="lv-date-tip"></span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex:0.4;">
+                        <label>จำนวนวัน</label>
+                        <input type="number" id="lv-count" step="0.5" min="0.5">
+                    </div>
+                </div>
+                <button class="btn-success btn-block" onclick="addLeave()">➕ เพิ่มวันลา</button>
+            </div>
+
+            <table class="data-table">
+                <thead><tr><th>ประเภท</th><th>ช่วงวันที่</th><th>วัน</th><th>ลบ</th></tr></thead>
+                <tbody id="leave-tbody"></tbody>
+            </table>
+            <div class="watermark">By Bm MR Sawee</div>
+        </div>
+    </div>
+
+    <!-- Print Preview -->
+    <div class="preview-section" id="preview-section">
+        <div class="preview-toolbar">
+            <h2 style="color:white;">📄 พรีวิวเอกสาร</h2>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-primary" onclick="doPrint()">🖨️ พิมพ์ทันที</button>
+                <button class="btn-success" onclick="doDownloadDocx()">⬇️ ดาวน์โหลด DOCX</button>
+            </div>
+        </div>
+        <div id="print-area" class="preview-container">
+            <!-- Page 1 generated by JS -->
+            <div class="page-preview" id="preview-page1"></div>
+            <!-- Page 2 -->
+            <div class="page-preview" id="preview-page2"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ================================================================
+// CONFIGURATION — *** เปลี่ยนค่านี้เป็นของท่าน ***
+// ================================================================
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';   // เช่น https://xxxxx.supabase.co
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // anon key
+
+// ================================================================
+// CONSTANTS
+// ================================================================
+const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// ================================================================
+// STATE
+// ================================================================
+let state = {
+    mode: null, // 'nosave' | 'login'
+    user: null, // { id, email, username }
+    profiles: [], // array of profile objects
+    activeProfileId: null,
+    leaves: [],
+    printHistory: [],
+    currentMonthYear: '',
+    currentViewYear: new Date().getFullYear() + 543,
+};
+
+// ================================================================
+// SUPABASE CLIENT
+// ================================================================
+let sb = null;
+function initSupabase() {
+    if (SUPABASE_URL === 'YOUR_SUPABASE_URL') return null;
+    try {
+        sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        return sb;
+    } catch(e) {
+        console.error('Supabase init error:', e);
+        return null;
+    }
+}
+
+// ================================================================
+// MODAL HELPERS
+// ================================================================
+function showAlert(msg) {
+    document.getElementById('alert-msg').innerText = msg;
+    document.getElementById('modal-alert').classList.add('active');
+}
+function closeAlert() { document.getElementById('modal-alert').classList.remove('active'); }
+
+function showConfirm(msg, cb) {
+    document.getElementById('confirm-msg').innerText = msg;
+    document.getElementById('modal-confirm').classList.add('active');
+    document.getElementById('confirm-yes').onclick = () => { closeConfirm(); cb(); };
+}
+function closeConfirm() { document.getElementById('modal-confirm').classList.remove('active'); }
+
+// ================================================================
+// PAGE NAVIGATION
+// ================================================================
+function showPage(id) {
+    ['page-landing','page-login','page-register','page-dashboard'].forEach(p => {
+        document.getElementById(p).classList.toggle('hidden', p !== id);
+    });
+}
+
+// ================================================================
+// PDPA CONSENT
+// ================================================================
+document.getElementById('chk-pdpa').addEventListener('change', function() {
+    document.getElementById('mode-buttons').style.display = this.checked ? 'flex' : 'none';
+});
+
+// ================================================================
+// NO-SAVE MODE
+// ================================================================
+function enterNoSaveMode() {
+    state.mode = 'nosave';
+    state.user = null;
+    state.profiles = [];
+    state.leaves = [];
+    state.printHistory = [];
+    state.activeProfileId = 'temp';
+
+    showPage('page-dashboard');
+
+    document.getElementById('lbl-mode-badge').innerText = '🔒 ไม่บันทึก';
+    document.getElementById('lbl-mode-badge').style.background = '#ffc107';
+    document.getElementById('lbl-mode-badge').style.color = '#000';
+    document.getElementById('lbl-user-info').innerText = '';
+
+    // ซ่อน profile bar & save button ใน nosave mode
+    document.getElementById('profile-bar').classList.add('hidden');
+    document.getElementById('btn-save-profile').classList.add('hidden');
+
+    initDashboard();
+}
+
+// ================================================================
+// AUTH: LOGIN
+// ================================================================
+async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const username = document.getElementById('login-username').value.trim();
+    if (!email || !username) return showAlert('กรุณากรอก Email และ Username');
+
+    if (!sb) return showAlert('ยังไม่ได้ตั้งค่า Supabase กรุณาแก้ไข SUPABASE_URL และ SUPABASE_KEY ในโค้ด');
+
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> กำลังเข้าสู่ระบบ...';
+
+    try {
+        const { data, error } = await sb.from('users')
+            .select('*')
+            .eq('email', email)
+            .eq('username', username)
+            .single();
+
+        if (error || !data) {
+            showAlert('Email หรือ Username ไม่ถูกต้อง กรุณาตรวจสอบ');
+            return;
+        }
+
+        state.mode = 'login';
+        state.user = data;
+        await loadUserData();
+
+        showPage('page-dashboard');
+        document.getElementById('lbl-mode-badge').innerText = '⚡ จดจำข้อมูล';
+        document.getElementById('lbl-mode-badge').style.background = '#198754';
+        document.getElementById('lbl-mode-badge').style.color = '#fff';
+        document.getElementById('lbl-user-info').innerText = `${data.username} (${data.email})`;
+        document.getElementById('profile-bar').classList.remove('hidden');
+        document.getElementById('btn-save-profile').classList.remove('hidden');
+
+        initDashboard();
+
+    } catch(e) {
+        showAlert('เชื่อมต่อล้มเหลว: ' + e.message);
+    } finally {
+        btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบ';
+    }
+}
+
+// ================================================================
+// AUTH: REGISTER
+// ================================================================
+async function doRegister() {
+    const email = document.getElementById('reg-email').value.trim();
+    const username = document.getElementById('reg-username').value.trim();
+    if (!email || !username) return showAlert('กรุณากรอก Email และ Username');
+    if (!sb) return showAlert('ยังไม่ได้ตั้งค่า Supabase');
+
+    try {
+        // Check existing
+        const { data: existing } = await sb.from('users').select('id').or(`email.eq.${email},username.eq.${username}`);
+        if (existing && existing.length > 0) return showAlert('Email หรือ Username นี้ถูกใช้แล้ว');
+
+        const { data, error } = await sb.from('users').insert({ email, username }).select().single();
+        if (error) throw error;
+
+        showAlert(`ลงทะเบียนสำเร็จ!\nUsername: ${username}\nEmail: ${email}\n\nกรุณาจดจำข้อมูลนี้ไว้สำหรับเข้าสู่ระบบ`);
+        document.getElementById('login-email').value = email;
+        document.getElementById('login-username').value = username;
+        showPage('page-login');
+
+    } catch(e) {
+        showAlert('ลงทะเบียนล้มเหลว: ' + e.message);
+    }
+}
+
+// ================================================================
+// AUTH: FORGOT USERNAME
+// ================================================================
+async function showForgotUsername() {
+    const email = document.getElementById('login-email').value.trim();
+    if (!email) return showAlert('กรุณาพิมพ์ Email ในช่องด้านบนก่อน แล้วกดลืม Username อีกครั้ง');
+    if (!sb) return showAlert('ยังไม่ได้ตั้งค่า Supabase');
+
+    try {
+        const { data, error } = await sb.from('users').select('username').eq('email', email).single();
+        if (error || !data) return showAlert(`ไม่พบ Email "${email}" ในระบบ`);
+        showAlert(`Username ของท่านคือ: ${data.username}`);
+    } catch(e) {
+        showAlert('เกิดข้อผิดพลาด: ' + e.message);
+    }
+}
+
+// ================================================================
+// AUTH: LOGOUT
+// ================================================================
+function doLogout() {
+    state = {
+        mode: null, user: null, profiles: [], activeProfileId: null,
+        leaves: [], printHistory: [],
+        currentMonthYear: '', currentViewYear: new Date().getFullYear() + 543,
+    };
+    clearForm();
+    showPage('page-landing');
+}
+
+// ================================================================
+// DATA: LOAD USER DATA
+// ================================================================
+async function loadUserData() {
+    if (!sb || !state.user) return;
+
+    // Load profiles
+    const { data: profiles } = await sb.from('profiles')
+        .select('*')
+        .eq('user_id', state.user.id)
+        .order('created_at');
+    state.profiles = profiles || [];
+
+    // Set active profile
+    if (state.profiles.length > 0) {
+        state.activeProfileId = state.profiles[0].id;
+    }
+}
+
+// ================================================================
+// DATA: LOAD LEAVES & PRINT HISTORY
+// ================================================================
+async function loadProfileData() {
+    if (!sb || !state.activeProfileId || state.mode === 'nosave') return;
+
+    const { data: leaves } = await sb.from('leaves')
+        .select('*')
+        .eq('profile_id', state.activeProfileId)
+        .order('created_at');
+    state.leaves = leaves || [];
+
+    const { data: history } = await sb.from('print_history')
+        .select('*')
+        .eq('profile_id', state.activeProfileId);
+    state.printHistory = history || [];
+}
+
+// ================================================================
+// DASHBOARD INIT
+// ================================================================
+async function initDashboard() {
+    const now = new Date();
+    state.currentViewYear = now.getFullYear() + 543;
+
+    if (state.mode === 'login' && state.profiles.length > 0) {
+        await loadProfileData();
+        populateForm(state.profiles.find(p => p.id === state.activeProfileId));
+        renderProfileChips();
+    } else if (state.mode === 'login' && state.profiles.length === 0) {
+        clearForm();
+        renderProfileChips();
+    } else {
+        clearForm();
+    }
+
+    // Select current month
+    selectMonth(`${THAI_MONTHS[now.getMonth()]} ${state.currentViewYear}`);
+    renderMonthGrid();
+}
+
+// ================================================================
+// PROFILE CHIPS
+// ================================================================
+function renderProfileChips() {
+    const container = document.getElementById('profile-chips');
+    container.innerHTML = '';
+    state.profiles.forEach(p => {
+        const chip = document.createElement('span');
+        chip.className = `profile-chip ${p.id === state.activeProfileId ? 'active' : ''}`;
+        chip.innerText = `${p.name || 'ไม่ระบุชื่อ'} ${p.surname || ''}`.trim();
+        chip.onclick = () => switchProfile(p.id);
+        container.appendChild(chip);
+    });
+}
+
+async function switchProfile(profileId) {
+    state.activeProfileId = profileId;
+    await loadProfileData();
+    const profile = state.profiles.find(p => p.id === profileId);
+    if (profile) populateForm(profile);
+    renderProfileChips();
+    renderMonthGrid();
+    renderLeaveTable();
+    updatePreview();
+}
+
+async function addNewProfile() {
+    if (!sb || !state.user) return;
+
+    const { data, error } = await sb.from('profiles')
+        .insert({ user_id: state.user.id, name: '', surname: '' })
+        .select()
+        .single();
+
+    if (error) return showAlert('เพิ่มรายชื่อล้มเหลว: ' + error.message);
+
+    state.profiles.push(data);
+    state.activeProfileId = data.id;
+    state.leaves = [];
+    state.printHistory = [];
+    clearForm();
+    renderProfileChips();
+    renderMonthGrid();
+    renderLeaveTable();
+    updatePreview();
+}
+
+// ================================================================
+// FORM: POPULATE & CLEAR
+// ================================================================
+function populateForm(profile) {
+    if (!profile) return clearForm();
+    const setV = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+    setV('fm-name', profile.name); setV('fm-surname', profile.surname);
+    setV('fm-job', profile.job); setV('fm-money', profile.money);
+    setV('fm-start-all', profile.start_date);
+
+    // Set radio
+    const empType = profile.emp_type || 'ข้าราชการ';
+    document.querySelectorAll('input[name="emp-type"]').forEach(r => { r.checked = r.value === empType; });
+
+    setV('fm-hosp1', profile.hospital1); setV('fm-prov1', profile.province1); setV('fm-level1', profile.level1);
+    setV('fm-start1', profile.start_date1); setV('fm-end1', profile.end_date1);
+    setV('fm-hosp2', profile.hospital2); setV('fm-prov2', profile.province2); setV('fm-level2', profile.level2);
+    setV('fm-start2', profile.start_date2); setV('fm-end2', profile.end_date2);
+    setV('fm-hosp3', profile.hospital3); setV('fm-prov3', profile.province3); setV('fm-level3', profile.level3);
+    setV('fm-start3', profile.start_date3); setV('fm-end3', profile.end_date3);
+
+    updatePreview();
+}
+
+function clearForm() {
+    document.querySelectorAll('#user-form input[type="text"], #user-form input[type="number"]').forEach(i => i.value = '');
+    document.querySelector('input[name="emp-type"][value="ข้าราชการ"]').checked = true;
+    document.getElementById('fm-show-fraction').checked = false;
+}
+
+function getFormData() {
+    const getV = id => (document.getElementById(id)?.value || '').trim();
+    const empType = document.querySelector('input[name="emp-type"]:checked')?.value || 'ข้าราชการ';
+    return {
+        name: getV('fm-name'), surname: getV('fm-surname'), job: getV('fm-job'),
+        emp_type: empType, start_date: getV('fm-start-all'), money: parseFloat(getV('fm-money')) || 0,
+        hospital1: getV('fm-hosp1'), province1: getV('fm-prov1'), level1: getV('fm-level1'),
+        start_date1: getV('fm-start1'), end_date1: getV('fm-end1'),
+        hospital2: getV('fm-hosp2'), province2: getV('fm-prov2'), level2: getV('fm-level2'),
+        start_date2: getV('fm-start2'), end_date2: getV('fm-end2'),
+        hospital3: getV('fm-hosp3'), province3: getV('fm-prov3'), level3: getV('fm-level3'),
+        start_date3: getV('fm-start3'), end_date3: getV('fm-end3'),
+    };
+}
+
+// ================================================================
+// SAVE PROFILE
+// ================================================================
+async function saveProfileData() {
+    if (state.mode === 'nosave') return;
+    if (!sb) return showAlert('ยังไม่ได้ตั้งค่า Supabase');
+
+    const formData = getFormData();
+
+    if (!formData.name) return showAlert('กรุณาระบุชื่อ');
+
+    try {
+        if (state.activeProfileId && state.profiles.find(p => p.id === state.activeProfileId)) {
+            // Update existing
+            const { error } = await sb.from('profiles')
+                .update(formData)
+                .eq('id', state.activeProfileId);
+            if (error) throw error;
+
+            // Update local state
+            const idx = state.profiles.findIndex(p => p.id === state.activeProfileId);
+            if (idx >= 0) Object.assign(state.profiles[idx], formData);
+        } else {
+            // Create new profile
+            formData.user_id = state.user.id;
+            const { data, error } = await sb.from('profiles').insert(formData).select().single();
+            if (error) throw error;
+            state.profiles.push(data);
+            state.activeProfileId = data.id;
+        }
+
+        renderProfileChips();
+        showAlert('บันทึกข้อมูลเรียบร้อยแล้ว ✅');
+    } catch(e) {
+        showAlert('บันทึกล้มเหลว: ' + e.message);
+    }
+}
+
+// ================================================================
+// MONTH GRID
+// ================================================================
+function changeYear(delta) {
+    state.currentViewYear += delta;
+    renderMonthGrid();
+}
+
+function renderMonthGrid() {
+    document.getElementById('display-year').innerText = `ปี ${state.currentViewYear}`;
+    const grid = document.getElementById('month-grid-container');
+    grid.innerHTML = '';
+
+    THAI_MONTHS.forEach((m, idx) => {
+        const mStr = `${m} ${state.currentViewYear}`;
+        const isPrinted = state.printHistory.some(h => h.month_year === mStr);
+        const isSelected = mStr === state.currentMonthYear;
+
+        const div = document.createElement('div');
+        div.className = `month-cell ${isPrinted ? 'printed' : ''} ${isSelected ? 'selected' : ''}`;
+        div.innerHTML = `<div>${m}</div><div class="month-status">${isPrinted ? '✅ พิมพ์แล้ว' : '❌ ยังไม่พิมพ์'}</div>`;
+        div.onclick = () => selectMonth(mStr);
+        grid.appendChild(div);
+    });
+}
+
+function selectMonth(monthStr) {
+    state.currentMonthYear = monthStr;
+    document.getElementById('lbl-selected-month').innerText = `เดือน: ${monthStr}`;
+    document.getElementById('lbl-leave-month').innerText = `(${monthStr})`;
+
+    const yearPart = parseInt(monthStr.split(' ')[1]);
+    if (yearPart && yearPart !== state.currentViewYear) state.currentViewYear = yearPart;
+
+    renderMonthGrid();
+    renderLeaveTable();
+    updatePreview();
+}
+
+// ================================================================
+// LEAVE VALIDATION
+// ================================================================
+function validateLeaveFormat(text) {
+    if (!text || !text.trim()) return { valid: false, error: '', count: 0 };
+    text = text.trim();
+
+    // Pattern: day-parts + month-abbr + year [+ half-day]
+    // e.g. "11 ก.ย. 69", "2, 10 ก.ย. 69", "2-10 ก.ย. 69", "20 ก.ย. 69 (8-12)"
+    const monthAbbrs = THAI_MONTHS_SHORT.join('|').replace(/\./g, '\\.');
+    const pattern = new RegExp(
+        `^([\\d\\s,\\-]+)\\s+(${monthAbbrs})\\s+(\\d{2})(?:\\s+\\((8-12|13-16)\\))?$`
+    );
+    const match = text.match(pattern);
+
+    if (!match) {
+        return { valid: false, error: 'รูปแบบไม่ถูกต้อง ตัวอย่าง: 11 ก.ย. 69', count: 0 };
+    }
+
+    const daysPart = match[1].trim();
+    const monthAbbr = match[2];
+    const yearShort = parseInt(match[3]);
+    const halfDay = match[4]; // "8-12" or "13-16" or undefined
+
+    // Validate month matches selected month
+    const monthIdx = THAI_MONTHS_SHORT.indexOf(monthAbbr);
+    const selectedParts = state.currentMonthYear.split(' ');
+    const selectedMonthIdx = THAI_MONTHS.indexOf(selectedParts[0]);
+    const selectedYear = parseInt(selectedParts[1]);
+    const expectedYearShort = selectedYear % 100;
+
+    if (monthIdx !== selectedMonthIdx) {
+        return { valid: false, error: `เดือนไม่ตรง ควรเป็น ${THAI_MONTHS_SHORT[selectedMonthIdx]}`, count: 0 };
+    }
+    if (yearShort !== expectedYearShort) {
+        return { valid: false, error: `ปีไม่ตรง ควรเป็น ${expectedYearShort}`, count: 0 };
+    }
+
+    // Parse day numbers
+    const daysInMonth = new Date(selectedYear - 543, selectedMonthIdx + 1, 0).getDate();
+    const dayTokens = daysPart.split(/\s*,\s*/);
+    let totalDays = 0;
+    let allDayNumbers = [];
+
+    for (const token of dayTokens) {
+        const rangeMatch = token.match(/^(\d{1,2})-(\d{1,2})$/);
+        if (rangeMatch) {
+            const start = parseInt(rangeMatch[1]);
+            const end = parseInt(rangeMatch[2]);
+            if (start >= end) return { valid: false, error: `ช่วงวัน ${start}-${end} ไม่ถูกต้อง`, count: 0 };
+            if (start < 1 || end > daysInMonth) return { valid: false, error: `วันที่ ${start}-${end} เกินจำนวนวันในเดือน (${daysInMonth} วัน)`, count: 0 };
+            for (let d = start; d <= end; d++) allDayNumbers.push(d);
+            totalDays += (end - start + 1);
+        } else {
+            const day = parseInt(token);
+            if (isNaN(day) || day < 1 || day > daysInMonth) return { valid: false, error: `วันที่ ${token} ไม่ถูกต้อง (เดือนนี้มี ${daysInMonth} วัน)`, count: 0 };
+            allDayNumbers.push(day);
+            totalDays += 1;
+        }
+    }
+
+    // Check for duplicate days
+    const uniqueDays = new Set(allDayNumbers);
+    if (uniqueDays.size !== allDayNumbers.length) {
+        return { valid: false, error: 'มีวันที่ซ้ำกัน', count: 0 };
+    }
+
+    // Half day
+    if (halfDay) {
+        if (totalDays !== 1) return { valid: false, error: 'ครึ่งวันใช้ได้กับวันเดียวเท่านั้น', count: 0 };
+        totalDays = 0.5;
+    }
+
+    return { valid: true, error: '', count: totalDays, daysPart, monthAbbr, yearShort, halfDay };
+}
+
+function validateLeaveInput() {
+    const text = document.getElementById('lv-date').value;
+    const wrapper = document.getElementById('lv-date-wrapper');
+    const tip = document.getElementById('lv-date-tip');
+    const countField = document.getElementById('lv-count');
+
+    if (!text.trim()) {
+        wrapper.classList.remove('show-tip');
+        tip.className = 'tooltip-text';
+        return;
+    }
+
+    const result = validateLeaveFormat(text);
+    wrapper.classList.add('show-tip');
+
+    if (result.valid) {
+        tip.className = 'tooltip-text success';
+        tip.innerText = `✅ ถูกต้อง — ${result.count} วัน`;
+        countField.value = result.count;
+    } else if (result.error) {
+        tip.className = 'tooltip-text error';
+        tip.innerText = `❌ ${result.error}`;
+    }
+}
+
+// ================================================================
+// LEAVE CRUD
+// ================================================================
+async function addLeave() {
+    const type = document.getElementById('lv-type').value;
+    const dateText = document.getElementById('lv-date').value.trim();
+    const count = parseFloat(document.getElementById('lv-count').value);
+
+    if (!dateText || !count) return showAlert('กรุณากรอกช่วงวันที่และจำนวนวัน');
+
+    const validation = validateLeaveFormat(dateText);
+    if (!validation.valid) return showAlert(`รูปแบบวันลาไม่ถูกต้อง: ${validation.error}`);
+
+    const leaveEntry = {
+        id: state.mode === 'nosave' ? Date.now().toString() : undefined,
+        profile_id: state.activeProfileId,
+        month_year: state.currentMonthYear,
+        type_of_leave: type,
+        date_range: dateText,
+        count: count
+    };
+
+    if (state.mode === 'login' && sb) {
+        try {
+            const { data, error } = await sb.from('leaves').insert(leaveEntry).select().single();
+            if (error) throw error;
+            state.leaves.push(data);
+        } catch(e) { return showAlert('เพิ่มวันลาล้มเหลว: ' + e.message); }
+    } else {
+        leaveEntry.id = leaveEntry.id || Date.now().toString();
+        state.leaves.push(leaveEntry);
+    }
+
+    document.getElementById('lv-date').value = '';
+    document.getElementById('lv-count').value = '';
+    document.getElementById('lv-date-wrapper').classList.remove('show-tip');
+
+    renderLeaveTable();
+    updatePreview();
+}
+
+async function deleteLeave(leaveId) {
+    showConfirm('ต้องการลบวันลานี้?', async () => {
+        if (state.mode === 'login' && sb) {
+            try {
+                const { error } = await sb.from('leaves').delete().eq('id', leaveId);
+                if (error) throw error;
+            } catch(e) { return showAlert('ลบล้มเหลว: ' + e.message); }
+        }
+        state.leaves = state.leaves.filter(l => l.id !== leaveId);
+        renderLeaveTable();
+        updatePreview();
+    });
+}
+
+function renderLeaveTable() {
+    const tbody = document.getElementById('leave-tbody');
+    const currentLeaves = state.leaves.filter(l => l.month_year === state.currentMonthYear);
+
+    if (currentLeaves.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color:#aaa;">ไม่มีข้อมูลวันลาในเดือนนี้</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = currentLeaves.map(lv => `
+        <tr>
+            <td>${lv.type_of_leave}</td>
+            <td>${lv.date_range}</td>
+            <td>${lv.count}</td>
+            <td><button class="btn-danger" onclick="deleteLeave('${lv.id}')">ลบ</button></td>
+        </tr>
+    `).join('');
+}
+
+// ================================================================
+// DATE UTILITIES
+// ================================================================
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    let y = parseInt(parts[2]); if (y > 2400) y -= 543;
+    return new Date(y, parseInt(parts[1]) - 1, parseInt(parts[0]));
+}
+
+function parseThaiMonth(thaiStr) {
+    if (!thaiStr) return new Date();
+    const parts = thaiStr.split(' ');
+    const mIndex = THAI_MONTHS.indexOf(parts[0]);
+    const y = parseInt(parts[1]) - 543;
+    return new Date(y, mIndex + 1, 0); // last day of month
+}
+
+function formatThaiDate(dateStr) {
+    const d = parseDate(dateStr);
+    if (!d) return dateStr || '';
+    return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+
+function calculateDuration(dStart, dEnd) {
+    if (!dStart || !dEnd) return { y: '', m: '', d: '' };
+    let y = dEnd.getFullYear() - dStart.getFullYear();
+    let m = dEnd.getMonth() - dStart.getMonth();
+    let d = dEnd.getDate() - dStart.getDate();
+    if (d < 0) { m--; const prev = new Date(dEnd.getFullYear(), dEnd.getMonth(), 0); d += prev.getDate(); }
+    if (m < 0) { y--; m += 12; }
+    return { y, m, d };
+}
+
+function ThaiBaht(num) {
+    if (isNaN(num) || num === 0) return '';
+    const t = ['','สิบ','ร้อย','พัน','หมื่น','แสน','ล้าน'];
+    const n = ['','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+    let txt = '', str = Math.floor(num).toString();
+    for (let i = 0; i < str.length; i++) {
+        let d = parseInt(str.charAt(i)), pos = str.length - i - 1;
+        if (d === 0) continue;
+        if (d === 1 && pos === 0 && str.length > 1) txt += 'เอ็ด';
+        else if (d === 2 && pos === 1) txt += 'ยี่';
+        else if (d === 1 && pos === 1) txt += '';
+        else txt += n[d];
+        txt += t[pos];
+    }
+    return txt ? txt + 'บาทถ้วน' : '';
+}
+
+// ================================================================
+// PREVIEW UPDATE
+// ================================================================
+function updatePreview() {
+    const data = getFormData();
+    const showFraction = document.getElementById('fm-show-fraction').checked;
+    const endDate = parseThaiMonth(state.currentMonthYear);
+
+    // Calculate work duration at current hospital (Sawee)
+    let saweeStart = null;
+    for (let i = 3; i >= 1; i--) {
+        if (data[`hospital${i}`] && data[`hospital${i}`].includes('สวี')) {
+            saweeStart = data[`start_date${i}`];
+        }
+    }
+    const workDur = saweeStart ? calculateDuration(parseDate(saweeStart), endDate) : { y: '', m: '' };
+
+    // Calculate total duration
+    const totalDur = calculateDuration(parseDate(data.start_date), endDate);
+
+    // Hospital details
+    const hospitals = [];
+    for (let i = 1; i <= 3; i++) {
+        if (data[`hospital${i}`]) {
+            const s = data[`start_date${i}`];
+            const e = data[`end_date${i}`];
+            const eDate = e ? parseDate(e) : (s ? endDate : null);
+            const dur = s && eDate ? calculateDuration(parseDate(s), eDate) : { y: '', m: '', d: '' };
+            hospitals.push({
+                name: data[`hospital${i}`], prov: data[`province${i}`], level: data[`level${i}`],
+                start: formatThaiDate(s), end: e ? formatThaiDate(e) : (s ? formatThaiDate(dateToStr(eDate)) : ''),
+                y: dur.y, m: dur.m, d: dur.d
+            });
+        }
+    }
+
+    // Money
+    const moneyFormatted = data.money ? data.money.toLocaleString('en-US') : '';
+    const moneyText = ThaiBaht(data.money);
+
+    // Determine approval section visibility
+    const showApproval = data.emp_type === 'ลูกจ้าง';
+
+    // Render Page 1
+    const page1 = document.getElementById('preview-page1');
+    page1.innerHTML = renderPage1HTML(data, showFraction, workDur, totalDur, hospitals, moneyFormatted, moneyText, showApproval);
+
+    // Render Page 2
+    const page2 = document.getElementById('preview-page2');
+    page2.innerHTML = renderPage2HTML(data);
+}
+
+function dateToStr(d) {
+    if (!d) return '';
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear() + 543}`;
+}
+
+function renderPage1HTML(data, showFraction, workDur, totalDur, hospitals, moneyFormatted, moneyText, showApproval) {
+    const df = (v, w) => `<span class="dot-field" style="width:${w || '120px'}">${v || ''}</span>`;
+    const dfrac = showFraction ? (totalDur.d || '-') : '-';
+
+    // Build hospital rows (2-6 in the form, we have slots 2-6 but user fills 1-3)
+    let hospHtml = '';
+    for (let i = 0; i < 5; i++) {
+        const h = hospitals[i] || {};
+        const num = i + 2;
+        const hasData = !!h.name;
+        hospHtml += `
+            <div class="form-line" style="margin-top:${i===0?'8pt':'4pt'}">
+                ${num}. ปฏิบัติงานที่โรงพยาบาล ${df(h.name || '', '140px')} จังหวัด ${df(h.prov || '', '100px')} จัดระดับ ${df(h.level || '', '110px')}
+            </div>
+            <div class="form-line indent" style="margin-top:2pt;">
+                ตั้งแต่วันที่ ${df(h.start || '', '130px')} ถึงวันที่ ${df(h.end || '', '130px')}
+                รวม ${df(hasData ? (h.y || '-') : '', '45px')} ปี ${df(hasData ? (h.m || '-') : '', '45px')} เดือน ${df(hasData ? (showFraction ? (h.d || '-') : '-') : '', '45px')} วัน
+            </div>
+        `;
+    }
+
+    const approvalSection = showApproval ? `
+        <div style="width:45%;">
+            <div style="font-weight:500;">ตรวจสอบแล้วถูกต้อง</div>
+            <div style="margin-top:8pt;">ลงชื่อ .............................................</div>
+            <div style="margin-top:8pt;">(............................................)</div>
+            <div style="margin-top:8pt;">ตำแหน่ง ........................................</div>
+            <div style="text-align:center;font-weight:500;margin-top:4pt;">หัวหน้าฝ่าย / หัวหน้างาน</div>
+        </div>
+    ` : '<div style="width:45%;"></div>';
+
+    return `
+        <div class="title-line">
+            ใบขอรับเงินค่าตอบแทนเบี้ยเลี้ยงเหมาจ่ายสำหรับเจ้าหน้าที่<br>
+            ที่ปฏิบัติงานในหน่วยบริการสังกัดกระทรวงสาธารณสุข
+        </div>
+
+        <div class="form-line" style="margin-top:12pt;justify-content:flex-end;">
+            <div style="width:270px;">
+                หน่วยบริการ ${df(data.hospital1 ? 'โรงพยาบาล' + data.hospital1 : 'โรงพยาบาลสวี', '170px')}
+            </div>
+        </div>
+        <div class="form-line" style="justify-content:flex-end;">
+            <div style="width:270px;">
+                ประจำเดือน ${df(state.currentMonthYear, '170px')}
+            </div>
+        </div>
+
+        <div class="form-line" style="margin-top:6pt;">
+            ข้าพเจ้า ชื่อ ${df(data.name, '140px')} นามสกุล ${df(data.surname, '130px')} ตำแหน่ง ${df(data.job, '140px')}
+        </div>
+        <div class="form-line">
+            ปัจจุบันปฏิบัติงานที่ ${df(data.hospital1 ? 'โรงพยาบาล' + data.hospital1 : 'โรงพยาบาลสวี', '140px')}
+            จังหวัด ${df(data.province1 || 'ชุมพร', '100px')}
+            ระดับ/กลุ่ม ${df(data.level1 || 'พื้นที่ปกติ 2', '110px')}
+        </div>
+        <div class="form-line">
+            ปฏิบัติงานในหน่วยบริการ ${df(workDur.y, '80px')} ปี ${df(workDur.m, '80px')} เดือน (นับถึงสิ้นเดือนที่เบิกจ่าย)
+        </div>
+
+        <div class="form-line" style="margin-top:6pt;margin-bottom:6pt;">
+            โดยมีรายละเอียดการปฏิบัติงาน ดังนี้ ( เฉพาะสายแพทย์ตอบข้อ 1 ด้วย )
+        </div>
+
+        <div class="form-line">
+            1. ฝึกเพิ่มพูนทักษะ (ปีที่ 1) รวมระยะเวลาการปฏิบัติงาน..................ปี....................เดือน ดังนี้
+        </div>
+        <div class="form-line indent">
+            รพศ./รพท. .........................................จังหวัด......................ตั้งแต่............................ถึง...........................
+        </div>
+        <div class="form-line indent">
+            รพช./....................................................จังหวัด.....................ตั้งแต่..............................ถึง...........................
+        </div>
+
+        ${hospHtml}
+
+        <div class="form-line" style="margin-top:12pt;">
+            <span style="margin-left:1.5cm;"><b>รวมทั้งสิ้น</b></span>
+            ${df(totalDur.y || '', '80px')} <b>ปี</b> ${df(totalDur.m || '', '80px')} <b>เดือน</b> ${df(dfrac, '80px')} <b>วัน</b>
+        </div>
+        <div class="form-line" style="margin-top:6pt;">
+            <span style="margin-left:1.5cm;"><b>ได้รับเงินจำนวน</b></span>
+            ${df(moneyFormatted, '120px')} <b>บาท</b> ( ${df(moneyText, '260px')} )
+        </div>
+
+        <div style="margin-top:12pt;text-indent:2.5cm;line-height:1.5;">
+            ข้าพเจ้าขอรับรองว่า ข้อมูลดังกล่าวเป็นความจริงทุกประการ และหากมีการเรียกเงินคืน ข้าพเจ้า
+            ขอรับผิดชอบคืนเงินแต่เพียงผู้เดียว
+        </div>
+
+        <div class="sign-section" style="margin-top:20pt;">
+            <div class="sign-block">
+                <div>.............................................</div>
+                <div style="margin-top:6pt;">(${df(data.name + '  ' + data.surname, '200px')})</div>
+                <div style="margin-top:6pt;">ตำแหน่ง ${df(data.job, '160px')}</div>
+            </div>
+        </div>
+
+        <div class="bottom-section" style="margin-top:16pt;">
+            ${approvalSection}
+            <div style="width:50%;">
+                <div>เรียน ผู้อำนวยการโรงพยาบาลสวี</div>
+                <div style="padding-left:24px;margin-top:6pt;">
+                    ได้ตรวจสอบ / วันปฏิบัติงานแล้ว
+                    <div style="margin-top:4pt;">(   ) ครบ 15 วันทำการ  (   ) ไม่ครบ 15 วันทำการ</div>
+                </div>
+                <div style="text-align:center;margin-top:20pt;">
+                    (ลงชื่อ)................................................
+                    <div style="margin-top:6pt;">( <b>นางอทิตา มณีรัตน์</b> )</div>
+                    <div style="margin-top:4pt;">ตำแหน่ง <b>เจ้าพนักงานธุรการชำนาญงาน</b></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderPage2HTML(data) {
+    const currentLeaves = state.leaves.filter(l => l.month_year === state.currentMonthYear);
+
+    // Group leaves by type
+    const sick = [], personal = [], vacation = [];
+    let totalCount = 0;
+
+    currentLeaves.forEach(lv => {
+        const cnt = parseFloat(lv.count) || 0;
+        totalCount += cnt;
+        if (lv.type_of_leave === 'ลาป่วย') sick.push(lv.date_range);
+        else if (lv.type_of_leave === 'ลากิจ') personal.push(lv.date_range);
+        else if (lv.type_of_leave === 'ลาพักผ่อน') vacation.push(lv.date_range);
+    });
+
+    const sickStr = sick.length > 0 ? sick.join(', ') : '-';
+    const personalStr = personal.length > 0 ? personal.join(', ') : '-';
+    const vacStr = vacation.length > 0 ? vacation.join(', ') : '-';
+    // ถ้าทุกช่องเป็น - ให้แสดงรวมเป็น - ไม่ใช่ 0
+    const allDash = (sickStr === '-' && personalStr === '-' && vacStr === '-');
+    const totalStr = allDash ? '-' : (totalCount % 1 !== 0 ? totalCount.toFixed(1) : totalCount.toString());
+
+    // Build 6 rows (1 data + 5 empty)
+    let rows = `<tr>
+        <td>${state.currentMonthYear}</td>
+        <td style="font-weight:700;">${sickStr}</td>
+        <td style="font-weight:700;">${personalStr}</td>
+        <td style="font-weight:700;">${vacStr}</td>
+        <td style="font-weight:700;">${totalStr}</td>
+    </tr>`;
+    for (let i = 0; i < 5; i++) {
+        rows += '<tr><td></td><td></td><td></td><td></td><td></td></tr>';
+    }
+
+    return `
+        <div class="leave-title" style="margin-top:40px;">สรุปวันลา</div>
+        <div class="form-line" style="justify-content:center;margin-top:24px;">
+            <span style="font-weight:500;">ชื่อ - สกุล</span>&nbsp;
+            <span class="dot-field" style="width:400px;font-weight:700;">${data.name} ${data.surname}</span>
+        </div>
+
+        <table class="leave-table">
+            <thead>
+                <tr>
+                    <th style="width:20%;">ประจำเดือน</th>
+                    <th style="width:20%;">วัน/เดือน/ปี<br>ลาป่วย</th>
+                    <th style="width:20%;">วัน/เดือน/ปี<br>ลากิจ</th>
+                    <th style="width:20%;">วัน/เดือน/ปี<br>ลาพักผ่อน</th>
+                    <th style="width:20%;">รวม</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+
+        <div style="margin-top:60px;text-align:center;">
+            <div style="font-weight:500;">ตรวจสอบแล้วถูกต้อง</div>
+            <div style="padding-left:50%;text-align:left;">
+                <div style="margin-top:12pt;">(ลงชื่อ) ............................................</div>
+                <div style="margin-top:8pt;text-align:center;width:250px;">( <b>นางอทิตา มณีรัตน์</b> )</div>
+                <div style="margin-top:4pt;text-align:center;width:250px;">ตำแหน่ง <b>เจ้าพนักงานธุรการชำนาญงาน</b></div>
+            </div>
+        </div>
+    `;
+}
+
+// ================================================================
+// PRINT (window.print — no new window)
+// ================================================================
+async function doPrint() {
+    // Mark as printed
+    await markAsPrinted();
+
+    // Use window.print()
+    window.print();
+}
+
+async function markAsPrinted() {
+    if (state.mode === 'nosave' || !sb) return;
+
+    try {
+        // Upsert print history
+        const { error } = await sb.from('print_history')
+            .upsert({
+                profile_id: state.activeProfileId,
+                month_year: state.currentMonthYear,
+                printed_at: new Date().toISOString()
+            }, { onConflict: 'profile_id,month_year' });
+
+        if (!error) {
+            if (!state.printHistory.find(h => h.month_year === state.currentMonthYear)) {
+                state.printHistory.push({ month_year: state.currentMonthYear });
+            }
+            renderMonthGrid();
+        }
+    } catch(e) { console.error('markAsPrinted error:', e); }
+}
+
+// ================================================================
+// DOCX GENERATION
+// ================================================================
+async function doDownloadDocx() {
+    // Mark as printed
+    await markAsPrinted();
+
+    try {
+        const blob = await generateDocxBlob();
+        saveAs(blob, `ใบขอรับเงิน_${state.currentMonthYear}.docx`);
+    } catch(e) {
+        showAlert('สร้าง DOCX ล้มเหลว: ' + e.message);
+        console.error(e);
+    }
+}
+
+async function generateDocxBlob() {
+    const { Document, Packer, Paragraph, TextRun, Tab, TabStopType, AlignmentType,
+            UnderlineType, PageBreak, Table, TableRow, TableCell, WidthType,
+            BorderStyle, SectionType, convertMillimetersToTwip, HeadingLevel,
+            TableLayoutType, VerticalAlign } = docx;
+
+    const data = getFormData();
+    const showFraction = document.getElementById('fm-show-fraction').checked;
+    const endDate = parseThaiMonth(state.currentMonthYear);
+
+    // Calculate durations
+    let saweeStart = null;
+    for (let i = 3; i >= 1; i--) {
+        if (data[`hospital${i}`] && data[`hospital${i}`].includes('สวี')) {
+            saweeStart = data[`start_date${i}`];
+        }
+    }
+    const workDur = saweeStart ? calculateDuration(parseDate(saweeStart), endDate) : { y: '', m: '' };
+    const totalDur = calculateDuration(parseDate(data.start_date), endDate);
+
+    const FONT = 'TH Sarabun New';
+    const SIZE_TITLE = 38; // 19pt in half-points
+    const SIZE_BODY = 32; // 16pt
+    const LINE_SPACING = 216; // 0.9 * 240
+
+    // Helper: create a text run
+    const tr = (text, opts = {}) => new TextRun({
+        text, font: FONT, size: opts.size || SIZE_BODY,
+        bold: opts.bold || false,
+        underline: opts.underline ? { type: UnderlineType.DOTTED } : undefined,
+        ...opts
+    });
+    const tab = () => new TextRun({ children: [new Tab()], font: FONT, size: SIZE_BODY });
+    const tabU = (opts = {}) => new TextRun({ children: [new Tab()], font: FONT, size: SIZE_BODY, underline: { type: UnderlineType.DOTTED }, ...opts });
+
+    // Helper: field value (bold + dotted underline)
+    const fv = (text, opts = {}) => new TextRun({
+        text: `  ${text || ''}  `, font: FONT, size: opts.size || SIZE_BODY,
+        bold: true, underline: { type: UnderlineType.DOTTED }
+    });
+    // Helper: dotted space
+    const ds = (text = '          ') => new TextRun({ text, font: FONT, size: SIZE_BODY, underline: { type: UnderlineType.DOTTED } });
+
+    // Tab stops in twips (1cm = 567 twips approximately)
+    const cm = (c) => Math.round(c * 567);
+
+    // ---- Hospital data ----
+    const hospitals = [];
+    for (let i = 1; i <= 3; i++) {
+        if (data[`hospital${i}`]) {
+            const s = data[`start_date${i}`];
+            const e = data[`end_date${i}`];
+            const eDate = e ? parseDate(e) : (s ? endDate : null);
+            const dur = s && eDate ? calculateDuration(parseDate(s), eDate) : { y: '', m: '', d: '' };
+            hospitals.push({
+                name: data[`hospital${i}`], prov: data[`province${i}`], level: data[`level${i}`],
+                start: formatThaiDate(s), end: e ? formatThaiDate(e) : (s ? formatThaiDate(dateToStr(eDate)) : ''),
+                y: dur.y, m: dur.m, d: dur.d
+            });
+        }
+    }
+
+    const moneyFormatted = data.money ? data.money.toLocaleString('en-US') : '';
+    const moneyText = ThaiBaht(data.money);
+
+    // ---- BUILD PARAGRAPHS ----
+    const paragraphs = [];
+
+    // Title
+    paragraphs.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { line: LINE_SPACING },
+        children: [tr('ใบขอรับเงินค่าตอบแทนเบี้ยเลี้ยงเหมาจ่ายสำหรับเจ้าหน้าที่', { size: SIZE_TITLE, bold: true })]
+    }));
+    paragraphs.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { line: LINE_SPACING },
+        children: [tr('ที่ปฏิบัติงานในหน่วยบริการสังกัดกระทรวงสาธารณสุข', { size: SIZE_TITLE, bold: true })]
+    }));
+
+    // หน่วยบริการ
+    paragraphs.push(new Paragraph({
+        spacing: { before: 240, line: LINE_SPACING },
+        tabStops: [{ type: TabStopType.LEFT, position: cm(10.75) }],
+        children: [tab(), tr('หน่วยบริการ'), ds('   '), fv('โรงพยาบาลสวี'), tabU()]
+    }));
+
+    // ประจำเดือน
+    paragraphs.push(new Paragraph({
+        spacing: { before: 120, line: LINE_SPACING },
+        tabStops: [{ type: TabStopType.LEFT, position: cm(10.75) }],
+        children: [tab(), tr('ประจำเดือน'), ds('   '), fv(state.currentMonthYear), tabU(), ds(' ')]
+    }));
+
+    // ชื่อ นามสกุล ตำแหน่ง
+    paragraphs.push(new Paragraph({
+        spacing: { before: 120, line: LINE_SPACING },
+        tabStops: [
+            { type: TabStopType.LEFT, position: cm(5.5) },
+            { type: TabStopType.LEFT, position: cm(9.75) },
+        ],
+        children: [
+            tr('ข้าพเจ้า ชื่อ'), ds(' '), fv(data.name), tabU(),
+            tr('นามสกุล'), ds('  '), fv(data.surname), tabU(),
+            tr('ตำแหน่ง'), ds('  '), fv(data.job), tabU(), tabU()
+        ]
+    }));
+
+    // ปัจจุบันปฏิบัติงาน + ระยะเวลา
+    const curHosp = data.hospital1 ? 'โรงพยาบาล' + data.hospital1 : 'โรงพยาบาลสวี';
+    const curProv = data.province1 || 'ชุมพร';
+    const curLevel = data.level1 || 'พื้นที่ปกติ 2';
+
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        tabStops: [
+            { type: TabStopType.LEFT, position: cm(5.5) },
+            { type: TabStopType.LEFT, position: cm(9.75) },
+        ],
+        children: [
+            tr('ปัจจุบันปฏิบัติงานที่ '), ds('       '), fv(curHosp), ds('       '),
+            tr('จังหวัด'), ds('      '), fv(curProv), ds('         '), tabU(),
+            tr('ระดับ'), tr('/กลุ่ม'), ds('    '), fv(curLevel), ds(' '), tabU({ text: '     ' }),
+            tr('ปฏิบัติงานในหน่วยบริการ'), ds('             '), fv(String(workDur.y || '')), ds('       '),
+            tr('ปี'), ds('         '), fv(String(workDur.m || '')), ds('       '), tabU(),
+            tr('เดือน  (นับถึงสิ้นเดือนที่เบิกจ่าย)')
+        ]
+    }));
+
+    // โดยมีรายละเอียด
+    paragraphs.push(new Paragraph({
+        spacing: { after: 120, line: LINE_SPACING },
+        children: [tr('โดยมีรายละเอียดการปฏิบัติงาน ดังนี้ ( เฉพาะสายแพทย์ตอบข้อ 1 ด้วย )')]
+    }));
+
+    // ข้อ 1 ฝึกเพิ่มพูนทักษะ
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('1. ฝึกเพิ่มพูนทักษะ (ปีที่ 1) รวมระยะเวลาการปฏิบัติงาน.........................ปี....................เดือน ดังนี้')]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('\trพศ./รพท...........................................จังหวัด...............................ตั้งแต่.............................ถึง..........................')]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('\tรพช./....................................................จังหวัด...........................ตั้งแต่...............................ถึง..........................')]
+    }));
+
+    // ข้อ 2-6
+    const hospTabStops = [
+        { type: TabStopType.LEFT, position: cm(4) },
+        { type: TabStopType.LEFT, position: cm(8.5) },
+        { type: TabStopType.LEFT, position: cm(9.5) },
+        { type: TabStopType.LEFT, position: cm(12.75) },
+        { type: TabStopType.LEFT, position: cm(14.5) },
+    ];
+    const dateTabStops = [
+        { type: TabStopType.LEFT, position: cm(2) },
+        { type: TabStopType.LEFT, position: cm(6.25) },
+        { type: TabStopType.LEFT, position: cm(7.25) },
+        { type: TabStopType.LEFT, position: cm(11.5) },
+        { type: TabStopType.LEFT, position: cm(12) },
+        { type: TabStopType.LEFT, position: cm(13.25) },
+        { type: TabStopType.LEFT, position: cm(14.5) },
+        { type: TabStopType.LEFT, position: cm(16.25) },
+    ];
+
+    for (let i = 0; i < 5; i++) {
+        const h = hospitals[i] || {};
+        const num = i + 2;
+        const hasData = !!h.name;
+        const dFrac = showFraction ? (h.d !== '' && h.d !== undefined ? String(h.d) : '') : '';
+
+        // Hospital line
+        paragraphs.push(new Paragraph({
+            spacing: { line: LINE_SPACING },
+            tabStops: hospTabStops,
+            children: [
+                tr(`${num}`), tr('. ปฏิบัติงานที่โรงพยาบาล'), tr('\t'),
+                ds('               '), fv(h.name || ''), tabU(),
+                tr('จังหวัด'), ds('        '), fv(h.prov || ''), tabU(),
+                tr('จัดระดับ'), ds(' '), fv(h.level || ''), ds(' '), tabU(), ds('    ')
+            ]
+        }));
+
+        // Date line
+        paragraphs.push(new Paragraph({
+            spacing: { line: LINE_SPACING },
+            tabStops: dateTabStops,
+            children: [
+                tr('   '), tr('ตั้งแต่วันที่'), tabU(), ds(' '), fv(h.start || ''), tabU(),
+                tr('ถึงวันที่'), ds('  '), fv(h.end || ''), tabU(),
+                tr('รวม'), ds('   '), fv(hasData ? String(h.y ?? '-') : ''), tabU(),
+                tr('ปี'), ds('  '), fv(hasData ? String(h.m ?? '-') : ''), tabU(),
+                tr('เดือน'), ds(''), tabU(),
+                tr('วัน')
+            ]
+        }));
+    }
+
+    // รวมทั้งสิ้น
+    const dfrac = showFraction ? (totalDur.d || '-') : '-';
+    paragraphs.push(new Paragraph({
+        spacing: { before: 240, line: LINE_SPACING },
+        tabStops: [
+            { type: TabStopType.LEFT, position: cm(1.5) },
+            { type: TabStopType.LEFT, position: cm(3.25) },
+            { type: TabStopType.LEFT, position: cm(6.75) },
+            { type: TabStopType.LEFT, position: cm(7) },
+            { type: TabStopType.LEFT, position: cm(9.25) },
+            { type: TabStopType.LEFT, position: cm(10) },
+            { type: TabStopType.LEFT, position: cm(12) },
+        ],
+        children: [
+            tabU(), tr('รวมทั้งสิ้น', { bold: true }), tabU(), ds('            '),
+            fv(String(totalDur.y || '')), tabU(),
+            tr('ปี', { bold: true }), new TextRun({ text: '        ', font: FONT, size: SIZE_BODY, bold: true, underline: { type: UnderlineType.DOTTED } }),
+            fv(String(totalDur.m || '')), tabU(),
+            tr('เดือน', { bold: true }), new TextRun({ text: '', font: FONT, size: SIZE_BODY, bold: true, underline: { type: UnderlineType.DOTTED } }), tabU(),
+            tr('วัน', { bold: true })
+        ]
+    }));
+
+    // ได้รับเงิน
+    paragraphs.push(new Paragraph({
+        spacing: { before: 120, line: LINE_SPACING },
+        tabStops: [
+            { type: TabStopType.LEFT, position: cm(1.5) },
+            { type: TabStopType.LEFT, position: cm(4) },
+            { type: TabStopType.LEFT, position: cm(7.5) },
+            { type: TabStopType.LEFT, position: cm(8.5) },
+            { type: TabStopType.LEFT, position: cm(14) },
+        ],
+        children: [
+            tabU({ bold: true }), tr('ได้รับเงินจำนวน', { bold: true }), tabU({ bold: true }),
+            new TextRun({ text: '         ', font: FONT, size: SIZE_BODY, bold: true, underline: { type: UnderlineType.DOTTED } }),
+            fv(moneyFormatted), tabU({ bold: true }),
+            tr('บาท (', { bold: true }),
+            new TextRun({ text: ' ', font: FONT, size: SIZE_BODY, bold: true, underline: { type: UnderlineType.DOTTED } }),
+            fv(moneyText), tabU({ bold: true }),
+            tr(')', { bold: true })
+        ]
+    }));
+
+    // ข้าพเจ้าขอรับรอง
+    paragraphs.push(new Paragraph({
+        spacing: { before: 240, line: LINE_SPACING },
+        tabStops: [{ type: TabStopType.LEFT, position: cm(2.5) }],
+        children: [tab(), tr('ข้าพเจ้าขอรับรองว่า ข้อมูลดังกล่าวเป็นความจริงทุกประการ และหากมีการเรียกเงินคืน  ข้าพเจ้า')]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('ขอรับผิดชอบคืนเงินแต่เพียงผู้เดียว')]
+    }));
+
+    // Blank + signature
+    paragraphs.push(new Paragraph({ spacing: { before: 120, line: LINE_SPACING } }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('  \t\t\t\t\t')]
+    }));
+
+    // ชื่อผู้ลงนาม
+    const fullName = `${data.name}  ${data.surname}`;
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        tabStops: [{ type: TabStopType.LEFT, position: cm(7.75) }],
+        children: [tab(), tr('    ('), fv(fullName), tr(')')]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        tabStops: [
+            { type: TabStopType.LEFT, position: cm(6.5) },
+            { type: TabStopType.LEFT, position: cm(7.75) },
+            { type: TabStopType.LEFT, position: cm(13.5) },
+        ],
+        children: [tab(), tr('ตำแหน่ง'), fv(`    ${data.job}`), tabU(), tr(' ', { bold: true })]
+    }));
+
+    // Approval section
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('         ', { bold: true })]
+    }));
+
+    // เรียน ผอ.
+    paragraphs.push(new Paragraph({
+        spacing: { before: 240, line: LINE_SPACING },
+        children: [tr('\t\t\t\t\t\t\tเรียน  ผู้อำนวยการโรงพยาบาลสวี\t')]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { before: 120, line: LINE_SPACING },
+        children: [tr('\t\t\t\t\t\t\t        ได้ตรวจสอบ / วันปฏิบัติงานแล้ว')]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('\t\t\t\t\t\t\t(   ) ครบ 15 วันทำการ  (   ) ไม่ครบ 15 วันทำการ')]
+    }));
+    paragraphs.push(new Paragraph({ spacing: { line: LINE_SPACING }, children: [tr('  ')] }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('\t\t        \t\t\t\t\t\t(ลงชื่อ).....................................................')]
+    }));
+
+    // ชื่อ officer
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [
+            tr('           \t\t\t\t\t      \t\t\t         ('),
+            ds('                              '), tr(')')
+        ]
+    }));
+    paragraphs.push(new Paragraph({
+        spacing: { line: LINE_SPACING },
+        children: [tr('\t\t\t\t\t\t\t     \t\tตำแหน่ง …………………………………………….')]
+    }));
+
+    // ---- PAGE 2: LEAVE SUMMARY ----
+    const currentLeaves = state.leaves.filter(l => l.month_year === state.currentMonthYear);
+    const sick = [], personal = [], vacation = [];
+    let totalCount = 0;
+    currentLeaves.forEach(lv => {
+        const cnt = parseFloat(lv.count) || 0;
+        totalCount += cnt;
+        if (lv.type_of_leave === 'ลาป่วย') sick.push(lv.date_range);
+        else if (lv.type_of_leave === 'ลากิจ') personal.push(lv.date_range);
+        else if (lv.type_of_leave === 'ลาพักผ่อน') vacation.push(lv.date_range);
+    });
+
+    const sickStr = sick.length > 0 ? sick.join(', ') : '-';
+    const personalStr = personal.length > 0 ? personal.join(', ') : '-';
+    const vacStr = vacation.length > 0 ? vacation.join(', ') : '-';
+    const allDash = (sickStr === '-' && personalStr === '-' && vacStr === '-');
+    const totalStr = allDash ? '-' : (totalCount % 1 !== 0 ? totalCount.toFixed(1) : String(totalCount));
+
+    // Page 2 paragraphs
+    const page2Paragraphs = [];
+
+    page2Paragraphs.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 720, line: LINE_SPACING },
+        children: [tr('สรุปวันลา', { size: 40, bold: false })] // 20pt
+    }));
+
+    page2Paragraphs.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 480, line: LINE_SPACING },
+        children: [
+            tr('ชื่อ - สกุล', { bold: false }),
+            tr('  '),
+            fv(`${data.name} ${data.surname}`)
+        ]
+    }));
+
+    // Leave table
+    const borderStyle = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
+    const cellBorders = { top: borderStyle, bottom: borderStyle, left: borderStyle, right: borderStyle };
+
+    const mkCell = (text, opts = {}) => new TableCell({
+        borders: cellBorders,
+        verticalAlign: VerticalAlign.CENTER,
+        width: { size: opts.width || 20, type: WidthType.PERCENTAGE },
+        children: [new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { line: LINE_SPACING },
+            children: [tr(text, { bold: opts.bold || false })]
+        })]
+    });
+
+    const tableRows = [];
+    // Header
+    tableRows.push(new TableRow({
+        children: [
+            mkCell('ประจำเดือน'),
+            new TableCell({
+                borders: cellBorders, verticalAlign: VerticalAlign.CENTER,
+                width: { size: 20, type: WidthType.PERCENTAGE },
+                children: [new Paragraph({
+                    alignment: AlignmentType.CENTER, spacing: { line: LINE_SPACING },
+                    children: [tr('วัน/เดือน/ปี'), new TextRun({ break: 1, font: FONT, size: SIZE_BODY, text: 'ลาป่วย' })]
+                })]
+            }),
+            new TableCell({
+                borders: cellBorders, verticalAlign: VerticalAlign.CENTER,
+                width: { size: 20, type: WidthType.PERCENTAGE },
+                children: [new Paragraph({
+                    alignment: AlignmentType.CENTER, spacing: { line: LINE_SPACING },
+                    children: [tr('วัน/เดือน/ปี'), new TextRun({ break: 1, font: FONT, size: SIZE_BODY, text: 'ลากิจ' })]
+                })]
+            }),
+            new TableCell({
+                borders: cellBorders, verticalAlign: VerticalAlign.CENTER,
+                width: { size: 20, type: WidthType.PERCENTAGE },
+                children: [new Paragraph({
+                    alignment: AlignmentType.CENTER, spacing: { line: LINE_SPACING },
+                    children: [tr('วัน/เดือน/ปี'), new TextRun({ break: 1, font: FONT, size: SIZE_BODY, text: 'ลาพักผ่อน' })]
+                })]
+            }),
+            mkCell('รวม'),
+        ]
+    }));
+
+    // Data row
+    tableRows.push(new TableRow({
+        children: [
+            mkCell(state.currentMonthYear),
+            mkCell(sickStr, { bold: true }),
+            mkCell(personalStr, { bold: true }),
+            mkCell(vacStr, { bold: true }),
+            mkCell(totalStr, { bold: true }),
+        ]
+    }));
+
+    // Empty rows
+    for (let i = 0; i < 5; i++) {
+        tableRows.push(new TableRow({
+            children: [mkCell(''), mkCell(''), mkCell(''), mkCell(''), mkCell('')]
+        }));
+    }
+
+    const leaveTable = new Table({
+        rows: tableRows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        layout: TableLayoutType.FIXED,
+    });
+
+    // Signature for page 2
+    const page2Sign = [
+        new Paragraph({ spacing: { before: 960, line: LINE_SPACING }, alignment: AlignmentType.CENTER, children: [tr('ตรวจสอบแล้วถูกต้อง', { bold: false })] }),
+        new Paragraph({ spacing: { line: LINE_SPACING }, children: [tr('\t\t\t\t\t\t\t\t(ลงชื่อ) ............................................')] }),
+        new Paragraph({ spacing: { line: LINE_SPACING }, children: [tr('\t\t\t\t\t\t\t\t\t         ( '), fv('นางอทิตา มณีรัตน์'), tr(' )')] }),
+        new Paragraph({ spacing: { line: LINE_SPACING }, children: [tr('\t\t\t\t\t\t\t\t\tตำแหน่ง '), tr('เจ้าพนักงานธุรการชำนาญงาน', { bold: true })] }),
+    ];
+
+    // ---- CREATE DOCUMENT ----
+    const doc = new Document({
+        sections: [
+            {
+                properties: {
+                    page: {
+                        size: { width: convertMillimetersToTwip(210), height: convertMillimetersToTwip(297) },
+                        margin: {
+                            top: convertMillimetersToTwip(23),
+                            bottom: convertMillimetersToTwip(5.4),
+                            left: convertMillimetersToTwip(25),
+                            right: convertMillimetersToTwip(10),
+                        }
+                    }
+                },
+                children: paragraphs
+            },
+            {
+                properties: {
+                    type: SectionType.NEXT_PAGE,
+                    page: {
+                        size: { width: convertMillimetersToTwip(210), height: convertMillimetersToTwip(297) },
+                        margin: {
+                            top: convertMillimetersToTwip(23),
+                            bottom: convertMillimetersToTwip(5.4),
+                            left: convertMillimetersToTwip(25),
+                            right: convertMillimetersToTwip(10),
+                        }
+                    }
+                },
+                children: [...page2Paragraphs, leaveTable, ...page2Sign]
+            }
+        ]
+    });
+
+    return await Packer.toBlob(doc);
+}
+
+// ================================================================
+// INIT
+// ================================================================
+window.addEventListener('DOMContentLoaded', () => {
+    initSupabase();
+});
+</script>
+
+</body>
+</html>
