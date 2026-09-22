@@ -1,0 +1,253 @@
+<!DOCTYPE html><html lang="th"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Sawee Rx — เบิกยา</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#003d82;--bg:#f4f6f9}
+*{font-family:'Sarabun',sans-serif!important}
+body{background:var(--bg);padding-bottom:70px}
+.hidden{display:none!important}
+.app-nav{position:fixed;top:0;left:0;right:0;height:56px;background:var(--primary);color:#fff;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:0 15px}
+.btm-nav{position:fixed;bottom:0;left:0;right:0;height:62px;background:#fff;display:flex;justify-content:space-around;align-items:center;z-index:1000;box-shadow:0 -2px 10px rgba(0,0,0,.1)}
+.nav-item{text-align:center;color:#999;font-size:.72rem;width:33%;cursor:pointer;padding:6px 0}
+.nav-item i{font-size:1.35rem;display:block;margin-bottom:2px}
+.nav-item.active{color:var(--primary);font-weight:700}
+.box-chip{min-width:92px;padding:10px 8px;background:var(--primary);color:#fff;border-radius:12px;text-align:center;cursor:pointer;font-size:.72rem;line-height:1.15;flex-shrink:0}
+.box-chip.active{background:#fff;color:var(--primary);border:2px solid var(--primary)}
+.scroller{display:flex;gap:8px;overflow-x:auto;padding:10px;scrollbar-width:none}
+.drug-card{background:#fff;border:1px solid #eee;border-radius:12px;padding:10px}
+.qty-wrap{display:flex;align-items:center;justify-content:space-between;background:#f1f3f5;border-radius:20px;padding:3px}
+.btn-q{width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid #ddd;color:var(--primary);font-weight:800;font-size:1.1rem;line-height:1}
+.inp-q{width:46px;border:0;background:transparent;text-align:center;font-weight:700}
+.badge-exp{background:#d32f2f;color:#fff;border-radius:4px;padding:1px 5px;font-size:10px}
+.badge-near{background:#fbc02d;color:#000;border-radius:4px;padding:1px 5px;font-size:10px}
+#offbar{position:fixed;top:56px;left:0;right:0;background:#b71c1c;color:#fff;text-align:center;font-size:.8rem;padding:3px;z-index:999}
+</style></head><body>
+
+<div id="login" class="d-flex flex-column align-items-center justify-content-center" style="position:fixed;inset:0;background:var(--bg);z-index:3000">
+  <div style="font-size:3.2rem">💊</div><h4 class="fw-bold">Sawee Rx — เบิกยา</h4>
+  <div class="card border-0 shadow-sm p-4 mt-3" style="width:90%;max-width:340px">
+    <input id="u" class="form-control mb-2 text-center fw-bold" placeholder="Username (HOSxP)">
+    <input id="p" type="password" class="form-control mb-3 text-center" placeholder="รหัสผ่าน">
+    <button class="btn btn-primary w-100 rounded-pill" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div id="lmsg" class="text-danger small text-center mt-2"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <nav class="app-nav"><b>Sawee Rx</b>
+    <div class="d-flex gap-3 align-items-center">
+      <span class="small" id="me"></span>
+      <span onclick="openCart()" style="position:relative;cursor:pointer"><i class="fas fa-basket-shopping"></i>
+        <span id="cbadge" class="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle hidden">0</span></span>
+      <i class="fas fa-right-from-bracket" style="cursor:pointer" onclick="sb.auth.signOut().then(()=>location.reload())"></i>
+    </div></nav>
+  <div id="offbar" class="hidden">⚠ ออฟไลน์ — ใบเบิกจะถูกส่งอัตโนมัติเมื่อเน็ตกลับมา</div>
+
+  <div style="padding-top:62px">
+    <div id="t-order" class="tab">
+      <div id="boxes" class="scroller"></div>
+      <div class="px-3 pb-2"><input id="fq" class="form-control rounded-pill" placeholder="🔍 ค้นหายาในกล่องนี้" oninput="renderItems()"></div>
+      <div id="items" class="px-3 row g-2"></div>
+    </div>
+
+    <div id="t-find" class="tab hidden container pt-3">
+      <div class="input-group mb-3"><input id="sq" class="form-control" placeholder="พิมพ์ชื่อยา แล้วกด Enter" onkeyup="if(event.key==='Enter')findDrug()">
+        <button class="btn btn-primary" onclick="findDrug()">ค้นหา</button></div>
+      <div id="sres" class="text-muted text-center mt-5"><i class="fas fa-magnifying-glass fa-2x mb-2 d-block opacity-25"></i>ค้นหาว่ายาเก็บอยู่หน่วยงานไหนบ้าง</div>
+    </div>
+
+    <div id="t-hist" class="tab hidden container pt-3"><div id="hist"></div></div>
+  </div>
+
+  <div class="btm-nav">
+    <div class="nav-item active" onclick="nav('order',this)"><i class="fas fa-pills"></i>เบิกยา</div>
+    <div class="nav-item" onclick="nav('find',this)"><i class="fas fa-magnifying-glass"></i>ค้นหายา</div>
+    <div class="nav-item" onclick="nav('hist',this)"><i class="fas fa-clock-rotate-left"></i>รายการเบิก</div>
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-bottom" id="cart" style="height:80vh">
+  <div class="offcanvas-header border-bottom"><h5 class="fw-bold text-primary m-0">ตะกร้าเบิกยา</h5>
+    <button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+  <div class="offcanvas-body d-flex flex-column p-0">
+    <div id="clist" class="flex-grow-1 overflow-auto p-3"></div>
+    <div class="p-3 border-top bg-white">
+      <div class="d-flex justify-content-between fw-bold mb-2"><span>รวม</span><span id="csum" class="text-primary">0.00</span></div>
+      <canvas id="sig" style="width:100%;height:90px;background:#f8f9fa;border:1px dashed #ccc;border-radius:8px"></canvas>
+      <div class="text-end"><small class="text-danger" style="cursor:pointer" onclick="clrSig()">ล้างลายเซ็น</small></div>
+      <button class="btn btn-primary w-100 rounded-pill py-2 mt-2" onclick="doSubmit()">ยืนยันการเบิก</button>
+    </div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const SB_URL='https://weiorxazsaoteqlpvkmv.supabase.co', SB_KEY='sb_publishable_mnHqCo1_n0ChjyAh7Lh3lw_U4iyEhJq';
+const sb = supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true,autoRefreshToken:true}});
+let me={}, boxes=[], curBox=null, items=[], cart=[], offc;
+
+/* ---------- cache แบบ stale-while-revalidate (ประหยัด request + ใช้ออฟไลน์ได้) ---------- */
+const C={get:k=>{try{return JSON.parse(localStorage.getItem('c_'+k))?.d??null}catch{return null}},
+         set:(k,d)=>localStorage.setItem('c_'+k,JSON.stringify({t:Date.now(),d}))};
+
+/* ---------- auth ---------- */
+async function doLogin(){
+  const u=u_.value.trim(), p=p_.value;
+  if(!u||!p) return lmsg.innerText='กรอกข้อมูลให้ครบ';
+  lmsg.innerText='กำลังเข้าสู่ระบบ...';
+  const {error}=await sb.auth.signInWithPassword({email:u+'@sawee.local',password:p});
+  if(error) return lmsg.innerText='เข้าสู่ระบบไม่สำเร็จ: '+error.message;
+  start();
+}
+async function start(){
+  const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+  const {data:pf}=await sb.from('profiles').select('username,full_name,role').eq('user_id',user.id).single();
+  me=pf||{full_name:user.email}; me_.innerText=me.full_name;
+  login.classList.add('hidden'); app.classList.remove('hidden');
+  offc=new bootstrap.Offcanvas('#cart');
+  loadBoxes(); loadHist(); flushQueue();
+}
+sb.auth.getSession().then(({data:{session}})=>{ if(session) start(); });
+
+/* ---------- boxes / items ---------- */
+async function loadBoxes(){
+  const c=C.get('boxes'); if(c){boxes=c;renderBoxes();}
+  const {data}=await sb.from('v_my_boxes').select('box_id,display_name,emoji,box_type,unit_name').order('display_name');
+  if(data){boxes=data;C.set('boxes',data);renderBoxes();}
+}
+function renderBoxes(){
+  boxes_.innerHTML = boxes.length? boxes.map(b=>
+    `<div class="box-chip ${curBox===b.box_id?'active':''}" onclick="openBox('${b.box_id}')">
+       <div style="font-size:1.5rem">${b.emoji||'📦'}</div>${b.display_name}</div>`).join('')
+    : '<div class="text-muted small p-3">ยังไม่ได้รับสิทธิ์เบิกกล่องใด — ติดต่อห้องยา</div>';
+}
+async function openBox(id){
+  curBox=id; renderBoxes();
+  const ck='items_'+id, c=C.get(ck); if(c){items=c;renderItems();}
+  const {data}=await sb.from('v_stock_full')
+    .select('icode,drug_name,unit_text,price,qty_actual,expire_date,days_left,high_alert,cold_chain,image_url')
+    .eq('box_id',id).order('drug_name');
+  if(data){ // ยุบหลาย lot ของยาตัวเดียวกันเป็นบรรทัดเดียว
+    const m={}; data.forEach(r=>{ const k=r.icode;
+      if(!m[k]) m[k]={...r,qty:0,req:1};
+      m[k].qty+=r.qty_actual||0;
+      if(r.days_left!=null&&(m[k].days_left==null||r.days_left<m[k].days_left)){m[k].days_left=r.days_left;m[k].expire_date=r.expire_date;}
+    });
+    items=Object.values(m); C.set(ck,items); renderItems();
+  }
+}
+function renderItems(){
+  const kw=(fq.value||'').toLowerCase();
+  const list=items.filter(i=>(i.drug_name||'').toLowerCase().includes(kw));
+  items_.innerHTML=list.map(i=>{
+    let tag=''; if(i.days_left!=null){ if(i.days_left<0)tag='<span class="badge-exp">หมดอายุ</span>';
+      else if(i.days_left<180)tag=`<span class="badge-near">${i.days_left} วัน</span>`; }
+    return `<div class="col-6 col-md-4"><div class="drug-card h-100 d-flex flex-column">
+      <div class="fw-bold small" style="min-height:2.4em;line-height:1.2">${i.drug_name}</div>
+      <div class="d-flex justify-content-between small text-muted my-1">
+        <span>คงเหลือ ${i.qty}</span><span>${tag}</span></div>
+      ${i.high_alert?'<span class="badge bg-danger mb-1" style="font-size:9px;width:fit-content">HIGH ALERT</span>':''}
+      <div class="qty-wrap mt-auto">
+        <button class="btn-q" onclick="adj('${i.icode}',-1)">−</button>
+        <input class="inp-q" id="q_${i.icode}" value="${i.req}" readonly>
+        <button class="btn-q" onclick="adj('${i.icode}',1)">+</button></div>
+      <button class="btn btn-sm btn-primary w-100 mt-2 rounded-pill" onclick="addCart('${i.icode}')">ใส่ตะกร้า</button>
+    </div></div>`}).join('') || '<div class="text-muted text-center py-5">ไม่พบยา</div>';
+}
+function adj(ic,v){const i=items.find(x=>x.icode===ic);i.req=Math.max(1,i.req+v);document.getElementById('q_'+ic).value=i.req;}
+
+/* ---------- cart ---------- */
+function addCart(ic){const i=items.find(x=>x.icode===ic);const e=cart.find(x=>x.icode===ic);
+  e?e.qty+=i.req:cart.push({icode:ic,name:i.drug_name,price:i.price||0,qty:i.req});
+  i.req=1;document.getElementById('q_'+ic).value=1;badge();}
+function badge(){cbadge.innerText=cart.length;cbadge.classList.toggle('hidden',!cart.length);}
+function openCart(){
+  let s=0; clist.innerHTML=cart.length?cart.map((c,i)=>{s+=c.price*c.qty;
+    return `<div class="d-flex justify-content-between border-bottom py-2"><div><b>${c.name}</b>
+      <div class="small text-muted">${c.qty} × ${c.price}</div></div>
+      <div class="text-end"><b>${(c.price*c.qty).toFixed(2)}</b>
+      <i class="fas fa-trash text-danger ms-2" onclick="cart.splice(${i},1);badge();openCart()"></i></div></div>`}).join('')
+    :'<div class="text-center text-muted py-5">ตะกร้าว่าง</div>';
+  csum.innerText=s.toFixed(2); offc.show(); setTimeout(fixSig,400);
+}
+async function doSubmit(){
+  if(!cart.length) return;
+  const payload={box_id:curBox,items:cart.map(c=>({icode:c.icode,qty:c.qty})),sign:sigData()};
+  offc.hide();
+  if(!navigator.onLine){ queuePush(payload);
+    return Swal.fire('บันทึกไว้แล้ว','ออฟไลน์อยู่ — ระบบจะส่งให้อัตโนมัติเมื่อเน็ตกลับมา','info'); }
+  Swal.fire({title:'กำลังส่ง...',didOpen:()=>Swal.showLoading(),allowOutsideClick:false});
+  const {error}=await sb.rpc('submit_order',{p_box_id:payload.box_id,p_items:payload.items,p_sign:payload.sign});
+  if(error){ queuePush(payload); return Swal.fire('ส่งไม่สำเร็จ','เก็บไว้ในคิวแล้ว: '+error.message,'warning'); }
+  cart=[];badge();clrSig();Swal.fire('เบิกสำเร็จ','ดูสถานะได้ที่หน้ารายการเบิก','success');loadHist();
+}
+
+/* ---------- offline queue ---------- */
+function queuePush(p){const q=JSON.parse(localStorage.getItem('q')||'[]');q.push(p);localStorage.setItem('q',JSON.stringify(q));cart=[];badge();}
+async function flushQueue(){
+  let q=JSON.parse(localStorage.getItem('q')||'[]'); if(!q.length||!navigator.onLine) return;
+  const rest=[];
+  for(const p of q){ const {error}=await sb.rpc('submit_order',{p_box_id:p.box_id,p_items:p.items,p_sign:p.sign}); if(error) rest.push(p); }
+  localStorage.setItem('q',JSON.stringify(rest));
+  if(q.length>rest.length){Swal.fire({toast:true,position:'top-end',icon:'success',title:`ส่งใบเบิกค้าง ${q.length-rest.length} ใบแล้ว`,timer:2500,showConfirmButton:false});loadHist();}
+}
+addEventListener('online',()=>{offbar.classList.add('hidden');flushQueue()});
+addEventListener('offline',()=>offbar.classList.remove('hidden'));
+
+/* ---------- ค้นหายาทั้งโรงพยาบาล ---------- */
+async function findDrug(){
+  const kw=sq.value.trim(); if(!kw) return;
+  sres.innerHTML='<div class="spinner-border text-primary"></div>';
+  const {data}=await sb.from('v_stock_full')
+    .select('icode,drug_name,box_name,emoji,unit_name,qty_actual,expire_date,days_left')
+    .ilike('drug_name','%'+kw+'%').gt('qty_actual',0).order('drug_name').limit(120);
+  if(!data?.length) return sres.innerHTML='<div class="alert alert-warning">ไม่พบยาในสต็อกย่อย</div>';
+  const g={}; data.forEach(r=>{(g[r.icode]??={name:r.drug_name,rows:[],total:0}).rows.push(r);g[r.icode].total+=r.qty_actual});
+  sres.innerHTML=Object.values(g).map(d=>`<div class="card border-0 shadow-sm mb-2 p-3">
+    <div class="fw-bold text-primary">${d.name} <span class="badge bg-info text-dark">รวม ${d.total}</span></div>
+    <table class="table table-sm mb-0 mt-2"><thead><tr><th>หน่วยงาน</th><th>จุดเก็บ</th><th>จน.</th><th>Exp</th></tr></thead><tbody>
+    ${d.rows.map(r=>`<tr class="${r.days_left<0?'table-danger':''}"><td>${r.unit_name||'-'}</td>
+      <td>${r.emoji||''}${r.box_name}</td><td>${r.qty_actual}</td>
+      <td>${r.expire_date?new Date(r.expire_date).toLocaleDateString('th-TH'):'-'}</td></tr>`).join('')}
+    </tbody></table></div>`).join('');
+}
+
+/* ---------- history ---------- */
+async function loadHist(){
+  const {data}=await sb.from('orders')
+    .select('order_id,order_no,status,ordered_at,total_price,boxes(display_name,emoji),order_lines(qty,drug_items(name))')
+    .order('ordered_at',{ascending:false}).limit(30);
+  const L={ordered:['รอจัดยา','warning'],picked:['จัดเสร็จ รอรับ','success'],received:['รับแล้ว','primary'],cancelled:['ยกเลิก','secondary']};
+  hist.innerHTML=(data||[]).map(o=>`<div class="card border-0 shadow-sm mb-2 p-3">
+    <div class="d-flex justify-content-between"><b class="small">${o.order_no}</b>
+      <span class="badge bg-${L[o.status][1]}">${L[o.status][0]}</span></div>
+    <div class="small text-muted">${o.boxes?.emoji||''}${o.boxes?.display_name||''} · ${new Date(o.ordered_at).toLocaleString('th-TH')}</div>
+    <ul class="small text-muted ps-3 mb-1 mt-1">${o.order_lines.map(l=>`<li>${l.drug_items?.name} (${l.qty})</li>`).join('')}</ul>
+    ${o.status==='picked'?`<button class="btn btn-success w-100 rounded-pill mt-1" onclick="recv('${o.order_id}')">กดรับยา</button>`:''}
+  </div>`).join('')||'<div class="text-center text-muted mt-4">ยังไม่มีรายการ</div>';
+}
+async function recv(id){
+  const r=await Swal.fire({title:'ยืนยันรับยาครบถ้วน?',showCancelButton:true,confirmButtonText:'ยืนยัน',cancelButtonText:'ยกเลิก'});
+  if(!r.isConfirmed) return;
+  await sb.rpc('set_order_status',{p_order_id:id,p_status:'received'}); loadHist();
+}
+
+/* ---------- signature ---------- */
+let sc,sx,drawing=false;
+function fixSig(){sc=sig;sx=sc.getContext('2d');sc.width=sc.offsetWidth;sc.height=90;sx.lineWidth=2;sx.lineCap='round';}
+['mousedown','touchstart'].forEach(e=>sig.addEventListener(e,ev=>{ev.preventDefault();drawing=true;sx.beginPath();const r=sc.getBoundingClientRect();sx.moveTo((ev.touches?ev.touches[0].clientX:ev.clientX)-r.left,(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top)},{passive:false}));
+['mousemove','touchmove'].forEach(e=>sig.addEventListener(e,ev=>{if(!drawing)return;ev.preventDefault();const r=sc.getBoundingClientRect();sx.lineTo((ev.touches?ev.touches[0].clientX:ev.clientX)-r.left,(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top);sx.stroke()},{passive:false}));
+['mouseup','touchend'].forEach(e=>sig.addEventListener(e,()=>drawing=false));
+function clrSig(){sx&&sx.clearRect(0,0,sc.width,sc.height)}
+function sigData(){try{return sc.toDataURL('image/png')}catch{return null}}
+
+function nav(t,el){document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('t-'+t).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');}
+const u_=document.getElementById('u'),p_=document.getElementById('p'),me_=document.getElementById('me'),
+      boxes_=document.getElementById('boxes'),items_=document.getElementById('items');
+if(!navigator.onLine) offbar.classList.remove('hidden');
+</script></body></html>
