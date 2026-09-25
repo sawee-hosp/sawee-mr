@@ -1,0 +1,170 @@
+<!DOCTYPE html><html lang="th"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>สรุปยาคงเหลือ — Sawee Rx</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#007a33;--accent:#f27024}
+*{font-family:'Sarabun',sans-serif!important}
+body{background:#f8f9fa;padding-bottom:40px}
+.app-nav{background:var(--primary);color:#fff;padding:12px 15px;border-bottom:3px solid var(--accent)}
+.kpi{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.thumb{width:42px;height:42px;object-fit:contain;background:#fafafa;border-radius:6px}
+td,th{font-size:.8rem;vertical-align:middle}
+.row-neg{background:#ffebee}.row-warn{background:#fff8e1}
+@media print{.noprint{display:none!important}body{background:#fff}}
+</style></head><body>
+
+<div class="app-nav d-flex justify-content-between align-items-center">
+  <div><b>สรุปยาคงเหลือ vs การใช้นอกเวลา</b>
+    <div class="small" style="opacity:.85" id="me"></div></div>
+  <div class="noprint d-flex gap-3">
+    <i class="fas fa-print" style="cursor:pointer" onclick="window.print()"></i>
+    <i class="fas fa-right-from-bracket" style="cursor:pointer" onclick="sb.auth.signOut().then(()=>location.reload())"></i>
+  </div>
+</div>
+
+<div id="login" class="container py-5" style="max-width:360px">
+  <div class="card border-0 shadow-sm p-4">
+    <h6 class="fw-bold text-center mb-3">เข้าสู่ระบบ (เฉพาะห้องยา)</h6>
+    <input id="u" class="form-control mb-2 text-center" placeholder="Username">
+    <input id="p" type="password" class="form-control mb-3 text-center" placeholder="รหัสผ่าน"
+           onkeyup="if(event.key==='Enter')doLogin()">
+    <button class="btn w-100 rounded-pill text-white" style="background:var(--primary)"
+            onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div id="lmsg" class="text-danger small text-center mt-2"></div>
+  </div>
+</div>
+
+<div id="app" class="container-fluid pt-3 d-none">
+  <div class="row g-2 mb-3 noprint">
+    <div class="col-12 col-md-4">
+      <label class="small text-muted">กล่อง / จุดเก็บ</label>
+      <select id="fBox" class="form-select form-select-sm"></select></div>
+    <div class="col-6 col-md-3">
+      <label class="small text-muted">ตั้งแต่</label>
+      <input id="fFrom" type="date" class="form-select form-select-sm"></div>
+    <div class="col-6 col-md-3">
+      <label class="small text-muted">ถึง</label>
+      <input id="fTo" type="date" class="form-select form-select-sm"></div>
+    <div class="col-12 col-md-2 d-flex align-items-end">
+      <button class="btn btn-sm w-100 text-white" style="background:var(--primary)"
+              onclick="run()"><i class="fas fa-calculator me-1"></i>คำนวณ</button></div>
+  </div>
+
+  <div class="alert alert-light border small py-2 noprint" id="cfgTxt"></div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-3"><div class="kpi"><div class="small text-muted">รายการยา</div>
+      <h5 class="fw-bold m-0" id="k1">–</h5></div></div>
+    <div class="col-3"><div class="kpi"><div class="small text-muted">ใช้นอกเวลา</div>
+      <h5 class="fw-bold text-warning m-0" id="k2">–</h5></div></div>
+    <div class="col-3"><div class="kpi"><div class="small text-muted">ยังไม่เบิกเติม</div>
+      <h5 class="fw-bold text-danger m-0" id="k3">–</h5></div></div>
+    <div class="col-3"><div class="kpi"><div class="small text-muted">ยอดติดลบ</div>
+      <h5 class="fw-bold text-danger m-0" id="k4">–</h5></div></div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light"><tr>
+          <th style="width:52px"></th><th>รายการยา</th>
+          <th class="text-center">นับล่าสุด</th>
+          <th class="text-center">รับเข้า<br><small class="text-muted">จากใบเบิก</small></th>
+          <th class="text-center text-warning">ใช้นอกเวลา</th>
+          <th class="text-center">ใช้ทั้งหมด</th>
+          <th class="text-center fw-bold">ควรเหลือ</th>
+          <th class="text-center">สถานะ</th>
+        </tr></thead>
+        <tbody id="tb"><tr><td colspan="8" class="text-center text-muted py-5">
+          เลือกกล่องและช่วงวันที่ แล้วกดคำนวณ</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="small text-muted mt-2">
+    <b>สูตรคำนวณ:</b> ควรเหลือ = จำนวนที่นับล่าสุด + รับเข้าจากใบเบิก − ที่ใช้นอกเวลา<br>
+    ถ้าตัวเลขจริงในกล่องน้อยกว่า "ควรเหลือ" แปลว่ามีการใช้ที่ยังไม่ได้บันทึกใน HOSxP
+  </div>
+</div>
+
+<script>
+const SB_URL='https://YOUR-PROJECT.supabase.co', SB_KEY='sb_publishable_xxx';
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true}});
+let IMG_BASE='https://drive.google.com/thumbnail?sz=w400&id=';
+
+function imgUrl(v){if(!v)return null;v=String(v).trim();
+  if(/^https?:\/\//i.test(v)){const m=v.match(/\/d\/([A-Za-z0-9_-]{20,})/)||v.match(/[?&]id=([A-Za-z0-9_-]{20,})/);
+    return m?IMG_BASE+m[1]:v;}
+  if(/^[A-Za-z0-9_-]{25,}$/.test(v))return IMG_BASE+v;
+  return IMG_BASE.replace(/id=$/,'')+encodeURIComponent(v);}
+
+async function doLogin(){
+  const {error}=await sb.auth.signInWithPassword(
+    {email:u.value.trim().toLowerCase()+'@sawee.local',password:p.value});
+  if(error) return lmsg.innerText='เข้าสู่ระบบไม่สำเร็จ';
+  start();
+}
+async function start(){
+  const {data:{user}}=await sb.auth.getUser(); if(!user) return;
+  const {data:pf}=await sb.from('profiles').select('full_name,role').eq('user_id',user.id).maybeSingle();
+  if(!pf||!['pharmacist','admin'].includes(pf.role))
+    return Swal.fire('ไม่มีสิทธิ์','หน้านี้สำหรับเจ้าหน้าที่ห้องยาเท่านั้น','error')
+      .then(()=>sb.auth.signOut().then(()=>location.reload()));
+  document.getElementById('me').innerText=pf.full_name;
+  login.classList.add('d-none'); app.classList.remove('d-none');
+
+  const {data:cfg}=await sb.from('app_config').select('key,value');
+  (cfg||[]).forEach(c=>{if(c.key==='image_base')IMG_BASE=c.value;});
+  const ah=(cfg||[]).find(c=>c.key==='after_hours')?.value;
+  if(ah) cfgTxt.innerHTML=`<i class="fas fa-clock me-1"></i><b>นิยามนอกเวลาปัจจุบัน:</b>
+    จันทร์-ศุกร์ ${ah.weekday_start}–${ah.weekday_end} น.
+    ${ah.sat_all_day?'· เสาร์ทั้งวัน':''} ${ah.sun_all_day?'· อาทิตย์ทั้งวัน':''}
+    <span class="text-muted">(แก้ได้ที่ตาราง app_config)</span>`;
+
+  const {data:bx}=await sb.from('v_my_boxes')
+    .select('box_id,display_name,emoji,unit_name').order('unit_name');
+  fBox.innerHTML=(bx||[]).map(b=>
+    `<option value="${b.box_id}">${b.emoji||''} ${b.display_name} — ${b.unit_name||''}</option>`).join('');
+
+  const t=new Date(), f=new Date(Date.now()-7*864e5);
+  fTo.value=t.toISOString().slice(0,10); fFrom.value=f.toISOString().slice(0,10);
+  run();
+}
+sb.auth.getSession().then(({data:{session}})=>{if(session)start()});
+
+async function run(){
+  tb.innerHTML='<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-success"></div></td></tr>';
+  const {data,error}=await sb.rpc('fn_reconcile',{
+    p_box_id:fBox.value,
+    p_from:new Date(fFrom.value+'T00:00:00').toISOString(),
+    p_to:new Date(fTo.value+'T23:59:59').toISOString()});
+  if(error){tb.innerHTML=`<tr><td colspan="8" class="text-danger p-3">${error.message}</td></tr>`;return;}
+  if(!data?.length){tb.innerHTML='<tr><td colspan="8" class="text-center text-muted py-5">ไม่มีข้อมูล</td></tr>';return;}
+
+  k1.innerText=data.length;
+  k2.innerText=data.filter(r=>+r.qty_used_ah>0).length;
+  k3.innerText=data.filter(r=>r.status_flag==='ใช้แล้วยังไม่เบิกเติม').length;
+  k4.innerText=data.filter(r=>+r.qty_expected<0).length;
+
+  tb.innerHTML=data.map(r=>{
+    const cls=+r.qty_expected<0?'row-neg':(r.status_flag==='ใช้แล้วยังไม่เบิกเติม'?'row-warn':'');
+    const bcls={'ติดลบ':'danger','ใช้แล้วยังไม่เบิกเติม':'warning text-dark',
+                'ไม่มีการใช้':'light text-dark border','ปกติ':'success'}[r.status_flag]||'secondary';
+    const iu=imgUrl(r.image_url);
+    return `<tr class="${cls}">
+      <td>${iu?`<img src="${iu}" class="thumb" loading="lazy" onerror="this.style.display='none'">`:''}</td>
+      <td><b>${r.drug_name}</b><div class="text-muted" style="font-size:.7rem">
+        ${r.icode} · นับล่าสุด ${r.last_count_at?new Date(r.last_count_at).toLocaleDateString('th-TH'):'—'}</div></td>
+      <td class="text-center">${r.qty_counted}</td>
+      <td class="text-center text-primary">${r.qty_received>0?'+'+r.qty_received:'–'}</td>
+      <td class="text-center fw-bold text-warning">${+r.qty_used_ah>0?'−'+r.qty_used_ah:'–'}</td>
+      <td class="text-center text-muted">${r.qty_used_all||'–'}</td>
+      <td class="text-center fw-bold ${+r.qty_expected<0?'text-danger':''}" style="font-size:.95rem">
+        ${r.qty_expected} <small class="text-muted">${r.unit_text||''}</small></td>
+      <td class="text-center"><span class="badge bg-${bcls}">${r.status_flag}</span></td></tr>`}).join('');
+}
+</script></body></html>
