@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="th"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ลงทะเบียนใช้งาน — Sawee Rx</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#003d82}
+*{font-family:'Sarabun',sans-serif!important}
+body{background:linear-gradient(160deg,#003d82,#0066cc);min-height:100vh;
+     display:flex;align-items:center;justify-content:center;padding:20px}
+.card-reg{width:100%;max-width:420px;border-radius:20px;border:0;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.step{display:none}.step.on{display:block}
+.dot{width:28px;height:28px;border-radius:50%;background:#dee2e6;color:#888;
+     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem}
+.dot.on{background:var(--primary);color:#fff}
+.line{flex:1;height:3px;background:#dee2e6}.line.on{background:var(--primary)}
+.pw-bar{height:5px;border-radius:3px;background:#eee;overflow:hidden}
+.pw-bar i{display:block;height:100%;width:0;transition:.3s}
+</style></head><body>
+
+<div class="card card-reg p-4">
+  <div class="text-center mb-3">
+    <div style="font-size:2.6rem">💊</div>
+    <h5 class="fw-bold text-primary mb-0">ลงทะเบียนใช้งาน</h5>
+    <small class="text-muted">Sawee Rx — ระบบเบิกยาสำรอง</small>
+  </div>
+
+  <div class="d-flex align-items-center gap-2 mb-4 px-2">
+    <div class="dot on" id="d1">1</div><div class="line" id="l1"></div>
+    <div class="dot" id="d2">2</div><div class="line" id="l2"></div>
+    <div class="dot" id="d3">3</div>
+  </div>
+
+  <!-- STEP 1 : ตรวจสอบ loginname -->
+  <div class="step on" id="s1">
+    <label class="small fw-bold text-muted">Username ที่ใช้เข้า HOSxP</label>
+    <input id="login" class="form-control form-control-lg text-center fw-bold mt-1"
+           placeholder="เช่น ER15" autocomplete="off"
+           onkeyup="if(event.key==='Enter')checkStaff()">
+    <div class="form-text">ระบบจะดึงชื่อ-สกุลจากฐานข้อมูล HOSxP มาให้อัตโนมัติ</div>
+    <button class="btn btn-primary w-100 rounded-pill mt-3 py-2" onclick="checkStaff()">
+      <i class="fas fa-magnifying-glass me-1"></i> ตรวจสอบรายชื่อ</button>
+    <div class="text-center mt-3"><a href="ward.html" class="small text-muted">มีบัญชีแล้ว — เข้าสู่ระบบ</a></div>
+  </div>
+
+  <!-- STEP 2 : ยืนยันตัวตน + ตั้งรหัส -->
+  <div class="step" id="s2">
+    <div class="alert alert-success d-flex align-items-center gap-3 py-2">
+      <i class="fas fa-user-check fa-lg"></i>
+      <div><b id="sName"></b><div class="small" id="sPos"></div></div>
+    </div>
+    <label class="small fw-bold text-muted">ตั้งรหัสผ่าน (อย่างน้อย 6 ตัว)</label>
+    <input id="pw1" type="password" class="form-control mt-1" oninput="pwCheck()">
+    <div class="pw-bar mt-1"><i id="pwBar"></i></div>
+    <div class="small mt-1" id="pwTxt"></div>
+    <label class="small fw-bold text-muted mt-2">ยืนยันรหัสผ่าน</label>
+    <input id="pw2" type="password" class="form-control mt-1"
+           onkeyup="if(event.key==='Enter')doRegister()">
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn btn-light border rounded-pill px-3" onclick="go(1)">ย้อนกลับ</button>
+      <button class="btn btn-primary rounded-pill flex-grow-1" onclick="doRegister()">ยืนยันลงทะเบียน</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 : สำเร็จ -->
+  <div class="step text-center" id="s3">
+    <i class="fas fa-circle-check text-success" style="font-size:3.5rem"></i>
+    <h5 class="fw-bold mt-3">ลงทะเบียนสำเร็จ</h5>
+    <p class="text-muted small mb-1">ยินดีต้อนรับ <b id="okName"></b></p>
+    <div class="alert alert-warning small text-start mt-3">
+      <b>ขั้นตอนถัดไป:</b> ห้องยาจะกำหนดสิทธิ์กล่องยาที่คุณเบิกได้
+      หากเข้าไปแล้วยังไม่เห็นกล่อง กรุณาแจ้งห้องยาครับ
+    </div>
+    <a href="ward.html" class="btn btn-success w-100 rounded-pill py-2">เข้าสู่ระบบเบิกยา</a>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://YOUR-PROJECT.supabase.co', SB_KEY='sb_publishable_xxx';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+let staff=null;
+
+function go(n){
+  [1,2,3].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i===n));
+  [1,2,3].forEach(i=>document.getElementById('d'+i).classList.toggle('on',i<=n));
+  [1,2].forEach(i=>document.getElementById('l'+i).classList.toggle('on',i<n));
+}
+async function checkStaff(){
+  const v=login.value.trim();
+  if(!v) return Swal.fire('กรอก Username','กรุณากรอก username ที่ใช้เข้า HOSxP','warning');
+  Swal.fire({title:'กำลังตรวจสอบ...',didOpen:()=>Swal.showLoading(),allowOutsideClick:false});
+  const {data,error}=await sb.rpc('lookup_staff',{p_loginname:v});
+  Swal.close();
+  if(error) return Swal.fire('เกิดข้อผิดพลาด',error.message,'error');
+  if(!data||!data.length) return Swal.fire('ไม่พบรายชื่อ',
+      'ไม่พบ username นี้ในฐานข้อมูล HOSxP กรุณาตรวจสอบตัวสะกด หรือแจ้งห้องยา','error');
+  const s=data[0];
+  if(s.claimed) return Swal.fire('ลงทะเบียนไปแล้ว',
+      'username นี้มีบัญชีในระบบแล้ว หากลืมรหัสผ่านกรุณาแจ้งห้องยา','info');
+  staff=s; sName.innerText=s.name; sPos.innerText=s.entryposition||'—';
+  go(2); setTimeout(()=>pw1.focus(),200);
+}
+function pwCheck(){
+  const v=pw1.value; let sc=0;
+  if(v.length>=6)sc++; if(v.length>=10)sc++;
+  if(/[A-Za-z]/.test(v)&&/[0-9]/.test(v))sc++;
+  const m=[['',0,''],['อ่อน',33,'#dc3545'],['พอใช้',66,'#fd7e14'],['ดี',100,'#198754']][sc]||['',0,''];
+  pwBar.style.width=m[1]+'%'; pwBar.style.background=m[2];
+  pwTxt.innerText=m[0]; pwTxt.style.color=m[2];
+}
+async function doRegister(){
+  if(pw1.value.length<6) return Swal.fire('รหัสสั้นเกินไป','ต้องมีอย่างน้อย 6 ตัวอักษร','warning');
+  if(pw1.value!==pw2.value) return Swal.fire('รหัสไม่ตรงกัน','กรุณากรอกใหม่','warning');
+  Swal.fire({title:'กำลังสร้างบัญชี...',didOpen:()=>Swal.showLoading(),allowOutsideClick:false});
+
+  const email=staff.loginname.toLowerCase()+'@sawee.local';
+  let {error}=await sb.auth.signUp({email,password:pw1.value});
+  if(error && !/already registered/i.test(error.message)){
+    return Swal.fire('สมัครไม่สำเร็จ',error.message,'error');
+  }
+  if(error){
+    const r=await sb.auth.signInWithPassword({email,password:pw1.value});
+    if(r.error) return Swal.fire('บัญชีนี้มีอยู่แล้ว','กรุณาแจ้งห้องยาเพื่อรีเซ็ตรหัสผ่าน','error');
+  }
+  const {data,error:e2}=await sb.rpc('claim_profile',{p_loginname:staff.loginname});
+  if(e2){
+    const msg={LOGINNAME_NOT_FOUND:'ไม่พบรายชื่อใน HOSxP',
+               ALREADY_CLAIMED:'username นี้ลงทะเบียนไปแล้ว',
+               REGISTER_CLOSED:'ระบบปิดรับลงทะเบียนชั่วคราว'}[e2.message]||e2.message;
+    return Swal.fire('ผูกบัญชีไม่สำเร็จ',msg,'error');
+  }
+  Swal.close(); okName.innerText=staff.name; go(3);
+}
+</script></body></html>
