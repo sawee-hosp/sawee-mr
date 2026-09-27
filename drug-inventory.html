@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1322,7 +1323,7 @@
               document.getElementById('qr-act').value = d.actual;
               document.getElementById('qr-exp').value = thDateToIso(d.expire); 
               document.getElementById('qr-img').src = DEFAULT_IMG; 
-              if(d.imageRaw) callApi('resolveImage',{input:d.imageRaw}).then(r=>{if(r.status) document.getElementById('qr-img').src=r.src});
+              if(d.imageRaw && String(d.imageRaw).startsWith('http')) document.getElementById('qr-img').src=d.imageRaw; else if(d.imageRaw) callApi('resolveImage',{input:d.imageRaw}).then(r=>{if(r.status) document.getElementById('qr-img').src=r.src});
               mdlScanRes.show();
           } else { Swal.fire('Not Found', 'QR Code not mapped', 'error').then(startScan); }
       }
