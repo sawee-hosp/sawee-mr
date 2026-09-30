@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>พิมพ์ฉลากยา · Sawee Rxfill</title>
+<link rel="icon" type="image/svg+xml" href="favicon-admin.svg">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="rxfill-shared.js"></script>
+<style>
+  body{margin:0;font-family:Sarabun,sans-serif;background:#eef3ef;color:#1f2d27}
+  .bar{flex-wrap:wrap;position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#064e2b,#0f7a3d);color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;border-bottom:3px solid #f97316}
+  .bar b{font-size:1.05rem}.bar small{opacity:.8;display:block}
+  button{white-space:nowrap;border:0;border-radius:24px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
+  .p{background:linear-gradient(135deg,#f97316,#fb923c);color:#fff}.s{background:#dcfce7;color:#064e2b}
+  .wrap{max-width:900px;margin:0 auto;padding:14px}
+  .msg{padding:50px 16px;text-align:center}
+  iframe{width:100%;border:0;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+  .list{background:#fff;border-radius:12px;padding:8px 12px;margin-bottom:12px;font-size:.9rem}
+  .list div{display:flex;justify-content:space-between;border-bottom:1px solid #eef2ef;padding:4px 0}
+  .done{background:#dcfce7;color:#064e2b;border-radius:12px;padding:10px;margin-bottom:12px;text-align:center;font-weight:700}
+</style>
+</head>
+<body>
+<div class="bar"><div><b id="t">พิมพ์ฉลากยา</b><small id="st"></small></div><div style="display:flex;gap:8px"><button class="s" id="bDone" onclick="markDone()" disabled>✔ พิมพ์แล้ว</button><button class="p" id="bPrint" onclick="doPrint()" disabled>🖨️ พิมพ์</button></div></div>
+<div class="wrap">
+  <div id="m" class="msg">กำลังโหลด…</div>
+  <div id="ok" class="done" hidden></div>
+  <div id="lst" class="list" hidden></div>
+  <iframe id="f" hidden></iframe>
+</div>
+<script>
+  // เปิดได้ทุกเครื่องโดยไม่ต้อง login: label-print.html?pool=<Sticker Id>  (ข้อมูลอยู่ในชีต ไม่ใช่ไฟล์)
+  const ADMIN_URL = 'https://script.google.com/macros/s/AKfycbwV8w7I53ilAwN6uSblnrrohfVeQSZd-Hm_O3jfyQRI4z3hDt_nTSxQCVgQ_BPPVsd9uQ/exec';
+  const id = new URLSearchParams(location.search).get('pool');
+  let HTML = '', P = null;
+  const post = (action, payload) => fetch(ADMIN_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload }) }).then(r => r.json());
+  (async () => {
+    if (!id) return document.getElementById('m').textContent = 'ไม่มีรหัสชุดสติกเกอร์ (?pool=...)';
+    try {
+      const r = await post('getStickerPool', { id });
+      if (!r.status) return document.getElementById('m').textContent = r.message || 'ไม่พบชุดสติกเกอร์';
+      P = r.data;
+      if (!P.items.length && P.oldPdf) { location.href = P.oldPdf; return; }        // ชุดเก่าที่เป็น PDF ใน Drive
+      const n = P.items.reduce((s, x) => s + x.qty, 0);
+      document.getElementById('t').textContent = P.id;
+      document.getElementById('st').textContent = `${n} ดวง · ${P.time} · ${P.admin || ''} · ${P.status === 'Printed' ? 'พิมพ์แล้ว' : 'รอพิมพ์'}`;
+      const l = document.getElementById('lst'); l.hidden = false;
+      l.innerHTML = P.items.map(x => `<div><span>${RX.esc(x.name)}</span><b>× ${x.qty}</b></div>`).join('');
+      HTML = RX.labelHtml(P.items);
+      const f = document.getElementById('f'); f.hidden = false; f.style.height = Math.min(n, 6) * 232 + 'px';
+      await RX.previewInto(f, HTML);
+      f.style.height = (f.contentDocument.body.scrollHeight + 10) + 'px';
+      document.getElementById('m').remove();
+      document.getElementById('bPrint').disabled = false; document.getElementById('bDone').disabled = false;
+    } catch (e) { document.getElementById('m').textContent = 'เชื่อมต่อไม่ได้: ' + e.message; }
+  })();
+  function doPrint() { RX.printHtml(HTML); }
+  async function markDone() {
+    await post('markPoolPrinted', { id });
+    const o = document.getElementById('ok'); o.hidden = false; o.textContent = '✔ บันทึกว่าพิมพ์แล้ว';
+    document.getElementById('bDone').disabled = true;
+  }
+</script>
+</body>
+</html>
