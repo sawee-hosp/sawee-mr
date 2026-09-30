@@ -1,1445 +1,1088 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Sawee Rxfill 2.0</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  <meta name="referrer" content="no-referrer">
+  <title>Sawee Rxfill 2.0 · เบิกยา</title>
+  <link rel="icon" type="image/svg+xml" href="favicon-rx.svg">
+  <link rel="apple-touch-icon" href="favicon-rx.svg">
+  <meta name="theme-color" content="#003d82">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="rxfill-shared.js"></script>
 
   <style>
-    :root {
-      --font-main: "Sarabun", sans-serif;
-      --primary: #003d82;
-      --bg: #f4f6f9;
-      --text: #2c3e50;
-      --ha-color: #ffebee;
-      --cool-color: #e3f2fd;
-    }
-    body { background-color: var(--bg); color: var(--text); font-family: var(--font-main) !important; padding-bottom: 70px; }
+    :root { --font-main: "Sarabun", sans-serif; --primary: #003d82; --primary2: #2563eb; --bg: #f4f6f9; --text: #2c3e50; --ha-color: #ffebee; --cool-color: #e3f2fd; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-main) !important; padding-bottom: 70px; }
     .hidden { display: none !important; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    
-    .app-nav { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--primary); color: white; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-    .nav-brand { font-weight: 600; font-size: 1.1rem; }
-    .profile-mini { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
-    .profile-mini img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid white; }
+    .fade-in { animation: fadeIn .3s ease-in; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .cursor-pointer { cursor: pointer; }
 
-    .box-scroller { display: flex; overflow-x: auto; padding: 10px; gap: 8px; scrollbar-width: none; }
-    
-    .box-btn { 
-      min-width: 85px; width: 85px; height: auto; min-height: 85px; padding: 5px; 
-      background: var(--primary); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; 
-      text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: 0.2s; position: relative; 
-    }
-    .box-btn span.box-name {
-        font-size: 0.7rem; line-height: 1.1; 
-        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-        margin-top: 2px;
-    }
-    .box-btn.active { background: white; color: var(--primary); border: 2px solid var(--primary); transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-    .box-icon { font-size: 1.8rem; margin-bottom: 0px; display: block; line-height: 1; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); }
-    .box-btn .badge-exp { position: absolute; top: -5px; right: -5px; font-size: 9px; padding: 2px 4px; border-radius: 4px; background: red; color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; animation: blink 1s linear infinite; }
-    .box-btn .badge-hist-count { position: absolute; top: -5px; right: -5px; font-size: 10px; padding: 2px 5px; border-radius: 10px; background: red; color: white; border:1px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; font-weight:bold; }
+    /* ---------- AUTH ---------- */
+    #auth { position: fixed; inset: 0; z-index: 3000; overflow-y: auto; background: radial-gradient(1200px 600px at 10% -10%, #dbeafe 0, transparent 60%), radial-gradient(900px 500px at 110% 110%, #cffafe 0, transparent 55%), var(--bg); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 24px; }
+    .auth-card { width: 100%; max-width: 380px; }
+    .auth-brand { text-align: center; margin-bottom: 18px; }
+    .auth-brand img { width: 76px; height: 76px; filter: drop-shadow(0 8px 18px rgba(37,99,235,.35)); }
+    .auth-brand h3 { font-weight: 700; margin: 10px 0 0; color: var(--primary); }
+    .auth-brand .sub { color: #6c7a89; font-size: .9rem; }
+    .auth-box { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(0,61,130,.10); }
+    .auth-box .form-control { border-radius: 12px; padding: 10px 14px; }
+    .auth-box .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary2)); border: 0; border-radius: 30px; padding: 10px; font-weight: 700; }
+    .auth-links { display: flex; justify-content: space-between; margin-top: 12px; }
+    .auth-links button { font-size: .9rem; }
+    .pw-wrap { position: relative; } .pw-wrap .eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #999; cursor: pointer; }
+    .chk-list { max-height: 140px; overflow-y: auto; border: 1px solid #e3e8ef; border-radius: 10px; padding: 6px 10px; background: #fbfcfe; font-size: .9rem; }
+    .hint { font-size: .78rem; color: #6c7a89; }
+
+    /* ---------- NAV ---------- */
+    .app-nav { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: linear-gradient(135deg, var(--primary), #1d4ed8); color: #fff; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+    .nav-brand { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; } .nav-brand img { width: 30px; height: 30px; }
+    .profile-mini { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.2); padding: 4px 12px; border-radius: 20px; font-size: .85rem; cursor: pointer; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .box-scroller { display: flex; overflow-x: auto; padding: 10px; gap: 8px; scrollbar-width: none; min-height: 70px; }
+    .box-btn { min-width: 85px; width: 85px; min-height: 85px; padding: 5px; background: var(--primary); color: #fff; border: 1px solid rgba(255,255,255,.2); border-radius: 12px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: .2s; position: relative; flex-shrink: 0; }
+    .box-btn span.box-name { font-size: .7rem; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; }
+    .box-btn.active { background: #fff; color: var(--primary); border: 2px solid var(--primary); transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,.2); }
+    .box-icon { font-size: 1.8rem; display: block; line-height: 1; }
+    .box-btn .badge-exp { position: absolute; top: -5px; right: -5px; font-size: 9px; padding: 2px 4px; border-radius: 4px; background: red; color: #fff; z-index: 10; animation: blink 1s linear infinite; }
+    .box-btn .badge-hist-count { position: absolute; top: -5px; right: -5px; font-size: 10px; padding: 2px 5px; border-radius: 10px; background: red; color: #fff; border: 1px solid #fff; z-index: 10; font-weight: bold; }
+    .box-loading { width: 100%; text-align: center; color: #3b5b85; font-size: .9rem; padding: 14px 10px; background: #e8f0fb; border-radius: 12px; }
 
     .drug-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px; }
-    .drug-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; display: flex; flex-direction: column; position: relative; }
-    .drug-img-wrap { width: 100%; aspect-ratio: 1/1; background: #e0e0e0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f8f8f8; padding: 5px; }
+    .grp-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 6px 10px; background: #fff; border-left: 4px solid var(--primary); border-radius: 8px; font-weight: 700; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .grp-head .cnt { margin-left: auto; font-size: .75rem; font-weight: 500; color: #6c7a89; }
+    .grp-head.no-perm { border-left-color: #adb5bd; color: #6c757d; }
+    .drug-card { background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee; display: flex; flex-direction: column; position: relative; }
+    .drug-card.in-cart { border: 2px solid #198754; }
+    .drug-img-wrap { width: 100%; aspect-ratio: 1/1; background: #e0e0e0; display: flex; align-items: center; justify-content: center; padding: 5px; }
     .drug-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-    .drug-info { padding: 8px; flex-grow: 1; display: flex; flex-direction: column; background: white; }
+    .drug-info { padding: 8px; flex-grow: 1; display: flex; flex-direction: column; }
+    .drug-name { font-weight: 600; font-size: .85rem; line-height: 1.2; margin-bottom: 4px; }
+    .incart-tag { position: absolute; top: 6px; right: 6px; background: #198754; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; z-index: 5; }
+    .badge-ha { position: absolute; top: 0; left: 0; background: red; color: #fff; font-size: 10px; padding: 2px 4px; border-bottom-right-radius: 8px; font-weight: bold; z-index: 5; }
+    .score { font-size: 9px; color: #9aa7b5; }
 
     .shelf-row-label { font-weight: bold; margin: 10px 0; padding-left: 10px; border-left: 4px solid var(--primary); color: #333; width: 100%; border-bottom: 2px solid #555; padding-bottom: 5px; }
-    .shelf-item { position: relative; border:1px solid #eee; border-radius:8px; padding:5px; text-align:center; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.08); width: 31%; max-width: 130px; margin-bottom: 5px; }
+    .shelf-item { position: relative; border: 1px solid #eee; border-radius: 8px; padding: 5px; text-align: center; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.08); width: 31%; max-width: 130px; margin-bottom: 5px; }
     .shelf-item img { width: 90px; height: 90px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; background: #e0e0e0; }
-    .bg-ha { background-color: var(--ha-color); border: 1px solid red; }
-    .bg-cool { background-color: var(--cool-color); border: 1px solid #2196f3; }
-    .exp-badge-stock { position: absolute; top: 0; right: 0; font-size: 10px; padding: 2px 4px; border-radius: 0 8px 0 4px; color: white; font-weight: bold; z-index: 5; }
-    .badge-ha { position: absolute; top: 0; left: 0; background: red; color: white; font-size: 10px; padding: 2px 4px; border-bottom-right-radius: 8px; font-weight: bold; z-index: 5; }
+    .bg-ha { background-color: var(--ha-color); border: 1px solid red; } .bg-cool { background-color: var(--cool-color); border: 1px solid #2196f3; }
+    .exp-badge-stock { position: absolute; top: 0; right: 0; font-size: 10px; padding: 2px 4px; border-radius: 0 8px 0 4px; color: #fff; font-weight: bold; z-index: 5; }
 
-    .btm-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-    .nav-item { text-align: center; color: #999; font-size: 0.7rem; width: 20%; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .nav-item i { font-size: 1.4rem; display: block; margin-bottom: 2px; }
-    .nav-item.active { color: var(--primary); font-weight: bold; }
-    .nav-item.active i { transform: scale(1.1); }
-    
-    .nav-center-btn { 
-        width: 55px; height: 55px; background: var(--primary); border-radius: 50%; 
-        color: white; display: flex; align-items: center; justify-content: center; 
-        box-shadow: 0 4px 10px rgba(0,31,66,0.4); border: 4px solid white; transform: translateY(-15px);
-        cursor: pointer; transition: 0.2s;
-    }
-    .nav-center-btn:active { transform: translateY(-12px) scale(0.95); }
+    .btm-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+    .nav-item { text-align: center; color: #999; font-size: .7rem; width: 20%; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    .nav-item i { font-size: 1.4rem; margin-bottom: 2px; } .nav-item.active { color: var(--primary); font-weight: bold; }
+    .nav-center-btn { width: 55px; height: 55px; background: linear-gradient(135deg, var(--primary), var(--primary2)); border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,31,66,.4); border: 4px solid #fff; transform: translateY(-15px); cursor: pointer; }
     .nav-center-btn i { font-size: 1.5rem; }
+    .nav-badge-large { position: absolute; top: -5px; right: 15px; background: red; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; border: 2px solid #fff; }
 
-    .nav-badge { position: absolute; top: 5px; right: 20px; background: red; color: white; border-radius: 50%; width: 10px; height: 10px; }
-    .nav-badge-large { position: absolute; top: -5px; right: 15px; background: red; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; border: 2px solid var(--primary); }
-    
-    .fab-print { position: fixed; bottom: 80px; left: 15px; background: #333; color: white; border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 900; cursor: pointer; }
-    .fab-edit-lg { position: fixed; bottom: 80px; right: 15px; background: var(--primary); color: white; border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 5px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 900; cursor: pointer; }
-    
     .qty-wrap { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #eee; border-radius: 20px; padding: 2px; margin-top: auto; }
-    .btn-qty { width: 32px; height: 32px; background: white; border: 1px solid #ddd; border-radius: 50%; color: var(--primary); font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; user-select: none; }
-    .btn-qty:active { background: #eee; }
-    .inp-qty { width: 40px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.1rem; }
+    .btn-qty { width: 32px; height: 32px; background: #fff; border: 1px solid #ddd; border-radius: 50%; color: var(--primary); font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; user-select: none; }
+    .inp-qty { width: 44px; border: none; background: transparent; text-align: center; font-weight: bold; font-size: 1.05rem; }
 
-    /* Timeline */
     .timeline { display: flex; justify-content: space-between; position: relative; margin: 25px 0 15px; align-items: center; }
-    .timeline-line { position: absolute; top: 15px; left: 10%; right: 10%; height: 2px; background: #ddd; z-index: 0; }
-    .tl-step { position: relative; z-index: 1; text-align: center; background: transparent; padding: 0 5px; width: 33%; }
-    .tl-icon { width: 35px; height: 35px; border-radius: 50%; background: #fff; color: #ccc; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; font-size: 1rem; border: 2px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .tl-time { font-size: 0.7rem; color: #666; margin-top: 2px; font-weight: bold; display: inline-block; background: rgba(255,255,255,0.8); padding: 0 3px; border-radius: 4px; }
-    .tl-duration { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 0.65rem; color: #0d6efd; font-weight:bold; background: rgba(255,255,255,0.9); padding: 0 2px; }
-    .tl-step.step-order .tl-icon { color: #ffc107; border-color: #ffc107; }
-    .tl-step.step-check .tl-icon { color: #198754; border-color: #198754; }
-    .tl-step.step-recv .tl-icon { color: #0d6efd; border-color: #0d6efd; }
-    .tl-content { display: flex; flex-direction: column; align-items: center; }
+    .timeline-line { position: absolute; top: 15px; left: 10%; right: 10%; height: 2px; background: #ddd; }
+    .tl-step { position: relative; z-index: 1; text-align: center; padding: 0 5px; width: 33%; }
+    .tl-icon { width: 35px; height: 35px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; border: 2px solid #ddd; }
+    .tl-time { font-size: .7rem; color: #666; font-weight: bold; } .tl-duration { position: absolute; top: 20px; width: 100%; text-align: center; font-size: .65rem; color: #0d6efd; font-weight: bold; }
+    .step-order .tl-icon { color: #ffc107; border-color: #ffc107; } .step-check .tl-icon { color: #198754; border-color: #198754; } .step-recv .tl-icon { color: #0d6efd; border-color: #0d6efd; }
 
-    #qr-overlay { position: fixed; inset: 0; background: black; z-index: 3000; display: none; flex-direction: column; }
-    #reader { width: 100%; flex-grow: 1; background: black; }
-    .scan-ctrl { padding: 20px; background: rgba(0,0,0,0.8); text-align: center; }
-    
-    .nav-tabs .nav-link { color: #666; font-size: 0.9rem; }
+    #qr-overlay { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; flex-direction: column; }
+    #reader { width: 100%; flex-grow: 1; } .scan-ctrl { padding: 20px; background: rgba(0,0,0,.8); text-align: center; }
+
+    .nav-tabs .nav-link { color: #666; font-size: .9rem; cursor: pointer; }
     .nav-tabs .nav-link.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); }
     .tab-badge { background: #eee; color: #333; border-radius: 12px; padding: 3px 8px; font-size: 11px; margin-left: 5px; font-weight: bold; }
-    .nav-link.active .tab-badge { background: var(--primary); color: white; }
-    
-    .card-wait { background-color: #fffde7; border-left: 4px solid #fbc02d; }
-    .card-done { background-color: #e8f5e9; border-left: 4px solid #4caf50; }
-    .card-recv { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
-    
-    .text-message-start { font-size: 24pt; font-weight: bold; text-align: center; color: #555; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; }
-    #group-filter .badge { padding: 5px 10px !important; }
-    #group-filter .badge .badge { width: 24px; height: 24px; border-radius: 50% !important; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .nav-link.active .tab-badge { background: var(--primary); color: #fff; }
+    .card-wait { background: #fffde7; border-left: 4px solid #fbc02d; } .card-done { background: #e8f5e9; border-left: 4px solid #4caf50; } .card-recv { background: #e3f2fd; border-left: 4px solid #2196f3; }
+    .text-message-start { font-size: 1.25rem; font-weight: 600; text-align: center; color: #607085; padding: 12vh 20px; }
 
-    .list-group-suggestion {
-        position: absolute; top: 100%; left: 0; right: 0; z-index: 1050;
-        max-height: 250px; overflow-y: auto;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-top: 5px;
-        background: white; border-radius: 12px; border: 1px solid #ddd;
-    }
-    
-    .cursor-pointer { cursor: pointer; }
-    .hover-bg-light:hover { background-color: #f8f9fa; }
+    @keyframes blink { 50% { opacity: .5; } }
+    .badge-expired { background: red; color: #fff; border-radius: 4px; padding: 2px 4px; font-weight: bold; animation: blink 1s linear infinite; }
+    .badge-near-exp { background: #ffc107; color: #000; border-radius: 4px; padding: 2px 4px; font-weight: bold; }
 
-    @keyframes blink { 50% { opacity: 0.5; } }
-    .blink { animation: blink 1s linear infinite; }
-    .badge-expired { background: red; color: white; border-radius: 4px; padding: 2px 4px; font-weight: bold; animation: blink 1s linear infinite; }
-    .badge-near-exp { background: #ffc107; color: black; border-radius: 4px; padding: 2px 4px; font-weight: bold; }
-    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    /* ---------- AFTER HOURS ---------- */
+    .ah-chip { border: 1px solid #cfd8e3; background: #fff; border-radius: 20px; padding: 4px 12px; font-size: .85rem; cursor: pointer; white-space: nowrap; }
+    .ah-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .ah-card { background: #fff; border-radius: 14px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); border: 1px solid #edf1f6; }
+    .ah-use { display: inline-flex; align-items: center; gap: 4px; border-radius: 20px; padding: 2px 10px; font-size: .78rem; margin: 2px 4px 2px 0; background: #eef3fb; }
+    .ah-use.total { background: #003d82; color: #fff; font-weight: 700; }
+    .ah-cut { background: #fff8e6; border: 1px dashed #f0b429; border-radius: 10px; padding: 6px 10px; font-size: .82rem; margin-top: 6px; }
+    .ah-cut b { color: #8a5a00; }
+    .table-loc td, .table-loc th { font-size: .78rem; padding: 3px 4px; }
+    .sig-need { outline: 2px solid #dc3545; }
   </style>
 </head>
 <body>
 
-  <!-- ========================================== -->
-  <!-- 1. DIRECT VIEW สำหรับสแกน QR Code จากใบสั่ง -->
-  <!-- ========================================== -->
-  <div id="direct-order-view" style="position:fixed; inset:0; background:#f4f6f9; z-index:9999; display:none; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
-      <div class="card p-4 shadow-lg border-0 text-center" style="width: 100%; max-width: 400px; border-radius: 16px;">
-          <div style="font-size: 4rem; color: #198754; margin-bottom: 10px;"><i class="fas fa-box-open"></i></div>
-          <h3 class="fw-bold text-success mb-2">รับยาเข้าตึก</h3>
-          <div class="text-muted small mb-4" style="word-break: break-all; line-height: 1.4;">
-            รหัสใบเบิก:<br>
-            <span id="dv-order-id" class="fw-bold text-dark fs-6"></span>
-          </div>
-          <button class="btn btn-success w-100 py-3 rounded-pill fw-bold" style="font-size: 1.3rem; box-shadow: 0 4px 10px rgba(25,135,84,0.3);" onclick="confirmDirectReceive()">
-              <i class="fas fa-check-circle me-1"></i> ยืนยันรับยาเข้าตึก
-          </button>
+  <!-- ================= AUTH ================= -->
+  <div id="auth">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img src="favicon-rx.svg" alt="">
+        <h3>Sawee Rxfill 2.0</h3>
+        <div class="sub">ระบบเบิกยาสำรองหน่วยงาน · รพ.สวี</div>
       </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- 2. หน้าจอ Login ปกติ -->
-  <!-- ========================================== -->
-  <div id="login-overlay" style="position:fixed;inset:0;background:#f4f6f9;z-index:3000;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-     <div style="font-size:3.5rem;color:var(--primary);margin-bottom:15px">💊</div>
-     <h3 class="fw-bold m-0" style="font-size:1.8rem">Sawee Rxfill 2.0</h3>
-     
-     <div id="login-form-box" class="card p-4 mt-4 shadow-sm border-0 w-75" style="max-width:350px;">
-        <div class="mb-3">
-            <label class="form-label small text-muted">HosXP Username</label>
-            <input type="text" id="login-username" class="form-control text-center fw-bold" placeholder="ระบุชื่อผู้ใช้งาน">
+      <div class="auth-box">
+        <!-- login -->
+        <div id="av-login" class="av">
+          <label class="form-label small text-muted mb-1">HosXP Username</label>
+          <input id="a-user" class="form-control mb-3 fw-bold" autocomplete="username" autocapitalize="off" placeholder="เช่น mr12">
+          <label class="form-label small text-muted mb-1">รหัสผ่าน</label>
+          <div class="pw-wrap mb-3"><input id="a-pass" type="password" class="form-control" autocomplete="current-password" placeholder="รหัสผ่าน"><i class="fas fa-eye eye" onclick="togglePw(this)"></i></div>
+          <button class="btn btn-primary w-100" onclick="doLogin()">เข้าสู่ระบบ</button>
+          <div class="auth-links">
+            <button class="btn btn-link p-0 text-decoration-none" onclick="openAsk('register')"><i class="fas fa-user-plus"></i> ลงทะเบียนใหม่</button>
+            <button class="btn btn-link p-0 text-decoration-none text-secondary" onclick="openAsk('forgot')"><i class="fas fa-key"></i> จำรหัสผ่านไม่ได้</button>
+          </div>
         </div>
-        <button class="btn btn-primary w-100 rounded-pill" onclick="onLoginSubmit()">เข้าสู่ระบบ</button>
-     </div>
-     <div id="status-text" class="text-danger mt-3 text-center px-4 small"></div>
+
+        <!-- ask username (register / forgot) -->
+        <div id="av-ask" class="av hidden">
+          <h6 class="fw-bold text-primary" id="ask-title"></h6>
+          <div class="hint mb-2" id="ask-hint"></div>
+          <input id="ask-user" class="form-control mb-3 fw-bold" autocapitalize="off" placeholder="HosXP Username">
+          <button class="btn btn-primary w-100" onclick="doAsk()">ต่อไป</button>
+          <button class="btn btn-link w-100 mt-2 text-decoration-none" onclick="showAuth('login')">← กลับ</button>
+        </div>
+
+        <!-- register -->
+        <div id="av-reg" class="av hidden">
+          <h6 class="fw-bold text-primary">ลงทะเบียนใหม่</h6>
+          <div class="row g-2 mb-2">
+            <div class="col-5"><label class="small text-muted">Username</label><input id="r-user" class="form-control" readonly></div>
+            <div class="col-7"><label class="small text-muted">ชื่อ (จาก HOSxP)</label><input id="r-name" class="form-control" readonly></div>
+          </div>
+          <label class="small text-muted">อีเมล <span class="text-danger">*</span></label>
+          <input id="r-email" type="email" class="form-control" placeholder="name@example.com">
+          <div class="hint mb-2">ใช้สำหรับรับรหัส OTP เวลาลืมรหัสผ่าน</div>
+          <div class="row g-2 mb-2">
+            <div class="col-6"><label class="small text-muted">รหัสผ่าน <span class="text-danger">*</span></label><input id="r-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 6 ตัว"></div>
+            <div class="col-6"><label class="small text-muted">ยืนยันรหัสผ่าน</label><input id="r-pass2" type="password" class="form-control" autocomplete="new-password"></div>
+          </div>
+          <label class="small fw-bold text-muted">ตึก (Box Group)</label>
+          <div class="chk-list mb-2" id="r-groups">กำลังโหลด…</div>
+          <label class="small fw-bold text-muted">สิทธิ์การเบิก (Substock)</label>
+          <div class="chk-list mb-3" id="r-subs">กำลังโหลด…</div>
+          <button class="btn btn-primary w-100" onclick="doRegister()">ลงทะเบียน</button>
+          <button class="btn btn-link w-100 mt-2 text-decoration-none" onclick="showAuth('login')">← กลับ</button>
+        </div>
+
+        <!-- set password (existing user without password) -->
+        <div id="av-setpw" class="av hidden">
+          <h6 class="fw-bold text-primary">ตั้งรหัสผ่าน</h6>
+          <div class="alert alert-info small py-2" id="sp-hint"></div>
+          <input id="sp-user" type="hidden">
+          <label class="small text-muted">อีเมล <span class="text-danger">*</span></label>
+          <input id="sp-email" type="email" class="form-control" placeholder="name@example.com">
+          <div class="hint mb-2">ใช้สำหรับรับรหัส OTP เวลาลืมรหัสผ่าน</div>
+          <div class="row g-2 mb-3">
+            <div class="col-6"><label class="small text-muted">รหัสผ่าน</label><input id="sp-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 6 ตัว"></div>
+            <div class="col-6"><label class="small text-muted">ยืนยัน</label><input id="sp-pass2" type="password" class="form-control" autocomplete="new-password"></div>
+          </div>
+          <button class="btn btn-primary w-100" onclick="doSetPw()">บันทึกและเข้าสู่ระบบ</button>
+          <button class="btn btn-link w-100 mt-2 text-decoration-none" onclick="showAuth('login')">← กลับ</button>
+        </div>
+
+        <!-- OTP reset -->
+        <div id="av-otp" class="av hidden">
+          <h6 class="fw-bold text-primary">ตั้งรหัสผ่านใหม่</h6>
+          <div class="alert alert-success small py-2" id="otp-hint"></div>
+          <input id="otp-user" type="hidden">
+          <label class="small text-muted">รหัส OTP 6 หลัก</label>
+          <input id="otp-code" class="form-control mb-2 text-center fw-bold fs-4" inputmode="numeric" maxlength="6" style="letter-spacing:6px">
+          <div class="row g-2 mb-3">
+            <div class="col-6"><label class="small text-muted">รหัสผ่านใหม่</label><input id="otp-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 6 ตัว"></div>
+            <div class="col-6"><label class="small text-muted">ยืนยัน</label><input id="otp-pass2" type="password" class="form-control" autocomplete="new-password"></div>
+          </div>
+          <button class="btn btn-primary w-100" onclick="doOtp()">ตั้งรหัสผ่านใหม่</button>
+          <div class="auth-links">
+            <button class="btn btn-link p-0 text-decoration-none" onclick="resendOtp()">ส่ง OTP อีกครั้ง</button>
+            <button class="btn btn-link p-0 text-decoration-none text-secondary" onclick="showAuth('login')">← กลับ</button>
+          </div>
+        </div>
+
+        <div id="a-msg" class="small mt-3 text-center"></div>
+      </div>
+    </div>
   </div>
 
   <div id="qr-overlay">
-     <div class="d-flex justify-content-between p-3 text-white align-items-center">
-        <h5 class="m-0"><i class="fas fa-qrcode"></i> Scan</h5>
-        <button class="btn btn-sm btn-outline-light rounded-circle" onclick="stopScan()"><i class="fas fa-times"></i></button>
-     </div>
-     <div id="reader"></div>
-     <div class="scan-ctrl">
-        <div class="btn-group w-100 mb-3" role="group">
-            <input type="radio" class="btn-check" name="scanType" id="scanItem" autocomplete="off" checked onclick="setScanMode('ITEM')">
-            <label class="btn btn-outline-light" for="scanItem">รายการยา</label>
-            <input type="radio" class="btn-check" name="scanType" id="scanBox" autocomplete="off" onclick="setScanMode('BOX')">
-            <label class="btn btn-outline-light" for="scanBox">กล่องยา</label>
-        </div>
-        <div class="text-white small mb-2" id="scan-hint">ส่อง QR Code ที่รายการยา</div>
-     </div>
+    <div class="d-flex justify-content-between p-3 text-white align-items-center">
+      <h5 class="m-0"><i class="fas fa-qrcode"></i> Scan</h5>
+      <button class="btn btn-sm btn-outline-light rounded-circle" onclick="stopScan()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="reader"></div>
+    <div class="scan-ctrl">
+      <div class="btn-group w-100 mb-3" role="group">
+        <input type="radio" class="btn-check" name="scanType" id="scanItem" autocomplete="off" checked onclick="setScanMode('ITEM')">
+        <label class="btn btn-outline-light" for="scanItem">รายการยา</label>
+        <input type="radio" class="btn-check" name="scanType" id="scanBox" autocomplete="off" onclick="setScanMode('BOX')">
+        <label class="btn btn-outline-light" for="scanBox">กล่องยา</label>
+      </div>
+      <div class="text-white small mb-2" id="scan-hint">ส่อง QR Code ที่รายการยา</div>
+    </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- 3. โครงสร้าง App หลัก -->
-  <!-- ========================================== -->
+  <!-- ================= APP ================= -->
   <div id="app-main" class="hidden">
     <nav class="app-nav">
-      <div class="nav-brand">Sawee Rxfill 2.0</div>
+      <div class="nav-brand"><img src="favicon-rx.svg" alt=""> Sawee Rxfill 2.0</div>
       <div class="d-flex align-items-center gap-2">
-         <div class="profile-mini" onclick="openProfile()"><img id="nav-img" src="" referrerpolicy="no-referrer"><span id="nav-name">User</span></div>
-         <div style="position:relative;padding:5px;" onclick="openCart()">
-            <i class="fas fa-shopping-basket" style="font-size:1.3rem;"></i>
-            <div id="badge" class="badge bg-danger rounded-circle position-absolute top-0 end-0 hidden" style="font-size:9px">0</div>
-         </div>
-         <div style="position:relative;padding:5px;cursor:pointer" onclick="logout()">
-            <i class="fas fa-sign-out-alt" style="font-size:1.3rem;"></i>
-         </div>
+        <div class="profile-mini" onclick="openProfile()"><i class="fas fa-user-circle"></i><span id="nav-name">User</span></div>
+        <div style="position:relative;padding:5px;cursor:pointer" onclick="openCart()">
+          <i class="fas fa-shopping-basket" id="cart-ico" style="font-size:1.3rem;transition:.2s"></i>
+          <div id="badge" class="badge bg-danger rounded-circle position-absolute top-0 end-0 hidden" style="font-size:9px">0</div>
+        </div>
+        <div style="padding:5px;cursor:pointer" onclick="logout()"><i class="fas fa-sign-out-alt" style="font-size:1.3rem"></i></div>
       </div>
     </nav>
 
-    <div class="tab-content" style="padding-top:60px">
+    <div style="padding-top:60px">
       <!-- TAB ORDER -->
       <div id="tab-order" class="page-sec">
         <div id="box-scroller-order" class="box-scroller"></div>
-        <div class="px-3 py-2 sticky-top bg-white shadow-sm" style="top:50px;z-index:900">
-           <input type="text" id="order-search" class="form-control rounded-pill border-0 bg-light" placeholder="🔍 ค้นหายาในกล่องนี้..." onkeyup="filterOrder()">
+        <div class="px-3 py-2 sticky-top bg-white shadow-sm" style="top:60px;z-index:900">
+          <div class="position-relative">
+            <input type="search" id="order-search" class="form-control rounded-pill border-0 bg-light ps-4 pe-5" autocomplete="off"
+                   placeholder="🔍 กรุณาเลือกกล่องยาข้างบนก่อน หรือค้นหายาที่สามารถเบิกได้">
+          </div>
+          <div id="order-sub" class="small text-muted mt-1 px-2"></div>
         </div>
-        <div style="position:relative;min-height:50vh">
-            <div id="order-start-msg" class="text-message-start">กรุณาเลือกกล่องยาด้านบนเพื่อเริ่มเบิกยา</div>
-            <div id="order-grid" class="drug-grid hidden"></div>
-        </div>
+        <div id="order-grid" class="drug-grid"></div>
       </div>
 
       <!-- TAB STOCK -->
       <div id="tab-stock" class="page-sec hidden">
-        <div id="group-filter" class="d-flex gap-2 px-3 pb-2 overflow-auto" style="white-space:nowrap"></div>
+        <div id="group-filter" class="d-flex gap-2 px-3 pt-2 pb-1 overflow-auto" style="white-space:nowrap"></div>
         <div id="box-scroller-stock" class="box-scroller"></div>
         <div id="stock-content" class="pb-5 px-3 d-flex flex-wrap gap-2 justify-content-start">
-           <div class="text-message-start">เลือกกล่องด้านบน<br>เพื่อดูสต็อก</div>
+          <div class="text-message-start w-100">เลือกกล่องด้านบน<br>เพื่อดูสต็อก</div>
         </div>
       </div>
 
-      <!-- TAB SEARCH -->
-      <div id="tab-search" class="page-sec hidden container pt-3">
-         <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
-             <h5 class="fw-bold text-primary m-0 me-auto">จัดการฐานข้อมูลยา</h5>
-             <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="doFullSearch('SHOW_ALL')">แสดงยาทุกตัว</button>
-             <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="showExpiredDrugs()">
-                 <i class="fas fa-calendar-times"></i> ดูยาหมดอายุ
-             </button>
-         </div>
-         <div class="position-relative mb-3 d-flex gap-2">
-             <div class="flex-grow-1 position-relative">
-                 <div class="input-group shadow-sm rounded-pill">
-                    <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
-                    <input id="kw-realtime" class="form-control border-0" placeholder="พิมพ์ชื่อยา..." autocomplete="off" onkeyup="if(event.key==='Enter') doFullSearch(this.value)">
-                 </div>
-                 <div id="search-suggestions" class="list-group-suggestion hidden"></div>
-             </div>
-             <button class="btn btn-primary rounded-pill px-3" onclick="doFullSearch(document.getElementById('kw-realtime').value)">ค้นหา</button>
-         </div>
-
-         <div class="d-flex justify-content-between align-items-center mb-2">
-             <div id="search-count" class="small text-muted fw-bold"></div>
-         </div>
-
-         <div id="search-spinner" class="text-center my-3 hidden"><div class="spinner-border text-primary"></div></div>
-         
-         <div id="realtime-detail" class="mt-2">
-            <!-- ข้อความเริ่มต้นเวลาหน้าว่าง -->
-            <div class="text-center text-muted mt-5">
-                <i class="fas fa-search" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
-                <h5 class="fw-bold text-dark">ค้นหาว่ายาเก็บไว้ตรงไหนของโรงพยาบาลบ้าง</h5>
-                <p>พิมพ์ชื่อยาได้เลย</p>
-            </div>
-         </div>
-         <div class="d-flex justify-content-center mt-3 gap-2 hidden" id="pagination-controls">
-            <button class="btn btn-sm btn-light border" onclick="prevPage()"><i class="fas fa-chevron-left"></i></button>
-            <span id="page-display" class="small pt-1"></span>
-            <button class="btn btn-sm btn-light border" onclick="nextPage()"><i class="fas fa-chevron-right"></i></button>
-         </div>
+      <!-- TAB AFTER HOURS -->
+      <div id="tab-after" class="page-sec hidden container pt-3 pb-4">
+        <div class="d-flex align-items-center mb-2 gap-2 flex-wrap">
+          <h5 class="fw-bold text-primary m-0 me-auto"><i class="fas fa-moon"></i> ยาที่ใช้นอกเวลา <small class="text-muted fw-normal fs-6">20.00–08.00 น.</small></h5>
+          <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="showExpired()"><i class="fas fa-calendar-times"></i> ยาหมดอายุ</button>
+        </div>
+        <div class="d-flex gap-2 overflow-auto pb-2" id="ah-range">
+          <span class="ah-chip active" data-r="1" onclick="setAhRange(1,this)">เมื่อคืน</span>
+          <span class="ah-chip" data-r="7" onclick="setAhRange(7,this)">7 คืน</span>
+          <span class="ah-chip" data-r="30" onclick="setAhRange(30,this)">30 คืน</span>
+          <span class="ah-chip" data-r="c" onclick="setAhRange('c',this)">กำหนดเอง</span>
+        </div>
+        <div id="ah-custom" class="d-flex gap-2 align-items-center mb-2 hidden">
+          <input type="date" id="ah-from" class="form-control form-control-sm"><span class="small">ถึง</span><input type="date" id="ah-to" class="form-control form-control-sm">
+          <button class="btn btn-sm btn-primary" onclick="loadAfter()">ดู</button>
+        </div>
+        <div class="input-group shadow-sm rounded-pill mb-2 bg-white" style="overflow:hidden">
+          <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
+          <input id="ah-search" type="search" class="form-control border-0" autocomplete="off" placeholder="ค้นหายา (พิมพ์ใกล้เคียงก็เจอ) เช่น adrenalin, ceftri">
+        </div>
+        <div id="ah-info" class="small text-muted mb-2"></div>
+        <div id="ah-list"></div>
       </div>
 
       <!-- TAB HIST -->
       <div id="tab-hist" class="page-sec hidden container pt-2">
-         <div id="box-scroller-hist" class="box-scroller mb-2"></div>
-
-         <ul class="nav nav-tabs nav-fill mb-3">
-            <li class="nav-item"><a class="nav-link active" onclick="filterHist('รอการจัดยา',this)">รอจัดยา <span id="bg-wait" class="tab-badge">0</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="filterHist('จัดยาเสร็จแล้ว',this)">จัดเสร็จ <span id="bg-done" class="tab-badge">0</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="filterHist('ได้รับยาแล้ว',this)">รับแล้ว <span id="bg-recv" class="tab-badge">0</span></a></li>
-            <li class="nav-item"><a class="nav-link" onclick="filterHist('STATS',this)">ประวัติการเบิก</a></li>
-         </ul>
-         
-         <div id="stats-filter" class="card p-3 mb-3 border-0 bg-light hidden">
-             <div class="d-flex gap-2 align-items-center mb-2">
-                 <input type="date" id="stat-start" class="form-control">
-                 <span>ถึง</span>
-                 <input type="date" id="stat-end" class="form-control">
-             </div>
-             <button class="btn btn-primary w-100 rounded-pill" onclick="loadStats()">ดูข้อมูล</button>
-         </div>
-
-         <div id="hist-msg" class="alert alert-info text-center small py-2 mb-2"></div>
-         <div id="hist-loader" class="text-center my-4 hidden"><div class="spinner-border text-primary"></div> กำลังโหลด...</div>
-         <div id="hist-res"></div>
+        <div id="box-scroller-hist" class="box-scroller mb-2"></div>
+        <ul class="nav nav-tabs nav-fill mb-3">
+          <li class="nav-item"><a class="nav-link active" onclick="filterHist('รอการจัดยา',this)">รอจัดยา <span id="bg-wait" class="tab-badge">0</span></a></li>
+          <li class="nav-item"><a class="nav-link" onclick="filterHist('จัดยาเสร็จแล้ว',this)">จัดเสร็จ <span id="bg-done" class="tab-badge">0</span></a></li>
+          <li class="nav-item"><a class="nav-link" onclick="filterHist('ได้รับยาแล้ว',this)">รับแล้ว <span id="bg-recv" class="tab-badge">0</span></a></li>
+          <li class="nav-item"><a class="nav-link" onclick="filterHist('STATS',this)">สถิติ</a></li>
+        </ul>
+        <div id="stats-filter" class="card p-3 mb-3 border-0 bg-light hidden">
+          <div class="d-flex gap-2 align-items-center mb-2"><input type="date" id="stat-start" class="form-control"><span>ถึง</span><input type="date" id="stat-end" class="form-control"></div>
+          <button class="btn btn-primary w-100 rounded-pill" onclick="loadStats()">ดูข้อมูล</button>
+        </div>
+        <div id="hist-msg" class="alert alert-info text-center small py-2 mb-2 hidden"></div>
+        <div id="hist-res"></div>
       </div>
     </div>
   </div>
 
-  <div class="btm-nav">
+  <div class="btm-nav hidden" id="btm-nav">
     <div class="nav-item active" onclick="nav('tab-order', this)"><i class="fas fa-pills"></i>เบิกยา</div>
     <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-cubes"></i>สต็อก</div>
     <div class="nav-center-btn" onclick="startScan()"><i class="fas fa-qrcode"></i></div>
-    <div class="nav-item" onclick="nav('tab-search', this)"><i class="fas fa-search"></i>ค้นหา</div>
-    <div class="nav-item" style="position:relative" onclick="nav('tab-hist', this)">
-        <i class="fas fa-history"></i>รายการเบิก
-        <div id="nav-badge-hist" class="nav-badge-large hidden"></div>
-    </div>
+    <div class="nav-item" onclick="nav('tab-after', this)"><i class="fas fa-moon"></i>ดูยานอกเวลา</div>
+    <div class="nav-item" onclick="nav('tab-hist', this)"><i class="fas fa-history"></i>รายการเบิก<div id="nav-badge-hist" class="nav-badge-large hidden"></div></div>
   </div>
 
-  <!-- MODALS -->
-  <div class="offcanvas offcanvas-bottom rounded-top-4" id="cartSheet" style="height:85vh;z-index:2000">
-    <div class="offcanvas-header border-bottom"><h5 class="fw-bold text-primary">รายการเบิก</h5><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+  <!-- CART -->
+  <div class="offcanvas offcanvas-bottom rounded-top-4" id="cartSheet" style="height:88vh;z-index:2000">
+    <div class="offcanvas-header border-bottom py-2">
+      <h5 class="fw-bold text-primary m-0">ใบเบิก <small class="text-muted fs-6" id="cart-count"></small></h5>
+      <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
     <div class="offcanvas-body d-flex flex-column p-0 bg-light">
-        <div id="cart-list" class="flex-grow-1 overflow-auto p-3"></div>
-        <div class="p-3 bg-white shadow-lg mt-auto">
-            <div class="d-flex justify-content-between fw-bold mb-2"><span>รวมสุทธิ</span><span class="text-primary" id="cart-sum">0.00</span></div>
-            <div class="border rounded p-2 mb-1 bg-white">
-                <small class="text-muted d-block">ลายเซ็นผู้เบิก:</small>
-                
-                <div class="text-primary fw-bold mb-2"><i class="fas fa-user-circle"></i> <span id="cart-signer-name"></span></div>
-                
-                <canvas id="cvs" style="width:100%;height:100px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc"></canvas>
-                <div class="text-end"><small class="text-danger cursor-pointer" onclick="clrCvs()">ล้าง</small></div>
-            </div>
-            
-            <button id="btn-submit-order" onclick="submitOrder()" class="btn btn-primary w-100 rounded-pill py-3 fw-bold">ยืนยันการเบิก</button>
+      <div id="cart-list" class="flex-grow-1 overflow-auto p-3"></div>
+      <div class="p-3 bg-white shadow-lg mt-auto">
+        <div class="d-flex justify-content-between fw-bold mb-2"><span>รวมสุทธิ</span><span class="text-primary" id="cart-sum">0.00</span></div>
+        <div class="border rounded p-2 mb-2 bg-white">
+          <div class="d-flex justify-content-between"><small class="text-muted">ลงชื่อผู้เบิก <span class="text-danger">*</span> <span class="hint">(ไม่บันทึกลายเซ็น)</span></small><small class="text-danger cursor-pointer" onclick="clrCvs()">ล้าง</small></div>
+          <div class="text-primary fw-bold mb-1"><i class="fas fa-user-circle"></i> <span id="cart-signer-name"></span></div>
+          <canvas id="cvs" style="width:100%;height:90px;background:#f8f9fa;border-radius:8px;border:1px dashed #ccc;touch-action:none"></canvas>
         </div>
+        <button id="btn-submit-order" onclick="submitOrder()" class="btn btn-primary w-100 rounded-pill py-3 fw-bold">ยืนยันการเบิก</button>
+      </div>
     </div>
   </div>
 
+  <!-- SCAN RESULT -->
   <div class="modal fade" id="mdlScanRes" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white p-2"><h6 class="m-0 ms-2"><i class="fas fa-qrcode"></i> ผลการแสกน</h6><button class="btn-close btn-close-white" onclick="restartScan()"></button></div>
-            <div class="modal-body pt-2">
-                <input type="hidden" id="qr-id">
-                <input type="hidden" id="qr-item-id">
-                <div class="text-center mb-1"><img id="qr-img" src="" style="height:60px;border-radius:6px;object-fit:cover;"></div>
-                <h6 id="qr-name" class="fw-bold text-center m-0 text-primary"></h6>
-                <div class="small text-muted text-center mb-2"><i class="fas fa-box"></i> <span id="qr-box"></span> | <i class="fas fa-map-marker-alt"></i> <input id="qr-loc" class="d-inline border-0 text-center" style="width:60px;font-size:0.8rem" placeholder="Loc"></div>
-                
-                <div class="row g-2 mb-2">
-                    <div class="col-4"><label class="small" style="font-size:0.7rem">Max</label><input type="number" id="qr-amt" class="form-control form-control-sm text-center"></div>
-                    <div class="col-4"><label class="small" style="font-size:0.7rem">Actual</label><input type="number" id="qr-act" class="form-control form-control-sm text-center border-success bg-success-subtle fw-bold"></div>
-                    <div class="col-4"><label class="small" style="font-size:0.7rem">Exp</label><input type="date" id="qr-exp" class="form-control form-control-sm p-1" style="font-size:0.7rem"></div>
-                </div>
-                <button class="btn btn-success w-100 btn-sm mb-2" onclick="saveQrEdit()">บันทึกข้อมูล</button>
-            </div>
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <div class="modal-header bg-dark text-white p-2"><h6 class="m-0 ms-2"><i class="fas fa-qrcode"></i> ผลการสแกน</h6><button class="btn-close btn-close-white" onclick="restartScan()"></button></div>
+      <div class="modal-body pt-2">
+        <input type="hidden" id="qr-id">
+        <div class="text-center mb-1"><img id="qr-img" src="" style="height:60px;border-radius:6px;object-fit:cover"></div>
+        <h6 id="qr-name" class="fw-bold text-center m-0 text-primary"></h6>
+        <div class="small text-muted text-center mb-2"><i class="fas fa-box"></i> <span id="qr-box"></span> | <i class="fas fa-map-marker-alt"></i> <input id="qr-loc" class="d-inline border-0 text-center" style="width:110px;font-size:.8rem" placeholder="Loc"></div>
+        <div class="row g-2 mb-2">
+          <div class="col-4"><label class="small" style="font-size:.7rem">Max</label><input type="number" id="qr-amt" class="form-control form-control-sm text-center"></div>
+          <div class="col-4"><label class="small" style="font-size:.7rem">Actual</label><input type="number" id="qr-act" class="form-control form-control-sm text-center border-success bg-success-subtle fw-bold"></div>
+          <div class="col-4"><label class="small" style="font-size:.7rem">Exp</label><input type="date" id="qr-exp" class="form-control form-control-sm p-1" style="font-size:.7rem"></div>
         </div>
-    </div>
+        <button class="btn btn-success w-100 btn-sm mb-2" onclick="saveQrEdit()">บันทึกข้อมูล</button>
+        <button class="btn btn-outline-primary w-100 btn-sm hidden" id="qr-add" onclick="qrAddCart()"><i class="fas fa-cart-plus"></i> ใส่ใบเบิก 1 หน่วย</button>
+      </div>
+    </div></div>
   </div>
 
-  <div class="modal fade" id="mdlRegister" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-light border-0"><h5 class="fw-bold text-primary">ลงทะเบียน</h5></div>
-            <div class="modal-body p-4">
-                <div class="text-center mb-3"><img id="reg-img" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)"></div>
-                <form id="form-reg">
-                    <input id="reg-username" class="form-control mb-2" placeholder="Username *" required>
-                    <input id="reg-name" class="form-control mb-2" placeholder="ชื่อ-สกุล *" required>
-                    
-                    <div class="mb-3">
-                        <label class="small fw-bold text-muted">ตึก (Box Group)</label>
-                        <div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto" id="reg-group-list">Loading...</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="small fw-bold text-muted">สิทธิ์การเบิก (Substock)</label>
-                        <div class="p-2 border rounded bg-white" style="max-height:150px;overflow-y:auto" id="reg-substock-list">Loading...</div>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill">ลงทะเบียน</button>
-                </form>
-            </div>
-        </div>
+  <!-- PROFILE -->
+  <div class="modal fade" id="mdlProfile"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header"><h6 class="fw-bold m-0">ข้อมูลผู้ใช้</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row g-2 mb-2">
+        <div class="col-5"><label class="small">Username</label><input id="pf-user" class="form-control" readonly></div>
+        <div class="col-7"><label class="small">ชื่อ (จาก HOSxP)</label><input id="pf-name" class="form-control" readonly></div>
+      </div>
+      <label class="small">อีเมล (สำหรับรีเซ็ตรหัสผ่าน)</label><input id="pf-email" type="email" class="form-control mb-2">
+      <label class="small fw-bold text-primary">ตึก (Box Group)</label><div id="pf-groups" class="chk-list mb-2"></div>
+      <label class="small fw-bold text-primary">สิทธิ์การเบิก (Substock)</label><div id="pf-subs" class="chk-list mb-2"></div>
+      <details class="mb-2"><summary class="small fw-bold text-secondary">เปลี่ยนรหัสผ่าน</summary>
+        <input id="pf-old" type="password" class="form-control form-control-sm mt-2" placeholder="รหัสผ่านเดิม" autocomplete="current-password">
+        <input id="pf-new" type="password" class="form-control form-control-sm mt-1" placeholder="รหัสผ่านใหม่ (≥ 6 ตัว)" autocomplete="new-password">
+        <input id="pf-new2" type="password" class="form-control form-control-sm mt-1" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
+      </details>
+      <button onclick="saveProfile()" class="btn btn-primary w-100 mt-2">บันทึก</button>
+      <hr><button onclick="logout()" class="btn btn-outline-danger w-100"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
     </div>
-  </div>
-
-  <div class="modal fade" id="mdlProfile"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h6 class="fw-bold">แก้ไขข้อมูลส่วนตัว</h6><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
-    <div class="mb-2"><label class="small">Username</label><input id="pf-user" class="form-control" readonly></div>
-    <div class="mb-2"><label class="small">ชื่อ-สกุล</label><input id="pf-name" class="form-control"></div>
-    
-    <div class="mb-2 p-2 bg-light rounded border">
-        <label class="small fw-bold text-primary">ตึก (Box Group)</label>
-        <div id="display-boxgroup" class="small text-muted" style="max-height: 150px; overflow-y: auto;"></div>
-    </div>
-
-    <div class="mb-2 p-2 bg-light rounded border">
-        <label class="small fw-bold text-primary">สิทธิ์การเบิก (Substock)</label>
-        <div id="display-substock" class="small text-muted" style="max-height: 150px; overflow-y: auto;"></div>
-    </div>
-    
-    <button onclick="saveProfile()" class="btn btn-primary w-100 mt-3">บันทึก</button>
-    <hr>
-    <button onclick="logout()" class="btn btn-danger w-100"><i class="fas fa-sign-out-alt"></i> Logout</button>
-  </div></div></div></div>
+  </div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // --- IMPORTANT: REPLACE WITH YOUR DEPLOYED WEB APP URL ---
+  // =====================================================================
+  //  CONFIG
+  // =====================================================================
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNMk59pHTzZJTCUZfGoFd_NmjdYrwyTesFqMz4DriMnHFCIr_NMrrpBsp_p4zq7inN1A/exec';
-  const DEFAULT_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="; 
-  let currentUser = {}, items=[], cart=[], curBoxOrder='', curBoxStock='';
-  let allBoxes = [], allHistory = [];
-  let offC, mdlReg, mdlProfile, mdlScanRes;
-  let searchTimeout;
-  let curPage = 1, totalPages = 1, totalSearchItems = 0;
-  let curHistBox = 'ALL', curHistStatus = 'รอการจัดยา';
-  let tempCheckOrderId = '';
-  let html5QrcodeScanner;
-  let scanMode = 'ITEM'; 
-  
-  let isSubmitting = false;
+  const DEFAULT_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+  // ยานอกเวลา: ที่มา → กลุ่มกล่อง (Box Group) ที่จะตัดจ่าย
+  const AFTER_TARGETS = [
+    { key: 'OPD',   label: 'OPD/ER',   icon: 'fa-truck-medical', group: 'ห้องอุบัติเหตุ/ฉุกเฉิน' },
+    { key: 'IPD_F', label: 'IPD หญิง', icon: 'fa-venus',          group: 'ตึกผู้ป่วยหญิง' },
+    { key: 'IPD_M', label: 'IPD ชาย',  icon: 'fa-mars',           group: 'ตึกผู้ป่วยชาย' },
+    { key: 'IPD_X', label: 'IPD อื่น', icon: 'fa-bed',            group: '' }
+  ];
+  const LOADING_BOX_MSG = 'กำลังโหลดกล่องยาที่สามารถเบิกได้ตามสิทธิ์มาแสดงตรงนี้ กรุณารอสักครู่';
 
-  async function callApi(action, payload = {}) {
-      try {
-        const res = await fetch(GAS_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action, ...payload }) });
-        const text = await res.text();
-        try { return JSON.parse(text); } catch(e) { if(text.includes("Service is")) throw new Error("DEPLOYMENT_ERR"); throw new Error(text.substr(0,50)); }
-      } catch(e) {
-        if(e.message=="DEPLOYMENT_ERR") Swal.fire('Error','Deploy ผิดวิธี! ต้องเลือก Execute as Me / Anyone','error');
-        return { status: false, message: e.message };
-      }
+  // =====================================================================
+  //  STATE + helpers
+  // =====================================================================
+  const $ = id => document.getElementById(id);
+  const esc = RX.esc;
+  const LS = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  let SESSION = LS.get('rx4_session');          // { token, user }
+  let CAT = null, BOXES = [], INV_BY = {}, BOX_BY = {};
+  let cart = [];                                // [{ invId, qty }]
+  let curBox = '', curStockBox = '', reqQty = {};
+  let HIST = null, curHistBox = 'ALL', curHistStatus = 'รอการจัดยา';
+  let AH = null, ahRange = 1, askMode = 'register';
+  let offC, mdlProfile, mdlScanRes, html5QrcodeScanner, scanMode = 'ITEM', isSubmitting = false;
+  const me = () => (SESSION && SESSION.user) || {};
+  const cartKey = () => 'rx4_cart_' + (me().username || '');
+  const fmtN = n => Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const fmtB = n => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const isoD = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const thD = iso => { if (!iso) return '-'; const p = String(iso).split('-'); return p.length === 3 ? `${+p[2]}/${+p[1]}/${p[0]}` : iso; };
+  const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+  async function api(action, payload = {}) {
+    try {
+      const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, token: SESSION && SESSION.token, ...payload }) });
+      const text = await res.text();
+      let j; try { j = JSON.parse(text); } catch (e) { throw new Error(text.includes('Service') ? 'Web App ยังไม่ได้ Deploy แบบ Anyone' : text.slice(0, 80)); }
+      if (j.code === 'SESSION_EXPIRED') { forceLogin('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'); }
+      return j;
+    } catch (e) { return { status: false, message: 'เชื่อมต่อไม่ได้: ' + e.message }; }
   }
 
-  function lazyLoad() { 
-      document.querySelectorAll('img.lazy').forEach(img => { 
-          if(img.dataset.loaded) return; 
-          const raw = img.dataset.raw; 
-          if(!raw || raw==='undefined' || raw==='') { img.classList.remove('loading'); return; } 
-          if(raw.startsWith('http')) { img.src=raw; img.classList.remove('loading'); img.dataset.loaded=true; return; } 
-          
-          // --- LOCAL STORAGE CACHE FOR IMAGES ---
-          const cachedUrl = localStorage.getItem('saw_img_' + raw);
-          if (cachedUrl) {
-              img.src = cachedUrl;
-              img.classList.remove('loading');
-              img.dataset.loaded = true;
-              return;
-          }
+  function lazyLoad(root) {
+    (root || document).querySelectorAll('img.lazy').forEach(img => {
+      if (img.dataset.loaded) return;
+      const raw = img.dataset.raw; img.dataset.loaded = 1;
+      if (!raw || raw === 'undefined') return;
+      if (raw.startsWith('http')) { img.src = raw; return; }
+      const c = LS.get('saw_img_' + raw); if (c) { img.src = c; return; }
+      api('resolveImage', { input: raw }).then(r => { if (r.status) { img.src = r.src; LS.set('saw_img_' + raw, r.src); } });
+    });
+  }
+  function getBoxIcon(type) {
+    const t = (type || '').toLowerCase();
+    if (t.includes('cart') || t.includes('รถ')) return '🛒';
+    if (t.includes('fridge') || t.includes('เย็น')) return '🧊';
+    if (t.includes('cabinet') || t.includes('carbinet') || t.includes('ตู้')) return '🗄️';
+    return '📦';
+  }
+  const splitList = v => String(v || '').split(',').map(s => s.trim()).filter(Boolean);
+  const inGroup = (box, g) => !!g && splitList(box.group).some(x => x === g || x.includes(g) || g.includes(x));
 
-          callApi('resolveImage', { input: raw }).then(res => { 
-              if(res.status) { 
-                  img.src = res.src; 
-                  img.classList.remove('loading'); 
-                  img.dataset.loaded = true; 
-                  try { localStorage.setItem('saw_img_' + raw, res.src); } catch(e) {} // Save to Cache
-              } 
-          }); 
-      }); 
+  // =====================================================================
+  //  AUTH
+  // =====================================================================
+  function showAuth(v) {
+    document.querySelectorAll('#auth .av').forEach(x => x.classList.add('hidden'));
+    $('av-' + v).classList.remove('hidden');
+    setMsg('');
+  }
+  function setMsg(t, ok) { $('a-msg').innerHTML = t ? `<span class="${ok ? 'text-success' : 'text-danger'}">${t}</span>` : ''; }
+  function busy(on) { document.querySelectorAll('#auth button').forEach(b => b.disabled = on); if (on) setMsg('<span class="spinner-border spinner-border-sm text-primary"></span> กำลังตรวจสอบ…', true); }
+  function togglePw(el) { const i = el.previousElementSibling; i.type = i.type === 'password' ? 'text' : 'password'; el.classList.toggle('fa-eye-slash'); }
+  const THINK = 'ไม่พบ Username นี้ในระบบ HOSxP<br><b>ลองนึกดูดีๆ ว่า HosXP User ของเราคืออะไร</b><br><span class="hint">(ชื่อที่ใช้ login เข้า HOSxP เช่น mr12)</span>';
+
+  function onAuthed(r) {
+    SESSION = { token: r.token, user: r.user };
+    LS.set('rx4_session', SESSION);
+    $('a-pass').value = '';
+    showApp();
   }
 
-  function thDateToIso(thDate) {
-      if(!thDate) return '';
-      if(thDate instanceof Date) return thDate.toISOString().split('T')[0];
-      if(String(thDate).match(/^\d{4}-\d{2}-\d{2}$/)) return thDate;
-      const parts = String(thDate).split('/');
-      if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-      return thDate;
+  async function doLogin() {
+    const u = $('a-user').value.trim(), p = $('a-pass').value;
+    if (!u) return setMsg('กรุณาระบุ Username');
+    busy(true);
+    const r = await api('login', { username: u, password: p });
+    busy(false);
+    if (r.status) return onAuthed(r);
+    if (r.code === 'NO_PASSWORD') return openSetPw(u, r.name);
+    if (r.code === 'NEED_REGISTER') return openRegister(u, r.name, 'ยังไม่เคยลงทะเบียนในระบบเบิกยา — ลงทะเบียนก่อนนะ');
+    if (r.code === 'UNKNOWN') return setMsg(THINK);
+    setMsg(r.message || 'เข้าสู่ระบบไม่สำเร็จ');
   }
 
-  function getDuration(t1, t2) {
-      if(!t1 || !t2) return '';
-      const diff = t2 - t1;
-      if(diff <= 0) return '';
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      let str = ""; if(days > 0) str += `${days}วัน `; if(hrs > 0) str += `${hrs}ชม. `; str += `${mins}นาที`; return str;
+  function openAsk(mode) {
+    askMode = mode;
+    $('ask-title').textContent = mode === 'register' ? 'ลงทะเบียนใหม่' : 'จำรหัสผ่านไม่ได้';
+    $('ask-hint').textContent = mode === 'register' ? 'กรอก HosXP Username ของคุณ ระบบจะดึงชื่อจาก HOSxP ให้อัตโนมัติ' : 'กรอก HosXP Username ระบบจะตรวจสอบบัญชีและส่ง OTP ไปที่อีเมลที่ลงทะเบียนไว้';
+    $('ask-user').value = $('a-user').value.trim();
+    showAuth('ask');
+    setTimeout(() => $('ask-user').focus(), 50);
+  }
+  async function doAsk() {
+    const u = $('ask-user').value.trim(); if (!u) return setMsg('กรุณาระบุ Username');
+    busy(true);
+    if (askMode === 'register') {
+      const r = await api('authCheck', { username: u }); busy(false);
+      if (!r.status) return setMsg(r.message);
+      if (r.state === 'HAS_PASSWORD') { $('a-user').value = u; showAuth('login'); return setMsg('บัญชีนี้ลงทะเบียนแล้ว กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ', true); }
+      if (r.state === 'NO_PASSWORD') return openSetPw(u, r.name);
+      if (r.state === 'HOSXP_ONLY') return openRegister(u, r.name);
+      return setMsg(THINK);
+    }
+    const r = await api('forgotStart', { username: u }); busy(false);
+    if (!r.status) return setMsg(r.message || 'ส่ง OTP ไม่สำเร็จ');
+    if (r.state === 'OTP_SENT') return openOtp(u, r.email, r.again);
+    if (r.state === 'NO_PASSWORD') return openSetPw(u, r.name);
+    if (r.state === 'NEED_REGISTER') return openRegister(u, r.name, 'ยังไม่เคยลงทะเบียนในระบบเบิกยา — ลงทะเบียนก่อนนะ');
+    if (r.state === 'NO_EMAIL') return setMsg('บัญชีนี้ยังไม่มีอีเมลสำหรับรีเซ็ตรหัสผ่าน<br>กรุณาติดต่อห้องยาเพื่อล้างรหัสผ่าน แล้วตั้งใหม่ได้เลย');
+    setMsg(THINK);
   }
 
-  window.onload = async () => {
-      try {
-          offC = new bootstrap.Offcanvas('#cartSheet');
-          mdlReg = new bootstrap.Modal('#mdlRegister'); 
-          mdlProfile = new bootstrap.Modal('#mdlProfile');
-          mdlScanRes = new bootstrap.Modal('#mdlScanRes');
-          
-          const params = new URLSearchParams(window.location.search);
-          const orderIdParam = params.get('orderId');
+  async function openRegister(u, name, note) {
+    $('r-user').value = u; $('r-name').value = name || '';
+    ['r-email', 'r-pass', 'r-pass2'].forEach(i => $(i).value = '');
+    showAuth('reg'); if (note) setMsg(note, true);
+    $('r-groups').innerHTML = $('r-subs').innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+    const o = await api('getRegOptions');
+    if (!o.status) { $('r-groups').innerHTML = $('r-subs').innerHTML = '<span class="text-danger">โหลดไม่สำเร็จ</span>'; return; }
+    $('r-groups').innerHTML = o.groups.map(g => `<div class="form-check"><input class="form-check-input r-grp" type="checkbox" value="${esc(g)}" id="rg-${esc(g)}"><label class="form-check-label" for="rg-${esc(g)}">${esc(g)}</label></div>`).join('');
+    $('r-subs').innerHTML = o.options.map(g => `<div class="form-check"><input class="form-check-input r-sub" type="checkbox" value="${esc(g)}" id="rs-${esc(g)}"><label class="form-check-label" for="rs-${esc(g)}">${esc(g)}</label></div>`).join('');
+  }
+  const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  function pwCheck(a, b) { if (a.length < 6) return 'รหัสผ่านอย่างน้อย 6 ตัวอักษร'; if (a !== b) return 'ยืนยันรหัสผ่านไม่ตรงกัน'; return ''; }
+  async function doRegister() {
+    const email = $('r-email').value.trim();
+    if (!emailOk(email)) return setMsg('กรุณากรอกอีเมลให้ถูกต้อง (ใช้สำหรับรีเซ็ตรหัสผ่าน)');
+    const pe = pwCheck($('r-pass').value, $('r-pass2').value); if (pe) return setMsg(pe);
+    const groups = [...document.querySelectorAll('.r-grp:checked')].map(c => c.value), subs = [...document.querySelectorAll('.r-sub:checked')].map(c => c.value);
+    if (!groups.length && !subs.length) return setMsg('เลือกตึกหรือสิทธิ์การเบิกอย่างน้อย 1 รายการ');
+    busy(true);
+    const r = await api('register', { username: $('r-user').value, email, password: $('r-pass').value, boxGroup: groups, substock: subs });
+    busy(false);
+    if (r.status) { Swal.fire({ icon: 'success', title: 'ลงทะเบียนสำเร็จ', timer: 1300, showConfirmButton: false }); return onAuthed(r); }
+    setMsg(r.message || 'ลงทะเบียนไม่สำเร็จ');
+  }
+  function openSetPw(u, name) {
+    $('sp-user').value = u; ['sp-email', 'sp-pass', 'sp-pass2'].forEach(i => $(i).value = '');
+    $('sp-hint').innerHTML = `บัญชี <b>${esc(u)}</b> ${name ? '(' + esc(name) + ')' : ''} มีในระบบแล้วแต่ยังไม่ได้ตั้งรหัสผ่าน — ตั้งรหัสผ่านและอีเมลก่อนใช้งาน`;
+    showAuth('setpw');
+  }
+  async function doSetPw() {
+    const email = $('sp-email').value.trim();
+    if (!emailOk(email)) return setMsg('กรุณากรอกอีเมลให้ถูกต้อง (ใช้สำหรับรีเซ็ตรหัสผ่าน)');
+    const pe = pwCheck($('sp-pass').value, $('sp-pass2').value); if (pe) return setMsg(pe);
+    busy(true);
+    const r = await api('setPassword', { username: $('sp-user').value, email, password: $('sp-pass').value });
+    busy(false);
+    if (r.status) return onAuthed(r);
+    setMsg(r.message || 'บันทึกไม่สำเร็จ');
+  }
+  function openOtp(u, email, again) {
+    $('otp-user').value = u; ['otp-code', 'otp-pass', 'otp-pass2'].forEach(i => $(i).value = '');
+    $('otp-hint').innerHTML = `${again ? 'ส่ง OTP ไปแล้วเมื่อสักครู่' : 'ส่งรหัส OTP แล้ว'} ที่ <b>${esc(email)}</b><br>ใช้ได้ภายใน 10 นาที (ดูในกล่องจดหมายขยะด้วย)`;
+    showAuth('otp');
+  }
+  async function resendOtp() { busy(true); const r = await api('forgotStart', { username: $('otp-user').value }); busy(false); if (r.state === 'OTP_SENT') openOtp($('otp-user').value, r.email, r.again); else setMsg(r.message || 'ส่งไม่สำเร็จ'); }
+  async function doOtp() {
+    const pe = pwCheck($('otp-pass').value, $('otp-pass2').value); if (pe) return setMsg(pe);
+    busy(true);
+    const r = await api('forgotVerify', { username: $('otp-user').value, otp: $('otp-code').value.trim(), password: $('otp-pass').value });
+    busy(false);
+    if (r.status) { Swal.fire({ icon: 'success', title: 'ตั้งรหัสผ่านใหม่แล้ว', timer: 1300, showConfirmButton: false }); return onAuthed(r); }
+    setMsg(r.message || 'ไม่สำเร็จ');
+  }
+  function forceLogin(msg) {
+    SESSION = null; LS.del('rx4_session');
+    $('app-main').classList.add('hidden'); $('btm-nav').classList.add('hidden');
+    $('auth').classList.remove('hidden'); showAuth('login'); if (msg) setMsg(msg);
+  }
+  function logout() { try { mdlProfile.hide(); } catch (e) {} forceLogin(''); }
+  $('a-pass').addEventListener('keyup', e => { if (e.key === 'Enter') doLogin(); });
+  $('a-user').addEventListener('keyup', e => { if (e.key === 'Enter') $('a-pass').focus(); });
+  $('ask-user').addEventListener('keyup', e => { if (e.key === 'Enter') doAsk(); });
 
-          if (orderIdParam) {
-              document.getElementById('login-overlay').style.display = 'none';
-              document.getElementById('app-main').classList.add('hidden');
-              document.querySelector('.btm-nav').style.display = 'none';
-              
-              const dv = document.getElementById('direct-order-view');
-              dv.style.display = 'flex';
-              
-              document.getElementById('dv-order-id').innerText = orderIdParam;
-              window.currentDirectOrderId = orderIdParam;
-              return;
-          }
-
-          const cachedUser = localStorage.getItem('saw_user_v2');
-          if (cachedUser) {
-              currentUser = JSON.parse(cachedUser);
-              document.getElementById('login-overlay').style.display = 'none';
-              document.getElementById('app-main').classList.remove('hidden');
-              document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
-              document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
-              startApp(null, true); 
-          } else {
-             document.getElementById('login-form-box').classList.remove('hidden');
-          }
-
-          const d = new Date();
-          document.getElementById('stat-end').valueAsDate = d;
-          d.setMonth(d.getMonth() - 1);
-          document.getElementById('stat-start').valueAsDate = d;
-
-          if(document.getElementById('form-reg')) document.getElementById('form-reg').onsubmit = async (e) => { 
-              e.preventDefault(); 
-              const subs = Array.from(document.querySelectorAll('.chk-sub:checked')).map(c=>c.value); 
-              const grps = Array.from(document.querySelectorAll('.chk-grp:checked')).map(c=>c.value); 
-              if(!subs.length && !grps.length) return Swal.fire('เลือกสิทธิ์หรือตึกอย่างน้อย 1 รายการ'); 
-              Swal.showLoading(); 
-              
-              const res = await callApi('registerUser', { 
-                  username: document.getElementById('reg-username').value, 
-                  name: document.getElementById('reg-name').value, 
-                  substock: subs, 
-                  boxGroup: grps,
-                  photo: currentUser.photo || DEFAULT_IMG
-              }); 
-              
-              if(res.status) {
-                  currentUser.username = document.getElementById('reg-username').value;
-                  currentUser.name = document.getElementById('reg-name').value;
-                  currentUser.substock = subs; 
-                  currentUser.boxGroup = grps;
-                  if(!currentUser.userId) currentUser.userId = 'MANUAL_' + currentUser.username;
-
-                  localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
-                  mdlReg.hide();
-                  Swal.fire({icon:'success', title:'ลงทะเบียนสำเร็จ', timer:1500, showConfirmButton:false});
-                  startApp(); 
-              } else {
-                  Swal.fire('Error', res.message, 'error');
-              }
-          };
-          
-          document.getElementById('kw-realtime').addEventListener('keyup', (e) => { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => showSuggestions(e.target.value), 300); });
-          initCvs(); 
-
-      } catch(e) { 
-          console.error(e);
-          const statusDiv = document.getElementById('status-text');
-          if(statusDiv) statusDiv.innerHTML = `Error: ${e.message}<br>Please check configuration.`;
-      }
+  // =====================================================================
+  //  BOOT
+  // =====================================================================
+  window.onload = () => {
+    offC = new bootstrap.Offcanvas('#cartSheet');
+    mdlProfile = new bootstrap.Modal('#mdlProfile');
+    mdlScanRes = new bootstrap.Modal('#mdlScanRes');
+    initCvs();
+    const d = new Date(); $('stat-end').value = isoD(d); d.setMonth(d.getMonth() - 1); $('stat-start').value = isoD(d);
+    $('order-search').addEventListener('input', debounce(renderOrder, 180));
+    $('ah-search').addEventListener('input', debounce(renderAfter, 180));
+    if (SESSION && SESSION.token) showApp(); else { $('auth').classList.remove('hidden'); showAuth('login'); }
   };
 
-  async function confirmDirectReceive() {
-      if (!window.currentDirectOrderId) return;
-      Swal.fire({title: 'กำลังบันทึกข้อมูล...', didOpen: () => Swal.showLoading()});
-      try {
-          const res = await callApi('updateOrderStatus', { 
-              orderId: window.currentDirectOrderId, 
-              user: 'ผู้รับยาปลายทาง (สแกน QR)' 
-          });
-          if(res.status) { 
-              Swal.fire({ icon: 'success', title: 'รับยาสำเร็จ', text: 'ระบบได้บันทึกเวลาการรับยาเรียบร้อยแล้ว', confirmButtonText: 'ปิดหน้าต่าง' });
-              const btn = document.querySelector('#direct-order-view button');
-              if(btn) { btn.disabled = true; btn.innerText = 'บันทึกสำเร็จแล้ว'; btn.classList.replace('btn-success', 'btn-secondary'); }
-          } else {
-              Swal.fire('ข้อผิดพลาด', res.message, 'error');
-          }
-      } catch (e) {
-          Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-      }
+  function showApp() {
+    $('auth').classList.add('hidden');
+    $('app-main').classList.remove('hidden'); $('btm-nav').classList.remove('hidden');
+    $('nav-name').textContent = (me().name || me().username || '').split(' ')[0];
+    cart = LS.get(cartKey()) || []; badge();
+    curBox = ''; CAT = null;
+    // 1) แสดงทันทีจากเครื่อง (ถ้าเคยโหลด)
+    const cb = LS.get('rx4_boxes_' + me().username);
+    if (cb && cb.length) { BOXES = cb; renderOrderBoxes(); } else $('box-scroller-order').innerHTML = `<div class="box-loading"><span class="spinner-border spinner-border-sm me-1"></span> ${LOADING_BOX_MSG}</div>`;
+    const cc = LS.get('rx4_cat_' + me().username);
+    if (cc) applyCatalog(cc, true);
+    else renderOrder();
+    // 2) ของสดจาก server (กล่องมาก่อน รายการยาตามมา)
+    api('getBoxes').then(r => { if (r.status && !CAT) { BOXES = r.boxes; LS.set('rx4_boxes_' + me().username, BOXES); renderOrderBoxes(); renderOrder(); } });
+    refreshCatalog(false).then(() => loadHistory(true));
   }
 
-  async function onLoginSubmit() {
-     const username = document.getElementById('login-username').value.trim();
-     if(!username) return Swal.fire('กรุณาระบุ Username');
-     
-     const statusDiv = document.getElementById('status-text');
-     statusDiv.innerHTML = '<div class="spinner-border text-primary spinner-border-sm"></div> Checking...';
-     document.getElementById('login-form-box').classList.add('disabled');
-     
-     try {
-         const res = await callApi('checkHosxpUser', { username: username });
-         statusDiv.innerHTML = '';
-         
-         if(res.status === 'FOUND') {
-            currentUser = res.userData;
-            localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app-main').classList.remove('hidden');
-            document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
-            document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
-            startApp();
-         } else if (res.status === 'PARTIAL') {
-             currentUser = { username: username, photo: DEFAULT_IMG };
-             prepareRegistration(username, res.name);
-         } else {
-             currentUser = { username: username, photo: DEFAULT_IMG };
-             prepareRegistration(username, '');
-         }
-     } catch(e) {
-         statusDiv.innerHTML = 'Error connecting to server';
-         console.error(e);
-     }
+  async function refreshCatalog(fresh) {
+    const r = await api('getCatalog', { fresh: !!fresh });
+    if (!r.status) { if (!CAT) $('order-grid').innerHTML = `<div class="alert alert-danger m-3" style="grid-column:1/-1">${esc(r.message || 'โหลดข้อมูลไม่สำเร็จ')}</div>`; return; }
+    LS.set('rx4_cat_' + me().username, r.data);
+    LS.set('rx4_boxes_' + me().username, r.data.boxes);
+    applyCatalog(r.data, false);
   }
 
-  async function prepareRegistration(username, name) {
-      document.getElementById('login-overlay').style.display = 'none';
-      const list = document.getElementById('reg-substock-list');
-      const grpList = document.getElementById('reg-group-list');
-      
-      list.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
-      grpList.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
-      mdlReg.show();
-
-      const opts = await callApi('getRegOptions');
-      if(opts.status) {
-         list.innerHTML = opts.options.map(o => `<div class="form-check"><input class="form-check-input chk-sub" type="checkbox" value="${o}"><label>${o}</label></div>`).join('');
-         grpList.innerHTML = opts.groups.map(g => `<div class="form-check"><input class="form-check-input chk-grp" type="checkbox" value="${g}"><label>${g}</label></div>`).join('');
-      } else {
-         list.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
-         grpList.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
-      }
-      
-      document.getElementById('reg-username').value = username;
-      document.getElementById('reg-name').value = name;
-      document.getElementById('reg-img').src = DEFAULT_IMG;
-  }
-  
-  function logout() {
-      localStorage.removeItem('saw_user_v2');
-      localStorage.removeItem('saw_init_data');
-      location.reload();
+  function applyCatalog(cat, fromCache) {
+    CAT = cat; BOXES = cat.boxes; INV_BY = {}; BOX_BY = {};
+    BOXES.forEach(b => BOX_BY[b.id] = b);
+    cat.inv.forEach(r => INV_BY[r[0]] = r);
+    // ตัดรายการในตะกร้าที่ไม่มีแล้ว / ไม่มีสิทธิ์
+    const before = cart.length;
+    cart = cart.filter(c => INV_BY[c.invId] && (BOX_BY[INV_BY[c.invId][1]] || {}).canOrder);
+    if (!fromCache && cart.length !== before) { saveCart(); }
+    badge();
+    renderOrderBoxes();
+    renderStockFilters();
+    // โหลดเสร็จ → เปิดกล่องแรกที่เบิกได้ทันที
+    if (!curBox) { const f = BOXES.find(b => b.canOrder); if (f) curBox = f.id; renderOrderBoxes(); }
+    renderOrder();
+    if (curStockBox) renderStockBox(curStockBox);
+    if (AH) renderAfter();
   }
 
-  async function openProfile() {
-      document.getElementById('pf-user').value = currentUser.username || '';
-      document.getElementById('pf-name').value = currentUser.name || '';
-      
-      const divSub = document.getElementById('display-substock');
-      const divGrp = document.getElementById('display-boxgroup');
-      
-      divSub.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
-      divGrp.innerHTML = '<div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...';
-      mdlProfile.show();
-      
-      const opts = await callApi('getRegOptions');
-      if(opts.status) {
-         let currentSubs = Array.isArray(currentUser.substock) ? currentUser.substock : String(currentUser.substock||'').split(',').map(s=>s.trim());
-         let currentGrps = Array.isArray(currentUser.boxGroup) ? currentUser.boxGroup : String(currentUser.boxGroup||'').split(',').map(s=>s.trim());
-         
-         divSub.innerHTML = opts.options.map(o => {
-             const checked = currentSubs.includes(o) ? 'checked' : '';
-             return `<div class="form-check"><input class="form-check-input pf-chk-sub" type="checkbox" value="${o}" ${checked}><label>${o}</label></div>`;
-         }).join('');
-         
-         divGrp.innerHTML = (opts.groups || []).map(g => {
-             const checked = currentGrps.includes(g) ? 'checked' : '';
-             return `<div class="form-check"><input class="form-check-input pf-chk-grp" type="checkbox" value="${g}" ${checked}><label>${g}</label></div>`;
-         }).join('');
-      } else {
-         divSub.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
-         divGrp.innerHTML = '<span class="text-danger">โหลดข้อมูลล้มเหลว</span>';
-      }
+  // =====================================================================
+  //  ORDER (เบิกยา) — ใบเดียวรวมทุกกล่อง
+  // =====================================================================
+  function renderOrderBoxes() {
+    const el = $('box-scroller-order');
+    const list = BOXES.filter(b => b.canOrder);
+    if (!BOXES.length) return;
+    if (!list.length) { el.innerHTML = '<div class="box-loading bg-warning-subtle">ไม่พบกล่องยาที่คุณมีสิทธิ์เบิก — แก้ไขตึก/สิทธิ์ได้ที่เมนูชื่อผู้ใช้ด้านบน</div>'; return; }
+    const cnt = {}; cart.forEach(c => { const r = INV_BY[c.invId]; if (r) cnt[r[1]] = (cnt[r[1]] || 0) + 1; });
+    el.innerHTML = list.map(b => `<div class="box-btn ${curBox === b.id ? 'active' : ''}" onclick="selOrderBox('${b.id}')">
+        <span class="box-icon">${getBoxIcon(b.type)}</span><span class="box-name">${esc(b.name)}</span>
+        ${cnt[b.id] ? `<span class="badge-hist-count" style="background:#198754">${cnt[b.id]}</span>` : (b.hasExpired ? '<span class="badge-exp">หมดอายุ</span>' : '')}</div>`).join('');
+    setupHorizontalScroll(el);
   }
-  
-  async function saveProfile() {
-      const subs = Array.from(document.querySelectorAll('.pf-chk-sub:checked')).map(c=>c.value);
-      const grps = Array.from(document.querySelectorAll('.pf-chk-grp:checked')).map(c=>c.value);
-      
-      const pl = { 
-          userId: currentUser.userId, 
-          username: document.getElementById('pf-user').value, 
-          name: document.getElementById('pf-name').value, 
-          substock: subs, 
-          boxGroup: grps
-      };
-      
-      const res = await callApi('updateUserProfile', pl);
-      if(res.status) {
-          currentUser.name = pl.name;
-          currentUser.substock = subs;
-          currentUser.boxGroup = grps;
-          localStorage.setItem('saw_user_v2', JSON.stringify(currentUser));
-          location.reload(); 
-      } else Swal.fire(res.message);
+  function selOrderBox(id) {
+    curBox = id; $('order-search').value = '';
+    renderOrderBoxes(); renderOrder();
   }
-
-  async function startApp(boxParam, fromCache=false) {
-      if(!fromCache) {
-        document.getElementById('login-overlay').style.display = 'none'; 
-        document.getElementById('app-main').classList.remove('hidden');
-        document.getElementById('nav-img').src = currentUser.photo || DEFAULT_IMG; 
-        document.getElementById('nav-name').innerText = currentUser.name.split(' ')[0];
-      }
-
-      // --- LOCAL STORAGE CACHE FOR DASHBOARD ---
-      const cachedData = localStorage.getItem('saw_init_data');
-      if(cachedData) {
-          try {
-             const d = JSON.parse(cachedData);
-             renderDashboard(d, boxParam);
-          } catch(e){}
-      } else {
-          // If no cache, show initial loader somewhere if needed (or keep skeleton)
-      }
-      
-      // Fetch fresh data in background
-      const res = await callApi('getInitialData', { user: currentUser });
-      if(res.status !== false && res.status !== 'error' && res.data) {
-          localStorage.setItem('saw_init_data', JSON.stringify(res.data)); // Save to cache
-          renderDashboard(res.data, boxParam); // Re-render with fresh data
-      }
+  function drugScore(kw, ic) {
+    const d = (CAT && CAT.drugs[ic]) || {};
+    return RX.fuzzy(kw, [{ t: d.n, w: 1 }, { t: d.g, w: .9 }, { t: d.f, w: .9 }, { t: ic, w: 1 }]);
   }
-
-  function renderDashboard(d, boxParam) {
-      if (d.boxesOrder && d.boxesOrder.length > 0) {
-         renderBoxScroller('order', d.boxesOrder);
-      } else {
-         document.getElementById('box-scroller-order').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาที่คุณมีสิทธิ์เบิก (Substock)</div>';
-      }
-      
-      allBoxes = d.boxesStock || [];
-      if (allBoxes.length > 0) {
-         renderBoxScroller('stock', allBoxes);
-      } else {
-         document.getElementById('box-scroller-stock').innerHTML = '<div class="text-center p-3 w-100 text-muted small">ไม่พบกล่องยาในตึกของคุณ (Box Group)</div>';
-      }
-      
-      if(d.groups) {
-          document.getElementById('group-filter').innerHTML = 
-            `<div class="badge rounded-pill bg-primary cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('ALL',this)">
-               ทั้งหมด <span class="badge bg-white text-dark rounded-circle">${allBoxes.length}</span>
-             </div>` + 
-            d.groups.map(g => {
-                let count = allBoxes.filter(b=>b.group===g).length;
-                return `<div class="badge rounded-pill bg-white text-dark border cursor-pointer d-flex align-items-center gap-2" onclick="filterStockBox('${g}',this)">
-                          ${g} <span class="badge bg-secondary rounded-circle">${count}</span>
-                        </div>`;
-            }).join('');
-      }
-      
-      allHistory = d.history || [];
-      document.getElementById('hist-loader').classList.add('hidden');
-      if(allHistory.length > 0) {
-          const boxCounts = allHistory.reduce((acc, r) => { if(r.box) acc[r.box] = (acc[r.box] || 0) + 1; return acc; }, {});
-          const histBoxes = [...new Set(allHistory.map(r => r.box))].sort();
-          const scroller = document.getElementById('box-scroller-hist');
-          scroller.innerHTML = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selBox('ALL', this, 'hist', '')"><span class="box-icon">📋</span><span style="font-size:0.7rem;">ทั้งหมด</span><span class="badge-hist-count">${allHistory.length}</span></div>` + 
-            histBoxes.map(bName => `<div class="box-btn ${curHistBox === bName ? 'active' : ''}" onclick="selBox('${bName}', this, 'hist', '')"><span class="box-icon">📦</span><span class="box-name">${bName}</span><span class="badge-hist-count">${boxCounts[bName]||0}</span></div>`).join('');
-      } else {
-         document.getElementById('box-scroller-hist').innerHTML = '<div class="text-center w-100 py-2 small text-muted">ยังไม่มีประวัติการเบิก</div>';
-      }
-      renderHist(curHistStatus);
-
-      if(boxParam) {
-          if(allBoxes.length) {
-              const box = allBoxes.find(b=>b.id===boxParam);
-              if(box) { nav('tab-stock', document.querySelectorAll('.nav-item')[1]); selBox(box.name, null, 'stock', box.imageRaw); }
-          }
-      }
-      setupHorizontalScroll();
-  }
-  
-  function setupHorizontalScroll() {
-      document.querySelectorAll('.box-scroller, #group-filter').forEach(ele => {
-          let isDown = false, startX, scrollLeft;
-          ele.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - ele.offsetLeft; scrollLeft = ele.scrollLeft; });
-          ele.addEventListener('mouseleave', () => { isDown = false; });
-          ele.addEventListener('mouseup', () => { isDown = false; });
-          ele.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); const x = e.pageX - ele.offsetLeft; const walk = (x - startX) * 2; ele.scrollLeft = scrollLeft - walk; });
-      });
-  }
-
-  function getBoxIcon(type) {
-      const t = (type || "").toLowerCase();
-      if(t.includes('cart') || t.includes('รถ')) return '🛒';
-      if(t.includes('fridge') || t.includes('เย็น')) return '🧊';
-      if(t.includes('carbinet') || t.includes('cabinet') || t.includes('ตู้')) return '🗄️';
-      return '📦';
-  }
-
-  function renderBoxScroller(mode, boxes) {
-      const el = document.getElementById(`box-scroller-${mode}`);
-      el.innerHTML = boxes.map(b=>`
-        <div class="box-btn" onclick="selBox('${b.name}', this, '${mode}', '${b.imageRaw}')">
-          <span class="box-icon">${getBoxIcon(b.type)}</span>
-          <span class="box-name">${b.name}</span>
-          ${b.hasExpired ? '<span class="badge-exp">หมดอายุ</span>' : ''}
-          ${mode === 'hist' ? `<span class="badge-hist-count">${b.count||0}</span>` : ''}
-        </div>`).join('');
-  }
-
-  function filterStockBox(group, el) {
-      const p = el.parentElement; 
-      Array.from(p.children).forEach(x=> { 
-          x.classList.remove('bg-primary','text-white'); 
-          x.classList.add('bg-white','text-dark'); 
-          const badge = x.querySelector('.badge');
-          if(badge) { badge.classList.remove('bg-white', 'text-dark'); badge.classList.add('bg-secondary'); }
-      });
-      el.classList.remove('bg-white','text-dark'); 
-      el.classList.add('bg-primary','text-white');
-      const activeBadge = el.querySelector('.badge');
-      if(activeBadge) { activeBadge.classList.remove('bg-secondary'); activeBadge.classList.add('bg-white', 'text-dark'); }
-
-      const filtered = (group==='ALL') ? allBoxes : allBoxes.filter(b=>b.group===group);
-      renderBoxScroller('stock', filtered);
-  }
-
-  function nav(pid, el){
-      document.querySelectorAll('.page-sec').forEach(x=>x.classList.add('hidden')); document.getElementById(pid).classList.remove('hidden');
-      document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); el.classList.add('active');
-  }
-
-  async function selBox(name, el, mode, imgRaw) {
-      document.querySelectorAll(`#box-scroller-${mode} .box-btn`).forEach(x=>x.classList.remove('active')); 
-      if(el) el.classList.add('active');
-      
-      if(mode==='order') {
-         if(cart.length && curBoxOrder!=name && !confirm('เปลี่ยนกล่อง ตะกร้าจะถูกล้าง?')) return;
-         if(cart.length && curBoxOrder!=name) { cart=[]; badge(); }
-         curBoxOrder = name; loadOrderItems(name);
-      } else if (mode === 'hist') {
-         curHistBox = name;
-         renderHist(curHistStatus); 
-      } else {
-         curBoxStock = name;
-         loadStockItems(name);
-      }
-  }
-
-  async function loadOrderItems(box) {
-      document.getElementById('order-start-msg').classList.add('hidden');
-      document.getElementById('order-grid').classList.remove('hidden');
-      document.getElementById('order-grid').innerHTML = '<div class="w-100 text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2 text-muted small">กำลังโหลดรายการยา...</div></div>';
-      
-      const res = await callApi('getItemsAndPendingOrder', { boxName: box });
-      
-      if(res.status) {
-         items = res.data.map(x=>({...x, req:1}));
-         if(res.pendingOrder) {
-             Swal.fire({
-                 toast: true, position: 'top', icon: 'info',
-                 title: 'มีใบเบิกค้างอยู่',
-                 text: 'การสั่งยาครั้งนี้จะถูกนำไปรวมกับใบสั่งยาเดิมโดยอัตโนมัติ',
-                 showConfirmButton: false, timer: 3000
-             });
-         }
-      } else { items = []; }
-      renderOrder();
-  }
-  
-  async function loadStockItems(box) {
-      const el = document.getElementById('stock-content'); 
-      el.innerHTML = '<div class="w-100 text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2 text-muted small">กำลังโหลดรายการยา...</div></div>';
-      
-      const res = await callApi('getItems', { boxName: box });
-      if(!res.status) return el.innerHTML = 'Error';
-      
-      if(!res.data || !Array.isArray(res.data)) {
-          el.innerHTML = '<div class="text-center mt-5 text-muted">ไม่พบข้อมูลยาในกล่องนี้</div>';
-          return;
-      }
-      
-      let totalChanges = 0;
-      let lastCheck = '-';
-      const boxObj = allBoxes.find(b=>b.name === box);
-      if(boxObj) { lastCheck = boxObj.lastCheck; }
-      res.data.forEach(i => totalChanges += (i.changeCount || 0));
-
-      let h = `<div class="h5 fw-bold text-dark mb-1 w-100 d-flex align-items-center gap-2"><i class="fas fa-box"></i> ${box} <span class="badge bg-info rounded-pill" style="font-size:0.7rem">${res.data.length} ยา</span></div>
-               <div class="small text-muted mb-3 border-bottom pb-2 w-100">จำนวนครั้ง: ${totalChanges} | ตรวจล่าสุด: ${lastCheck}</div>`;
-      
-      let rows={}; res.data.forEach(i=>{ let k=i.row||'Other'; if(!rows[k])rows[k]=[]; rows[k].push(i); });
-      Object.keys(rows).sort((a,b)=> a.localeCompare(b, undefined, {numeric:true})).forEach(r=>{
-          h+=`<div class="shelf-row-label">ชั้น/แถว: ${r}</div><div class="d-flex flex-wrap gap-2 mt-2 w-100">`;
-          h+=rows[r].map(i=> {
-           let cls = i.highAlert ? 'bg-ha' : (i.keepCool ? 'bg-cool' : '');
-           let icon = i.protectLight ? '<i class="fas fa-sun icon-protect"></i>' : '';
-           let expTag = '';
-           let expiredClass = '';
-           if(i.expire) {
-              const diff = (new Date(i.expire) - new Date())/(1000*3600*24);
-              if(diff < 0) { 
-                  expTag = '<span class="exp-badge-stock badge-expired">หมดอายุ</span>';
-                  expiredClass = 'border border-danger';
-              }
-              else if(diff < 180) {
-                  expTag = `<span class="exp-badge-stock badge-near-exp">${Math.ceil(diff)} วัน</span>`;
-              }
-           }
-           let haBadge = i.highAlert ? '<div class="badge-ha">HAD</div>' : '';
-           
-           return `<div id="stk-${i.invId}" class="shelf-item ${cls} ${expiredClass}" style="width:31%;max-width:130px;">${haBadge}${expTag}<img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="lazy" referrerpolicy="no-referrer"><div class="small text-truncate fw-bold" style="font-size:0.75rem">${i.name}</div><div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary qty-val">${i.amount}</span><span class="text-muted exp-val" style="font-size:9px">${i.expire || '-'} ${icon}</span></div></div>`
-          }).join('');
-          h+='</div>';
-      });
-      el.innerHTML = h || '<div class="text-center mt-5 text-muted">กล่องว่าง</div>';
-      lazyLoad();
-  }
-
   function renderOrder() {
-      const grid = document.getElementById('order-grid');
-      grid.innerHTML = '';
-      const kw = document.getElementById('order-search').value.toLowerCase();
-      const filtered = items.filter(i=>i.name.toLowerCase().includes(kw));
-      
-      if(filtered.length === 0) {
-          grid.innerHTML = '<div class="text-center mt-5 text-muted w-100">ไม่พบยา</div>';
-          return;
-      }
-
-      let idx = 0;
-      const chunk = 20;
-      function nextChunk() {
-          const slice = filtered.slice(idx, idx + chunk);
-          if (slice.length === 0) return;
-          
-          const html = slice.map(i=>`
-            <div class="drug-card">
-                <div class="drug-img-wrap">
-                    <img src="${DEFAULT_IMG}" data-raw="${i.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer">
-                </div>
-                <div class="drug-info">
-                    <div class="drug-name">${i.name}</div>
-                    <div class="d-flex justify-content-between small text-muted mb-2"><span>จำนวนเบิก : ${i.req}</span><span class="text-primary fw-bold">${i.price} บ.</span></div>
-                    <div class="qty-wrap"><div class="btn-qty" onclick="adj('${i.itemId}',-1)">-</div><input class="inp-qty" id="qty-${i.itemId}" value="${i.req}" readonly><div class="btn-qty" onclick="adj('${i.itemId}',1)">+</div></div>
-                    <button class="btn btn-sm btn-primary w-100 mt-2 rounded-pill fw-bold" onclick="addCart('${i.itemId}')">ใส่ตะกร้า</button>
-                </div>
-            </div>`).join('');
-          
-          grid.insertAdjacentHTML('beforeend', html);
-          idx += chunk;
-          lazyLoad();
-          
-          if(idx < filtered.length) {
-              requestAnimationFrame(nextChunk);
-          }
-      }
-      nextChunk();
+    const grid = $('order-grid'), sub = $('order-sub');
+    const kw = $('order-search').value.trim();
+    if (!CAT) {
+      grid.innerHTML = `<div class="text-message-start" style="grid-column:1/-1"><span class="spinner-border text-primary"></span><div class="mt-2 fs-6">${curBox ? 'กำลังโหลดรายการยา…' : LOADING_BOX_MSG}</div></div>`;
+      sub.textContent = ''; return;
+    }
+    const orderable = {}; BOXES.forEach(b => { if (b.canOrder) orderable[b.id] = b; });
+    let groups = [];
+    if (kw) {
+      const hits = CAT.inv.filter(r => orderable[r[1]]).map(r => ({ r, s: drugScore(kw, r[2]) })).filter(x => x.s >= RX.FUZZY_MIN);
+      const by = {}; hits.forEach(h => (by[h.r[1]] = by[h.r[1]] || []).push(h));
+      groups = Object.keys(by).map(bid => ({ box: orderable[bid], rows: by[bid].sort((a, b) => b.s - a.s || nameOf(a.r[2]).localeCompare(nameOf(b.r[2]))), best: Math.max(...by[bid].map(h => h.s)) }))
+        .sort((a, b) => b.best - a.best || (a.box.id === curBox ? -1 : b.box.id === curBox ? 1 : 0));
+      sub.innerHTML = hits.length ? `ค้นหา “${esc(kw)}” พบ <b>${hits.length}</b> รายการ ใน <b>${groups.length}</b> กล่อง · เรียงตามความใกล้เคียง` : '';
+      if (!hits.length) { grid.innerHTML = `<div class="text-message-start" style="grid-column:1/-1">ไม่พบยาที่ใกล้เคียง “${esc(kw)}”<div class="fs-6 fw-normal mt-2">ในกล่องที่คุณมีสิทธิ์เบิก</div></div>`; return; }
+    } else if (curBox && orderable[curBox]) {
+      const rows = CAT.inv.filter(r => r[1] === curBox).map(r => ({ r, s: 0 })).sort((a, b) => nameOf(a.r[2]).localeCompare(nameOf(b.r[2])));
+      groups = [{ box: orderable[curBox], rows }];
+      sub.textContent = '';
+    } else {
+      grid.innerHTML = '<div class="text-message-start" style="grid-column:1/-1">กรุณาเลือกกล่องยาข้างบนก่อน<br>หรือค้นหายาที่สามารถเบิกได้</div>';
+      sub.textContent = ''; return;
+    }
+    // วาดทีละก้อน (ลื่นบนมือถือ)
+    const flat = []; groups.forEach(g => { flat.push({ head: g }); g.rows.forEach(x => flat.push(x)); });
+    grid.innerHTML = ''; let i = 0; const token = (renderOrder.tk = (renderOrder.tk || 0) + 1);
+    (function chunk() {
+      if (token !== renderOrder.tk) return;
+      const html = flat.slice(i, i + 24).map(x => x.head ? groupHead(x.head) : drugCard(x.r, kw ? x.s : null)).join('');
+      grid.insertAdjacentHTML('beforeend', html); lazyLoad(grid); i += 24;
+      if (i < flat.length) requestAnimationFrame(chunk);
+    })();
   }
-
-  function addCart(id) { 
-      let i = items.find(x=>x.itemId==id); 
-      let ex = cart.find(x=>x.itemId==id); 
-      if(ex) { 
-          ex.qty+=i.req; 
-      } else {
-          cart.push({...i, qty:i.req}); 
-      }
-      badge(); 
-      const b=document.querySelector('.fa-shopping-basket'); 
-      if(b) { b.style.transform='scale(1.4)'; setTimeout(()=>b.style.transform='scale(1)',200); }
-      i.req=1; 
-      const inp = document.getElementById(`qty-${id}`);
-      if(inp) inp.value=1; 
+  const nameOf = ic => ((CAT && CAT.drugs[ic]) || {}).n || ic;
+  function groupHead(g) {
+    return `<div class="grp-head"><span>${getBoxIcon(g.box.type)}</span><span>${esc(g.box.name)}</span><span class="cnt">${g.rows.length} รายการ${g.box.group ? ' · ' + esc(splitList(g.box.group)[0]) : ''}</span></div>`;
   }
-  
-  function badge() { 
-      let n=cart.length; 
-      const b = document.getElementById('badge');
-      if(b) {
-          b.innerText=n; 
-          n>0 ? b.classList.remove('hidden') : b.classList.add('hidden'); 
-      }
+  function drugCard(r, score) {
+    const [invId, , ic, max, act] = r, d = CAT.drugs[ic] || {};
+    const inC = cart.find(c => c.invId === invId), q = reqQty[invId] || 1;
+    return `<div class="drug-card ${inC ? 'in-cart' : ''}" id="dc-${invId}">
+      ${d.ha ? '<div class="badge-ha">HAD</div>' : ''}${inC ? `<div class="incart-tag">ในใบเบิก ${inC.qty}</div>` : ''}
+      <div class="drug-img-wrap"><img src="${DEFAULT_IMG}" data-raw="${esc(d.i)}" class="drug-img lazy"></div>
+      <div class="drug-info">
+        <div class="drug-name">${esc(d.n || ic)}</div>
+        <div class="d-flex justify-content-between small text-muted mb-2"><span>มี ${fmtN(act)}/${fmtN(max)}</span><span class="text-primary fw-bold">${fmtN(d.p)} บ.${d.u ? '/' + esc(d.u) : ''}</span></div>
+        <div class="qty-wrap"><div class="btn-qty" onclick="adj('${invId}',-1)">-</div><input class="inp-qty" id="qty-${invId}" type="number" inputmode="numeric" min="1" value="${q}" onchange="setReq('${invId}',this.value)"><div class="btn-qty" onclick="adj('${invId}',1)">+</div></div>
+        <button class="btn btn-sm btn-primary w-100 mt-2 rounded-pill fw-bold" onclick="addCart('${invId}')">ใส่ใบเบิก</button>
+        ${score != null ? `<div class="score text-end mt-1">ใกล้เคียง ${score}%</div>` : ''}
+      </div></div>`;
   }
-
-  function adj(id, v) { 
-      let i = items.find(x=>x.itemId==id); 
-      if(!i) return; 
-      let n = i.req + v; 
-      if(n<1)n=1; 
-      i.req = n; 
-      const el = document.getElementById(`qty-${id}`);
-      if(el) el.value = n; 
+  function adj(id, v) { const n = Math.max(1, (reqQty[id] || 1) + v); reqQty[id] = n; const el = $('qty-' + id); if (el) el.value = n; }
+  function setReq(id, v) { reqQty[id] = Math.max(1, Math.floor(Number(v)) || 1); $('qty-' + id).value = reqQty[id]; }
+  function addCart(id, qty) {
+    const q = qty || reqQty[id] || 1;
+    const ex = cart.find(c => c.invId === id);
+    if (ex) ex.qty += q; else cart.push({ invId: id, qty: q });
+    reqQty[id] = 1; saveCart(); badge();
+    const ico = $('cart-ico'); ico.style.transform = 'scale(1.4)'; setTimeout(() => ico.style.transform = '', 200);
+    const card = $('dc-' + id); if (card && CAT) card.outerHTML = drugCard(INV_BY[id], null), lazyLoad($('order-grid'));
+    renderOrderBoxes();
+    Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'ใส่ใบเบิกแล้ว', showConfirmButton: false, timer: 900 });
   }
+  function saveCart() { LS.set(cartKey(), cart); }
+  function badge() { const b = $('badge'); b.textContent = cart.length; b.classList.toggle('hidden', !cart.length); }
 
-  function filterHist(status, el) {
-      curHistStatus = status;
-      document.querySelectorAll('.nav-tabs .nav-link').forEach(x=>x.classList.remove('active')); el.classList.add('active');
-      const scroller = document.getElementById('box-scroller-hist');
-      const statsFilter = document.getElementById('stats-filter');
-      
-      if(status === 'STATS') {
-          scroller.classList.add('hidden'); statsFilter.classList.remove('hidden');
-          loadStats();
-      } else {
-          scroller.classList.remove('hidden'); statsFilter.classList.add('hidden');
-          renderHist(status);
-      }
-  }
-
-  function renderHist(status) {
-      let filtered = allHistory;
-      if(curHistBox !== 'ALL') { filtered = filtered.filter(r => r.box === curHistBox); }
-
-      const totalWait = filtered.filter(r => r.status.includes('รอ')).length;
-      const totalDone = filtered.filter(r => r.status.includes('จัดยาเสร็จ')).length;
-      const totalRecv = filtered.filter(r => r.status.includes('ได้รับ')).length;
-      
-      document.getElementById('bg-wait').innerText = totalWait; 
-      document.getElementById('bg-done').innerText = totalDone; 
-      document.getElementById('bg-recv').innerText = totalRecv;
-      
-      const globalDone = allHistory.filter(r => r.status.includes('จัดยาเสร็จ')).length;
-      if(globalDone > 0) { 
-          document.getElementById('nav-badge-hist').classList.remove('hidden'); 
-          document.getElementById('nav-badge-hist').innerText = globalDone; 
-      } else { 
-          document.getElementById('nav-badge-hist').classList.add('hidden'); 
-      }
-
-      let msg = "";
-      if(status === 'รอการจัดยา') { filtered = filtered.filter(r => r.status.includes('รอ')); msg = "เมื่อห้องยารับ order แล้ว จะเปลี่ยนสถานะเป็น 'จัดยาเสร็จแล้ว'"; }
-      else if(status === 'จัดยาเสร็จแล้ว') { filtered = filtered.filter(r => r.status.includes('จัดยาเสร็จ')); msg = "มารับยาที่ห้องยาได้เลย"; }
-      else if(status === 'ได้รับยาแล้ว') { filtered = filtered.filter(r => r.status.includes('ได้รับ')); }
-      else if(status === 'STATS') return;
-
-      document.getElementById('hist-msg').innerText = msg; document.getElementById('hist-msg').classList.toggle('hidden', msg === "");
-      renderHistList(filtered, 10);
-  }
-
-  function renderHistList(data, limit) {
-      const displayData = limit ? data.slice(0, limit) : data;
-      const html = displayData.map(r=>{
-        let action = ''; 
-        if(r.status.includes('รอการจัดยา')) {
-            // ซ่อนปุ่มพิมพ์ใบจัดยา
-        } else if(r.status.includes('จัดยาเสร็จ')) {
-            action = `<button class="btn btn-success w-100 fw-bold py-2 mt-2" style="font-size:1.2rem;" onclick="receiveOrder('${r.id}')">กดรับยา</button>`;
-        }
-        
-        let pdfBtn = '';
-        if(!r.status.includes('รอการจัดยา')) {
-            pdfBtn = `<a href="${r.pdf}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-file-pdf"></i> PDF</a>`;
-        }
-
-        let deleteBtn = '';
-        if(r.status.includes('รอการจัดยา')) {
-             deleteBtn = `<button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${r.id}')"><i class="fas fa-trash"></i> ยกเลิกใบเบิก</button>`;
-        }
-
-        let itemList = r.items.map(i=> `<li>${i.name} (${i.qty}) - ${i.price}</li>`).join('').slice(0, 200) + (r.items.length > 5 ? '...' : '');
-        let cardClass = r.status.includes('รอ') ? 'card-wait' : (r.status.includes('รับ') ? 'card-recv' : 'card-done');
-        
-        const diff1 = getDuration(r.rawOrderTime, r.rawCheckTime);
-        const diff2 = getDuration(r.rawCheckTime, r.rawAcceptTime);
-        
-        let timelineHtml = '';
-        if(r.status.includes('ได้รับ')) {
-            timelineHtml = `
-              <div class="timeline px-2 py-2">
-                 <div class="timeline-line"></div>
-                 <div class="tl-step step-order active"><div class="tl-content"><div class="tl-icon"><i class="fas fa-file-alt"></i></div><div class="tl-time">เบิก ${r.time.split(' ')[1]||''}</div></div></div>
-                 <div class="tl-step step-check active"><div class="tl-duration">${diff1}</div><div class="tl-content"><div class="tl-icon"><i class="fas fa-check"></i></div><div class="tl-time">เสร็จ ${r.checkedTime||'-'}</div></div></div>
-                 <div class="tl-step step-recv active"><div class="tl-duration">${diff2}</div><div class="tl-content"><div class="tl-icon"><i class="fas fa-hand-holding"></i></div><div class="tl-time">รับ ${r.acceptedTime||'-'}</div></div></div>
-              </div>`;
-        }
-        
-        return `<div class="card mb-2 p-2 shadow-sm ${cardClass}">
-                  <div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${r.id}</strong><small class="text-muted" style="font-size:10px">${r.time}</small></div>
-                  <div class="small text-muted my-1"><i class="fas fa-box"></i> ${r.box}</div>
-                  ${timelineHtml}
-                  <ul class="small text-muted ps-3 mb-1" style="max-height:100px;overflow-y:auto">${itemList}</ul>
-                  <div class="d-flex flex-column align-items-stretch">
-                     <div class="d-flex justify-content-between align-items-center"><small class="badge bg-light text-dark border">${r.status}</small>${pdfBtn}</div>
-                     <div class="mt-2 text-end">${deleteBtn}</div>
-                     ${action}
-                  </div>
-                </div>`;
-      }).join('');
-
-      let moreBtn = '';
-      if(limit && data.length > limit) {
-          moreBtn = `<button class="btn btn-outline-secondary w-100 mt-2" onclick='renderHistList(${JSON.stringify(data).replace(/'/g, "&apos;")}, null)'>ดูทั้งหมด (${data.length})</button>`;
-      }
-      document.getElementById('hist-res').innerHTML = html + moreBtn || '<div class="text-center text-muted mt-3">ไม่มีรายการ</div>';
-  }
-
-  async function loadStats() {
-      const start = document.getElementById('stat-start').value;
-      const end = document.getElementById('stat-end').value;
-      document.getElementById('hist-res').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2">กำลังคำนวณสถิติ...</div></div>';
-      document.getElementById('hist-msg').classList.add('hidden');
-      const res = await callApi('getStatData', { user: currentUser.name, substock: currentUser.substock, start: start, end: end });
-      if(res.status) { renderStats(res.data); } else { document.getElementById('hist-res').innerHTML = '<div class="alert alert-danger">Error loading stats</div>'; }
-  }
-
-  function renderStats(data) {
-      if(!data || data.length === 0) { document.getElementById('hist-res').innerHTML = '<div class="text-center text-muted mt-5">ไม่พบข้อมูลการเบิกในช่วงเวลานี้</div>'; return; }
-      const html = data.map((item, idx) => `
-        <div class="d-flex align-items-center bg-white p-2 mb-2 rounded shadow-sm border">
-            <div class="me-3 fw-bold text-muted" style="width:20px">${idx+1}</div>
-            <div class="flex-grow-1"><div class="fw-bold text-primary">${item.name}</div><div class="small text-secondary"><i class="fas fa-box"></i> ${item.box}</div><div class="small text-muted">เบิกไป ${item.count} ครั้ง</div></div>
-            <div class="text-end"><div class="fw-bold fs-5">${item.qty}</div><div class="small text-muted">${item.price.toFixed(0)} บ.</div></div>
-        </div>`).join('');
-      document.getElementById('hist-res').innerHTML = html;
-  }
-
-  async function receiveOrder(oid) {
-      Swal.fire({
-          title: 'ยืนยันได้รับยาครบถ้วน?',
-          showCancelButton: true,
-          confirmButtonText: 'ยืนยัน',
-          cancelButtonText: 'ยกเลิก'
-      }).then(async (result) => {
-          if (result.isConfirmed) {
-              const res = await callApi('updateOrderStatus', { orderId: oid, user: currentUser.name });
-              if(res.status) { Swal.fire('Success'); }
-          }
-      });
-  }
-
-  async function deleteOrder(oid) {
-      Swal.fire({
-          title: 'ยืนยันการลบ?',
-          text: "คุณต้องการยกเลิกใบเบิกยานี้ใช่หรือไม่?",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonText: 'ใช่, ยกเลิกเลย!',
-          cancelButtonText: 'ไม่ยกเลิก'
-      }).then(async (result) => {
-          if (result.isConfirmed) {
-              Swal.fire({title: 'กำลังลบ...', didOpen: () => Swal.showLoading()});
-              const res = await callApi('deleteOrder', { orderId: oid });
-              if(res.status) {
-                  Swal.fire('ลบสำเร็จ', '', 'success');
-                  // อัปเดตข้อมูล History ใหม่
-                  const histRes = await callApi('getInitialData', { user: currentUser });
-                  if(histRes.status !== false && histRes.status !== 'error' && histRes.data) {
-                      allHistory = histRes.data.history || [];
-                      renderHist(curHistStatus);
-                  }
-              } else {
-                  Swal.fire('ลบล้มเหลว', res.message, 'error');
-              }
-          }
-      });
-  }
-
-  async function showExpiredDrugs() {
-      Swal.fire({title:'Loading...', didOpen:()=>Swal.showLoading()});
-      try {
-          const res = await callApi('getExpiredInventory');
-          Swal.close();
-          const div = document.getElementById('realtime-detail');
-          
-          if(!res.data || res.data.length === 0) {
-              div.innerHTML = '<div class="alert alert-success text-center">เยี่ยม! ไม่มียาหมดอายุ</div>';
-          } else {
-              div.innerHTML = `<h6 class="text-danger fw-bold"><i class="fas fa-exclamation-circle"></i> รายการยาหมดอายุ (${res.data.length})</h6>` + 
-              res.data.map(d => `
-                 <div class="border-bottom py-2">
-                    <div class="fw-bold text-dark">${d.name}</div>
-                    <div class="d-flex justify-content-between small text-muted"><span><i class="fas fa-box"></i> ${d.box}</span><span class="text-danger fw-bold">${d.expire}</span></div>
-                 </div>`).join('');
-          }
-          document.getElementById('pagination-controls').classList.add('hidden');
-      } catch(e) { Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลได้', 'error'); }
-  }
-
-  async function showSuggestions(kw) {
-      if(!kw || kw.length < 2) {
-          document.getElementById('search-suggestions').innerHTML = '';
-          document.getElementById('search-suggestions').classList.add('hidden');
-          
-          if(!kw) {
-             document.getElementById('realtime-detail').innerHTML = `
-                 <div class="text-center text-muted mt-5">
-                     <i class="fas fa-search" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
-                     <h5 class="fw-bold text-dark">ค้นหาว่ายาเก็บไว้ตรงไหนของโรงพยาบาลบ้าง</h5>
-                     <p>พิมพ์ชื่อยาได้เลย</p>
-                 </div>`;
-             document.getElementById('pagination-controls').classList.add('hidden');
-             document.getElementById('search-count').innerText = '';
-          }
-          return;
-      }
-      const res = await callApi('searchMasterItems', { kw });
-      if(res.data && res.data.length > 0) {
-          const html = res.data.map(i => 
-              `<div class="p-2 border-bottom cursor-pointer hover-bg-light" onclick="doFullSearch('${i.name}'); document.getElementById('kw-realtime').value='${i.name}';">
-                 <i class="fas fa-search text-muted me-2"></i> ${i.name}
-              </div>`
-          ).join('');
-          document.getElementById('search-suggestions').innerHTML = html;
-          document.getElementById('search-suggestions').classList.remove('hidden');
-      } else {
-          document.getElementById('search-suggestions').classList.add('hidden');
-      }
-  }
-
-  async function doFullSearch(kw, page=1) {
-      document.getElementById('search-suggestions').classList.add('hidden');
-      if(!kw) {
-          document.getElementById('realtime-detail').innerHTML = `
-              <div class="text-center text-muted mt-5">
-                  <i class="fas fa-search" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
-                  <h5 class="fw-bold text-dark">ค้นหาว่ายาเก็บไว้ตรงไหนของโรงพยาบาลบ้าง</h5>
-                  <p>พิมพ์ชื่อยาได้เลย</p>
-              </div>`;
-          document.getElementById('pagination-controls').classList.add('hidden');
-          document.getElementById('search-count').innerText = '';
-          return;
-      }
-      
-      curPage = page;
-      document.getElementById('search-spinner').classList.remove('hidden');
-      document.getElementById('realtime-detail').innerHTML = '';
-      
-      const res = await callApi('searchDrugDetails', { kw: kw, page: page });
-      document.getElementById('search-spinner').classList.add('hidden');
-
-      if(res.status !== false && res.status !== 'error' && res.data) {
-         totalPages = res.data.totalPages;
-         totalSearchItems = res.data.totalItems;
-         document.getElementById('search-count').innerText = `พบ ${totalSearchItems} รายการ`;
-         
-         if(totalSearchItems === 0) {
-             document.getElementById('realtime-detail').innerHTML = '<div class="alert alert-warning text-center">ไม่พบยาสต็อก</div>';
-             document.getElementById('pagination-controls').classList.add('hidden');
-             return;
-         }
-
-         if(kw === 'SHOW_ALL') {
-            document.getElementById('pagination-controls').classList.remove('hidden');
-            document.getElementById('page-display').innerText = `หน้า ${curPage} / ${totalPages}`;
-         } else {
-            document.getElementById('pagination-controls').classList.add('hidden');
-         }
-
-         document.getElementById('realtime-detail').innerHTML = res.data.results.map(d => {
-           let rows = d.locations.map(l => {
-               let cls = ''; let badge = '';
-               if(l.isExpired) { cls = 'row-expired'; badge = '<span class="badge-expired ms-1">ยาหมดอายุ</span>'; }
-               else if(l.isNearExp) { badge = `<span class="badge-near-exp ms-1">${l.daysLeft} วัน</span>`; }
-               return `<tr class="${cls}"><td>${l.box}</td><td>${l.amount}</td><td>${l.expire}${badge}</td></tr>`;
-            }).join('');
-           
-            return `<div class="mb-3 border rounded shadow-sm p-3 bg-white fade-in">
-                      <div class="d-flex gap-2">
-                        <div class="drug-img-wrap" style="width:80px;height:80px;flex-shrink:0;">
-                            <img src="${DEFAULT_IMG}" data-raw="${d.imageRaw}" class="drug-img lazy" referrerpolicy="no-referrer">
-                        </div>
-                        <div class="flex-grow-1">
-                           <div class="fw-bold text-primary">${d.name} <span class="badge bg-info text-dark">รวม ${d.totalQty}</span></div>
-                           <div class="small text-muted mb-1">ID: ${d.itemId}</div>
-                           <table class="table table-sm table-custom mb-0"><thead><tr><th>กล่อง</th><th>จน.</th><th>Exp</th></tr></thead><tbody>${rows}</tbody></table>
-                        </div>
-                      </div>
-                    </div>`;
-         }).join('');
-         lazyLoad();
-      } else {
-         document.getElementById('realtime-detail').innerHTML = '<div class="alert alert-danger text-center">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
-      }
-  }
-  
-  function nextPage() { if(curPage < totalPages) doFullSearch('SHOW_ALL', curPage+1); }
-  function prevPage() { if(curPage > 1) doFullSearch('SHOW_ALL', curPage-1); }
-
-  function setScanMode(mode) {
-      scanMode = mode;
-      document.getElementById('scan-hint').innerText = mode === 'ITEM' ? 'ส่อง QR Code ที่รายการยา' : 'ส่อง QR Code ที่กล่องยา';
-  }
-
-  function startScan() {
-      document.getElementById('qr-overlay').style.display = 'flex';
-      scanMode = 'ITEM'; 
-      document.getElementById('scanItem').checked = true;
-      document.getElementById('scan-hint').innerText = 'ส่อง QR Code ที่รายการยา';
-      
-      html5QrcodeScanner = new Html5Qrcode("reader");
-      html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
-      .catch(err => {
-         console.error("Error starting scanner", err);
-         Swal.fire('Camera Error', 'ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึง', 'error');
-         document.getElementById('qr-overlay').style.display = 'none';
-      });
-  }
-  function stopScan() {
-      if(html5QrcodeScanner && html5QrcodeScanner.isScanning) {
-          html5QrcodeScanner.stop().then(() => {
-              html5QrcodeScanner.clear();
-              document.getElementById('qr-overlay').style.display = 'none';
-          }).catch(err => {
-              console.log("Stop failed", err);
-              document.getElementById('qr-overlay').style.display = 'none';
-          });
-      } else {
-          document.getElementById('qr-overlay').style.display = 'none';
-      }
-  }
-  function restartScan() {
-      mdlScanRes.hide();
-      startScan();
-  }
-  async function onScanSuccess(decodedText) {
-      stopScan();
-      
-      if(scanMode === 'BOX') {
-          const boxId = decodedText.trim();
-          const box = allBoxes.find(b => b.id === boxId);
-          if(box) {
-              nav('tab-stock', document.querySelectorAll('.nav-item')[1]); 
-              selBox(box.name, null, 'stock', box.imageRaw);
-          } else {
-              Swal.fire('Not Found', 'ไม่พบกล่องยานี้ในระบบ', 'error').then(startScan);
-          }
-      } else {
-          Swal.fire({title:'Searching...', didOpen:()=>Swal.showLoading()});
-          const res = await callApi('getInventoryByQr', { qrCode: decodedText.trim() });
-          Swal.close();
-          if(res.status) {
-              const d = res.data;
-              document.getElementById('qr-id').value = d.invId;
-              document.getElementById('qr-item-id').value = d.itemId; 
-              document.getElementById('qr-name').innerText = d.name;
-              document.getElementById('qr-box').innerText = d.box;
-              document.getElementById('qr-loc').value = d.location;
-              document.getElementById('qr-amt').value = d.amount;
-              document.getElementById('qr-act').value = d.actual;
-              document.getElementById('qr-exp').value = thDateToIso(d.expire); 
-              document.getElementById('qr-img').src = DEFAULT_IMG; 
-              if(d.imageRaw && String(d.imageRaw).startsWith('http')) document.getElementById('qr-img').src=d.imageRaw; else if(d.imageRaw) callApi('resolveImage',{input:d.imageRaw}).then(r=>{if(r.status) document.getElementById('qr-img').src=r.src});
-              mdlScanRes.show();
-          } else { Swal.fire('Not Found', 'QR Code not mapped', 'error').then(startScan); }
-      }
-  }
-  async function saveQrEdit() {
-      const pl = { invId: document.getElementById('qr-id').value, amount: document.getElementById('qr-amt').value, actual: document.getElementById('qr-act').value, location: document.getElementById('qr-loc').value, expire: document.getElementById('qr-exp').value };
-      await callApi('updateInventoryFromQr', pl);
-      Swal.fire({toast:true, icon:'success', title:'Saved', position:'center', timer:1000});
-      mdlScanRes.hide();
-      startScan();
-  }
-  
-  let canvas, ctx, isDraw=false;
-  
-  function initCvs(){ canvas=document.getElementById('cvs'); ctx=canvas.getContext('2d'); ['mousedown','touchstart'].forEach(e=>canvas.addEventListener(e,s,{passive:false})); ['mousemove','touchmove'].forEach(e=>canvas.addEventListener(e,d,{passive:false})); ['mouseup','touchend'].forEach(e=>canvas.addEventListener(e,()=>isDraw=false)); }
-  function fixCvs(){ canvas.width=canvas.offsetWidth; canvas.height=100; ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#000'; }
-  function s(e){ e.preventDefault(); isDraw=true; let r=canvas.getBoundingClientRect(); ctx.beginPath(); ctx.moveTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); }
-  function d(e){ if(!isDraw)return; e.preventDefault(); let r=canvas.getBoundingClientRect(); ctx.lineTo((e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top); ctx.stroke(); }
-  function clrCvs(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
-  function isCanvasBlank(cv) { return !cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some(channel => channel !== 0); }
-
+  // ---------- ตะกร้า / ใบเบิก ----------
   function openCart() {
-      const el = document.getElementById('cart-list');
-      if(cart.length===0) {
-          el.innerHTML = '<div class="text-center mt-5 text-muted">ตะกร้าว่างเปล่า</div>';
-          document.getElementById('cart-sum').innerText = '0.00';
-          document.getElementById('cart-signer-name').innerText = '';
-      } else {
-          let sum = 0;
-          el.innerHTML = cart.map((i,idx) => {
-              const total = i.price * i.req;
-              sum += total;
-              return `
-              <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                  <div class="d-flex align-items-center gap-2">
-                      <div class="fw-bold text-primary">${idx+1}.</div>
-                      <div>
-                          <div class="fw-bold">${i.name}</div>
-                          <div class="small text-muted">${i.req} x ${i.price}</div>
-                      </div>
-                  </div>
-                  <div class="text-end">
-                      <div class="fw-bold">${total.toFixed(2)}</div>
-                      <i class="fas fa-trash text-danger cursor-pointer" onclick="removeCartItem(${idx})"></i>
-                  </div>
-              </div>`;
-          }).join('');
-          document.getElementById('cart-sum').innerText = sum.toFixed(2);
-          document.getElementById('cart-signer-name').innerText = currentUser.name || currentUser.username;
-      }
-      offC.show();
-      setTimeout(fixCvs, 500);
+    const el = $('cart-list');
+    $('cart-signer-name').textContent = me().name || me().username;
+    if (!cart.length) { el.innerHTML = '<div class="text-center mt-5 text-muted">ยังไม่มีรายการในใบเบิก</div>'; $('cart-sum').textContent = '0.00'; $('cart-count').textContent = ''; offC.show(); setTimeout(fixCvs, 400); return; }
+    const by = {}; let sum = 0;
+    cart.forEach((c, idx) => { const r = INV_BY[c.invId]; if (!r) return; (by[r[1]] = by[r[1]] || []).push({ c, idx, r }); });
+    el.innerHTML = Object.keys(by).map(bid => {
+      const b = BOX_BY[bid] || { name: bid };
+      return `<div class="grp-head mb-2" style="margin-top:0"><span>${getBoxIcon(b.type)}</span><span>${esc(b.name)}</span><span class="cnt">${by[bid].length} รายการ</span></div>` +
+        by[bid].map(({ c, idx, r }) => {
+          const d = CAT.drugs[r[2]] || {}, tot = (d.p || 0) * c.qty; sum += tot;
+          return `<div class="d-flex align-items-center gap-2 mb-2 bg-white rounded p-2 border">
+            <div class="flex-grow-1"><div class="fw-bold small">${esc(d.n || r[2])}</div><div class="small text-muted">${fmtN(d.p)} × ${c.qty} ${esc(d.u || '')} = <b>${fmtB(tot)}</b></div></div>
+            <div class="qty-wrap" style="margin:0;width:118px"><div class="btn-qty" onclick="cartQty(${idx},-1)">-</div><span class="inp-qty">${c.qty}</span><div class="btn-qty" onclick="cartQty(${idx},1)">+</div></div>
+            <i class="fas fa-trash text-danger cursor-pointer p-1" onclick="cartDel(${idx})"></i></div>`;
+        }).join('');
+    }).join('');
+    $('cart-sum').textContent = fmtB(sum);
+    $('cart-count').textContent = `${cart.length} รายการ · ${Object.keys(by).length} กล่อง`;
+    offC.show(); setTimeout(fixCvs, 400);
   }
-  
-  function removeCartItem(idx) {
-      cart.splice(idx, 1);
-      badge();
-      openCart();
-      renderOrder(); 
-  }
+  function cartQty(i, v) { cart[i].qty = Math.max(1, cart[i].qty + v); saveCart(); openCart(); }
+  function cartDel(i) { cart.splice(i, 1); saveCart(); badge(); openCart(); renderOrder(); renderOrderBoxes(); }
 
   async function submitOrder() {
-      if(isSubmitting) return;
-      if(cart.length === 0) return Swal.fire('ไม่มีสินค้าในตะกร้า');
-
-      isSubmitting = true;
-      offC.hide();
-      
-      const sign = isCanvasBlank(cvs) ? "" : cvs.toDataURL();
-      const orderData = {
-          box: curBoxOrder,
-          user: currentUser.name || currentUser.username,
-          signature: sign,
-          items: cart
-      };
-
-      Swal.fire({ 
-          title: 'กำลังประมวลผล', 
-          html: '1. บันทึกข้อมูลใบเบิก<br>2. สร้างใบสั่งยา (PDF)<br><br>กรุณารอสักครู่...',
-          allowOutsideClick: false,
-          didOpen: ()=>Swal.showLoading(),
-          customClass: { popup: 'z-index-top' } 
-      });
-      
-      const style = document.createElement('style');
-      style.innerHTML = '.z-index-top { z-index: 9999 !important; }';
-      document.head.appendChild(style);
-
-      try {
-          const res = await callApi('submitOrder', { orderData });
-          if(res.status !== false && res.status !== 'error') {
-              cart = [];
-              badge();
-              renderOrder();
-              clrCvs();
-              Swal.fire({ 
-                  icon: 'success', 
-                  title: 'ส่งข้อมูลเรียบร้อยแล้ว',
-                  html: `โปรดเช็คสถานะในหน้า "รายการเบิก"`
-              });
-              
-              // Force background refresh to update local cache
-              const histRes = await callApi('getInitialData', { user: currentUser });
-              if(histRes.status !== false && histRes.status !== 'error' && histRes.data) {
-                  localStorage.setItem('saw_init_data', JSON.stringify(histRes.data));
-                  allHistory = histRes.data.history || [];
-              }
-          } else {
-              Swal.fire('Error', res.message, 'error');
-          }
-      } catch(e) {
-          Swal.fire('Error', 'การเชื่อมต่อผิดพลาด', 'error');
-      } finally {
-          isSubmitting = false;
-      }
+    if (isSubmitting) return;
+    if (!cart.length) return Swal.fire('ยังไม่มีรายการในใบเบิก');
+    if (isCanvasBlank()) { $('cvs').classList.add('sig-need'); setTimeout(() => $('cvs').classList.remove('sig-need'), 1500); return Swal.fire({ icon: 'info', title: 'กรุณาเซ็นชื่อผู้เบิก', text: 'ระบบไม่บันทึกลายเซ็น แต่ต้องเซ็นยืนยันทุกครั้ง', target: '#cartSheet' }); }
+    isSubmitting = true; offC.hide();
+    Swal.fire({ title: 'กำลังส่งใบเบิก…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    const r = await api('submitOrder', { items: cart, signed: true });
+    isSubmitting = false;
+    if (!r.status) return Swal.fire('ส่งไม่สำเร็จ', r.message || '', 'error');
+    cart = []; saveCart(); badge(); clrCvs(); renderOrder(); renderOrderBoxes();
+    Swal.fire({ icon: 'success', title: 'ส่งใบเบิกเรียบร้อย', html: `เลขที่ <b>${esc(r.orderId)}</b><br><span class="small text-muted">${esc(r.message || '')}</span>`,
+      showCancelButton: true, confirmButtonText: 'ดูรายการเบิก', cancelButtonText: 'ปิด' })
+      .then(x => { if (x.isConfirmed) nav('tab-hist', document.querySelectorAll('.btm-nav .nav-item')[3]); });
+    loadHistory(true); refreshCatalog(false);
   }
+
+  // ---------- ลายเซ็น (ขอให้เซ็น แต่ไม่ส่ง/ไม่เก็บ) ----------
+  let canvas, ctx, isDraw = false, inked = false;
+  function initCvs() {
+    canvas = $('cvs'); ctx = canvas.getContext('2d');
+    const pos = e => { const r = canvas.getBoundingClientRect(), p = e.touches ? e.touches[0] : e; return [p.clientX - r.left, p.clientY - r.top]; };
+    const s = e => { e.preventDefault(); isDraw = true; ctx.beginPath(); ctx.moveTo(...pos(e)); };
+    const d = e => { if (!isDraw) return; e.preventDefault(); ctx.lineTo(...pos(e)); ctx.stroke(); inked = true; };
+    ['mousedown', 'touchstart'].forEach(ev => canvas.addEventListener(ev, s, { passive: false }));
+    ['mousemove', 'touchmove'].forEach(ev => canvas.addEventListener(ev, d, { passive: false }));
+    ['mouseup', 'touchend', 'mouseleave'].forEach(ev => canvas.addEventListener(ev, () => isDraw = false));
+  }
+  function fixCvs() { if (canvas.width !== canvas.offsetWidth) { canvas.width = canvas.offsetWidth; canvas.height = 90; inked = false; } ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000'; }
+  function clrCvs() { ctx.clearRect(0, 0, canvas.width, canvas.height); inked = false; }
+  function isCanvasBlank() { return !inked; }
+
+  // =====================================================================
+  //  STOCK (ดูสต็อกทุกกล่อง — จาก catalog ไม่ต้องรอ server)
+  // =====================================================================
+  let stockGroup = 'ALL';
+  function renderStockFilters() {
+    const groups = [...new Set(BOXES.flatMap(b => splitList(b.group)))].sort();
+    const cnt = g => g === 'ALL' ? BOXES.length : BOXES.filter(b => splitList(b.group).includes(g)).length;
+    $('group-filter').innerHTML = ['ALL', ...groups].map(g => `<div class="badge rounded-pill ${stockGroup === g ? 'bg-primary text-white' : 'bg-white text-dark border'} cursor-pointer d-flex align-items-center gap-2 py-2 px-3" onclick="filterStockBox('${esc(g)}')">
+        ${g === 'ALL' ? 'ทั้งหมด' : esc(g)} <span class="badge ${stockGroup === g ? 'bg-white text-dark' : 'bg-secondary'} rounded-pill">${cnt(g)}</span></div>`).join('');
+    const list = stockGroup === 'ALL' ? BOXES : BOXES.filter(b => splitList(b.group).includes(stockGroup));
+    $('box-scroller-stock').innerHTML = list.map(b => `<div class="box-btn ${curStockBox === b.id ? 'active' : ''}" onclick="selStockBox('${b.id}')"><span class="box-icon">${getBoxIcon(b.type)}</span><span class="box-name">${esc(b.name)}</span>${b.hasExpired ? '<span class="badge-exp">หมดอายุ</span>' : ''}</div>`).join('');
+    setupHorizontalScroll($('box-scroller-stock')); setupHorizontalScroll($('group-filter'));
+  }
+  function filterStockBox(g) { stockGroup = g; renderStockFilters(); }
+  function selStockBox(id) { curStockBox = id; renderStockFilters(); renderStockBox(id); }
+  function renderStockBox(id) {
+    const el = $('stock-content'), b = BOX_BY[id]; if (!b || !CAT) return;
+    const rows = CAT.inv.filter(r => r[1] === id);
+    const total = rows.reduce((s, r) => s + (r[7] || 0), 0);
+    let h = `<div class="h5 fw-bold text-dark mb-1 w-100 d-flex align-items-center gap-2 mt-2">${getBoxIcon(b.type)} ${esc(b.name)} <span class="badge bg-info rounded-pill" style="font-size:.7rem">${rows.length} ยา</span></div>
+             <div class="small text-muted mb-2 border-bottom pb-2 w-100">จำนวนครั้งที่เปลี่ยน: ${total} | ตรวจล่าสุด: ${esc(b.lastCheck || '-')}</div>`;
+    const shelf = {}; rows.forEach(r => { const k = String(r[6] || '').split('/')[1] || 'Other'; (shelf[k] = shelf[k] || []).push(r); });
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    Object.keys(shelf).sort((a, c) => a.localeCompare(c, undefined, { numeric: true })).forEach(k => {
+      h += `<div class="shelf-row-label">ชั้น/แถว: ${esc(k)}</div><div class="d-flex flex-wrap gap-2 w-100">` + shelf[k].map(r => {
+        const d = CAT.drugs[r[2]] || {};
+        let tag = '', cls = d.ha ? 'bg-ha' : (d.c ? 'bg-cool' : '');
+        if (r[5]) { const diff = (new Date(r[5]) - today) / 864e5; if (diff < 0) { tag = '<span class="exp-badge-stock badge-expired">หมดอายุ</span>'; cls += ' border border-danger'; } else if (diff < 180) tag = `<span class="exp-badge-stock badge-near-exp">${Math.ceil(diff)} วัน</span>`; }
+        return `<div class="shelf-item ${cls}">${d.ha ? '<div class="badge-ha">HAD</div>' : ''}${tag}<img src="${DEFAULT_IMG}" data-raw="${esc(d.i)}" class="lazy"><div class="small text-truncate fw-bold" style="font-size:.75rem">${esc(d.n || r[2])}</div>
+          <div class="d-flex justify-content-between align-items-center mt-1"><span class="badge bg-secondary">${fmtN(r[4])}</span><span class="text-muted" style="font-size:9px">${thD(r[5])} ${d.l ? '<i class="fas fa-sun"></i>' : ''}</span></div></div>`;
+      }).join('') + '</div>';
+    });
+    el.innerHTML = rows.length ? h : h + '<div class="text-center w-100 mt-4 text-muted">กล่องว่าง</div>';
+    lazyLoad(el);
+  }
+
+  // =====================================================================
+  //  ยานอกเวลา 20.00–08.00
+  // =====================================================================
+  function nightRange(n) { const t = new Date(); t.setHours(0, 0, 0, 0); const to = new Date(t); to.setDate(to.getDate() - 1); const from = new Date(to); from.setDate(from.getDate() - (n - 1)); return [isoD(from), isoD(to)]; }
+  function setAhRange(r, el) {
+    ahRange = r; document.querySelectorAll('.ah-chip').forEach(x => x.classList.toggle('active', x === el));
+    $('ah-custom').classList.toggle('hidden', r !== 'c');
+    if (r === 'c') { if (!$('ah-from').value) { const [f, t] = nightRange(7); $('ah-from').value = f; $('ah-to').value = t; } return; }
+    loadAfter();
+  }
+  async function loadAfter() {
+    const [from, to] = ahRange === 'c' ? [$('ah-from').value, $('ah-to').value] : nightRange(ahRange);
+    if (!from || !to) return;
+    $('ah-list').innerHTML = '<div class="text-center my-4"><div class="spinner-border text-primary"></div></div>';
+    const r = await api('getAfterHours', { from, to });
+    if (!r.status) { $('ah-list').innerHTML = `<div class="alert alert-danger">${esc(r.message)}</div>`; return; }
+    AH = { from, to, ...r.data, agg: aggAfter(r.data.rows) };
+    renderAfter();
+  }
+  /** แยกที่มา: OPD → ER · IPD ดูชื่อตึกก่อน (หญิง/ชาย) ถ้าไม่ชัดดูเพศ */
+  function srcKey(row) {
+    const [, , source, sex, , wardName] = row;
+    if (source === 'OPD') return 'OPD';
+    if (/หญิง/.test(wardName)) return 'IPD_F';
+    if (/ชาย/.test(wardName)) return 'IPD_M';
+    return sex === 'F' ? 'IPD_F' : sex === 'M' ? 'IPD_M' : 'IPD_X';
+  }
+  function aggAfter(rows) {
+    const a = {};
+    rows.forEach(r => {
+      const o = a[r[1]] || (a[r[1]] = { total: 0, visits: 0, OPD: 0, IPD_F: 0, IPD_M: 0, IPD_X: 0, wards: {} });
+      const k = srcKey(r); o[k] += r[6]; o.total += r[6]; o.visits += r[7];
+      if (r[2] === 'IPD' && r[5]) o.wards[r[5]] = (o.wards[r[5]] || 0) + r[6];
+    });
+    return a;
+  }
+  function renderAfter() {
+    const list = $('ah-list'); if (!AH) return;
+    const nights = AH.from === AH.to ? `คืนวันที่ ${thD(AH.from)} (20.00) – เช้าวันถัดไป (08.00)` : `คืน ${thD(AH.from)} – ${thD(AH.to)}`;
+    $('ah-info').innerHTML = `${nights}${AH.lastSync ? ` · ข้อมูล HOSxP อัปเดต ${esc(AH.lastSync)}` : ' · <span class="text-danger">ยังไม่มีข้อมูลจาก HOSxP</span>'}`;
+    const kw = $('ah-search').value.trim();
+    const name = ic => (CAT && CAT.drugs[ic] && CAT.drugs[ic].n) || (AH.names[ic] || {}).n || ic;
+    let ics;
+    if (kw) {
+      const pool = new Set([...Object.keys(AH.agg), ...(CAT ? Object.keys(CAT.drugs) : [])]);
+      ics = [...pool].map(ic => {
+        const d = (CAT && CAT.drugs[ic]) || {}, h = AH.names[ic] || {};
+        return { ic, s: RX.fuzzy(kw, [{ t: d.n || h.n, w: 1 }, { t: d.g || h.g, w: .9 }, { t: d.f, w: .9 }, { t: ic, w: 1 }]) };
+      }).filter(x => x.s >= RX.FUZZY_MIN).sort((a, b) => b.s - a.s || ((AH.agg[b.ic] || {}).total || 0) - ((AH.agg[a.ic] || {}).total || 0)).slice(0, 60).map(x => x.ic);
+    } else {
+      ics = Object.keys(AH.agg).sort((a, b) => AH.agg[b].total - AH.agg[a].total).slice(0, 80);
+    }
+    if (!ics.length) { list.innerHTML = `<div class="text-center text-muted mt-5"><i class="fas fa-moon fa-3x mb-3" style="color:#ccd6e3"></i><h6>${kw ? 'ไม่พบยาที่ใกล้เคียง “' + esc(kw) + '”' : 'ไม่มีการใช้ยานอกเวลาในช่วงนี้'}</h6></div>`; return; }
+    list.innerHTML = (kw ? '' : `<div class="small fw-bold text-secondary mb-2">ยาที่ใช้นอกเวลามากที่สุด ${ics.length} รายการ</div>`) + ics.map(ic => afterCard(ic, name(ic))).join('');
+    lazyLoad(list);
+  }
+  function afterCard(ic, nm) {
+    const a = AH.agg[ic], d = (CAT && CAT.drugs[ic]) || {}, unit = d.u || (AH.names[ic] || {}).u || '';
+    const locs = CAT ? CAT.inv.filter(r => r[2] === ic) : [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let use = '<div class="small text-muted">ไม่มีการใช้นอกเวลาในช่วงนี้</div>', cut = '';
+    if (a) {
+      use = `<span class="ah-use total">รวม ${fmtN(a.total)} ${esc(unit)}</span>` + AFTER_TARGETS.filter(t => a[t.key]).map(t => `<span class="ah-use"><i class="fas ${t.icon}"></i> ${t.label} ${fmtN(a[t.key])}</span>`).join('') +
+            `<span class="ah-use"><i class="fas fa-user-injured"></i> ${a.visits} ครั้ง</span>`;
+      cut = AFTER_TARGETS.filter(t => a[t.key]).map(t => {
+        if (!t.group) return `<div class="ah-cut"><b>IPD ไม่ทราบตึก</b> ≈ ${fmtN(a[t.key])} ${esc(unit)} ${Object.keys(a.wards).length ? '· ' + Object.keys(a.wards).map(esc).join(', ') : ''}</div>`;
+        const inG = locs.filter(r => BOX_BY[r[1]] && inGroup(BOX_BY[r[1]], t.group));
+        const q = a[t.key];
+        if (!inG.length) return `<div class="ah-cut"><b>${t.label}</b> ≈ ${fmtN(q)} ${esc(unit)} · <span class="text-muted">ไม่มียานี้ในกล่องของกลุ่ม “${esc(t.group)}”</span></div>`;
+        if (inG.length === 1) { const r = inG[0], left = r[4] - q;
+          return `<div class="ah-cut"><b>${t.label}</b> ตัดจาก <b>${esc(BOX_BY[r[1]].name)}</b> ≈ ${fmtN(q)} ${esc(unit)} · คงเหลือ ${fmtN(r[4])} → <b class="${left < 0 ? 'text-danger' : ''}">≈ ${fmtN(left)}</b></div>`; }
+        const sum = inG.reduce((s, r) => s + r[4], 0);
+        return `<div class="ah-cut"><b>${t.label}</b> ตัดออกจากกลุ่มกล่อง = <b>${esc(t.group)}</b> ≈ ${fmtN(q)} ${esc(unit)}
+          <div class="small text-muted">${inG.map(r => `${esc(BOX_BY[r[1]].name)} (${fmtN(r[4])})`).join(' · ')} · รวม ${fmtN(sum)} → ≈ ${fmtN(sum - q)}</div></div>`;
+      }).join('');
+    }
+    const locRows = locs.map(r => { let b = ''; if (r[5]) { const diff = (new Date(r[5]) - today) / 864e5; if (diff < 0) b = ' <span class="badge-expired">หมดอายุ</span>'; else if (diff < 180) b = ` <span class="badge-near-exp">${Math.ceil(diff)} วัน</span>`; }
+      return `<tr><td>${esc((BOX_BY[r[1]] || {}).name || r[1])}</td><td class="text-end">${fmtN(r[4])}</td><td>${thD(r[5])}${b}</td></tr>`; }).join('');
+    return `<div class="ah-card fade-in"><div class="d-flex gap-2">
+        <div class="drug-img-wrap" style="width:64px;height:64px;flex-shrink:0;padding:3px;border-radius:10px"><img src="${DEFAULT_IMG}" data-raw="${esc(d.i || '')}" class="drug-img lazy"></div>
+        <div class="flex-grow-1" style="min-width:0"><div class="fw-bold text-primary">${esc(nm)}</div><div class="small text-muted">${esc(ic)}${d.g ? ' · ' + esc(d.g) : ''}</div><div class="mt-1">${use}</div></div></div>
+        ${cut}
+        ${locs.length ? `<details class="mt-2" ${a ? '' : 'open'}><summary class="small fw-bold text-secondary">เก็บที่ ${locs.length} กล่อง · รวม ${fmtN(locs.reduce((s, r) => s + r[4], 0))}</summary>
+          <table class="table table-sm table-loc mb-0 mt-1"><thead><tr><th>กล่อง</th><th class="text-end">คงเหลือ</th><th>Exp</th></tr></thead><tbody>${locRows}</tbody></table></details>` : '<div class="small text-muted mt-2">ไม่มีเก็บสำรองในกล่อง</div>'}
+      </div>`;
+  }
+  function showExpired() {
+    if (!CAT) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const rows = CAT.inv.filter(r => r[5]).map(r => ({ r, diff: (new Date(r[5]) - today) / 864e5 })).filter(x => x.diff < 90).sort((a, b) => a.diff - b.diff);
+    Swal.fire({ title: 'ยาหมดอายุ / ใกล้หมดอายุ (90 วัน)', width: 600,
+      html: rows.length ? `<div style="max-height:60vh;overflow:auto;text-align:left">${rows.map(({ r, diff }) => `<div class="border-bottom py-2"><div class="fw-bold">${esc(nameOf(r[2]))}</div>
+        <div class="d-flex justify-content-between small text-muted"><span><i class="fas fa-box"></i> ${esc((BOX_BY[r[1]] || {}).name || r[1])} · ${fmtN(r[4])}</span>
+        <span class="${diff < 0 ? 'badge-expired' : 'badge-near-exp'}">${thD(r[5])}${diff >= 0 ? ' (' + Math.ceil(diff) + ' วัน)' : ''}</span></div></div>`).join('')}</div>` : 'เยี่ยม! ไม่มียาหมดอายุ' });
+  }
+
+  // =====================================================================
+  //  HISTORY
+  // =====================================================================
+  async function loadHistory(silent) {
+    if (!silent) $('hist-res').innerHTML = '<div class="text-center my-4"><div class="spinner-border text-primary"></div> กำลังโหลด…</div>';
+    const r = await api('getHistory');
+    if (!r.status) { if (!silent) $('hist-res').innerHTML = `<div class="alert alert-danger">${esc(r.message)}</div>`; return; }
+    HIST = r.data; renderHistBoxes(); if (curHistStatus !== 'STATS') renderHist(curHistStatus);
+  }
+  function renderHistBoxes() {
+    const cnt = {}; HIST.forEach(o => (o.boxIds.length ? o.boxIds : [o.box]).forEach(b => cnt[b] = (cnt[b] || 0) + 1));
+    $('box-scroller-hist').innerHTML = `<div class="box-btn ${curHistBox === 'ALL' ? 'active' : ''}" onclick="selHistBox('ALL')"><span class="box-icon">📋</span><span style="font-size:.7rem">ทั้งหมด</span><span class="badge-hist-count">${HIST.length}</span></div>` +
+      Object.keys(cnt).map(b => `<div class="box-btn ${curHistBox === b ? 'active' : ''}" onclick="selHistBox('${esc(b)}')"><span class="box-icon">📦</span><span class="box-name">${esc((BOX_BY[b] || {}).name || b)}</span><span class="badge-hist-count">${cnt[b]}</span></div>`).join('');
+    const done = HIST.filter(o => o.status.includes('จัดยาเสร็จ')).length;
+    $('nav-badge-hist').classList.toggle('hidden', !done); $('nav-badge-hist').textContent = done;
+    setupHorizontalScroll($('box-scroller-hist'));
+  }
+  function selHistBox(b) { curHistBox = b; renderHistBoxes(); renderHist(curHistStatus); }
+  function filterHist(status, el) {
+    curHistStatus = status;
+    document.querySelectorAll('#tab-hist .nav-link').forEach(x => x.classList.remove('active')); el.classList.add('active');
+    const st = status === 'STATS';
+    $('box-scroller-hist').classList.toggle('hidden', st); $('stats-filter').classList.toggle('hidden', !st);
+    st ? loadStats() : renderHist(status);
+  }
+  function getDuration(t1, t2) { if (!t1 || !t2 || t2 <= t1) return ''; const m = Math.floor((t2 - t1) / 6e4), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60); return (d ? d + 'วัน ' : '') + (h ? h + 'ชม. ' : '') + (m % 60) + 'นาที'; }
+  function renderHist(status) {
+    if (!HIST) return loadHistory(false);
+    let f = curHistBox === 'ALL' ? HIST : HIST.filter(o => o.boxIds.includes(curHistBox) || o.box === curHistBox);
+    $('bg-wait').textContent = f.filter(o => o.status.includes('รอ')).length;
+    $('bg-done').textContent = f.filter(o => o.status.includes('จัดยาเสร็จ')).length;
+    $('bg-recv').textContent = f.filter(o => o.status.includes('ได้รับ') || o.status.includes('รับยาได้')).length;
+    let msg = '';
+    if (status === 'รอการจัดยา') { f = f.filter(o => o.status.includes('รอ')); msg = "เมื่อห้องยาจัดเสร็จ สถานะจะเปลี่ยนเป็น 'จัดยาเสร็จแล้ว'"; }
+    else if (status === 'จัดยาเสร็จแล้ว') { f = f.filter(o => o.status.includes('จัดยาเสร็จ')); msg = 'มารับยาที่ห้องยาได้เลย'; }
+    else f = f.filter(o => o.status.includes('ได้รับ') || o.status.includes('รับยาได้'));
+    $('hist-msg').textContent = msg; $('hist-msg').classList.toggle('hidden', !msg);
+    renderHistList(f, 15);
+  }
+  function renderHistList(data, limit) {
+    const show = limit ? data.slice(0, limit) : data;
+    const html = show.map(o => {
+      const cls = o.status.includes('รอ') ? 'card-wait' : (o.status.includes('รับ') ? 'card-recv' : 'card-done');
+      const groups = {}; o.items.forEach(i => (groups[i.box] = groups[i.box] || []).push(i));
+      const items = Object.keys(groups).map(b => `${Object.keys(groups).length > 1 ? `<li class="list-unstyled fw-bold text-dark mt-1" style="margin-left:-1rem">📦 ${esc(b)}</li>` : ''}` + groups[b].map(i => `<li>${esc(i.name)} <b>(${fmtN(i.qty)})</b></li>`).join('')).join('');
+      const tl = o.status.includes('ได้รับ') ? `<div class="timeline px-2 py-2"><div class="timeline-line"></div>
+          <div class="tl-step step-order"><div class="tl-icon"><i class="fas fa-file-alt"></i></div><div class="tl-time">เบิก ${esc(o.time.split(' ')[1] || '')}</div></div>
+          <div class="tl-step step-check"><div class="tl-duration">${getDuration(o.rawOrderTime, o.rawCheckTime)}</div><div class="tl-icon"><i class="fas fa-check"></i></div><div class="tl-time">เสร็จ ${esc(o.checkedTime || '-')}</div></div>
+          <div class="tl-step step-recv"><div class="tl-duration">${getDuration(o.rawCheckTime, o.rawAcceptTime)}</div><div class="tl-icon"><i class="fas fa-hand-holding"></i></div><div class="tl-time">รับ ${esc(o.acceptedTime || '-')}</div></div></div>` : '';
+      return `<div class="card mb-2 p-2 shadow-sm ${cls}">
+          <div class="d-flex justify-content-between align-items-center"><strong class="text-primary small text-truncate w-75">${esc(o.id)}</strong><small class="text-muted" style="font-size:10px">${esc(o.time)}</small></div>
+          <div class="small text-muted my-1"><i class="fas fa-box"></i> ${esc(o.box)} · <i class="fas fa-user"></i> ${esc(o.user)}</div>
+          ${tl}
+          <ul class="small text-muted ps-3 mb-1" style="max-height:140px;overflow-y:auto">${items}</ul>
+          <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <small class="badge bg-light text-dark border">${esc(o.status)}</small>
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="printHist('${esc(o.id)}')"><i class="fas fa-print"></i> ใบเบิก</button>
+              ${o.status.includes('รอการจัดยา') ? `<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteOrder('${esc(o.id)}')"><i class="fas fa-trash"></i> ยกเลิก</button>` : ''}
+            </div>
+          </div>
+          ${o.status.includes('จัดยาเสร็จ') ? `<button class="btn btn-success w-100 fw-bold py-2 mt-2" onclick="receiveOrder('${esc(o.id)}')">กดรับยา</button>` : ''}
+        </div>`;
+    }).join('');
+    const more = limit && data.length > limit ? `<button class="btn btn-outline-secondary w-100 mt-2" id="hist-more">ดูทั้งหมด (${data.length})</button>` : '';
+    $('hist-res').innerHTML = (html + more) || '<div class="text-center text-muted mt-3">ไม่มีรายการ</div>';
+    if (more) $('hist-more').onclick = () => renderHistList(data, null);
+  }
+  /** พิมพ์ใบเบิก — สร้างจากข้อมูลทันที (ไม่มีไฟล์ใน Drive, ไม่มีลายเซ็น/QR) */
+  function printHist(id) {
+    const o = HIST.find(x => x.id === id); if (!o) return;
+    RX.printSlip({ id: o.id, user: o.user, time: o.time, status: o.status, items: o.items });
+  }
+  async function receiveOrder(id) {
+    const x = await Swal.fire({ title: 'ยืนยันได้รับยาครบถ้วน?', showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก' });
+    if (!x.isConfirmed) return;
+    const r = await api('updateOrderStatus', { orderId: id });
+    if (r.status) { Swal.fire({ icon: 'success', title: 'บันทึกรับยาแล้ว', timer: 1200, showConfirmButton: false }); loadHistory(true); } else Swal.fire('ไม่สำเร็จ', r.message, 'error');
+  }
+  async function deleteOrder(id) {
+    const x = await Swal.fire({ title: 'ยกเลิกใบเบิกนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ใช่, ยกเลิกเลย', cancelButtonText: 'ไม่' });
+    if (!x.isConfirmed) return;
+    Swal.fire({ title: 'กำลังลบ…', didOpen: () => Swal.showLoading() });
+    const r = await api('deleteOrder', { orderId: id });
+    if (r.status) { Swal.fire('ลบสำเร็จ', '', 'success'); loadHistory(true); } else Swal.fire('ลบไม่สำเร็จ', r.message, 'error');
+  }
+  async function loadStats() {
+    $('hist-res').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><div class="mt-2">กำลังคำนวณ…</div></div>'; $('hist-msg').classList.add('hidden');
+    const r = await api('getStatData', { start: $('stat-start').value, end: $('stat-end').value });
+    if (!r.status) return $('hist-res').innerHTML = `<div class="alert alert-danger">${esc(r.message)}</div>`;
+    $('hist-res').innerHTML = r.data.length ? r.data.map((it, i) => `<div class="d-flex align-items-center bg-white p-2 mb-2 rounded shadow-sm border">
+        <div class="me-3 fw-bold text-muted" style="width:20px">${i + 1}</div>
+        <div class="flex-grow-1"><div class="fw-bold text-primary">${esc(it.name)}</div><div class="small text-secondary"><i class="fas fa-box"></i> ${esc(it.box)}</div><div class="small text-muted">เบิก ${it.count} ครั้ง</div></div>
+        <div class="text-end"><div class="fw-bold fs-5">${fmtN(it.qty)}</div><div class="small text-muted">${fmtN(it.price)} บ.</div></div></div>`).join('') : '<div class="text-center text-muted mt-5">ไม่พบข้อมูลการเบิกในช่วงนี้</div>';
+  }
+
+  // =====================================================================
+  //  NAV / PROFILE / misc
+  // =====================================================================
+  function nav(pid, el) {
+    document.querySelectorAll('.page-sec').forEach(x => x.classList.add('hidden')); $(pid).classList.remove('hidden');
+    document.querySelectorAll('.btm-nav .nav-item').forEach(x => x.classList.remove('active')); if (el) el.classList.add('active');
+    if (pid === 'tab-after' && !AH) loadAfter();
+    if (pid === 'tab-hist') { HIST ? renderHist(curHistStatus) : loadHistory(false); }
+    window.scrollTo(0, 0);
+  }
+  function setupHorizontalScroll(ele) {
+    if (!ele || ele.dataset.hs) return; ele.dataset.hs = 1;
+    let down = false, sx, sl;
+    ele.addEventListener('mousedown', e => { down = true; sx = e.pageX - ele.offsetLeft; sl = ele.scrollLeft; });
+    ['mouseleave', 'mouseup'].forEach(ev => ele.addEventListener(ev, () => down = false));
+    ele.addEventListener('mousemove', e => { if (!down) return; e.preventDefault(); ele.scrollLeft = sl - (e.pageX - ele.offsetLeft - sx) * 2; });
+  }
+  async function openProfile() {
+    const u = me();
+    $('pf-user').value = u.username || ''; $('pf-name').value = u.name || ''; $('pf-email').value = u.email || '';
+    ['pf-old', 'pf-new', 'pf-new2'].forEach(i => $(i).value = '');
+    $('pf-groups').innerHTML = $('pf-subs').innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+    mdlProfile.show();
+    const o = await api('getRegOptions');
+    if (!o.status) return;
+    const ck = (arr, cur, cls) => arr.map(v => `<div class="form-check"><input class="form-check-input ${cls}" type="checkbox" value="${esc(v)}" ${cur.includes(v) ? 'checked' : ''}><label class="form-check-label">${esc(v)}</label></div>`).join('');
+    $('pf-groups').innerHTML = ck(o.groups, u.boxGroup || [], 'pf-grp');
+    $('pf-subs').innerHTML = ck(o.options, u.substock || [], 'pf-sub');
+  }
+  async function saveProfile() {
+    const p = { email: $('pf-email').value.trim(), boxGroup: [...document.querySelectorAll('.pf-grp:checked')].map(c => c.value), substock: [...document.querySelectorAll('.pf-sub:checked')].map(c => c.value) };
+    if (!emailOk(p.email)) return Swal.fire('กรุณากรอกอีเมลให้ถูกต้อง');
+    if (!p.boxGroup.length && !p.substock.length) return Swal.fire('เลือกตึกหรือสิทธิ์อย่างน้อย 1 รายการ');
+    if ($('pf-new').value) { const e = pwCheck($('pf-new').value, $('pf-new2').value); if (e) return Swal.fire(e); p.oldPassword = $('pf-old').value; p.newPassword = $('pf-new').value; }
+    const r = await api('updateProfile', p);
+    if (!r.status) return Swal.fire('บันทึกไม่สำเร็จ', r.message, 'error');
+    SESSION.user = r.user; LS.set('rx4_session', SESSION);
+    mdlProfile.hide(); Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', timer: 1000, showConfirmButton: false });
+    curBox = ''; refreshCatalog(false).then(() => loadHistory(true));
+  }
+
+  // =====================================================================
+  //  QR
+  // =====================================================================
+  function setScanMode(m) { scanMode = m; $('scan-hint').textContent = m === 'ITEM' ? 'ส่อง QR Code ที่รายการยา' : 'ส่อง QR Code ที่กล่องยา'; }
+  function startScan() {
+    $('qr-overlay').style.display = 'flex'; setScanMode('ITEM'); $('scanItem').checked = true;
+    html5QrcodeScanner = new Html5Qrcode('reader');
+    html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess)
+      .catch(() => { Swal.fire('Camera Error', 'ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการเข้าถึง', 'error'); $('qr-overlay').style.display = 'none'; });
+  }
+  function stopScan() {
+    const hide = () => $('qr-overlay').style.display = 'none';
+    if (html5QrcodeScanner && html5QrcodeScanner.isScanning) html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); hide(); }).catch(hide); else hide();
+  }
+  function restartScan() { mdlScanRes.hide(); startScan(); }
+  async function onScanSuccess(text) {
+    stopScan();
+    const code = text.trim();
+    if (scanMode === 'BOX') {
+      const b = BOX_BY[code];
+      if (!b) return Swal.fire('ไม่พบกล่อง', 'ไม่พบกล่องยานี้ในระบบ', 'error').then(startScan);
+      nav('tab-stock', document.querySelectorAll('.btm-nav .nav-item')[1]); stockGroup = 'ALL'; selStockBox(b.id); return;
+    }
+    let d;
+    const r0 = INV_BY[code];
+    if (r0) { const m = CAT.drugs[r0[2]] || {}; d = { invId: r0[0], boxId: r0[1], box: (BOX_BY[r0[1]] || {}).name, name: m.n, imageRaw: m.i, location: r0[6], amount: r0[3], actual: r0[4], expire: r0[5] }; }
+    else { Swal.fire({ title: 'กำลังค้นหา…', didOpen: () => Swal.showLoading() }); const r = await api('getInventoryByQr', { qrCode: code }); Swal.close(); if (!r.status) return Swal.fire('ไม่พบ', 'QR นี้ไม่ตรงกับรายการยาในกล่อง', 'error').then(startScan); d = r.data; }
+    $('qr-id').value = d.invId; $('qr-name').textContent = d.name || ''; $('qr-box').textContent = d.box || '';
+    $('qr-loc').value = d.location || ''; $('qr-amt').value = d.amount; $('qr-act').value = d.actual; $('qr-exp').value = d.expire || '';
+    $('qr-img').src = d.imageRaw && String(d.imageRaw).startsWith('http') ? d.imageRaw : DEFAULT_IMG;
+    $('qr-add').classList.toggle('hidden', !(BOX_BY[d.boxId] || {}).canOrder || !INV_BY[d.invId]);
+    mdlScanRes.show();
+  }
+  async function saveQrEdit() {
+    const p = { invId: $('qr-id').value, amount: $('qr-amt').value, actual: $('qr-act').value, location: $('qr-loc').value, expire: $('qr-exp').value };
+    const r = await api('updateInventoryFromQr', p);
+    Swal.fire({ toast: true, icon: r.status ? 'success' : 'error', title: r.status ? 'บันทึกแล้ว' : (r.message || 'ไม่สำเร็จ'), position: 'center', timer: 1000, showConfirmButton: false });
+    mdlScanRes.hide(); refreshCatalog(true); startScan();
+  }
+  function qrAddCart() { addCart($('qr-id').value, 1); mdlScanRes.hide(); }
 </script>
 </body>
 </html>

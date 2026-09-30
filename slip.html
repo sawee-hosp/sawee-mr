@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ใบเบิกเวชภัณฑ์ · Sawee Rxfill</title>
+<link rel="icon" type="image/svg+xml" href="favicon-rx.svg">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;font-family:Sarabun,sans-serif;background:#eef2f7;color:#1f2d3d}
+  .bar{position:sticky;top:0;background:#003d82;color:#fff;padding:10px 14px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .bar button{border:0;border-radius:20px;padding:8px 16px;font:inherit;font-weight:700;background:#fff;color:#003d82;cursor:pointer}
+  .wrap{display:flex;justify-content:center;padding:16px}
+  iframe{width:60mm;height:120mm;border:0;background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+  .msg{padding:40px 16px;text-align:center}
+</style>
+</head>
+<body>
+<div class="bar"><b id="t">ใบเบิกเวชภัณฑ์</b><button id="p" onclick="RX.printSlip(O)" disabled>🖨️ พิมพ์</button></div>
+<div id="m" class="msg">กำลังโหลด…</div>
+<div class="wrap"><iframe id="f" hidden></iframe></div>
+<script src="rxfill-shared.js"></script>
+<script>
+  // เปิดจากลิงก์ในคอลัมน์ PDF ของ Order Detail (หน้า kitbox-admin กด "PDF" แล้วมาที่นี่) — สร้างใบเบิกใหม่ทุกครั้ง ไม่มีไฟล์ใน Drive
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwNMk59pHTzZJTCUZfGoFd_NmjdYrwyTesFqMz4DriMnHFCIr_NMrrpBsp_p4zq7inN1A/exec';
+  let O = null;
+  (async () => {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) return document.getElementById('m').textContent = 'ไม่มีเลขใบเบิก';
+    try {
+      const r = await (await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getOrderSlip', id }) })).json();
+      if (!r.status) return document.getElementById('m').textContent = r.message || 'ไม่พบใบเบิก';
+      O = r.data;
+      document.getElementById('t').textContent = O.id;
+      const f = document.getElementById('f'); f.hidden = false;
+      f.srcdoc = RX.slipHtml(O);
+      document.getElementById('m').remove();
+      document.getElementById('p').disabled = false;
+      if (new URLSearchParams(location.search).get('print') === '1') setTimeout(() => RX.printSlip(O), 400);
+    } catch (e) { document.getElementById('m').textContent = 'เชื่อมต่อไม่ได้: ' + e.message; }
+  })();
+</script>
+</body>
+</html>
