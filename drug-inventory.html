@@ -17,7 +17,7 @@
 
   <style>
     :root { --font-main: "Sarabun", sans-serif; --primary: #003d82; --primary2: #2563eb; --bg: #f4f6f9; --text: #2c3e50; --ha-color: #ffebee; --cool-color: #e3f2fd; }
-    body { background: var(--bg); color: var(--text); font-family: var(--font-main) !important; padding-bottom: 70px; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-main) !important; padding-bottom: 130px; }
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn .3s ease-in; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .cursor-pointer { cursor: pointer; }
@@ -114,6 +114,20 @@
     .ah-cut b { color: #8a5a00; }
     .table-loc td, .table-loc th { font-size: .78rem; padding: 3px 4px; }
     .sig-need { outline: 2px solid #dc3545; }
+    .ah-search-box { position: relative; }
+    .ah-search-box i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--primary2); font-size: 1.2rem; }
+    .ah-search-box input { width: 100%; border: 2px solid var(--primary2); border-radius: 30px; padding: 14px 18px 14px 50px; font-size: 1.1rem; font-weight: 600; box-shadow: 0 6px 18px rgba(37,99,235,.15); outline: none; }
+    .ah-rules { background: #fff8e6; border: 1px solid #f5d38a; border-left: 5px solid #f59e0b; border-radius: 12px; padding: 10px 12px; font-size: .88rem; color: #6b4a00; }
+    .ah-rules li { margin-bottom: 2px; }
+    .oncall-fab { position: fixed; right: 12px; bottom: 76px; z-index: 950; background: linear-gradient(135deg,#dc2626,#ef4444); color: #fff; border-radius: 30px; padding: 8px 14px 8px 10px; box-shadow: 0 6px 18px rgba(220,38,38,.45); display: flex; align-items: center; gap: 8px; cursor: pointer; max-width: 70vw; border: 2px solid #fff; }
+    .oncall-fab .ic { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; animation: ring 2.4s infinite; }
+    .oncall-fab .t { line-height: 1.1; font-size: .72rem; } .oncall-fab .t b { font-size: .9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @keyframes ring { 0%,80%,100% { transform: rotate(0); } 84% { transform: rotate(-15deg); } 88% { transform: rotate(15deg); } 92% { transform: rotate(-10deg); } 96% { transform: rotate(10deg); } }
+    .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal .h { text-align: center; font-size: .72rem; font-weight: 700; color: #6c7a89; }
+    .cal .d { min-height: 58px; border: 1px solid #e3e8ef; border-radius: 10px; padding: 3px; font-size: .72rem; cursor: pointer; background: #fff; }
+    .cal .d .n { font-weight: 700; color: #6c7a89; } .cal .d .p { color: #b91c1c; font-weight: 700; line-height: 1.1; word-break: break-word; }
+    .cal .d.today { border: 2px solid #dc2626; background: #fff1f1; } .cal .d.off { visibility: hidden; }
   </style>
 </head>
 <body>
@@ -266,23 +280,32 @@
 
       <!-- TAB AFTER HOURS -->
       <div id="tab-after" class="page-sec hidden container pt-3 pb-4">
-        <div class="d-flex align-items-center mb-2 gap-2 flex-wrap">
-          <h5 class="fw-bold text-primary m-0 me-auto"><i class="fas fa-moon"></i> ยาที่ใช้นอกเวลา <small class="text-muted fw-normal fs-6">20.00–08.00 น.</small></h5>
-          <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="showExpired()"><i class="fas fa-calendar-times"></i> ยาหมดอายุ</button>
+        <h5 class="fw-bold text-primary mb-2"><i class="fas fa-moon"></i> ค้นหายานอกเวลา</h5>
+        <div class="ah-search-box mb-2">
+          <i class="fas fa-search"></i>
+          <input id="ah-search" type="search" autocomplete="off" placeholder="พิมพ์ชื่อยา / ชื่อการค้า / ชื่อเล่นยา เช่น adrenaline, lasix, ยาลดกรด">
         </div>
-        <div class="d-flex gap-2 overflow-auto pb-2" id="ah-range">
-          <span class="ah-chip active" data-r="1" onclick="setAhRange(1,this)">เมื่อคืน</span>
-          <span class="ah-chip" data-r="7" onclick="setAhRange(7,this)">7 คืน</span>
-          <span class="ah-chip" data-r="30" onclick="setAhRange(30,this)">30 คืน</span>
-          <span class="ah-chip" data-r="c" onclick="setAhRange('c',this)">กำหนดเอง</span>
+        <div class="ah-rules mb-3">
+          <div class="fw-bold mb-1"><i class="fas fa-clipboard-check"></i> กฎการใช้ยานอกเวลา</div>
+          <ol class="mb-0 ps-3">
+            <li>ค้นหายาจากเว็บเบิกยานอกเวลา<b>ก่อนทุกครั้ง</b></li>
+            <li>ถ้าพบยาสำรองอยู่ที่หน่วยงานตัวเองหรือหน่วยงานอื่น <b>ให้ติดต่อหน่วยงานนั้น</b> (ไม่ต้องกลัวยาหมด ยกเว้นยาช่วยชีวิต)</li>
+            <li>ถ้าไม่มีสำรองที่ไหนเลย จึงค่อย<b>โทรตามเภสัชกรที่อยู่เวร</b> <a href="#" onclick="openOnCall();return false" class="fw-bold text-danger text-decoration-none"><i class="fas fa-phone"></i> ดูเวร</a></li>
+          </ol>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+          <span class="small fw-bold text-secondary me-1">ยอดใช้นอกเวลา 20.00–08.00:</span>
+          <div class="d-flex gap-2 overflow-auto" id="ah-range">
+            <span class="ah-chip active" data-r="1" onclick="setAhRange(1,this)">เมื่อคืน</span>
+            <span class="ah-chip" data-r="7" onclick="setAhRange(7,this)">7 คืน</span>
+            <span class="ah-chip" data-r="30" onclick="setAhRange(30,this)">30 คืน</span>
+            <span class="ah-chip" data-r="c" onclick="setAhRange('c',this)">กำหนดเอง</span>
+          </div>
+          <button class="btn btn-sm btn-outline-danger rounded-pill ms-auto" onclick="showExpired()"><i class="fas fa-calendar-times"></i> ยาหมดอายุ</button>
         </div>
         <div id="ah-custom" class="d-flex gap-2 align-items-center mb-2 hidden">
           <input type="date" id="ah-from" class="form-control form-control-sm"><span class="small">ถึง</span><input type="date" id="ah-to" class="form-control form-control-sm">
           <button class="btn btn-sm btn-primary" onclick="loadAfter()">ดู</button>
-        </div>
-        <div class="input-group shadow-sm rounded-pill mb-2 bg-white" style="overflow:hidden">
-          <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
-          <input id="ah-search" type="search" class="form-control border-0" autocomplete="off" placeholder="ค้นหายา (พิมพ์ใกล้เคียงก็เจอ) เช่น adrenalin, ceftri">
         </div>
         <div id="ah-info" class="small text-muted mb-2"></div>
         <div id="ah-list"></div>
@@ -307,11 +330,16 @@
     </div>
   </div>
 
+  <div class="oncall-fab hidden" id="oncall-fab" onclick="openOnCall()">
+    <div class="ic"><i class="fas fa-phone"></i></div>
+    <div class="t">เภสัชกรเวร (On Call)<b id="oncall-name">กำลังโหลด…</b></div>
+  </div>
+
   <div class="btm-nav hidden" id="btm-nav">
     <div class="nav-item active" onclick="nav('tab-order', this)"><i class="fas fa-pills"></i>เบิกยา</div>
     <div class="nav-item" onclick="nav('tab-stock', this)"><i class="fas fa-cubes"></i>สต็อก</div>
     <div class="nav-center-btn" onclick="startScan()"><i class="fas fa-qrcode"></i></div>
-    <div class="nav-item" onclick="nav('tab-after', this)"><i class="fas fa-moon"></i>ดูยานอกเวลา</div>
+    <div class="nav-item" onclick="nav('tab-after', this)"><i class="fas fa-magnifying-glass"></i>ค้นหายานอกเวลา</div>
     <div class="nav-item" onclick="nav('tab-hist', this)"><i class="fas fa-history"></i>รายการเบิก<div id="nav-badge-hist" class="nav-badge-large hidden"></div></div>
   </div>
 
@@ -354,6 +382,21 @@
       </div>
     </div></div>
   </div>
+
+  <!-- ON CALL -->
+  <div class="modal fade" id="mdlOnCall"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header text-white" style="background:linear-gradient(135deg,#dc2626,#ef4444)"><h6 class="fw-bold m-0"><i class="fas fa-user-md"></i> เภสัชกรเวรนอกเวลา (On Call)</h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div id="oc-now" class="text-center mb-3"></div>
+      <div class="small text-muted text-center mb-2">เวรเริ่ม 08.00 น. ถึง 08.00 น. ของวันถัดไป (หลังเที่ยงคืนยังเป็นเวรของเมื่อวาน)</div>
+      <button class="btn btn-outline-danger w-100 rounded-pill mb-2" onclick="toggleCal()"><i class="fas fa-calendar-alt"></i> ดูเวรทั้งเดือน</button>
+      <div id="oc-cal" class="hidden">
+        <div class="d-flex justify-content-between align-items-center mb-2"><button class="btn btn-sm btn-light" onclick="calMove(-1)"><i class="fas fa-chevron-left"></i></button><b id="oc-month"></b><button class="btn btn-sm btn-light" onclick="calMove(1)"><i class="fas fa-chevron-right"></i></button></div>
+        <div class="cal" id="oc-grid"></div>
+        <div class="small text-muted mt-2">แตะวันที่เพื่อดูเบอร์โทร</div>
+      </div>
+    </div>
+  </div></div></div>
 
   <!-- PROFILE -->
   <div class="modal fade" id="mdlProfile"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
@@ -407,7 +450,8 @@
   let cart = [];                                // [{ invId, qty }]
   let curBox = '', curStockBox = '', reqQty = {};
   let HIST = null, curHistBox = 'ALL', curHistStatus = 'รอการจัดยา';
-  let AH = null, ahRange = 1, askMode = 'register';
+  var AH = null; let ahRange = 1, askMode = 'register';
+  const AH_EMPTY = { from: '', to: '', rows: [], names: {}, agg: {}, lastSync: '' };
   let offC, mdlProfile, mdlScanRes, html5QrcodeScanner, scanMode = 'ITEM', isSubmitting = false;
   const me = () => (SESSION && SESSION.user) || {};
   const cartKey = () => 'rx4_cart_' + (me().username || '');
@@ -564,7 +608,7 @@
   }
   function forceLogin(msg) {
     SESSION = null; LS.del('rx4_session');
-    $('app-main').classList.add('hidden'); $('btm-nav').classList.add('hidden');
+    $('app-main').classList.add('hidden'); $('btm-nav').classList.add('hidden'); $('oncall-fab').classList.add('hidden');
     $('auth').classList.remove('hidden'); showAuth('login'); if (msg) setMsg(msg);
   }
   function logout() { try { mdlProfile.hide(); } catch (e) {} forceLogin(''); }
@@ -601,6 +645,7 @@
     // 2) ของสดจาก server (กล่องมาก่อน รายการยาตามมา)
     api('getBoxes').then(r => { if (r.status && !CAT) { BOXES = r.boxes; LS.set('rx4_boxes_' + me().username, BOXES); renderOrderBoxes(); renderOrder(); } });
     refreshCatalog(false).then(() => loadHistory(true));
+    $('oncall-fab').classList.remove('hidden'); loadOnCall();
   }
 
   async function refreshCatalog(fresh) {
@@ -649,7 +694,7 @@
   }
   function drugScore(kw, ic) {
     const d = (CAT && CAT.drugs[ic]) || {};
-    return RX.fuzzy(kw, [{ t: d.n, w: 1 }, { t: d.g, w: .9 }, { t: d.f, w: .9 }, { t: ic, w: 1 }]);
+    return RX.fuzzy(kw, [{ t: d.n, w: 1 }, { t: d.g, w: .9 }, { t: d.f, w: .95, split: true }, { t: ic, w: 1 }]);
   }
   function renderOrder() {
     const grid = $('order-grid'), sub = $('order-sub');
@@ -847,8 +892,8 @@
     return a;
   }
   function renderAfter() {
-    const list = $('ah-list'); if (!AH) return;
-    const nights = AH.from === AH.to ? `คืนวันที่ ${thD(AH.from)} (20.00) – เช้าวันถัดไป (08.00)` : `คืน ${thD(AH.from)} – ${thD(AH.to)}`;
+    const list = $('ah-list'), AH = window.AH || AH_EMPTY;
+    const nights = !AH.from ? 'กำลังโหลดยอดใช้…' : AH.from === AH.to ? `คืนวันที่ ${thD(AH.from)} (20.00) – เช้าวันถัดไป (08.00)` : `คืน ${thD(AH.from)} – ${thD(AH.to)}`;
     $('ah-info').innerHTML = `${nights}${AH.lastSync ? ` · ข้อมูล HOSxP อัปเดต ${esc(AH.lastSync)}` : ' · <span class="text-danger">ยังไม่มีข้อมูลจาก HOSxP</span>'}`;
     const kw = $('ah-search').value.trim();
     const name = ic => (CAT && CAT.drugs[ic] && CAT.drugs[ic].n) || (AH.names[ic] || {}).n || ic;
@@ -857,7 +902,7 @@
       const pool = new Set([...Object.keys(AH.agg), ...(CAT ? Object.keys(CAT.drugs) : [])]);
       ics = [...pool].map(ic => {
         const d = (CAT && CAT.drugs[ic]) || {}, h = AH.names[ic] || {};
-        return { ic, s: RX.fuzzy(kw, [{ t: d.n || h.n, w: 1 }, { t: d.g || h.g, w: .9 }, { t: d.f, w: .9 }, { t: ic, w: 1 }]) };
+        return { ic, s: RX.fuzzy(kw, [{ t: d.n || h.n, w: 1 }, { t: d.g || h.g, w: .9 }, { t: d.f, w: .95, split: true }, { t: ic, w: 1 }]) };
       }).filter(x => x.s >= RX.FUZZY_MIN).sort((a, b) => b.s - a.s || ((AH.agg[b.ic] || {}).total || 0) - ((AH.agg[a.ic] || {}).total || 0)).slice(0, 60).map(x => x.ic);
     } else {
       ics = Object.keys(AH.agg).sort((a, b) => AH.agg[b].total - AH.agg[a].total).slice(0, 80);
@@ -867,6 +912,7 @@
     lazyLoad(list);
   }
   function afterCard(ic, nm) {
+    const AH = window.AH || AH_EMPTY;
     const a = AH.agg[ic], d = (CAT && CAT.drugs[ic]) || {}, unit = d.u || (AH.names[ic] || {}).u || '';
     const locs = CAT ? CAT.inv.filter(r => r[2] === ic) : [];
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -1042,6 +1088,41 @@
     mdlProfile.hide(); Swal.fire({ icon: 'success', title: 'บันทึกแล้ว', timer: 1000, showConfirmButton: false });
     curBox = ''; refreshCatalog(false).then(() => loadHistory(true));
   }
+
+  // =====================================================================
+  //  เวรเภสัชกรนอกเวลา (On Call) — 00:00–07:59 ยังเป็นเวรของเมื่อวาน
+  // =====================================================================
+  let OC = null, ocMonth = '', mdlOnCall;
+  async function loadOnCall(month) {
+    const r = await api('getOnCall', month ? { month } : {});
+    if (!r.status) { $('oncall-name').textContent = 'ดูตารางเวร'; return null; }
+    if (!month) { OC = r.data; const n = OC.now; $('oncall-name').textContent = n ? n.name + (n.tel ? ' · ' + n.tel : '') : 'ไม่พบเวรวันนี้'; }
+    return r.data;
+  }
+  const telLink = t => { const d = String(t || '').replace(/[^0-9+]/g, ''); return d ? `<a href="tel:${d}" class="btn btn-danger rounded-pill px-4 mt-2"><i class="fas fa-phone"></i> โทร ${esc(t)}</a>` : '<div class="small text-muted mt-2">ไม่มีเบอร์ในตาราง</div>'; };
+  async function openOnCall() {
+    mdlOnCall = mdlOnCall || new bootstrap.Modal('#mdlOnCall');
+    $('oc-cal').classList.add('hidden'); mdlOnCall.show();
+    if (!OC) { $('oc-now').innerHTML = '<div class="spinner-border text-danger"></div>'; await loadOnCall(); }
+    const n = OC && OC.now;
+    $('oc-now').innerHTML = n ? `<div class="small text-muted">เวรของวันที่ ${thD(OC.dutyDate)}</div><div class="fs-3 fw-bold text-danger">${esc(n.name)}</div>${telLink(n.tel)}` : '<div class="text-muted">ไม่พบเวรของวันนี้ในตาราง</div>';
+  }
+  function toggleCal() { const c = $('oc-cal'); c.classList.toggle('hidden'); if (!c.classList.contains('hidden')) { ocMonth = (OC && OC.dutyDate || isoD(new Date())).slice(0, 7); drawCal(); } }
+  function calMove(k) { const [y, m] = ocMonth.split('-').map(Number); const d = new Date(y, m - 1 + k, 1); ocMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); drawCal(); }
+  async function drawCal() {
+    const [y, m] = ocMonth.split('-').map(Number);
+    $('oc-month').textContent = new Date(y, m - 1, 1).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+    $('oc-grid').innerHTML = '<div class="text-center" style="grid-column:1/-1"><div class="spinner-border spinner-border-sm text-danger"></div></div>';
+    const data = ocMonth === (OC && OC.month) ? OC : await loadOnCall(ocMonth);
+    const by = {}; ((data && data.list) || []).forEach(x => by[x.date] = x);
+    const first = new Date(y, m - 1, 1).getDay(), days = new Date(y, m, 0).getDate(), duty = OC && OC.dutyDate;
+    let h = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(d => `<div class="h">${d}</div>`).join('');
+    for (let i = 0; i < first; i++) h += '<div class="d off"></div>';
+    for (let d = 1; d <= days; d++) { const k = `${ocMonth}-${String(d).padStart(2, '0')}`, x = by[k];
+      h += `<div class="d ${k === duty ? 'today' : ''}" onclick="calDay('${k}')"><div class="n">${d}</div><div class="p">${x ? esc(x.name) : ''}</div></div>`; }
+    $('oc-grid').innerHTML = h; window._ocBy = by;
+  }
+  function calDay(k) { const x = (window._ocBy || {})[k]; Swal.fire({ title: x ? x.name : 'ไม่มีข้อมูล', html: `<div class="text-muted">เวรวันที่ ${thD(k)} (08.00 – 08.00 น. วันถัดไป)</div>${x ? telLink(x.tel) : ''}`, showConfirmButton: false, showCloseButton: true }); }
 
   // =====================================================================
   //  QR

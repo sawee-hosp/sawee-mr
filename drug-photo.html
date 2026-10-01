@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -6,158 +5,177 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>ถ่ายรูปยา · Sawee Rxfill</title>
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📷</text></svg>'>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon-admin.svg">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="rxfill-shared.js"></script>
 <style>
-  body{font-family:Sarabun,sans-serif;background:#f4f7fb;padding-bottom:40px}
-  .res{cursor:pointer}.res:hover{background:#eef4ff}
-  .ph{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#e9eef5}
-  .ph-card.primary{outline:3px solid #198754;border-radius:12px}
-  #preview{max-height:320px;object-fit:contain;border-radius:10px;background:#000}
-  .muted{color:#6c7a89;font-size:.85rem}
-  .pill{display:inline-block;background:#e7eef8;border-radius:20px;padding:1px 10px;margin:2px;font-size:.8rem}
+  :root{--g0:#064e2b;--g1:#0f7a3d;--g2:#16a34a;--g3:#dcfce7;--o1:#f97316;--o2:#fb923c;--pu:#7c3aed}
+  *{font-family:Sarabun,sans-serif}body{background:#f3f6f4;padding-bottom:40px}
+  .hidden{display:none!important}.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.min-w-0{min-width:0}
+  .top{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,var(--g0),var(--g1));color:#fff;padding:10px 14px;border-bottom:3px solid var(--o1);display:flex;align-items:center;gap:10px}
+  .top img{width:30px}.top b{font-size:1.05rem}
+  .card-x{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(6,78,43,.07),0 6px 20px rgba(6,78,43,.05);border:1px solid #e7efe9}
+  .stat{padding:10px;text-align:center}.stat .n{font-size:1.5rem;font-weight:800}.stat .l{font-size:.75rem;color:#6b7c73}
+  .bar{height:10px;border-radius:6px;background:#e7efe9;overflow:hidden}.bar div{height:100%;background:linear-gradient(90deg,var(--g1),var(--o1))}
+  .chip{display:inline-flex;align-items:center;gap:4px;border-radius:30px;padding:4px 12px;font-size:.82rem;border:1px solid #d6e2da;background:#fff;cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--g1);color:#fff;border-color:var(--g1)}
+  .row-d{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #eef2ef;cursor:pointer}.row-d:hover{background:#f6fbf7}
+  .pc{min-width:34px;text-align:center;border-radius:10px;font-weight:800;font-size:.8rem;padding:2px 6px}
+  .pc0{background:#fee2e2;color:#b91c1c}.pc1{background:var(--g3);color:var(--g0)}
+  .ph{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:#eef3ef}
+  .phc.primary{outline:3px solid var(--g2);border-radius:14px}
+  .btn-g{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border:0;font-weight:700}.btn-o{background:linear-gradient(135deg,var(--o1),var(--o2));color:#fff;border:0;font-weight:700}
+  .cam{border:2px dashed #b7cbbf;border-radius:16px;padding:18px;text-align:center;cursor:pointer;background:#f8fbf9}
+  #pv{max-height:300px;object-fit:contain;border-radius:12px;background:#000}
 </style>
 </head>
 <body>
-<nav class="navbar bg-white border-bottom sticky-top"><div class="container">
-  <span class="navbar-brand fw-bold">📷 ถ่ายรูปยา</span>
-  <span class="muted" id="who"></span>
-</div></nav>
+<div class="top"><a href="kitbox-admin.html" class="text-white"><i class="fas fa-chevron-left"></i></a><img src="favicon-admin.svg" alt=""><b class="flex-grow-1">ถ่ายรูปยา</b><span class="small opacity-75" id="who"></span></div>
 
-<div class="container py-3" style="max-width:820px">
-  <!-- login -->
-  <div id="vLogin" class="card shadow-sm mx-auto" style="max-width:380px"><div class="card-body">
-    <h6 class="mb-3">เข้าสู่ระบบ (ผู้ดูแล)</h6>
-    <input id="lu" class="form-control mb-2" placeholder="Username">
-    <button class="btn btn-primary w-100" onclick="login()">เข้าสู่ระบบ</button>
-  </div></div>
+<div class="container py-3" style="max-width:900px">
+  <div id="vLogin" class="card-x p-4 mx-auto" style="max-width:380px">
+    <h6 class="fw-bold mb-3">เข้าสู่ระบบผู้ดูแล</h6>
+    <input id="lu" class="form-control mb-2" placeholder="HosXP Username" autocapitalize="off">
+    <input id="lp" type="password" class="form-control mb-3" placeholder="รหัสผ่าน">
+    <button class="btn btn-g w-100 rounded-pill" onclick="login()">เข้าสู่ระบบ</button>
+  </div>
 
-  <!-- search -->
-  <div id="vMain" class="d-none">
-    <input id="q" class="form-control form-control-lg mb-2" placeholder="ค้นหา: ชื่อยา / icode / invs code / TMTID">
-    <div id="list" class="list-group mb-3"></div>
-
-    <div id="drug" class="d-none">
-      <div class="card mb-3"><div class="card-body">
-        <div class="d-flex justify-content-between"><div>
-          <h5 class="mb-0" id="dName"></h5>
-          <div class="muted">icode HOSxP: <b id="dIcode"></b> · <span id="dUnit"></span></div></div>
-          <button class="btn btn-sm btn-light" onclick="closeDrug()">✕</button></div>
-        <div id="dLoc" class="mt-2 small"></div>
-      </div></div>
-
-      <div class="card mb-3"><div class="card-body">
-        <h6>ถ่ายรูปใหม่</h6>
-        <div class="row g-2">
-          <div class="col-md-6"><label class="form-label small mb-0">รหัสคลัง (invs code)</label>
-            <select id="fInvs" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label small mb-0">TMTID</label>
-            <input id="fTmt" class="form-control" list="tmtList" placeholder="เลือก/พิมพ์ TMTID"><datalist id="tmtList"></datalist></div>
-          <div class="col-md-8"><label class="form-label small mb-0">ยี่ห้อ / บริษัท</label><input id="fBrand" class="form-control"></div>
-          <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input type="checkbox" class="form-check-input" id="fPrimary"><label class="form-check-label" for="fPrimary">ตั้งเป็นรูปหลัก</label></div></div>
-          <div class="col-12"><input type="file" id="fFile" accept="image/*" capture="environment" class="form-control"></div>
-          <div class="col-12 text-center"><img id="preview" class="d-none w-100"></div>
-          <div class="col-12"><button id="bUp" class="btn btn-success w-100" disabled onclick="upload()">อัปโหลดรูป</button></div>
-        </div>
-        <div class="muted mt-2">รูปเก็บในโฟลเดอร์ drugcode_Images · ระบบเก็บแค่ URL ในชีต DrugPhotos ผูกกับ icode + invs code + TMTID</div>
-      </div></div>
-
-      <h6>รูปที่มีอยู่ <span class="muted" id="pCount"></span></h6>
-      <div class="row g-2" id="photos"></div>
+  <div id="vMain" class="hidden">
+    <div class="card-x p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-end mb-1"><b>ความครบถ้วนของรูปยา</b><span class="small text-muted" id="covTxt"></span></div>
+      <div class="bar mb-3"><div id="covBar" style="width:0"></div></div>
+      <div class="row g-2 text-center" id="stats"></div>
+      <div class="small text-muted mt-2">ฐานรายการ = ยาทุกตัวใน HOSxP (icode) · ยาคลัง INVS ที่ยังไม่ผูก icode ถ่ายเก็บไว้ได้ด้วยรหัสคลัง · รูปอยู่ใน Drive โฟลเดอร์ drugcode_Images · ชีต DrugPhotos เก็บ URL ผูก icode + invs + TMTID (ย้ายไประบบใหญ่ได้ภายหลัง)</div>
     </div>
+    <input id="q" class="form-control form-control-lg rounded-pill mb-2" placeholder="ค้นหา: ชื่อยา / generic / icode / invs code">
+    <div class="d-flex gap-2 overflow-auto pb-2" id="flt">
+      <span class="chip on" data-f="stock0">ในกล่องสำรอง · ยังไม่มีรูป</span>
+      <span class="chip" data-f="no">ยังไม่มีรูป</span>
+      <span class="chip" data-f="yes">มีรูปแล้ว</span>
+      <span class="chip" data-f="all">ทั้งหมด</span>
+      <span class="chip" data-f="invs">INVS ไม่มี icode</span>
+    </div>
+    <div class="form-check form-switch small mb-2"><input class="form-check-input" type="checkbox" id="showInactive"><label class="form-check-label" for="showInactive">แสดงยาที่เลิกใช้ (ขึ้นต้น *)</label></div>
+    <div class="small text-muted mb-1" id="cnt"></div>
+    <div class="card-x overflow-hidden" id="list"></div>
   </div>
 </div>
 
-<script>
-  // ใช้ URL เดียวกับหน้าห้องยา (Code.gs admin)
-  const API_URL = "https://script.google.com/macros/s/AKfycbwV8w7I53ilAwN6uSblnrrohfVeQSZd-Hm_O3jfyQRI4z3hDt_nTSxQCVgQ_BPPVsd9uQ/exec";
-  let USER = null, CUR = null, t = null;
-  const $ = id => document.getElementById(id);
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+<div class="modal fade" id="mDrug"><div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-scrollable"><div class="modal-content" style="border-radius:20px">
+  <div class="modal-header" style="background:linear-gradient(135deg,#064e2b,#0f7a3d);color:#fff"><div class="min-w-0"><div class="fw-bold one" id="dName"></div><div class="small opacity-75" id="dSub"></div></div><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <div id="dLoc" class="small mb-2"></div>
+    <label class="cam w-100 mb-2" for="fFile"><i class="fas fa-camera fa-2x" style="color:var(--o1)"></i><div class="fw-bold mt-1">แตะเพื่อถ่ายรูป / เลือกรูป</div><div class="small text-muted">ย่อเหลือ 1280px ก่อนส่ง</div></label>
+    <input type="file" id="fFile" accept="image/*" capture="environment" class="hidden">
+    <div class="text-center mb-2"><img id="pv" class="hidden w-100"></div>
+    <div class="row g-2 mb-2">
+      <div class="col-md-6"><label class="small text-muted">รหัสคลัง (invs)</label><select id="fInvs" class="form-select"></select></div>
+      <div class="col-md-6"><label class="small text-muted">TMTID</label><input id="fTmt" class="form-control" list="tmtL"><datalist id="tmtL"></datalist></div>
+      <div class="col-md-8"><label class="small text-muted">ยี่ห้อ / บริษัท</label><input id="fBrand" class="form-control"></div>
+      <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input type="checkbox" class="form-check-input" id="fPrimary"><label class="form-check-label" for="fPrimary">ตั้งเป็นรูปหลัก</label></div></div>
+    </div>
+    <div class="d-flex gap-2 mb-3"><button id="bUp" class="btn btn-g rounded-pill flex-grow-1 py-2" disabled onclick="upload()"><i class="fas fa-cloud-upload-alt"></i> บันทึกรูป</button>
+      <button class="btn btn-o rounded-pill py-2" onclick="nextNoPhoto()">ถัดไปที่ยังไม่มีรูป <i class="fas fa-forward"></i></button></div>
+    <h6 class="fw-bold">รูปที่มีอยู่ <span class="text-muted small" id="pCount"></span></h6>
+    <div class="row g-2" id="photos"></div>
+  </div></div></div></div>
 
-  async function callApi(action, payload = {}) {
-    const r = await fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload }) });
-    return r.json();
-  }
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const ADMIN_URL = 'https://script.google.com/macros/s/AKfycbwV8w7I53ilAwN6uSblnrrohfVeQSZd-Hm_O3jfyQRI4z3hDt_nTSxQCVgQ_BPPVsd9uQ/exec';
+  const WARD_URL = 'https://script.google.com/macros/s/AKfycbwNMk59pHTzZJTCUZfGoFd_NmjdYrwyTesFqMz4DriMnHFCIr_NMrrpBsp_p4zq7inN1A/exec';
+  const $ = id => document.getElementById(id), esc = RX.esc;
+  let SES = null, COV = null, CUR = null, filt = 'stock0', IMG64 = null, mDrug;
+  try { SES = JSON.parse(localStorage.getItem('rxadm_session')); } catch (e) {}
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }).then(r => r.json()).catch(e => ({ status: false, message: e.message }));
+  async function api(action, payload = {}) { const r = await post(ADMIN_URL, { action, payload: { ...payload, token: SES && SES.token } }); if (r.code === 'SESSION_EXPIRED') { localStorage.removeItem('rxadm_session'); location.reload(); } return r; }
+
   async function login() {
-    const u = $('lu').value.trim(); if (!u) return;
-    const r = await callApi('adminLogin', u);
-    if (!r.status) return Swal.fire('ไม่พบผู้ใช้', r.message || '', 'error');
-    USER = r.user; try { localStorage.setItem('photo_user', JSON.stringify(USER)); } catch (e) {}
-    start();
+    const r = await post(WARD_URL, { action: 'login', username: $('lu').value.trim(), password: $('lp').value });
+    if (!r.status) return Swal.fire('เข้าสู่ระบบไม่สำเร็จ', r.message || r.code, 'error');
+    if (!r.user.isAdmin) return Swal.fire('ไม่มีสิทธิ์ผู้ดูแล', '', 'warning');
+    SES = { token: r.token, user: r.user }; localStorage.setItem('rxadm_session', JSON.stringify(SES)); start();
   }
-  function start() {
-    $('vLogin').classList.add('d-none'); $('vMain').classList.remove('d-none');
-    $('who').textContent = USER.name;
-    const ic = new URLSearchParams(location.search).get('icode'); if (ic) openDrug(ic);
+  async function start() {
+    $('vLogin').classList.add('hidden'); $('vMain').classList.remove('hidden'); $('who').textContent = SES.user.name;
+    $('list').innerHTML = '<div class="text-center p-4"><div class="spinner-border text-success"></div></div>';
+    const r = await api('photoCoverage'); if (!r.status) return $('list').innerHTML = `<div class="p-3 text-danger">${esc(r.message)}</div>`;
+    COV = r.data; renderStats(); render();
+    const ic = new URLSearchParams(location.search).get('icode'); if (ic) openDrug(ic, '');
   }
-  $('q').oninput = () => { clearTimeout(t); t = setTimeout(search, 350); };
-  async function search() {
-    const kw = $('q').value.trim(); if (kw.length < 2) { $('list').innerHTML = ''; return; }
-    $('list').innerHTML = '<div class="list-group-item muted">กำลังค้นหา…</div>';
-    const r = await callApi('photoSearch', { kw });
-    $('list').innerHTML = (r.data || []).map(d => `<div class="list-group-item res ${d.inactive ? 'text-muted' : ''}" onclick="openDrug('${esc(d.icode)}')">
-      <div class="d-flex justify-content-between"><b>${esc(d.name)}</b><span class="badge ${d.photos ? 'text-bg-success' : 'text-bg-secondary'}">${d.photos} รูป</span></div>
-      <div class="muted">${esc(d.icode)} · ${esc(d.strength || '')} ${esc(d.units || '')} ${d.invs.map(x => `<span class="pill">invs ${esc(x)}</span>`).join('')}</div></div>`).join('') || '<div class="list-group-item muted">ไม่พบในรายการยา HOSxP</div>';
+  function renderStats() {
+    const act = COV.hosxp.filter(x => !x[9]), has = act.filter(x => x[5] > 0), st = act.filter(x => x[7]), stHas = st.filter(x => x[5] > 0);
+    const pct = act.length ? Math.round(has.length / act.length * 100) : 0;
+    $('covBar').style.width = pct + '%'; $('covTxt').textContent = `${has.length}/${act.length} รายการ (${pct}%)`;
+    const s = (n, l, c) => `<div class="col-3"><div class="stat card-x"><div class="n" style="color:${c}">${n}</div><div class="l">${l}</div></div></div>`;
+    $('stats').innerHTML = s(act.length, 'ยา HOSxP ใช้อยู่', '#064e2b') + s(has.length, 'มีรูปแล้ว', '#16a34a') + s(`${stHas.length}/${st.length}`, 'ยาสำรองในกล่อง', '#f97316') + s(COV.invsOnly.length, 'INVS ไม่มี icode', '#7c3aed');
   }
-  async function openDrug(icode) {
-    $('list').innerHTML = '';
-    const r = await callApi('photoGetDrug', { icode });
-    if (!r.status) return Swal.fire('ผิดพลาด', r.message, 'error');
-    CUR = r.data;
-    $('drug').classList.remove('d-none');
-    $('dName').textContent = CUR.name || '(ไม่พบชื่อใน HOSxP)'; $('dIcode').textContent = CUR.icode;
-    $('dUnit').textContent = [CUR.strength, CUR.units].filter(Boolean).join(' · ');
-    $('dLoc').innerHTML = CUR.location ? `<pre class="mb-0 small">${esc(CUR.location.note_text)}</pre>` : '<span class="muted">ไม่มีเก็บสำรองในกล่อง</span>';
-    $('fInvs').innerHTML = '<option value="">— ไม่ระบุ —</option>' + CUR.drugcode.map(d => `<option value="${esc(d.invs_code)}" data-tmt="${esc(d.new_tmtid || d.tmtid)}" data-brand="${esc(d.company)}">${esc(d.invs_code)} · ${esc(d.invs_name)} (${esc(d.company)})</option>`).join('');
-    $('tmtList').innerHTML = CUR.drugcode.flatMap(d => [d.tmtid, d.new_tmtid]).filter(Boolean).map(x => `<option value="${esc(x)}">`).join('');
-    if (CUR.drugcode.length === 1) { $('fInvs').selectedIndex = 1; $('fInvs').onchange(); }
+  document.querySelectorAll('#flt .chip').forEach(c => c.onclick = () => { filt = c.dataset.f; document.querySelectorAll('#flt .chip').forEach(x => x.classList.toggle('on', x === c)); render(); });
+  $('showInactive').onchange = render;
+  let t; $('q').oninput = () => { clearTimeout(t); t = setTimeout(render, 200); };
+  function rowsNow() {
+    const kw = $('q').value.trim();
+    if (filt === 'invs') {
+      let l = COV.invsOnly; if (kw) l = l.map(x => ({ x, s: RX.fuzzy(kw, [{ t: x[1] }, { t: x[2] }, { t: x[0] }]) })).filter(o => o.s >= RX.FUZZY_MIN).sort((a, b) => b.s - a.s).map(o => o.x);
+      return l.map(x => ({ inv: true, key: x[0], name: x[1], sub: `invs ${x[0]} · ${x[2]} · ${x[3]}`, n: x[4] }));
+    }
+    let l = COV.hosxp.filter(x => $('showInactive').checked || !x[9]);
+    if (filt === 'stock0') l = l.filter(x => x[7] && !x[5]); else if (filt === 'no') l = l.filter(x => !x[5]); else if (filt === 'yes') l = l.filter(x => x[5]);
+    if (kw) l = l.map(x => ({ x, s: RX.fuzzy(kw, [{ t: x[1] }, { t: x[4], w: .9 }, { t: x[0] }, { t: x[6], split: true }]) })).filter(o => o.s >= RX.FUZZY_MIN).sort((a, b) => b.s - a.s).map(o => o.x);
+    return l.map(x => ({ key: x[0], name: x[1], sub: `${x[0]} · ${x[2]} ${x[3]}${x[4] ? ' · ' + x[4] : ''}${x[6] ? ' · invs ' + x[6] : ''}`, n: x[5], stock: x[7] }));
+  }
+  function render() {
+    const l = rowsNow(); $('cnt').textContent = `${l.length} รายการ`;
+    $('list').innerHTML = l.slice(0, 120).map(x => `<div class="row-d" onclick="openDrug('${x.inv ? '' : esc(x.key)}','${x.inv ? esc(x.key) : ''}')">
+      <span class="pc ${x.n ? 'pc1' : 'pc0'}">${x.n ? '📷 ' + x.n : '—'}</span><div class="min-w-0 flex-grow-1"><div class="fw-bold one">${esc(x.name)}</div><div class="small text-muted one">${esc(x.sub)}</div></div>
+      ${x.stock ? '<span class="badge text-bg-warning">สำรอง</span>' : ''}<i class="fas fa-chevron-right text-muted"></i></div>`).join('') + (l.length > 120 ? `<div class="p-2 small text-muted text-center">แสดง 120 จาก ${l.length} — พิมพ์ค้นหาเพื่อจำกัด</div>` : '') || '<div class="p-4 text-center text-muted">ไม่พบ</div>';
+  }
+  async function openDrug(icode, invs) {
+    mDrug = mDrug || new bootstrap.Modal('#mDrug');
+    const r = await api('photoGetDrug', { icode, invs }); if (!r.status) return Swal.fire('ผิดพลาด', r.message, 'error');
+    CUR = r.data; mDrug.show();
+    $('dName').textContent = CUR.name || '(ไม่พบชื่อ)'; $('dSub').textContent = [CUR.icode ? 'icode ' + CUR.icode : 'INVS ' + CUR.invs, CUR.strength, CUR.units, CUR.generic].filter(Boolean).join(' · ');
+    $('dLoc').innerHTML = CUR.location ? `<div class="p-2 rounded" style="background:#fff7ed"><i class="fas fa-box" style="color:#f97316"></i> ${esc(String(CUR.location.note_text).replace('ยานี้เก็บสำรองที่', '').trim()).replace(/\n/g, ' · ')}</div>` : '';
+    $('fInvs').innerHTML = (CUR.icode ? '<option value="">— ไม่ระบุ —</option>' : '') + CUR.drugcode.map(d => `<option value="${esc(d.invs_code)}" data-tmt="${esc(d.new_tmtid || d.tmtid)}" data-brand="${esc(d.company)}">${esc(d.invs_code)} · ${esc(d.invs_name)} (${esc(d.company)})</option>`).join('');
+    $('tmtL').innerHTML = CUR.drugcode.flatMap(d => [d.tmtid, d.new_tmtid]).filter(Boolean).map(x => `<option value="${esc(x)}">`).join('');
+    if (CUR.drugcode.length === 1 || !CUR.icode) { $('fInvs').selectedIndex = CUR.icode ? 1 : 0; $('fInvs').onchange(); } else { $('fTmt').value = ''; $('fBrand').value = ''; }
+    IMG64 = null; $('pv').classList.add('hidden'); $('bUp').disabled = true; $('fPrimary').checked = false; $('fFile').value = '';
     renderPhotos();
-    window.scrollTo(0, 0);
   }
   $('fInvs').onchange = () => { const o = $('fInvs').selectedOptions[0]; if (o && o.value) { $('fTmt').value = o.dataset.tmt || ''; $('fBrand').value = o.dataset.brand || ''; } };
   function renderPhotos() {
     $('pCount').textContent = `(${CUR.photos.length})`;
-    $('photos').innerHTML = CUR.photos.map(p => `<div class="col-6 col-md-4"><div class="card ph-card ${p.primary ? 'primary' : ''}">
-      <a href="${esc(p.url)}" target="_blank"><img class="ph" src="${esc(p.url)}" referrerpolicy="no-referrer"></a>
-      <div class="card-body p-2 small">${p.primary ? '<span class="badge text-bg-success">รูปหลัก</span> ' : ''}${p.invs_code ? 'invs ' + esc(p.invs_code) : ''} ${p.tmtid ? '· TMT ' + esc(p.tmtid) : ''}
-        <div class="muted">${esc(p.brand || '')} ${esc(p.taken_by || '')} ${esc(p.taken_at || '')}</div>
-        <div class="d-flex gap-1 mt-1">${p.primary ? '' : `<button class="btn btn-sm btn-outline-success" onclick="setPrimary('${p.photo_id}')">ตั้งเป็นหลัก</button>`}
-        <button class="btn btn-sm btn-outline-danger" onclick="delPhoto('${p.photo_id}')">ลบ</button></div></div></div></div>`).join('') || '<div class="muted">ยังไม่มีรูป</div>';
+    $('photos').innerHTML = CUR.photos.map(p => `<div class="col-6 col-md-4"><div class="card-x p-1 phc ${p.primary ? 'primary' : ''}"><a href="${esc(p.url)}" target="_blank"><img class="ph" src="${esc(p.url)}"></a>
+      <div class="small p-1">${p.primary ? '<span class="badge text-bg-success">รูปหลัก</span> ' : ''}${p.invs_code ? 'invs ' + esc(p.invs_code) : ''}${p.tmtid ? ' · TMT ' + esc(p.tmtid) : ''}<div class="text-muted one">${esc(p.brand || '')} ${esc(p.taken_by || '')} ${esc(p.taken_at || '')}</div>
+      <div class="d-flex gap-1 mt-1">${p.primary || !CUR.icode ? '' : `<button class="btn btn-sm btn-outline-success rounded-pill" onclick="setPrimary('${p.photo_id}')">ตั้งเป็นหลัก</button>`}<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="delPhoto('${p.photo_id}')">ลบ</button></div></div></div></div>`).join('') || '<div class="text-muted small">ยังไม่มีรูป</div>';
   }
-  function closeDrug() { CUR = null; $('drug').classList.add('d-none'); }
-
-  // ย่อรูปก่อนส่ง (ด้านยาวสุด 1280px) — ส่งเร็วขึ้นมาก
-  let IMG64 = null;
   $('fFile').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     const img = await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.src = URL.createObjectURL(f); });
-    const k = Math.min(1, 1280 / Math.max(img.width, img.height));
-    const c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    IMG64 = c.toDataURL('image/jpeg', 0.85);
-    $('preview').src = IMG64; $('preview').classList.remove('d-none'); $('bUp').disabled = false;
+    const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); IMG64 = c.toDataURL('image/jpeg', .85);
+    $('pv').src = IMG64; $('pv').classList.remove('hidden'); $('bUp').disabled = false;
   };
   async function upload() {
     if (!IMG64 || !CUR) return;
-    $('bUp').disabled = true; $('bUp').textContent = 'กำลังอัปโหลด…';
-    const r = await callApi('photoUpload', { icode: CUR.icode, invs_code: $('fInvs').value, tmtid: $('fTmt').value.trim(), brand: $('fBrand').value.trim(), primary: $('fPrimary').checked, base64: IMG64, user: USER.name });
-    $('bUp').textContent = 'อัปโหลดรูป';
+    $('bUp').disabled = true; $('bUp').innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังอัปโหลด…';
+    const r = await api('photoUpload', { icode: CUR.icode, invs_code: $('fInvs').value || CUR.invs, tmtid: $('fTmt').value.trim(), brand: $('fBrand').value.trim(), primary: $('fPrimary').checked, base64: IMG64 });
+    $('bUp').innerHTML = '<i class="fas fa-cloud-upload-alt"></i> บันทึกรูป';
     if (!r.status) { $('bUp').disabled = false; return Swal.fire('อัปโหลดไม่สำเร็จ', r.message || '', 'error'); }
-    IMG64 = null; $('fFile').value = ''; $('preview').classList.add('d-none'); $('fPrimary').checked = false;
-    Swal.fire({ icon: 'success', title: 'บันทึกรูปแล้ว', timer: 1200, showConfirmButton: false });
-    openDrug(CUR.icode);
+    Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'บันทึกรูปแล้ว', showConfirmButton: false, timer: 1200 });
+    bump(CUR.icode || CUR.invs, !CUR.icode); openDrug(CUR.icode, CUR.invs);
   }
-  async function setPrimary(id) { await callApi('photoSetPrimary', { photoId: id }); openDrug(CUR.icode); }
+  function bump(key, inv) { const row = inv ? COV.invsOnly.find(x => x[0] === key) : COV.hosxp.find(x => x[0] === key); if (row) row[inv ? 4 : 5]++; renderStats(); render(); }
+  function nextNoPhoto() { const l = rowsNow().filter(x => !x.n && x.key !== (CUR.icode || CUR.invs)); if (!l.length) return Swal.fire('ครบแล้ว 🎉'); openDrug(l[0].inv ? '' : l[0].key, l[0].inv ? l[0].key : ''); }
+  async function setPrimary(id) { await api('photoSetPrimary', { photoId: id }); openDrug(CUR.icode, CUR.invs); }
   async function delPhoto(id) {
-    const ok = await Swal.fire({ title: 'ลบรูปนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก' });
-    if (!ok.isConfirmed) return;
-    await callApi('photoDelete', { photoId: id }); openDrug(CUR.icode);
+    const ok = await Swal.fire({ title: 'ลบรูปนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก' }); if (!ok.isConfirmed) return;
+    await api('photoDelete', { photoId: id }); const row = CUR.icode ? COV.hosxp.find(x => x[0] === CUR.icode) : COV.invsOnly.find(x => x[0] === CUR.invs); if (row) row[CUR.icode ? 5 : 4]--; renderStats(); render(); openDrug(CUR.icode, CUR.invs);
   }
-  try { USER = JSON.parse(localStorage.getItem('photo_user') || 'null'); } catch (e) {}
-  if (USER) start();
+  if (SES && SES.token) start();
 </script>
 </body>
 </html>
