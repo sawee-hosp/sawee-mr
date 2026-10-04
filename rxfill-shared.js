@@ -122,27 +122,26 @@
     (items || []).forEach(it => { for (let k = 0; k < (Number(it.qty) || 1); k++) pages.push(it); });
     return HEAD('ฉลากยา', `@page{size:80mm 60mm;margin:0}
   .page{width:80mm;height:60mm;display:flex}
-  .m{width:67mm;height:60mm;padding:2mm 2.5mm 1.5mm 3mm;display:flex;flex-direction:column}
-  .t{display:flex;align-items:flex-end;gap:2mm;border-bottom:1.2px solid #000;padding-bottom:.6mm;height:7.5mm}
-  .t .n{flex:1;min-width:0;font-weight:800;font-size:17px;height:6.5mm;line-height:6.5mm}
-  .t .a{font-weight:700;font-size:15px;white-space:nowrap;height:6.5mm;line-height:6.5mm}
-  .mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:.3mm;padding:.8mm 0}
+  .m{width:72mm;height:60mm;padding:1.8mm 2mm 1.2mm 2.5mm;display:flex;flex-direction:column}
+  .t{display:flex;align-items:flex-end;gap:2mm;border-bottom:1.2px solid #000;padding-bottom:.5mm;height:7mm}
+  .t .n{flex:1;min-width:0;font-weight:800;font-size:15px;height:6mm;line-height:6mm}
+  .t .a{font-weight:700;font-size:13px;white-space:nowrap;height:6mm;line-height:6mm}
+  .mid{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:.3mm;padding:.6mm 0;overflow:hidden}
   .l{text-align:center;white-space:nowrap;overflow:hidden;font-weight:800;line-height:1.15}
-  .l1{font-size:28px;height:9.5mm}.l2{font-size:25px;height:8.5mm}.l3{font-size:21px;height:7.5mm}
-  .ind{font-size:12px;font-weight:600;text-align:center;line-height:1.15;height:9.5mm;overflow:hidden;word-break:break-word}
-  .ft{display:flex;justify-content:space-between;align-items:flex-end;border-top:.8px solid #999;padding-top:.6mm;height:7.5mm}
-  .ft .d{font-size:11px;font-weight:400;line-height:1.1}.ft .x{font-size:17px;font-weight:800;white-space:nowrap}
-  .stub{width:13mm;height:60mm;border-left:1.2px dashed #000;display:flex;align-items:center;justify-content:center;padding:2mm 0}
-  .stub .v{writing-mode:vertical-rl;transform:rotate(180deg);height:56mm;width:11mm;display:flex;flex-direction:column;justify-content:center;gap:.5mm}
-  .stub .vn{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;height:54mm;width:9mm;line-height:9mm;text-align:center}`) +
+  .l1{font-size:24px;height:8.5mm}.l2{font-size:21px;height:7.5mm}.l3{font-size:18px;height:6.5mm}
+  .ind{font-size:11px;font-weight:600;text-align:center;line-height:1.12;height:8.5mm;overflow:hidden;word-break:break-word}
+  .ft{display:flex;justify-content:space-between;align-items:center;gap:2mm;border-top:.8px solid #999;padding-top:.4mm;height:5mm;white-space:nowrap}
+  .ft .d{font-size:10px;font-weight:600;flex:1;min-width:0;height:4mm;line-height:4mm;overflow:hidden}.ft .x{font-size:12px;font-weight:800;white-space:nowrap}
+  .stub{width:8mm;height:60mm;border-left:1.2px dashed #000;display:flex;align-items:center;justify-content:center}
+  .stub .vn{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;height:56mm;width:6mm;line-height:6mm;text-align:center}`) +
       pages.map(it => {
         const exp = isoToTh(it.expire);
         return `<div class="page"><div class="m">
       <div class="t"><div class="n one" data-fit="10">${e(it.name)}</div><div class="a">${e([it.amount, it.unit].filter(Boolean).join(' '))}</div></div>
-      <div class="mid">${it.l1 ? `<div class="l l1" data-fit="12">${e(it.l1)}</div>` : ''}${it.l2 ? `<div class="l l2" data-fit="11">${e(it.l2)}</div>` : ''}${it.l3 ? `<div class="l l3" data-fit="10">${e(it.l3)}</div>` : ''}</div>
-      ${it.ind ? `<div class="ind" data-fit="7">${e(it.ind)}</div>` : ''}
-      <div class="ft"><div class="d">วันที่จัดยา<br>${today}</div><div class="x">${exp ? 'EXP ' + e(exp) : ''}</div></div>
-    </div><div class="stub"><div class="v"><div class="vn" data-fit="7">${e(it.name)} · จัด ${today}</div></div></div></div>`;
+      <div class="mid">${it.l1 ? `<div class="l l1" data-fit="10">${e(it.l1)}</div>` : ''}${it.l2 ? `<div class="l l2" data-fit="11">${e(it.l2)}</div>` : ''}${it.l3 ? `<div class="l l3" data-fit="10">${e(it.l3)}</div>` : ''}</div>
+      ${it.ind ? `<div class="ind" data-fit="6">${e(it.ind)}</div>` : ''}
+      <div class="ft"><div class="d" data-fit="6">วันที่จัด ${today}${opt.by ? ' · พิมพ์โดย ' + e(opt.by) : ''}</div><div class="x">${exp ? 'EXP ' + e(exp) : ''}</div></div>
+    </div><div class="stub"><div class="vn" data-fit="6">${e(it.name)} · จัด ${today}</div></div></div>`;
       }).join('') + '</body></html>';
   };
 
