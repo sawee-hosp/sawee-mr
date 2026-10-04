@@ -407,7 +407,8 @@
       const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 30000);
       const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ac.signal });
       clearTimeout(tm);
-      return await r.json();
+      const tx = await r.text();
+      try { return JSON.parse(tx); } catch (x) { return { status: false, message: 'GAS ตอบกลับผิดปกติ (HTTP ' + r.status + ') — มักเกิดจากยังไม่ได้ "อนุญาตสิทธิ์" หลังอัปเดตโค้ด: เปิด Apps Script → รันฟังก์ชัน SETUP_ALL → กดอนุญาต → Deploy เป็น New version' }; }
     } catch (e) { return { status: false, message: e.name === 'AbortError' ? 'ระบบตอบช้าเกิน 30 วินาที (ตรวจว่า Deploy GAS ทั้งสองฝั่งเป็นเวอร์ชันใหม่)' : 'เชื่อมต่อไม่ได้: ' + e.message }; }
   }
   async function api(action, payload = {}) {
@@ -843,7 +844,7 @@
   const lblForm = () => ({ itemId: $('lbIcode').dataset.ic, name: $('lbName').value.trim(), amount: $('lbAmt').value.trim(), unit: $('lbUnit').value.trim(), l1: $('lbL1').value.trim(), l2: $('lbL2').value.trim(), l3: $('lbL3').value.trim(), ind: $('lbInd').value.trim() });
   function previewLabel() {
     const f = $('lbPv'), w = f.clientWidth || 300, k = w / 302;                 // 80mm ≈ 302px
-    RX.previewInto(f, RX.labelHtml([{ ...lblForm(), expire: $('lbExp').value, qty: 1 }]).replace('<body>', `<body style="transform:scale(${k});transform-origin:0 0">`));
+    RX.previewInto(f, RX.labelHtml([{ ...lblForm(), expire: $('lbExp').value, qty: 1 }], { by: SES && SES.user.name }).replace('<body>', `<body style="transform:scale(${k});transform-origin:0 0">`));
     f.style.height = (227 * k + 4) + 'px';
   }
   async function saveLabelForm() {
@@ -851,7 +852,7 @@
     if (!r.status) return Swal.fire('ไม่สำเร็จ', r.message, 'error');
     LABELS[L.itemId] = L; if (CAT.drugs[L.itemId]) CAT.drugs[L.itemId].lbl = true; toast('บันทึกฉลากแล้ว'); renderLabelList();
   }
-  function printLabelNow() { RX.printHtml(RX.labelHtml([{ ...lblForm(), expire: $('lbExp').value, qty: 1 }])); }
+  function printLabelNow() { RX.printHtml(RX.labelHtml([{ ...lblForm(), expire: $('lbExp').value, qty: 1 }], { by: SES && SES.user.name })); }
   function labelToCart() { const L = lblForm(); addSticker(L.itemId, 1, $('lbExp').value); }
   function stkQty(v) { $('stkQty').value = Math.max(1, (+$('stkQty').value || 1) + v); }
   function addStickerFromInv() { const r = curInvRow(); addSticker(r[2], +$('stkQty').value || 1, $('invExp').value || r[5]); }
@@ -876,7 +877,7 @@
   const stickerItems = () => stickerCart.map(s => { const L = LABELS[s.itemId] || {}, d = drug(s.itemId); return { ...L, name: L.name || d.n, unit: L.unit || d.u, itemId: s.itemId, qty: s.qty, expire: s.expire }; });
   function printStickerCart() {
     if (!stickerCart.length) return;
-    RX.printHtml(RX.labelHtml(stickerItems())).then(async () => {
+    RX.printHtml(RX.labelHtml(stickerItems(), { by: SES && SES.user.name })).then(async () => {
       const ok = await Swal.fire({ title: 'พิมพ์เรียบร้อยไหม?', text: 'ล้างรายการฉลาก', showCancelButton: true, confirmButtonText: 'ล้าง', cancelButtonText: 'เก็บไว้ก่อน' });
       if (ok.isConfirmed) { stickerCart = []; LS.set('rxadm_stk', stickerCart); badges(); M.ocStk.hide(); }
     });
