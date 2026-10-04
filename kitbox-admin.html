@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="rxfill-shared.js"></script>
+  <script src="rxfill-shared.js?v=20261004"></script>
   <style>
     :root{--g0:#064e2b;--g1:#0f7a3d;--g2:#16a34a;--g3:#dcfce7;--o1:#f97316;--o2:#fb923c;--o3:#fff1e6;--red:#dc2626;--bg:#f3f6f4;--ink:#1f2d27;--mut:#6b7c73;--card:#fff;--r:16px}
     *{font-family:'Sarabun',sans-serif}
@@ -33,6 +33,7 @@
     .one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.min-w-0{min-width:0}
 
     /* auth */
+    .swal2-container{z-index:99999 !important}
     #auth{position:fixed;inset:0;z-index:3000;overflow-y:auto;background:radial-gradient(900px 500px at 0% 0%,#14532d 0,transparent 60%),radial-gradient(800px 500px at 100% 100%,#9a3412 0,transparent 55%),var(--g0);padding:5vh 16px 30px}
     .auth-wrap{max-width:420px;margin:0 auto}
     .brand{text-align:center;color:#fff;margin-bottom:16px}.brand img{width:70px;height:70px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.35))}
@@ -109,6 +110,7 @@
       <input id="lu" class="form-control mb-3 fw-bold" autocapitalize="off" autocomplete="username">
       <label class="small mut mb-1">รหัสผ่าน</label>
       <input id="lp" type="password" class="form-control mb-3" autocomplete="current-password">
+      <div id="loginErr" class="mb-2 fw-bold" style="display:none;background:#fee2e2;color:#991b1b;border-radius:10px;padding:8px 12px;font-size:14px"></div>
       <button class="btn btn-g w-100 rounded-pill py-2" id="btnLogin" onclick="doLogin()">เข้าสู่ระบบผู้ดูแล</button>
       <div class="small mut text-center mt-3">ยังไม่มีรหัสผ่าน / ลืมรหัสผ่าน → <a href="drug-inventory.html" class="text-decoration-none fw-bold" style="color:var(--o1)">ตั้งที่หน้าเบิกยา</a></div>
     </div>
@@ -441,10 +443,13 @@
     $('btnLogin').disabled = true; $('btnLogin').innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     const r = await post(WARD_URL, { action: 'login', username: u, password: p });
     $('btnLogin').disabled = false; $('btnLogin').textContent = 'เข้าสู่ระบบผู้ดูแล';
+    const le = $('loginErr'); le.style.display = 'none';
+    const showErr = m => { le.textContent = '⚠ ' + m; le.style.display = 'block'; };
     if (!r.status) {
       const msg = { NO_PASSWORD: 'บัญชีนี้ยังไม่ได้ตั้งรหัสผ่าน — ตั้งที่หน้าเบิกยาก่อน', NEED_REGISTER: 'ยังไม่ได้ลงทะเบียน — ลงทะเบียนที่หน้าเบิกยาก่อน', UNKNOWN: 'ไม่พบ Username นี้ใน HOSxP', BAD_PASSWORD: 'รหัสผ่านไม่ถูกต้อง' }[r.code] || r.message;
-      return Swal.fire('เข้าสู่ระบบไม่สำเร็จ', msg, 'error');
+      showErr(msg || 'เข้าสู่ระบบไม่สำเร็จ'); return Swal.fire('เข้าสู่ระบบไม่สำเร็จ', msg, 'error');
     }
+    if (!r.user.isAdmin) { showErr('บัญชีนี้ไม่อยู่ในชีต Admin/Admins'); }
     if (!r.user.isAdmin) return Swal.fire('ไม่มีสิทธิ์ผู้ดูแล', 'บัญชีนี้ไม่อยู่ในชีต Admins', 'warning');
     SES = { token: r.token, user: r.user }; LS.set('rxadm_session', SES); $('lp').value = '';
     showApp();
