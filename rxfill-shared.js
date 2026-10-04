@@ -129,21 +129,20 @@
   .mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:.3mm;padding:.8mm 0}
   .l{text-align:center;white-space:nowrap;overflow:hidden;font-weight:800;line-height:1.15}
   .l1{font-size:28px;height:9.5mm}.l2{font-size:25px;height:8.5mm}.l3{font-size:21px;height:7.5mm}
-  .ind{font-size:14px;font-weight:600;text-align:center;line-height:1.15;height:9.5mm;overflow:hidden}
+  .ind{font-size:12px;font-weight:600;text-align:center;line-height:1.15;height:9.5mm;overflow:hidden;word-break:break-word}
   .ft{display:flex;justify-content:space-between;align-items:flex-end;border-top:.8px solid #999;padding-top:.6mm;height:7.5mm}
   .ft .d{font-size:11px;font-weight:400;line-height:1.1}.ft .x{font-size:17px;font-weight:800;white-space:nowrap}
   .stub{width:13mm;height:60mm;border-left:1.2px dashed #000;display:flex;align-items:center;justify-content:center;padding:2mm 0}
   .stub .v{writing-mode:vertical-rl;transform:rotate(180deg);height:56mm;width:11mm;display:flex;flex-direction:column;justify-content:center;gap:.5mm}
-  .stub .vn{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;height:34mm;width:6mm;line-height:6mm}
-  .stub .vx{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;height:20mm;width:4.5mm;line-height:4.5mm}`) +
+  .stub .vn{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;height:54mm;width:9mm;line-height:9mm;text-align:center}`) +
       pages.map(it => {
         const exp = isoToTh(it.expire);
         return `<div class="page"><div class="m">
       <div class="t"><div class="n one" data-fit="10">${e(it.name)}</div><div class="a">${e([it.amount, it.unit].filter(Boolean).join(' '))}</div></div>
       <div class="mid">${it.l1 ? `<div class="l l1" data-fit="12">${e(it.l1)}</div>` : ''}${it.l2 ? `<div class="l l2" data-fit="11">${e(it.l2)}</div>` : ''}${it.l3 ? `<div class="l l3" data-fit="10">${e(it.l3)}</div>` : ''}</div>
-      ${it.ind ? `<div class="ind" data-fit="9">${e(it.ind)}</div>` : ''}
+      ${it.ind ? `<div class="ind" data-fit="7">${e(it.ind)}</div>` : ''}
       <div class="ft"><div class="d">วันที่จัดยา<br>${today}</div><div class="x">${exp ? 'EXP ' + e(exp) : ''}</div></div>
-    </div><div class="stub"><div class="v"><div class="vn" data-fit="8">${e(it.name)}</div><div class="vx" data-fit="7">${exp ? 'EXP ' + e(exp) : today}</div></div></div></div>`;
+    </div><div class="stub"><div class="v"><div class="vn" data-fit="7">${e(it.name)} · จัด ${today}</div></div></div></div>`;
       }).join('') + '</body></html>';
   };
 

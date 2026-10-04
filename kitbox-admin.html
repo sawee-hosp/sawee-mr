@@ -404,9 +404,11 @@
 
   async function post(url, body) {
     try {
-      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+      const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 30000);
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ac.signal });
+      clearTimeout(tm);
       return await r.json();
-    } catch (e) { return { status: false, message: 'เชื่อมต่อไม่ได้: ' + e.message }; }
+    } catch (e) { return { status: false, message: e.name === 'AbortError' ? 'ระบบตอบช้าเกิน 30 วินาที (ตรวจว่า Deploy GAS ทั้งสองฝั่งเป็นเวอร์ชันใหม่)' : 'เชื่อมต่อไม่ได้: ' + e.message }; }
   }
   async function api(action, payload = {}) {
     const r = await post(ADMIN_URL, { action, payload: { ...payload, token: SES && SES.token } });
@@ -422,7 +424,8 @@
     const r = await post(ADMIN_URL, { action: 'getPublicDashboard', payload: {} });
     if (!r.status) { $('pub').innerHTML = `<div class="glass small">โหลดสถานะไม่ได้: ${esc(r.message || '')}</div>`; return; }
     let h = '';
-    if (r.pools && r.pools.length) h += `<div class="glass"><div class="fw-bold mb-1"><i class="fas fa-print" style="color:#fdba74"></i> ฉลากยารอพิมพ์ (${r.pools.length}) <span class="small fw-normal opacity-75">— แตะเพื่อพิมพ์ ไม่ต้อง login</span></div>` +
+    r.pools = (r.pools || []).filter(x => x.status !== 'Printed' && x.status !== 'Yes');
+    if (r.pools.length) h += `<div class="glass"><div class="fw-bold mb-1"><i class="fas fa-print" style="color:#fdba74"></i> ฉลากยารอพิมพ์ (${r.pools.length}) <span class="small fw-normal opacity-75">— แตะเพื่อพิมพ์ ไม่ต้อง login</span></div>` +
       r.pools.map(p => `<a href="label-print.html?pool=${encodeURIComponent(p.id)}" target="_blank" class="d-flex justify-content-between text-decoration-none py-1 border-bottom border-light border-opacity-25"><span class="one">${esc(p.id)}</span><span class="small opacity-75">${esc(p.time)}</span></a>`).join('') + '</div>';
     if (r.pending && r.pending.length) h += `<div class="glass"><div class="fw-bold mb-1"><i class="fas fa-bell" style="color:#fdba74"></i> ใบเบิกรอจัด (${r.pending.length})</div>` +
       r.pending.slice(-8).reverse().map(p => `<div class="d-flex justify-content-between small py-1"><span class="one">📦 ${esc(p.box)}</span><span class="opacity-75">${esc(p.time)}</span></div>`).join('') + '</div>';
