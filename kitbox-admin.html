@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="referrer" content="no-referrer">
   <title>Sawee Rxfill Admin · ห้องยา</title>
+  <link rel="manifest" href="manifest-admin.webmanifest">
+  <link rel="apple-touch-icon" href="icons/admin-apple.png">
+  <meta name="theme-color" content="#0f7a3d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Rxfill Admin">
   <link rel="icon" type="image/svg+xml" href="favicon-admin.svg">
   <link rel="apple-touch-icon" href="favicon-admin.svg">
   <meta name="theme-color" content="#0f7a3d">
@@ -14,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="rxfill-shared.js?v=20261005"></script>
+  <script src="rxfill-shared.js?v=20261005b"></script>
   <style>
     :root{--g0:#064e2b;--g1:#0f7a3d;--g2:#16a34a;--g3:#dcfce7;--o1:#f97316;--o2:#fb923c;--o3:#fff1e6;--red:#dc2626;--bg:#f3f6f4;--ink:#1f2d27;--mut:#6b7c73;--card:#fff;--r:16px}
     *{font-family:'Sarabun',sans-serif}
@@ -168,7 +175,8 @@
         <span class="input-group-text bg-white border-0"><i class="fas fa-search text-success"></i></span>
         <input id="drugKw" class="form-control border-0" placeholder="ค้นหายา (ชื่อ / ชื่ออื่น / icode) — พิมพ์ใกล้เคียงได้">
       </div>
-      <div class="small mut mb-2" id="drugInfo"></div>
+      <div class="d-flex gap-2 mb-2 flex-wrap" id="drugF"><span class="chip on" data-f="all" onclick="setDrugFilter('all',this)">ทั้งหมด</span><span class="chip" data-f="box" onclick="setDrugFilter('box',this)">อยู่ในกล่อง</span><span class="chip" data-f="ha" onclick="setDrugFilter('ha',this)">High Alert</span><span class="chip" data-f="c" onclick="setDrugFilter('c',this)">2–8 °C</span><span class="chip" data-f="l" onclick="setDrugFilter('l',this)">กันแสง</span><span class="chip" data-f="nolbl" onclick="setDrugFilter('nolbl',this)">ยังไม่มีฉลาก</span></div>
+      <div class="d-flex align-items-center gap-2 mb-2"><div class="small mut me-auto" id="drugInfo"></div><button class="btn btn-sm btn-osoft rounded-pill" onclick="bulkAutoLabel()"><i class="fas fa-magic"></i> สร้างฉลากอัตโนมัติ (ยาที่ยังไม่มีฉลาก)</button></div>
       <div id="drugList"></div>
     </section>
 
@@ -181,6 +189,9 @@
         <div class="col-12 col-md-6"><a href="drug-photo.html" class="text-decoration-none text-reset"><div class="card-x menu-card"><div class="ic" style="background:#7c3aed"><i class="fas fa-camera"></i></div><div><div class="fw-bold">ถ่ายรูปยา</div><div class="small mut">ถ่ายให้ครบทุก icode / INVS</div></div></div></a></div>
         <div class="col-12 col-md-6"><div class="card-x menu-card" onclick="go('t-pools')"><div class="ic" style="background:#0891b2"><i class="fas fa-print"></i></div><div><div class="fw-bold">Sticker pool</div><div class="small mut">ชุดฉลากที่รอพิมพ์ (เปิดเครื่องไหนก็ได้)</div></div></div></div>
         <div class="col-12 col-md-6"><div class="card-x menu-card" onclick="go('t-stats')"><div class="ic" style="background:#4d7c0f"><i class="fas fa-chart-pie"></i></div><div><div class="fw-bold">สถิติการใช้งานกล่อง</div><div class="small mut">จำนวนครั้งที่เติม/เปลี่ยน</div></div></div></div>
+        <div class="col-12 col-md-6"><div class="card-x menu-card" onclick="go('t-users')"><div class="ic" style="background:#0f766e"><i class="fas fa-users-cog"></i></div><div><div class="fw-bold">จัดการผู้ใช้</div><div class="small mut">สิทธิ์เบิก · ตั้ง/ถอน admin · ล้างรหัสผ่าน</div></div></div></div>
+        <div class="col-12 col-md-6"><div class="card-x menu-card" onclick="M.mPw.show()"><div class="ic" style="background:#475569"><i class="fas fa-key"></i></div><div><div class="fw-bold">เปลี่ยนรหัสผ่านของฉัน</div><div class="small mut">ใช้ได้ทั้งหน้าเบิกยาและหน้า admin</div></div></div></div>
+        <div class="col-12 col-md-6"><a href="install.html" class="text-decoration-none text-reset"><div class="card-x menu-card"><div class="ic" style="background:#2563eb"><i class="fas fa-mobile-alt"></i></div><div><div class="fw-bold">ติดตั้งเป็นแอปบนมือถือ</div><div class="small mut">Android · iPhone/iPad</div></div></div></a></div>
         <div class="col-12"><div class="card-x p-3">
           <div class="fw-bold mb-1"><i class="fas fa-sync text-success"></i> ราคา/ชื่อยาจาก HOSxP</div>
           <div class="small mut mb-2">PHP ส่งรายการยาอัตโนมัติทุกวันที่ 1 · กดด้านล่างเพื่อดึงทันที (ต้องใช้เครื่องในวง LAN รพ.)</div>
@@ -220,6 +231,15 @@
       <h5 class="fw-bold mb-2" style="color:#0891b2"><i class="fas fa-print"></i> Sticker pool</h5>
       <div class="small mut mb-2">เปิดลิงก์ของแต่ละชุดจากเครื่องที่ต่อเครื่องพิมพ์ได้เลย ไม่ต้อง login</div>
       <div id="poolList"></div>
+    </section>
+
+    <section id="t-users" class="container page hidden">
+      <h5 class="fw-bold mb-2" style="color:#0f766e"><i class="fas fa-users-cog"></i> จัดการผู้ใช้</h5>
+      <input id="usrKw" class="form-control rounded-pill mb-2" placeholder="ค้นหาชื่อ / username / หน่วยงาน…" oninput="renderUsers()">
+      <div class="d-flex gap-2 mb-2 flex-wrap"><span class="chip on" data-u="all" onclick="setUsrFilter('all',this)">ทั้งหมด</span><span class="chip" data-u="admin" onclick="setUsrFilter('admin',this)">Admin</span><span class="chip" data-u="nopw" onclick="setUsrFilter('nopw',this)">ยังไม่ตั้งรหัสผ่าน</span></div>
+      <div class="small mut mb-2" id="usrInfo"></div>
+      <div id="usrList"></div>
+      <div class="small mut mt-2">ผู้ใช้ใหม่ลงทะเบียนเองที่หน้าเบิกยา (ต้องมีชื่อใน HOSxP) · "ล้างรหัสผ่าน" = ให้ผู้ใช้ตั้งรหัสใหม่เองที่หน้าเบิกยา</div>
     </section>
 
     <section id="t-stats" class="container page hidden">
@@ -276,11 +296,14 @@
       <button class="btn btn-sm btn-soft rounded-pill" onclick="openItem(curInvRow()[2])"><i class="fas fa-pen"></i> ข้อมูลยา</button>
       <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="removeInv()"><i class="fas fa-trash"></i> เอาออกจากกล่อง</button>
     </div>
-    <div class="d-flex align-items-center gap-2 mt-3 justify-content-center">
+    <div class="d-flex align-items-center gap-2 mt-3 justify-content-center flex-wrap">
       <span class="small">ฉลากยา</span>
-      <div class="input-group input-group-sm" style="width:130px"><button class="btn btn-outline-secondary" onclick="stkQty(-1)">-</button><input id="stkQty" class="form-control text-center" value="1"><button class="btn btn-outline-secondary" onclick="stkQty(1)">+</button></div>
-      <button class="btn btn-sm btn-o rounded-pill" onclick="addStickerFromInv()"><i class="fas fa-tags"></i> ใส่รายการฉลาก</button>
+      <div class="input-group input-group-sm" style="width:120px"><button class="btn btn-outline-secondary" onclick="stkQty(-1)">-</button><input id="stkQty" class="form-control text-center" value="1"><button class="btn btn-outline-secondary" onclick="stkQty(1)">+</button></div>
+      <button class="btn btn-sm btn-o rounded-pill" onclick="printInvLabel('full')"><i class="fas fa-print"></i> ฉลากเต็ม</button>
+      <button class="btn btn-sm btn-o rounded-pill" onclick="printInvLabel('mini')"><i class="fas fa-th"></i> ฉลากจิ๋ว</button>
+      <button class="btn btn-sm btn-soft rounded-pill" onclick="addStickerFromInv()"><i class="fas fa-cart-plus"></i> ใส่รายการ</button>
     </div>
+    <div class="mt-3 p-2 rounded" style="background:#f0fdf4" id="invUsageBox"><div class="small mut text-center">กำลังโหลดยอดใช้…</div></div>
   </div></div></div></div>
 
 <div class="modal fade" id="mBox" style="z-index:2100"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
@@ -334,8 +357,10 @@
     <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="itLight"><label class="form-check-label fw-bold" style="color:#b45309" for="itLight">ป้องกันแสง</label></div>
     <label class="small mut">ชื่ออื่น / คำค้น (Fuzzy)</label><textarea id="itFuzzy" rows="2" class="form-control mb-2"></textarea>
     <div class="small mut mb-2">ชื่อยาและราคาใช้จาก HOSxP อัตโนมัติ</div>
+    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="itSyncLbl" checked><label class="form-check-label small" for="itSyncLbl">ปรับข้อความเตือนบนฉลากตามคุณสมบัติอัตโนมัติ (High Alert / 2–8 °C / กันแสง)</label></div>
+    <div class="small p-2 mb-2 rounded" style="background:#fff7ed" id="itLbl"></div>
     <div class="d-flex gap-2"><button class="btn btn-g rounded-pill flex-grow-1" onclick="saveItemForm()">บันทึก</button>
-      <button class="btn btn-osoft rounded-pill" onclick="openLabel(document.getElementById('itIcode').value)"><i class="fas fa-tag"></i> ฉลาก</button>
+      <button class="btn btn-osoft rounded-pill" onclick="openLabel(document.getElementById('itIcode').value)"><i class="fas fa-tag"></i> แก้ฉลาก</button>
       <a class="btn btn-soft rounded-pill" id="itPhoto" href="#"><i class="fas fa-camera"></i></a></div>
   </div></div></div></div>
 
@@ -358,20 +383,44 @@
       </div>
     </div>
     <div class="d-flex gap-2 mt-3 flex-wrap">
+      <button class="btn btn-outline-secondary rounded-pill" onclick="fillAutoLabel()" title="ร่างฉลากอัตโนมัติจากชื่อ/หน่วย/คุณสมบัติ"><i class="fas fa-magic"></i> อัตโนมัติ</button>
       <button class="btn btn-g rounded-pill flex-grow-1" onclick="saveLabelForm()">บันทึกฉลาก</button>
-      <button class="btn btn-osoft rounded-pill" onclick="printLabelNow()"><i class="fas fa-print"></i> พิมพ์ 1 ใบ</button>
+      <button class="btn btn-osoft rounded-pill" onclick="printLabelNow()"><i class="fas fa-print"></i> ฉลากเต็ม</button>
+      <button class="btn btn-osoft rounded-pill" onclick="printMiniNow(lblForm().itemId)"><i class="fas fa-th"></i> ฉลากจิ๋ว</button>
       <button class="btn btn-soft rounded-pill" onclick="labelToCart()"><i class="fas fa-cart-plus"></i> ใส่รายการฉลาก</button>
     </div>
   </div></div></div></div>
 
 <div class="offcanvas offcanvas-bottom" id="ocStk" style="height:80vh;border-radius:20px 20px 0 0"><div class="offcanvas-header"><h6 class="fw-bold m-0" style="color:var(--o1)"><i class="fas fa-tags"></i> รายการพิมพ์ฉลากยา</h6><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
   <div class="offcanvas-body pt-0"><div id="stkList"></div>
-    <div class="d-flex gap-2 mt-3"><button class="btn btn-o rounded-pill flex-grow-1 py-2" onclick="printStickerCart()"><i class="fas fa-print"></i> พิมพ์เลยที่เครื่องนี้</button>
-    <button class="btn btn-soft rounded-pill flex-grow-1 py-2" onclick="poolStickerCart()"><i class="fas fa-cloud-upload-alt"></i> ส่งเข้า Pool (พิมพ์เครื่องอื่น)</button></div></div></div>
+    <div class="d-flex gap-2 mt-3 flex-wrap"><button class="btn btn-o rounded-pill flex-grow-1 py-2" onclick="printStickerCart('full')"><i class="fas fa-print"></i> ฉลากเต็ม</button>
+    <button class="btn btn-o rounded-pill flex-grow-1 py-2" onclick="printStickerCart('mini')"><i class="fas fa-th"></i> ฉลากจิ๋ว (16 ช่อง/แผ่น)</button>
+    <button class="btn btn-soft rounded-pill w-100 py-2" onclick="poolStickerCart()"><i class="fas fa-cloud-upload-alt"></i> ส่งเข้า Pool (พิมพ์เครื่องอื่น เลือกแบบได้)</button></div></div></div>
 
 <div class="offcanvas offcanvas-bottom" id="ocShelf" style="height:70vh;border-radius:20px 20px 0 0"><div class="offcanvas-header"><h6 class="fw-bold m-0" style="color:var(--g1)"><i class="fas fa-barcode"></i> รายการพิมพ์ป้ายล็อกยา (50×30)</h6><button class="btn-close" data-bs-dismiss="offcanvas"></button></div>
   <div class="offcanvas-body pt-0"><div id="shelfList"></div>
     <div class="d-flex gap-2 mt-3"><button class="btn btn-soft rounded-pill py-2" onclick="shelfAllBox()">+ ทั้งกล่องที่เปิดอยู่</button><button class="btn btn-g rounded-pill flex-grow-1 py-2" onclick="printShelfCart()"><i class="fas fa-print"></i> พิมพ์ป้ายทันที</button></div></div></div>
+
+<div class="modal fade" id="mUser" style="z-index:2200"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header mh-g"><h6 class="m-0 fw-bold"><i class="fas fa-user-edit"></i> ผู้ใช้ <span id="muUser" class="fw-normal"></span></h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <label class="small mut">ชื่อ-สกุล</label><input id="muName" class="form-control mb-2">
+    <label class="small mut">อีเมล (ใช้รีเซ็ตรหัสผ่าน)</label><input id="muEmail" type="email" class="form-control mb-2">
+    <label class="small mut">สิทธิ์เบิก: กลุ่มกล่อง (Box Group)</label><div id="muGrp" class="d-flex flex-wrap gap-1 mb-2"></div>
+    <label class="small mut">สิทธิ์เบิก: หน่วยงาน (Substock)</label><div id="muSub" class="d-flex flex-wrap gap-1 mb-2"></div>
+    <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="muAdmin"><label class="form-check-label fw-bold text-success" for="muAdmin">เป็นผู้ดูแล (Admin)</label></div>
+    <div class="small mb-2" id="muPw"></div>
+    <div class="d-flex gap-2"><button class="btn btn-g rounded-pill flex-grow-1" onclick="saveUserForm()">บันทึก</button><button class="btn btn-outline-danger rounded-pill" onclick="resetUserPw()"><i class="fas fa-key"></i> ล้างรหัสผ่าน</button></div>
+  </div></div></div></div>
+
+<div class="modal fade" id="mPw" style="z-index:2200"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content">
+  <div class="modal-header"><h6 class="m-0 fw-bold"><i class="fas fa-key"></i> เปลี่ยนรหัสผ่านของฉัน</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <input id="pwOld" type="password" class="form-control mb-2" placeholder="รหัสผ่านเดิม" autocomplete="current-password">
+    <input id="pwNew" type="password" class="form-control mb-2" placeholder="รหัสผ่านใหม่ (อย่างน้อย 4 ตัว)" autocomplete="new-password">
+    <input id="pwNew2" type="password" class="form-control mb-3" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
+    <button class="btn btn-g w-100 rounded-pill" onclick="saveMyPw()">บันทึก</button>
+  </div></div></div></div>
 
 <div class="modal fade" id="mScan" style="z-index:2400"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
   <div class="modal-header mh-g"><h6 class="m-0 fw-bold"><i class="fas fa-qrcode"></i> สแกน QR ยา / กล่อง</h6><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
@@ -477,7 +526,7 @@
   //  BOOT (โหลดครั้งเดียว + cache ในเครื่อง = เปิดปุ๊บเห็นปั๊บ)
   // =====================================================================
   window.onload = () => {
-    ['mSign', 'mInv', 'mBox', 'mAdd', 'mItem', 'mLabel', 'mScan'].forEach(k => M[k] = new bootstrap.Modal('#' + k));
+    ['mSign', 'mInv', 'mBox', 'mAdd', 'mItem', 'mLabel', 'mScan', 'mUser', 'mPw'].forEach(k => M[k] = new bootstrap.Modal('#' + k));
     M.ocStk = new bootstrap.Offcanvas('#ocStk'); M.ocShelf = new bootstrap.Offcanvas('#ocShelf');
     sig.init();
     $('drugKw').addEventListener('input', debounce(renderDrugs, 180));
@@ -517,7 +566,7 @@
   // =====================================================================
   function go(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('hidden', p.id !== id));
-    const main = { 't-expire': 't-more', 't-night': 't-more', 't-labels': 't-more', 't-pools': 't-more', 't-stats': 't-more' }[id] || id;
+    const main = { 't-expire': 't-more', 't-night': 't-more', 't-labels': 't-more', 't-pools': 't-more', 't-stats': 't-more', 't-users': 't-more' }[id] || id;
     document.querySelectorAll('.btm .ni[data-t]').forEach(n => n.classList.toggle('on', n.dataset.t === main));
     $('boxFabs').classList.toggle('hidden', !(id === 't-stock' && curBox));
     window.scrollTo(0, 0); onShow(id);
@@ -527,6 +576,7 @@
     if (id === 't-night' && !NIGHT) loadNight();
     if (id === 't-labels') loadLabels().then(renderLabelList);
     if (id === 't-pools') loadPools();
+    if (id === 't-users') loadUsers();
     if (id === 't-stats') renderStats();
   }
 
@@ -650,7 +700,7 @@
     const r = INV[id]; if (!r) return; const d = drug(r[2]), p = String(r[6] || '').split('/');
     $('invId').value = id; $('invName').textContent = d.n; $('invSub').textContent = `${(BOX[r[1]] || {}).name || r[1]} · ${r[2]} · Inv ${id}`;
     $('invShelf').value = p[1] || ''; $('invRow').value = p[2] || ''; $('invMax').value = r[3]; $('invAct').value = r[4]; $('invExp').value = r[5] || ''; $('stkQty').value = 1;
-    $('invUse').textContent = `เปลี่ยน ${r[7]} ครั้ง${r[8] ? ' · ล่าสุด ' + r[8] : ''}`; expHint(); M.mInv.show();
+    $('invUse').textContent = `เปลี่ยน ${r[7]} ครั้ง${r[8] ? ' · ล่าสุด ' + r[8] : ''}`; expHint(); M.mInv.show(); loadInvUsage(id);
   }
   function expHint() { const d = daysTo($('invExp').value); $('invExpHint').innerHTML = d == null ? '' : d < 0 ? `<span class="text-danger fw-bold">หมดอายุแล้ว ${-d} วัน</span>` : `อีก <b>${d}</b> วันหมดอายุ`; }
   async function saveInvForm() {
@@ -750,7 +800,8 @@
   function drugScore(kw, ic) { const d = CAT.drugs[ic]; return RX.fuzzy(kw, [{ t: d.n, w: 1 }, { t: d.g, w: .9 }, { t: d.f, w: .9, split: true }, { t: ic, w: 1 }]); }
   function renderDrugs() {
     if (!CAT) return; const kw = $('drugKw').value.trim();
-    const all = Object.keys(CAT.drugs).filter(ic => !CAT.drugs[ic].notItem || CAT.inv.some(r => r[2] === ic));
+    const inBox = {}; CAT.inv.forEach(r => inBox[r[2]] = 1);
+    const all = Object.keys(CAT.drugs).filter(ic => (!CAT.drugs[ic].notItem || inBox[ic]) && drugFilterOk(ic, inBox));
     const list = kw ? all.map(ic => ({ ic, s: drugScore(kw, ic) })).filter(x => x.s >= RX.FUZZY_MIN).sort((a, b) => b.s - a.s).map(x => x.ic)
                     : all.sort((a, b) => CAT.drugs[a].n.localeCompare(CAT.drugs[b].n));
     $('drugInfo').textContent = kw ? `พบ ${list.length} รายการ` : `ยาใน Items ${all.length} รายการ`;
@@ -767,13 +818,21 @@
   function openItem(ic) {
     const d = drug(ic); $('itIcode').value = ic; $('itName').textContent = d.n; $('itSub').textContent = `${ic} · ${d.g || ''} · ฿${fmtN(d.p)}/${d.u || ''}`;
     $('itImg').src = d.i && d.i.startsWith('http') ? d.i : DEFAULT_IMG; $('itHa').checked = !!d.ha; $('itCool').checked = !!d.c; $('itLight').checked = !!d.l; $('itFuzzy').value = d.f || '';
-    $('itPhoto').href = 'drug-photo.html?icode=' + encodeURIComponent(ic); M.mItem.show();
+    $('itPhoto').href = 'drug-photo.html?icode=' + encodeURIComponent(ic);
+    loadLabels().then(() => { const L = LABELS[ic]; $('itLbl').innerHTML = L ? `<b>ฉลาก:</b> ${esc([L.l1, L.l2, L.l3].filter(Boolean).join(' · ') || '-')}${L.ind ? '<br><span class="mut">' + esc(L.ind) + '</span>' : ''}` : '<span class="text-danger">ยังไม่มีฉลาก</span> — บันทึกแล้วระบบจะร่างให้อัตโนมัติ'; });
+    M.mItem.show();
   }
   async function saveItemForm() {
     const ic = $('itIcode').value;
     const r = await api('saveItem', { icode: ic, highAlert: $('itHa').checked, keepCool: $('itCool').checked, protectLight: $('itLight').checked, fuzzy: $('itFuzzy').value.trim() });
     if (!r.status) return Swal.fire('ไม่สำเร็จ', r.message, 'error');
     Object.assign(CAT.drugs[ic] || {}, { ha: $('itHa').checked, c: $('itCool').checked, l: $('itLight').checked, f: $('itFuzzy').value.trim() });
+    if ($('itSyncLbl').checked) {                                              // ปรับฉลากให้ตรงคุณสมบัติ
+      await loadLabels(); const d = drug(ic), A = RX.autoLabel(d), L = LABELS[ic];
+      const keep = L ? String(L.ind || '').split(' · ').filter(x => !/High Alert|2–8 °C|พ้นแสง/.test(x)) : [];
+      const N = L ? { ...L, ind: keep.concat(A.ind ? [A.ind] : []).join(' · ') } : { itemId: ic, ...A };
+      if (!L || N.ind !== L.ind) { N.itemId = ic; const x = await api('saveLabel', N); if (x.status) { LABELS[ic] = N; d.lbl = true; } }
+    }
     M.mItem.hide(); toast('บันทึกแล้ว'); renderDrugs(); if (curBox) renderBox(); refreshCat(true);
   }
   async function applyPrices() {
@@ -875,11 +934,11 @@
   function printLabelNow() { RX.printHtml(RX.labelHtml([{ ...lblForm(), expire: $('lbExp').value, qty: 1 }], { by: SES && SES.user.name })); }
   function labelToCart() { const L = lblForm(); addSticker(L.itemId, 1, $('lbExp').value); }
   function stkQty(v) { $('stkQty').value = Math.max(1, (+$('stkQty').value || 1) + v); }
-  function addStickerFromInv() { const r = curInvRow(); addSticker(r[2], +$('stkQty').value || 1, $('invExp').value || r[5], (BOX[r[1]] || {}).name || ''); }
-  function addSticker(ic, qty, expire, store) {
+  function addStickerFromInv() { const r = curInvRow(); addSticker(r[2], +$('stkQty').value || 1, $('invExp').value || r[5], (BOX[r[1]] || {}).name || '', invLoc(r)); }
+  function addSticker(ic, qty, expire, store, loc) {
     store = store || '';
     const ex = stickerCart.find(s => s.itemId === ic && s.expire === expire && (s.store || '') === store);
-    ex ? ex.qty += qty : stickerCart.push({ itemId: ic, qty, expire: expire || '', store });
+    ex ? ex.qty += qty : stickerCart.push({ itemId: ic, qty, expire: expire || '', store, loc: loc || store });
     LS.set('rxadm_stk', stickerCart); badges(); toast('ใส่รายการฉลากแล้ว');
   }
   function badges() {
@@ -895,10 +954,10 @@
     M.ocStk.show();
   }
   function saveStk() { LS.set('rxadm_stk', stickerCart); badges(); openStickerCart(); }
-  const stickerItems = () => stickerCart.map(s => { const L = LABELS[s.itemId] || {}, d = drug(s.itemId); return { ...L, name: L.name || d.n, unit: L.unit || d.u, itemId: s.itemId, qty: s.qty, expire: s.expire, store: s.store || '' }; });
-  function printStickerCart() {
+  const stickerItems = () => stickerCart.map(s => { const L = LABELS[s.itemId] || {}, d = drug(s.itemId); return { ...L, name: L.name || d.n, unit: L.unit || d.u, itemId: s.itemId, qty: s.qty, expire: s.expire, store: s.store || '', loc: s.loc || s.store || '' }; });
+  function printStickerCart(type) {
     if (!stickerCart.length) return;
-    RX.printHtml(RX.labelHtml(stickerItems(), { by: SES && SES.user.name })).then(async () => {
+    RX.printHtml(type === 'mini' ? RX.miniLabelHtml(stickerItems()) : RX.labelHtml(stickerItems())).then(async () => {
       const ok = await Swal.fire({ title: 'พิมพ์เรียบร้อยไหม?', text: 'ล้างรายการฉลาก', showCancelButton: true, confirmButtonText: 'ล้าง', cancelButtonText: 'เก็บไว้ก่อน' });
       if (ok.isConfirmed) { stickerCart = []; LS.set('rxadm_stk', stickerCart); badges(); M.ocStk.hide(); }
     });
@@ -954,6 +1013,96 @@
   function openScanner() {
     M.mScan.show();
     setTimeout(() => { scanner = new Html5QrcodeScanner('qrReader', { fps: 10, qrbox: { width: 240, height: 240 } }, false); scanner.render(t => { try { scanner.clear(); } catch (e) {} M.mScan.hide(); findScan(t); }, () => {}); }, 300);
+  }
+
+  // =====================================================================
+  //  v5.5: ตัวกรองยา · ฉลากอัตโนมัติ · ฉลากจิ๋ว · ยอดใช้ · ผู้ใช้ · รหัสผ่าน
+  // =====================================================================
+  let drugFilter = 'all', usrFilter = 'all', USERS = null, curUser = null;
+  function setDrugFilter(f, el) { drugFilter = f; document.querySelectorAll('#drugF .chip').forEach(c => c.classList.toggle('on', c === el)); if (f === 'nolbl') loadLabels().then(renderDrugs); else renderDrugs(); }
+  function drugFilterOk(ic, inBox) { const d = CAT.drugs[ic];
+    return drugFilter === 'all' || (drugFilter === 'box' && inBox[ic]) || (drugFilter === 'ha' && d.ha) || (drugFilter === 'c' && d.c) || (drugFilter === 'l' && d.l) || (drugFilter === 'nolbl' && !(LABELS ? LABELS[ic] : d.lbl)); }
+  function fillAutoLabel() {
+    const ic = $('lbIcode').dataset.ic, A = RX.autoLabel(drug(ic));
+    $('lbName').value = $('lbName').value || A.name; $('lbUnit').value = $('lbUnit').value || A.unit;
+    $('lbL1').value = A.l1; $('lbL2').value = A.l2; $('lbL3').value = A.l3; $('lbInd').value = A.ind; previewLabel();
+  }
+  async function bulkAutoLabel() {
+    await loadLabels(); const inBox = {}; CAT.inv.forEach(r => inBox[r[2]] = 1);
+    const ics = Object.keys(CAT.drugs).filter(ic => (!CAT.drugs[ic].notItem || inBox[ic]) && !LABELS[ic]);
+    if (!ics.length) return Swal.fire('ยาทุกตัวมีฉลากแล้ว', '', 'success');
+    const ok = await Swal.fire({ title: `ร่างฉลากอัตโนมัติ ${ics.length} รายการ?`, html: 'ระบบเดาวิธีใช้จากชื่อ/หน่วยยา (เม็ด, ฉีด, น้ำ, ครีม, หยอด, พ่น…)<br>และใส่คำเตือนตามคุณสมบัติ — <b>ตรวจ/แก้ก่อนพิมพ์ทุกครั้ง</b>', icon: 'question', showCancelButton: true, confirmButtonText: 'สร้าง', cancelButtonText: 'ยกเลิก' });
+    if (!ok.isConfirmed) return;
+    const list = ics.map(ic => ({ itemId: ic, ...RX.autoLabel(drug(ic)) }));
+    Swal.fire({ title: 'กำลังบันทึก…', didOpen: () => Swal.showLoading() });
+    const r = await api('saveLabelsBulk', { list }); Swal.close();
+    if (!r.status) return Swal.fire('ไม่สำเร็จ', r.message, 'error');
+    list.forEach(l => { LABELS[l.itemId] = l; CAT.drugs[l.itemId].lbl = true; }); toast(`สร้างฉลาก ${list.length} รายการ`); renderDrugs();
+  }
+  // ---- ฉลากจิ๋ว / เต็ม ----
+  const invLoc = r => { const p = String(r[6] || '').split('/'); return [(BOX[r[1]] || {}).name || p[0], p[1], p[2]].filter(Boolean).join(' / '); };
+  async function printInvLabel(type) {
+    const r = curInvRow(), qty = +$('stkQty').value || 1; await loadLabels();
+    const L = LABELS[r[2]] || {}, d = drug(r[2]);
+    const it = { ...(L.l1 || L.l2 ? L : RX.autoLabel(d)), name: L.name || d.n, unit: L.unit || d.u, itemId: r[2], qty, expire: $('invExp').value || r[5], store: (BOX[r[1]] || {}).name || '', loc: invLoc(r) };
+    RX.printHtml(type === 'mini' ? RX.miniLabelHtml([it]) : RX.labelHtml([it]));
+  }
+  async function printMiniNow(ic) { const L = lblForm(); RX.printHtml(RX.miniLabelHtml([{ name: L.name || drug(ic).n, loc: '', qty: 1 }])); }
+  async function loadInvUsage(id) {
+    const box = $('invUsageBox'); box.innerHTML = '<div class="small mut text-center">กำลังโหลดยอดใช้…</div>';
+    const r = await api('invUsage', { invId: id }); if ($('invId').value !== id) return;
+    if (!r.status) { box.innerHTML = `<div class="small text-danger text-center">${esc(r.message || 'โหลดยอดใช้ไม่ได้')}</div>`; return; }
+    const u = r.data;
+    box.innerHTML = `<div class="d-flex justify-content-around text-center mb-1">
+      <div><div class="fw-bold fs-5">${fmtN(u.d30)}</div><div class="small2 mut">เบิก 30 วัน</div></div>
+      <div><div class="fw-bold fs-5">${fmtN(u.d90)}</div><div class="small2 mut">เบิก 90 วัน</div></div>
+      <div><div class="fw-bold fs-5" style="color:#1e3a8a">${fmtN(u.night30)}</div><div class="small2 mut">ใช้นอกเวลา 30 คืน (HOSxP)</div></div></div>` +
+      (u.recent.length ? '<div class="small fw-bold mt-1">เบิกล่าสุด</div>' + u.recent.map(x => `<div class="d-flex justify-content-between small border-top py-1"><span class="one">${esc(x.time)} · ${esc(x.user)}</span><b class="ms-2">${fmtN(x.qty)}</b></div>`).join('') : '<div class="small mut text-center">ยังไม่มีประวัติการเบิก</div>');
+  }
+  // ---- ผู้ใช้ ----
+  function setUsrFilter(f, el) { usrFilter = f; document.querySelectorAll('#t-users .chip').forEach(c => c.classList.toggle('on', c === el)); renderUsers(); }
+  async function loadUsers() {
+    $('usrList').innerHTML = '<div class="text-center my-4"><div class="spinner-border text-success"></div></div>';
+    const r = await api('listUsers'); if (!r.status) { $('usrList').innerHTML = `<div class="text-danger text-center">${esc(r.message)}</div>`; return; }
+    USERS = r.data; renderUsers();
+  }
+  function renderUsers() {
+    if (!USERS) return; const kw = $('usrKw').value.trim().toLowerCase();
+    const list = USERS.users.filter(u => (usrFilter === 'all' || (usrFilter === 'admin' && u.isAdmin) || (usrFilter === 'nopw' && !u.hasPw)) &&
+      (!kw || [u.username, u.name, u.substock.join(' '), u.boxGroup.join(' ')].join(' ').toLowerCase().includes(kw)));
+    $('usrInfo').textContent = `${list.length} จาก ${USERS.users.length} คน`;
+    $('usrList').innerHTML = list.map(u => `<div class="card-x p-2 mb-2 d-flex align-items-center gap-2" style="cursor:pointer" onclick="openUser('${esc(u.username)}')">
+      <i class="fas fa-${u.isAdmin ? 'user-shield text-success' : 'user'} fs-4" style="width:30px;text-align:center"></i>
+      <div class="flex-grow-1 min-w-0"><div class="fw-bold one">${esc(u.name || u.username)} <span class="small mut fw-normal">${esc(u.username)}</span></div>
+      <div class="small mut one">${esc(u.boxGroup.concat(u.substock).join(', ') || 'ยังไม่มีสิทธิ์เบิก')}</div></div>
+      ${u.hasPw ? '' : '<span class="badge text-bg-warning">ยังไม่ตั้งรหัส</span>'}${u.isAdmin ? '<span class="badge text-bg-success">Admin</span>' : ''}</div>`).join('') || '<div class="text-center mut my-4">ไม่พบผู้ใช้</div>';
+  }
+  const chipSel = (box, opts, sel) => { document.querySelector(box).innerHTML = [...new Set(opts.concat(sel))].map(o => `<span class="chip ${sel.includes(o) ? 'on' : ''}" onclick="this.classList.toggle('on')" data-v="${esc(o)}">${esc(o)}</span>`).join('') || '<span class="small mut">-</span>'; };
+  const chipVal = box => [...document.querySelectorAll(box + ' .chip.on')].map(c => c.dataset.v);
+  function openUser(un) {
+    curUser = USERS.users.find(u => u.username === un); if (!curUser) return;
+    $('muUser').textContent = curUser.username; $('muName').value = curUser.name; $('muEmail').value = curUser.email; $('muAdmin').checked = curUser.isAdmin;
+    chipSel('#muGrp', USERS.boxGroups, curUser.boxGroup); chipSel('#muSub', USERS.substocks, curUser.substock);
+    $('muPw').innerHTML = curUser.hasPw ? '<i class="fas fa-check-circle text-success"></i> ตั้งรหัสผ่านแล้ว' : '<i class="fas fa-exclamation-circle text-warning"></i> ยังไม่ได้ตั้งรหัสผ่าน (ตั้งเองที่หน้าเบิกยา)';
+    M.mUser.show();
+  }
+  async function saveUserForm() {
+    const d = { username: curUser.username, name: $('muName').value.trim(), email: $('muEmail').value.trim(), boxGroup: chipVal('#muGrp'), substock: chipVal('#muSub'), isAdmin: $('muAdmin').checked };
+    const r = await api('saveUser', d); if (!r.status) return Swal.fire({ title: 'ไม่สำเร็จ', text: r.message, icon: 'error', target: '#mUser' });
+    Object.assign(curUser, d); M.mUser.hide(); toast('บันทึกแล้ว'); renderUsers();
+  }
+  async function resetUserPw() {
+    const ok = await Swal.fire({ title: 'ล้างรหัสผ่าน ' + curUser.username + '?', text: 'ผู้ใช้จะต้องตั้งรหัสใหม่ที่หน้าเบิกยา และทุกเครื่องที่ login อยู่จะถูกออกจากระบบ', icon: 'warning', showCancelButton: true, confirmButtonText: 'ล้างรหัสผ่าน', cancelButtonText: 'ยกเลิก', target: '#mUser' });
+    if (!ok.isConfirmed) return;
+    const r = await api('resetUserPassword', { username: curUser.username }); if (!r.status) return Swal.fire({ title: 'ไม่สำเร็จ', text: r.message, icon: 'error', target: '#mUser' });
+    curUser.hasPw = false; M.mUser.hide(); toast('ล้างรหัสผ่านแล้ว'); renderUsers();
+  }
+  async function saveMyPw() {
+    const o = $('pwOld').value, n = $('pwNew').value;
+    if (n.length < 4) return Swal.fire({ title: 'รหัสผ่านใหม่อย่างน้อย 4 ตัว', icon: 'warning', target: '#mPw' });
+    if (n !== $('pwNew2').value) return Swal.fire({ title: 'ยืนยันรหัสผ่านไม่ตรงกัน', icon: 'warning', target: '#mPw' });
+    const r = await api('changeMyPassword', { oldPassword: o, newPassword: n }); if (!r.status) return Swal.fire({ title: 'ไม่สำเร็จ', text: r.message, icon: 'error', target: '#mPw' });
+    ['pwOld', 'pwNew', 'pwNew2'].forEach(k => $(k).value = ''); M.mPw.hide(); Swal.fire('เปลี่ยนรหัสผ่านแล้ว', 'ใช้รหัสใหม่ได้ทั้งหน้าเบิกยาและหน้า admin', 'success');
   }
   function findScan(code) {
     code = String(code || '').trim(); if (!code || !CAT) return;
