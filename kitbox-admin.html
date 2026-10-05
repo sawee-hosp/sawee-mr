@@ -14,7 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="rxfill-shared.js?v=20261004"></script>
+  <script src="rxfill-shared.js?v=20261005"></script>
   <style>
     :root{--g0:#064e2b;--g1:#0f7a3d;--g2:#16a34a;--g3:#dcfce7;--o1:#f97316;--o2:#fb923c;--o3:#fff1e6;--red:#dc2626;--bg:#f3f6f4;--ink:#1f2d27;--mut:#6b7c73;--card:#fff;--r:16px}
     *{font-family:'Sarabun',sans-serif}
@@ -112,7 +112,9 @@
       <input id="lp" type="password" class="form-control mb-3" autocomplete="current-password">
       <div id="loginErr" class="mb-2 fw-bold" style="display:none;background:#fee2e2;color:#991b1b;border-radius:10px;padding:8px 12px;font-size:14px"></div>
       <button class="btn btn-g w-100 rounded-pill py-2" id="btnLogin" onclick="doLogin()">เข้าสู่ระบบผู้ดูแล</button>
+      <a href="drug-inventory.html" class="btn btn-outline-light w-100 rounded-pill py-2 mt-2" style="border-color:var(--o1);color:var(--o1)"><i class="fas fa-pills me-1"></i> ไปหน้าเบิกยา (หน่วยงาน)</a>
       <div class="small mut text-center mt-3">ยังไม่มีรหัสผ่าน / ลืมรหัสผ่าน → <a href="drug-inventory.html" class="text-decoration-none fw-bold" style="color:var(--o1)">ตั้งที่หน้าเบิกยา</a></div>
+      <div id="verLine" class="text-center mut mt-2" style="font-size:11px"></div>
     </div>
   </div>
 </div>
@@ -123,6 +125,7 @@
     <div class="b"><img src="favicon-admin.svg" alt=""> Rxfill Admin</div>
     <div class="d-flex align-items-center gap-1">
       <span class="who one" id="who"></span>
+      <a class="tb-ico text-reset" title="ไปหน้าเบิกยา" href="drug-inventory.html"><i class="fas fa-pills"></i></a>
       <span class="tb-ico" title="ฉลากยา" onclick="openStickerCart()"><i class="fas fa-tags"></i><span class="bd hidden" id="bdStk"></span></span>
       <span class="tb-ico" title="ป้ายล็อกยา" onclick="openShelfCart()"><i class="fas fa-barcode"></i><span class="bd hidden" id="bdShelf"></span></span>
       <span class="tb-ico" onclick="logout()"><i class="fas fa-sign-out-alt"></i></span>
@@ -423,6 +426,11 @@
   // =====================================================================
   //  AUTH + หน้าแรก
   // =====================================================================
+  async function loadVersions() {
+    const g = async u => { try { const r = await fetch(u); const t = await r.text(); try { const j = JSON.parse(t); return j.ver ? j.ver + (j.shared && j.shared !== j.ver ? ' (Shared ' + j.shared + ')' : '') + (j.secret === false ? ' · ยังไม่มีรหัสลับ' : '') : t.slice(0, 40); } catch (e) { return t.includes('ward v4') || t.includes('admin v4') ? 'v4 (เก่า)' : 'ตอบผิดปกติ'; } } catch (e) { return 'เชื่อมต่อไม่ได้'; } };
+    const [a, w] = await Promise.all([g(ADMIN_URL), g(WARD_URL)]);
+    $('verLine').textContent = 'ระบบหลังบ้าน · admin: ' + a + ' · ward: ' + w;
+  }
   async function loadPublic() {
     const r = await post(ADMIN_URL, { action: 'getPublicDashboard', payload: {} });
     if (!r.status) { $('pub').innerHTML = `<div class="glass small">โหลดสถานะไม่ได้: ${esc(r.message || '')}</div>`; return; }
@@ -441,12 +449,16 @@
     if (!u || !p) return Swal.fire('กรอก Username และรหัสผ่าน');
     if ('speechSynthesis' in window) speechSynthesis.speak(new SpeechSynthesisUtterance(''));  // ปลดล็อกเสียงแจ้งเตือน
     $('btnLogin').disabled = true; $('btnLogin').innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    const r = await post(WARD_URL, { action: 'login', username: u, password: p });
+    let r = await post(ADMIN_URL, { action: 'adminLogin2', payload: { username: u, password: p } });
+    if (!r.status && !r.code && /Unknown action|ผิดปกติ|เชื่อมต่อ/.test(r.message || '')) {          // ฝั่ง admin ยังเป็นเวอร์ชันเก่า → ลองผ่านฝั่ง ward
+      const w = await post(WARD_URL, { action: 'login', username: u, password: p });
+      if (w.status || w.code) r = w; else r.message = 'admin: ' + r.message + ' · ward: ' + w.message;
+    }
     $('btnLogin').disabled = false; $('btnLogin').textContent = 'เข้าสู่ระบบผู้ดูแล';
     const le = $('loginErr'); le.style.display = 'none';
     const showErr = m => { le.textContent = '⚠ ' + m; le.style.display = 'block'; };
     if (!r.status) {
-      const msg = { NO_PASSWORD: 'บัญชีนี้ยังไม่ได้ตั้งรหัสผ่าน — ตั้งที่หน้าเบิกยาก่อน', NEED_REGISTER: 'ยังไม่ได้ลงทะเบียน — ลงทะเบียนที่หน้าเบิกยาก่อน', UNKNOWN: 'ไม่พบ Username นี้ใน HOSxP', BAD_PASSWORD: 'รหัสผ่านไม่ถูกต้อง' }[r.code] || r.message;
+      const msg = { NOT_ADMIN: r.message, NO_SECRET: r.message, NO_PASSWORD: 'บัญชีนี้ยังไม่ได้ตั้งรหัสผ่าน — ตั้งที่หน้าเบิกยาก่อน', NEED_REGISTER: 'ยังไม่ได้ลงทะเบียน — ลงทะเบียนที่หน้าเบิกยาก่อน', UNKNOWN: r.message || 'ไม่พบ Username นี้', BAD_PASSWORD: 'รหัสผ่านไม่ถูกต้อง' }[r.code] || r.message;
       showErr(msg || 'เข้าสู่ระบบไม่สำเร็จ'); return Swal.fire('เข้าสู่ระบบไม่สำเร็จ', msg, 'error');
     }
     if (!r.user.isAdmin) { showErr('บัญชีนี้ไม่อยู่ในชีต Admin/Admins'); }
@@ -456,7 +468,7 @@
   }
   function logout(msg) {
     SES = null; LS.del('rxadm_session');
-    $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); loadPublic();
+    $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); loadPublic(); loadVersions();
     if (msg) Swal.fire({ icon: 'info', title: msg });
   }
   $('lp').addEventListener('keyup', e => { if (e.key === 'Enter') doLogin(); });
@@ -474,7 +486,7 @@
     document.querySelectorAll('.lbf').forEach(i => i.addEventListener('input', debounce(previewLabel, 250)));
     $('mScan').addEventListener('hidden.bs.modal', () => { try { scanner && scanner.clear(); } catch (e) {} });
     badges();
-    if (SES && SES.token) showApp(); else loadPublic();
+    if (SES && SES.token) showApp(); else { loadPublic(); loadVersions(); }
     setInterval(() => { if (SES) refreshOrders(true); else loadPublic(); }, 60000);
   };
   function showApp() {
@@ -820,9 +832,12 @@
   }
   function printNight() {
     if (!NIGHT) return; const list = nightRows();
-    RX.printHtml(`<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:12mm}body{font-family:Sarabun;font-size:12px}h2{text-align:center;margin:0 0 4px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:3px 5px}th{background:#eee}.c{text-align:center}.r{color:#c00;font-weight:700}</style></head><body>
-      <h2>รายงานการใช้ยาเวรดึก (20.00–08.00 น.)</h2><div style="text-align:center;margin-bottom:6px">คืน ${thD(NIGHT.from)} – ${thD(NIGHT.to)} · พิมพ์โดย ${esc(SES.user.name)} ${new Date().toLocaleString('th-TH')}</div>
-      <table><thead><tr><th>#</th><th>ยา</th>${NIGHT_TARGETS.map(t => `<th>${t.label}<br>ใช้/คงเหลือ</th>`).join('')}<th>รวมใช้</th></tr></thead><tbody>${list.map((x, i) => `<tr><td class="c">${i + 1}</td><td>${esc(x.name)}</td>${NIGHT_TARGETS.map(t => { const u = x.use[t.key], s = x.stock[t.key]; return `<td class="c ${u > s ? 'r' : ''}">${u || s ? fmtN(u) + ' / ' + fmtN(s) : '-'}</td>`; }).join('')}<td class="c">${fmtN(x.use.total)} ${esc(x.unit)}</td></tr>`).join('')}</tbody></table></body></html>`);
+    const body = `<table class="t"><thead><tr><th style="width:8mm">ที่</th><th>ชื่อยา</th>${NIGHT_TARGETS.map(t => `<th style="width:24mm" class="c">${esc(t.label)}<div style="font-size:14px;font-weight:400">ใช้ / คงเหลือ</div></th>`).join('')}<th style="width:24mm">รวมใช้</th></tr></thead>
+      <tbody>${list.map((x, i) => `<tr><td class="c">${i + 1}</td><td>${esc(x.name)}<div class="small mut">${esc(x.ic)} · ${x.use.visits} ครั้ง</div></td>${NIGHT_TARGETS.map(t => { const u = x.use[t.key], s = x.stock[t.key]; return `<td class="c ${u > s ? 'red' : ''}">${u || s ? fmtN(u) + ' / ' + fmtN(s) : '–'}${u && !s ? '<div class="small">ไม่มีสำรอง</div>' : ''}</td>`; }).join('')}<td class="r">${fmtN(x.use.total)} ${esc(x.unit)}</td></tr>`).join('') || '<tr><td colspan="9" class="c mut">ไม่มีข้อมูล</td></tr>'}</tbody></table>
+      <div class="small mut" style="margin-top:2mm">สีแดง = ใช้มากกว่าจำนวนสำรองที่มี · ข้อมูลจาก HOSxP ${esc(NIGHT.lastSync || '')}</div>`;
+    RX.printHtml(RX.docHtml({ title: 'รายงานการใช้ยาเวรดึก', subtitle: 'ช่วงเวลา 20.00–08.00 น. เทียบกับยาสำรองคงเหลือ',
+      meta: [['คืนวันที่', thD(NIGHT.from) + ' – ' + thD(NIGHT.to)], ['จำนวนรายการ', list.length + ' รายการ'], ['ผู้พิมพ์', SES.user.name]], body,
+      sign: [{ label: 'ผู้รายงาน', name: SES.user.name, role: 'เภสัชกร' }] }));
   }
 
   // =====================================================================
@@ -860,10 +875,11 @@
   function printLabelNow() { RX.printHtml(RX.labelHtml([{ ...lblForm(), expire: $('lbExp').value, qty: 1 }], { by: SES && SES.user.name })); }
   function labelToCart() { const L = lblForm(); addSticker(L.itemId, 1, $('lbExp').value); }
   function stkQty(v) { $('stkQty').value = Math.max(1, (+$('stkQty').value || 1) + v); }
-  function addStickerFromInv() { const r = curInvRow(); addSticker(r[2], +$('stkQty').value || 1, $('invExp').value || r[5]); }
-  function addSticker(ic, qty, expire) {
-    const ex = stickerCart.find(s => s.itemId === ic && s.expire === expire);
-    ex ? ex.qty += qty : stickerCart.push({ itemId: ic, qty, expire: expire || '' });
+  function addStickerFromInv() { const r = curInvRow(); addSticker(r[2], +$('stkQty').value || 1, $('invExp').value || r[5], (BOX[r[1]] || {}).name || ''); }
+  function addSticker(ic, qty, expire, store) {
+    store = store || '';
+    const ex = stickerCart.find(s => s.itemId === ic && s.expire === expire && (s.store || '') === store);
+    ex ? ex.qty += qty : stickerCart.push({ itemId: ic, qty, expire: expire || '', store });
     LS.set('rxadm_stk', stickerCart); badges(); toast('ใส่รายการฉลากแล้ว');
   }
   function badges() {
@@ -873,13 +889,13 @@
   async function openStickerCart() {
     await loadLabels();
     $('stkList').innerHTML = stickerCart.map((s, i) => `<div class="card-x p-2 mb-2 d-flex align-items-center gap-2"><div class="flex-grow-1 min-w-0"><div class="fw-bold one">${esc((LABELS[s.itemId] || {}).name || drug(s.itemId).n)}</div>
-      <div class="small mut">EXP ${esc(thD(s.expire) || '-')} ${LABELS[s.itemId] ? '' : '<span class="text-danger">· ยังไม่มีฉลาก</span>'}</div></div>
+      <div class="small mut">${s.store ? esc(s.store) + ' · ' : ''}EXP ${esc(thD(s.expire) || '-')} ${LABELS[s.itemId] ? '' : '<span class="text-danger">· ยังไม่มีฉลาก</span>'}</div></div>
       <div class="input-group input-group-sm" style="width:110px"><button class="btn btn-outline-secondary" onclick="stickerCart[${i}].qty=Math.max(1,stickerCart[${i}].qty-1);saveStk()">-</button><span class="form-control text-center">${s.qty}</span><button class="btn btn-outline-secondary" onclick="stickerCart[${i}].qty++;saveStk()">+</button></div>
       <i class="fas fa-trash text-danger p-1" style="cursor:pointer" onclick="stickerCart.splice(${i},1);saveStk()"></i></div>`).join('') || '<div class="text-center mut my-4">ยังไม่มีรายการ — เลือกยาในกล่องแล้วกด "ใส่รายการฉลาก"</div>';
     M.ocStk.show();
   }
   function saveStk() { LS.set('rxadm_stk', stickerCart); badges(); openStickerCart(); }
-  const stickerItems = () => stickerCart.map(s => { const L = LABELS[s.itemId] || {}, d = drug(s.itemId); return { ...L, name: L.name || d.n, unit: L.unit || d.u, itemId: s.itemId, qty: s.qty, expire: s.expire }; });
+  const stickerItems = () => stickerCart.map(s => { const L = LABELS[s.itemId] || {}, d = drug(s.itemId); return { ...L, name: L.name || d.n, unit: L.unit || d.u, itemId: s.itemId, qty: s.qty, expire: s.expire, store: s.store || '' }; });
   function printStickerCart() {
     if (!stickerCart.length) return;
     RX.printHtml(RX.labelHtml(stickerItems(), { by: SES && SES.user.name })).then(async () => {

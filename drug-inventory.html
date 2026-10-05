@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="rxfill-shared.js?v=20261004"></script>
+  <script src="rxfill-shared.js?v=20261005"></script>
 
   <style>
     :root { --font-main: "Sarabun", sans-serif; --primary: #003d82; --primary2: #2563eb; --bg: #f4f6f9; --text: #2c3e50; --ha-color: #ffebee; --cool-color: #e3f2fd; }
@@ -152,6 +152,7 @@
             <button class="btn btn-link p-0 text-decoration-none" onclick="openAsk('register')"><i class="fas fa-user-plus"></i> ลงทะเบียนใหม่</button>
             <button class="btn btn-link p-0 text-decoration-none text-secondary" onclick="openAsk('forgot')"><i class="fas fa-key"></i> จำรหัสผ่านไม่ได้</button>
           </div>
+          <a href="kitbox-admin.html" class="btn btn-outline-success w-100 mt-3 rounded-pill"><i class="fas fa-user-shield me-1"></i> ไปหน้าห้องยา (Admin)</a>
         </div>
 
         <!-- ask username (register / forgot) -->
@@ -174,7 +175,7 @@
           <input id="r-email" type="email" class="form-control" placeholder="name@example.com">
           <div class="hint mb-2">ใช้สำหรับรับรหัส OTP เวลาลืมรหัสผ่าน</div>
           <div class="row g-2 mb-2">
-            <div class="col-6"><label class="small text-muted">รหัสผ่าน <span class="text-danger">*</span></label><input id="r-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 6 ตัว"></div>
+            <div class="col-6"><label class="small text-muted">รหัสผ่าน <span class="text-danger">*</span></label><input id="r-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 4 ตัว"></div>
             <div class="col-6"><label class="small text-muted">ยืนยันรหัสผ่าน</label><input id="r-pass2" type="password" class="form-control" autocomplete="new-password"></div>
           </div>
           <label class="small fw-bold text-muted">ตึก (Box Group)</label>
@@ -194,7 +195,7 @@
           <input id="sp-email" type="email" class="form-control" placeholder="name@example.com">
           <div class="hint mb-2">ใช้สำหรับรับรหัส OTP เวลาลืมรหัสผ่าน</div>
           <div class="row g-2 mb-3">
-            <div class="col-6"><label class="small text-muted">รหัสผ่าน</label><input id="sp-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 6 ตัว"></div>
+            <div class="col-6"><label class="small text-muted">รหัสผ่าน</label><input id="sp-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 4 ตัว"></div>
             <div class="col-6"><label class="small text-muted">ยืนยัน</label><input id="sp-pass2" type="password" class="form-control" autocomplete="new-password"></div>
           </div>
           <button class="btn btn-primary w-100" onclick="doSetPw()">บันทึกและเข้าสู่ระบบ</button>
@@ -209,7 +210,7 @@
           <label class="small text-muted">รหัส OTP 6 หลัก</label>
           <input id="otp-code" class="form-control mb-2 text-center fw-bold fs-4" inputmode="numeric" maxlength="6" style="letter-spacing:6px">
           <div class="row g-2 mb-3">
-            <div class="col-6"><label class="small text-muted">รหัสผ่านใหม่</label><input id="otp-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 6 ตัว"></div>
+            <div class="col-6"><label class="small text-muted">รหัสผ่านใหม่</label><input id="otp-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 4 ตัว"></div>
             <div class="col-6"><label class="small text-muted">ยืนยัน</label><input id="otp-pass2" type="password" class="form-control" autocomplete="new-password"></div>
           </div>
           <button class="btn btn-primary w-100" onclick="doOtp()">ตั้งรหัสผ่านใหม่</button>
@@ -251,6 +252,7 @@
           <i class="fas fa-shopping-basket" id="cart-ico" style="font-size:1.3rem;transition:.2s"></i>
           <div id="badge" class="badge bg-danger rounded-circle position-absolute top-0 end-0 hidden" style="font-size:9px">0</div>
         </div>
+        <a id="nav-admin" href="kitbox-admin.html" title="ไปหน้าห้องยา (Admin)" class="text-reset hidden" style="padding:5px"><i class="fas fa-user-shield" style="font-size:1.3rem"></i></a>
         <div style="padding:5px;cursor:pointer" onclick="logout()"><i class="fas fa-sign-out-alt" style="font-size:1.3rem"></i></div>
       </div>
     </nav>
@@ -411,11 +413,12 @@
       <label class="small fw-bold text-primary">สิทธิ์การเบิก (Substock)</label><div id="pf-subs" class="chk-list mb-2"></div>
       <details class="mb-2"><summary class="small fw-bold text-secondary">เปลี่ยนรหัสผ่าน</summary>
         <input id="pf-old" type="password" class="form-control form-control-sm mt-2" placeholder="รหัสผ่านเดิม" autocomplete="current-password">
-        <input id="pf-new" type="password" class="form-control form-control-sm mt-1" placeholder="รหัสผ่านใหม่ (≥ 6 ตัว)" autocomplete="new-password">
+        <input id="pf-new" type="password" class="form-control form-control-sm mt-1" placeholder="รหัสผ่านใหม่ (≥ 4 ตัว)" autocomplete="new-password">
         <input id="pf-new2" type="password" class="form-control form-control-sm mt-1" placeholder="ยืนยันรหัสผ่านใหม่" autocomplete="new-password">
       </details>
       <button onclick="saveProfile()" class="btn btn-primary w-100 mt-2">บันทึก</button>
-      <hr><button onclick="logout()" class="btn btn-outline-danger w-100"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
+      <hr><a href="kitbox-admin.html" class="btn btn-outline-success w-100 mb-2"><i class="fas fa-user-shield"></i> ไปหน้าห้องยา (Admin)</a>
+      <button onclick="logout()" class="btn btn-outline-danger w-100"><i class="fas fa-sign-out-alt"></i> ออกจากระบบ</button>
     </div>
   </div></div></div>
 
@@ -564,7 +567,7 @@
     $('r-subs').innerHTML = o.options.map(g => `<div class="form-check"><input class="form-check-input r-sub" type="checkbox" value="${esc(g)}" id="rs-${esc(g)}"><label class="form-check-label" for="rs-${esc(g)}">${esc(g)}</label></div>`).join('');
   }
   const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-  function pwCheck(a, b) { if (a.length < 6) return 'รหัสผ่านอย่างน้อย 6 ตัวอักษร'; if (a !== b) return 'ยืนยันรหัสผ่านไม่ตรงกัน'; return ''; }
+  function pwCheck(a, b) { if (a.length < 4) return 'รหัสผ่านอย่างน้อย 4 ตัวอักษร'; if (a !== b) return 'ยืนยันรหัสผ่านไม่ตรงกัน'; return ''; }
   async function doRegister() {
     const email = $('r-email').value.trim();
     if (!emailOk(email)) return setMsg('กรุณากรอกอีเมลให้ถูกต้อง (ใช้สำหรับรีเซ็ตรหัสผ่าน)');
@@ -634,6 +637,7 @@
     $('auth').classList.add('hidden');
     $('app-main').classList.remove('hidden'); $('btm-nav').classList.remove('hidden');
     $('nav-name').textContent = (me().name || me().username || '').split(' ')[0];
+    $('nav-admin').classList.toggle('hidden', !me().isAdmin);
     cart = LS.get(cartKey()) || []; badge();
     curBox = ''; CAT = null;
     // 1) แสดงทันทีจากเครื่อง (ถ้าเคยโหลด)
