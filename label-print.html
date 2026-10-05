@@ -6,7 +6,7 @@
 <title>พิมพ์ฉลากยา · Sawee Rxfill</title>
 <link rel="icon" type="image/svg+xml" href="favicon-admin.svg">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="rxfill-shared.js?v=20261005"></script>
+<script src="rxfill-shared.js?v=20261005b"></script>
 <style>
   body{margin:0;font-family:Sarabun,sans-serif;background:#eef3ef;color:#1f2d27}
   .bar{flex-wrap:wrap;position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#064e2b,#0f7a3d);color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;border-bottom:3px solid #f97316}
@@ -18,11 +18,12 @@
   iframe{width:100%;border:0;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12)}
   .list{background:#fff;border-radius:12px;padding:8px 12px;margin-bottom:12px;font-size:.9rem}
   .list div{display:flex;justify-content:space-between;border-bottom:1px solid #eef2ef;padding:4px 0}
+  .seg{background:rgba(255,255,255,.15);border-radius:24px;padding:3px;display:inline-flex}.seg button{background:transparent;color:#fff;padding:6px 12px}.seg button.on{background:#fff;color:#064e2b}
   .done{background:#dcfce7;color:#064e2b;border-radius:12px;padding:10px;margin-bottom:12px;text-align:center;font-weight:700}
 </style>
 </head>
 <body>
-<div class="bar"><div><b id="t">พิมพ์ฉลากยา</b><small id="st"></small></div><div style="display:flex;gap:8px"><button class="s" id="bDone" onclick="markDone()" disabled>✔ พิมพ์แล้ว</button><button class="p" id="bPrint" onclick="doPrint()" disabled>🖨️ พิมพ์</button></div></div>
+<div class="bar"><div><b id="t">พิมพ์ฉลากยา</b><small id="st"></small></div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="seg"><button id="tFull" class="on" onclick="setType('full')">ฉลากเต็ม</button><button id="tMini" onclick="setType('mini')">ฉลากจิ๋ว</button></span><button class="s" id="bDone" onclick="markDone()" disabled>✔ พิมพ์แล้ว</button><button class="p" id="bPrint" onclick="doPrint()" disabled>🖨️ พิมพ์</button></div></div>
 <div class="wrap">
   <div id="m" class="msg">กำลังโหลด…</div>
   <div id="ok" class="done" hidden></div>
@@ -47,14 +48,19 @@
       document.getElementById('st').textContent = `${n} ดวง · ${P.time} · ${P.admin || ''} · ${P.status === 'Printed' ? 'พิมพ์แล้ว' : 'รอพิมพ์'}`;
       const l = document.getElementById('lst'); l.hidden = false;
       l.innerHTML = P.items.map(x => `<div><span>${RX.esc(x.name)}</span><b>× ${x.qty}</b></div>`).join('');
-      HTML = RX.labelHtml(P.items);
-      const f = document.getElementById('f'); f.hidden = false; f.style.height = Math.min(n, 6) * 232 + 'px';
-      await RX.previewInto(f, HTML);
-      f.style.height = (f.contentDocument.body.scrollHeight + 10) + 'px';
+      await render();
       document.getElementById('m').remove();
       document.getElementById('bPrint').disabled = false; document.getElementById('bDone').disabled = false;
     } catch (e) { document.getElementById('m').textContent = 'เชื่อมต่อไม่ได้: ' + e.message; }
   })();
+  let TYPE = 'full';
+  async function render() {
+    HTML = TYPE === 'mini' ? RX.miniLabelHtml(P.items) : RX.labelHtml(P.items);
+    const f = document.getElementById('f'); f.hidden = false; f.style.height = '240px';
+    await RX.previewInto(f, HTML);
+    f.style.height = (f.contentDocument.body.scrollHeight + 10) + 'px';
+  }
+  function setType(t) { TYPE = t; document.getElementById('tFull').classList.toggle('on', t === 'full'); document.getElementById('tMini').classList.toggle('on', t === 'mini'); if (P) render(); }
   function doPrint() { RX.printHtml(HTML); }
   async function markDone() {
     await post('markPoolPrinted', { id });
