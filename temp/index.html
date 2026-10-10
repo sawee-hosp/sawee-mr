@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sawee Cold Chain</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='40' y='10' width='20' height='60' rx='10' fill='%234f46e5'/><circle cx='50' cy='75' r='20' fill='%234f46e5'/><rect x='45' y='20' width='10' height='50' rx='5' fill='%23ef4448'/><circle cx='50' cy='75' r='12' fill='%23ef4448'/></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Faster+One&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Prompt"', 'sans-serif'],
+                        logo: ['"Faster One"', 'system-ui', 'sans-serif']
+                    },
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#4f46e5', 600: '#4338ca', 900: '#312e81' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background: linear-gradient(135deg, #ffe4e6 0%, #e0e7ff 50%, #f3e8ff 100%); background-attachment: fixed; }
+        .glass-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.3); }
+        .glass-panel { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .device-card { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); }
+        .device-card:hover:not(.alert-card-fx) { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.15); border-color: #a5b4fc; }
+        .mini-card:hover { transform: scale(1.02); }
+
+        @keyframes severeBlink {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { transform: scale(1.02); box-shadow: 0 0 25px 8px rgba(239, 68, 68, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .alert-card-fx { animation: severeBlink 1s ease-in-out infinite; z-index: 10; }
+        @media (prefers-reduced-motion: reduce) {
+            .alert-card-fx, .holo-text, .shine-sweep::after { animation: none !important; }
+        }
+
+        .modal-active { overflow: hidden; }
+
+        .loader { border: 4px solid rgba(79, 70, 229, 0.2); border-top-color: #4f46e5; border-radius: 50%; width: 100%; height: 100%; animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #1e293b; color: white; padding: 14px 24px; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); transition: all 0.3s; font-size: 14px; display: flex; align-items: center; gap: 12px; font-weight: 500; max-width: 420px; }
+
+        @keyframes holoShine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes sweep { 0% { left: -150%; } 50% { left: 150%; } 100% { left: 150%; } }
+        .holo-text {
+            font-family: 'Faster One', system-ui, sans-serif;
+            background: linear-gradient(120deg, #06b6d4 0%, #3b82f6 25%, #8b5cf6 50%, #10b981 75%, #06b6d4 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: holoShine 6s linear infinite;
+            font-weight: 400;
+        }
+        .shine-sweep { position: relative; overflow: hidden; }
+        .shine-sweep::after {
+            content: ''; position: absolute; top: 0; left: -150%; width: 80%; height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-20deg); animation: sweep 4s ease-in-out infinite;
+        }
+
+        @media print {
+            body { background: white; }
+            .print-hidden { display: none !important; }
+            .print-block { display: block !important; }
+            .print-box-hide { display: none !important; }
+            @page { margin: 15mm; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+
+<!-- ================= แอปหลัก ================= -->
+<div class="min-h-screen flex flex-col h-screen print-hidden">
+    <header class="glass-header z-20 sticky top-0 shadow-sm">
+        <div class="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="bg-gradient-to-tr from-cyan-600 via-indigo-500 to-purple-400 p-2.5 rounded-xl shadow-md text-white flex items-center justify-center shine-sweep">
+                    <i class="fa-solid fa-thermometer-half text-lg"></i>
+                </div>
+                <div>
+                    <div class="relative inline-block shine-sweep">
+                        <h1 class="text-xl sm:text-2xl tracking-tight holo-text leading-none">Sawee Cold Chain</h1>
+                    </div>
+                    <p class="text-[11px] sm:text-xs text-slate-500 font-semibold tracking-wider mt-1">ระบบห่วงโซ่ความเย็น รพ.สวี</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="last-sync" class="hidden md:inline text-[11px] text-slate-500 font-semibold"></span>
+                <button onclick="fetchDashboardData()" class="group bg-white/80 border border-brand-100 text-brand-600 px-4 py-2 rounded-xl hover:bg-brand-600 hover:text-white transition-all duration-300 text-sm font-semibold flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-rotate group-hover:rotate-180 transition-transform duration-500" id="refresh-icon"></i> <span class="hidden sm:inline">ซิงค์ข้อมูล</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-hidden flex flex-col md:flex-row max-w-[1800px] w-full mx-auto relative">
+
+        <!-- Sidebar -->
+        <aside class="w-full md:w-64 bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-y-auto p-5 shrink-0 z-10 flex flex-col gap-6 text-slate-300">
+            <div class="bg-gradient-to-br from-brand-500 to-indigo-400 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 w-20 h-20 bg-white/20 rounded-full blur-2xl"></div>
+                <h3 class="text-xs font-semibold opacity-90 mb-1 uppercase tracking-wider">System Status</h3>
+                <div class="flex items-end gap-2">
+                    <span class="text-3xl font-black tracking-tight" id="total-devices-count">--</span>
+                    <span class="text-xs opacity-90 mb-1 font-medium">อุปกรณ์ทั้งหมด</span>
+                </div>
+                <div class="flex gap-3 mt-2 text-[11px] font-semibold">
+                    <span><i class="fa-solid fa-triangle-exclamation"></i> แจ้งเตือน <b id="alert-count">0</b></span>
+                    <span><i class="fa-solid fa-plug-circle-xmark"></i> ออฟไลน์ <b id="offline-count">0</b></span>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-3">มุมมองข้อมูล (Views)</h2>
+                <div class="space-y-2">
+                    <button onclick="switchView('grid')" id="nav-grid"><i class="fa-solid fa-border-all w-5"></i> อุปกรณ์ทั้งหมด</button>
+                    <button onclick="switchView('room')" id="nav-room"><i class="fa-solid fa-layer-group w-5"></i> แยกตามห้อง (Room)</button>
+                    <button onclick="switchView('chart')" id="nav-chart"><i class="fa-solid fa-chart-line w-5"></i> กราฟรวม</button>
+                    <button onclick="switchView('manage')" id="nav-manage"><i class="fa-solid fa-gear w-5"></i> จัดการอุปกรณ์</button>
+                </div>
+            </div>
+
+            <hr class="border-slate-800">
+
+            <div id="filter-section">
+                <div class="flex items-center gap-2 mb-3 text-white">
+                    <i class="fa-solid fa-map-location-dot text-brand-400"></i>
+                    <h2 class="text-xs font-bold tracking-wider uppercase">สถานที่ / ตู้ (Location)</h2>
+                </div>
+                <ul id="room-filter-list" class="space-y-1"></ul>
+
+                <div class="flex items-center gap-2 mt-6 mb-3 text-white">
+                    <i class="fa-solid fa-microchip text-sky-400"></i>
+                    <h2 class="text-xs font-bold tracking-wider uppercase">ประเภท (Sensor)</h2>
+                </div>
+                <ul id="type-filter-list" class="space-y-1"></ul>
+            </div>
+        </aside>
+
+        <!-- View 1: Grid -->
+        <main id="view-grid" class="flex-1 overflow-y-auto p-4 sm:p-6 relative">
+            <div id="loading-state" class="flex flex-col items-center justify-center h-full min-h-[300px]">
+                <div class="relative w-16 h-16 mb-4"><div class="loader"></div></div>
+                <h3 class="text-lg font-bold text-slate-800">กำลังซิงค์ข้อมูล...</h3>
+            </div>
+            <div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 hidden pb-10"></div>
+        </main>
+
+        <!-- View 2: Room -->
+        <main id="view-room" class="flex-1 overflow-y-auto p-4 sm:p-6 relative hidden">
+            <div id="room-grid" class="space-y-6 pb-10"></div>
+        </main>
+
+        <!-- View 3: Master Chart -->
+        <main id="view-chart" class="flex-1 overflow-y-auto p-4 sm:p-6 relative hidden">
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-sm">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-white/40">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800">ภาพรวมอุณหภูมิทั้งหมด</h2>
+                        <p class="text-sm text-slate-500 mt-1">เปรียบเทียบแนวโน้มอุณหภูมิของทุกอุปกรณ์ในระบบ</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 bg-white/60 p-2 rounded-2xl shadow-sm border border-white">
+                        <input type="date" id="master-date-start" class="px-3 py-2 bg-white rounded-xl text-sm font-semibold outline-none border border-slate-200">
+                        <span class="text-slate-400 text-sm font-medium">ถึง</span>
+                        <input type="date" id="master-date-end" class="px-3 py-2 bg-white rounded-xl text-sm font-semibold outline-none border border-slate-200">
+                        <button onclick="fetchMasterChart()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-md">พล็อตจุด</button>
+                    </div>
+                </div>
+                <div class="relative w-full h-[500px] bg-white/80 rounded-2xl border border-white p-4 shadow-inner">
+                    <div id="master-chart-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm z-10 hidden rounded-2xl">
+                        <div class="relative w-12 h-12 mb-3"><div class="loader"></div></div>
+                        <p class="text-brand-600 font-bold animate-pulse">กำลังประมวลผลข้อมูลจากทุกโหนด...</p>
+                    </div>
+                    <canvas id="masterChartCanvas"></canvas>
+                </div>
+            </div>
+        </main>
+
+        <!-- View 4: Device Management -->
+        <main id="view-manage" class="flex-1 overflow-y-auto p-4 sm:p-6 relative hidden">
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-sm">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-white/40">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800">จัดการอุปกรณ์</h2>
+                        <p class="text-sm text-slate-500 mt-1">เพิ่ม แก้ไข หรือปิดการใช้งานเซ็นเซอร์ (ข้อมูลเก็บในชีต device)</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <input id="manage-search" oninput="renderManageTable()" placeholder="ค้นหาชื่อ / ID / สถานที่..." class="px-3 py-2 bg-white rounded-xl text-sm font-semibold outline-none border border-slate-200 w-60">
+                        <button onclick="openDeviceForm()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> เพิ่มอุปกรณ์
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto bg-white/80 rounded-2xl border border-white shadow-inner">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3">สถานะ</th>
+                                <th class="px-4 py-3">อุปกรณ์</th>
+                                <th class="px-4 py-3">ประเภท</th>
+                                <th class="px-4 py-3">สถานที่</th>
+                                <th class="px-4 py-3">ช่วงอุณหภูมิ</th>
+                                <th class="px-4 py-3">ช่วงความชื้น</th>
+                                <th class="px-4 py-3 text-right">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manage-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- ================= Modal รายละเอียด ================= -->
+<div id="detail-modal" class="fixed inset-0 z-50 hidden print-hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+
+        <div class="modal-panel relative bg-white/95 backdrop-blur-md rounded-[28px] text-left overflow-hidden shadow-2xl transform transition-all duration-200 scale-95 opacity-0 sm:my-8 sm:max-w-6xl w-full flex flex-col border border-white" style="max-height: 95vh;">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <div class="min-w-0">
+                    <h3 class="text-xl font-bold text-slate-900 line-clamp-1" id="modal-title">Node Identifier</h3>
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        <span class="text-xs font-semibold text-slate-500" id="modal-room">Location</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="text-xs text-brand-600 font-semibold" id="modal-type">Type</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="text-xs text-slate-500 font-semibold" id="modal-limits"></span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openPdfReport()" class="hidden sm:flex bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
+                    </button>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-white bg-slate-100 hover:bg-red-500 w-9 h-9 rounded-full transition-colors flex items-center justify-center ml-2" aria-label="ปิด">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 overflow-y-auto flex-1 bg-slate-50/50">
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <div class="bg-white px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-slate-200 shadow-sm flex-1">
+                        <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center"><i class="fa-solid fa-battery-three-quarters"></i></div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">แบตเตอรี่</p>
+                            <p class="font-bold text-slate-800" id="modal-battery">--%</p>
+                        </div>
+                    </div>
+                    <div class="bg-white px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-slate-200 shadow-sm flex-1">
+                        <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fa-regular fa-clock"></i></div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">อัปเดตล่าสุด</p>
+                            <p class="font-bold text-slate-800 text-sm" id="modal-lastupdate">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="chart-section" class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
+                        <h4 class="font-bold text-slate-900 whitespace-nowrap flex items-center">
+                            <i class="fa-solid fa-chart-area text-brand-500 mr-2"></i>วิเคราะห์ประวัติ
+                            <span class="text-xs font-normal text-slate-400 ml-2">(ส่วนสีแดงในกราฟ = หลุดเกณฑ์)</span>
+                        </h4>
+                        <div class="flex items-center flex-wrap gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 w-full xl:w-auto">
+                            <input type="date" id="date-start" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none flex-1">
+                            <span class="text-slate-400 text-xs">ถึง</span>
+                            <input type="date" id="date-end" class="px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold outline-none flex-1">
+                            <button onclick="fetchHistory()" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">ดึงข้อมูล</button>
+                            <button onclick="analyzeHealth()" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"><i class="fa-solid fa-stethoscope"></i> วิเคราะห์สุขภาพตู้เย็น</button>
+                            <button id="btn-view-drugs" onclick="toggleDrugList()" class="bg-indigo-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"><i class="fa-solid fa-pills"></i> ดูรายการยา</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-row gap-1 sm:gap-2 mb-4 w-full items-stretch" id="stats-container">
+                        <div class="flex-1 min-w-0 bg-red-50 rounded-xl p-1.5 sm:p-2 text-center border border-red-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-red-500 font-bold uppercase truncate">สูงสุด</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-red-600 mt-1 truncate" id="stat-max">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-blue-50 rounded-xl p-1.5 sm:p-2 text-center border border-blue-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-blue-500 font-bold uppercase truncate">ต่ำสุด</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-blue-600 mt-1 truncate" id="stat-min">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-emerald-50 rounded-xl p-1.5 sm:p-2 text-center border border-emerald-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-emerald-500 font-bold uppercase truncate">เฉลี่ย</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-emerald-600 mt-1 truncate" id="stat-avg">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-amber-50 rounded-xl p-1.5 sm:p-2 text-center border border-amber-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-amber-600 font-bold uppercase truncate" title="อุณหภูมิต่ำเกณฑ์">ต่ำเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-amber-700 leading-none mt-1 truncate" id="stat-out-low">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-purple-50 rounded-xl p-1.5 sm:p-2 text-center border border-purple-100 flex flex-col justify-center">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-purple-600 font-bold uppercase truncate" title="อุณหภูมิสูงเกณฑ์">สูงเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-purple-700 leading-none mt-1 truncate" id="stat-out-high">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-sky-50 rounded-xl p-1.5 sm:p-2 text-center border border-sky-100 flex flex-col justify-center" id="card-hum-low">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-sky-600 font-bold uppercase truncate" title="ความชื้นต่ำเกณฑ์">ชื้นต่ำเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-sky-700 leading-none mt-1 truncate" id="stat-hum-low">--</p>
+                        </div>
+                        <div class="flex-1 min-w-0 bg-fuchsia-50 rounded-xl p-1.5 sm:p-2 text-center border border-fuchsia-100 flex flex-col justify-center" id="card-hum-high">
+                            <p class="text-[8px] sm:text-[9px] md:text-[10px] text-fuchsia-600 font-bold uppercase truncate" title="ความชื้นสูงเกณฑ์">ชื้นสูงเกณฑ์</p>
+                            <p class="text-xs sm:text-sm md:text-base lg:text-lg font-black text-fuchsia-700 leading-none mt-1 truncate" id="stat-hum-high">--</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col lg:flex-row gap-4 w-full h-auto lg:h-[320px] items-stretch mt-2">
+                        <div id="canvas-container" class="flex-1 min-w-0 h-[320px] lg:h-full relative bg-white rounded-xl">
+                            <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10 hidden rounded-xl">
+                                <div class="w-10 h-10 relative"><div class="loader"></div></div>
+                            </div>
+                            <canvas id="historyChart"></canvas>
+                        </div>
+                        <div id="drug-panel" class="hidden w-full lg:w-1/5 h-[320px] lg:h-full bg-slate-50 border border-slate-200 rounded-2xl p-3 flex-col overflow-hidden">
+                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide border-b border-slate-200 pb-1.5 mb-2 flex items-center"><i class="fa-solid fa-pills text-indigo-500 mr-1.5"></i>รายการยาในจุดเก็บ</p>
+                            <div id="drug-list-container" class="flex-1 overflow-auto space-y-1 pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="smoke-message" class="hidden text-center py-12 bg-white border border-slate-200 rounded-2xl shadow-sm mt-4">
+                    <i class="fa-solid fa-wind text-4xl text-slate-300 mb-4"></i>
+                    <p class="text-slate-500 font-medium">อุปกรณ์นี้ไม่รองรับการแสดงกราฟอุณหภูมิ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= Modal วิเคราะห์สุขภาพ ================= -->
+<div id="health-modal" class="fixed inset-0 z-[60] hidden print-hidden" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeHealthModal()"></div>
+        <div class="relative bg-white rounded-3xl text-left overflow-hidden shadow-2xl sm:max-w-3xl w-full border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-teal-50">
+                <h3 class="text-lg font-bold text-teal-800 flex items-center gap-2"><i class="fa-solid fa-stethoscope text-teal-600"></i>ผลวิเคราะห์สมรรถนะอุปกรณ์</h3>
+                <button onclick="closeHealthModal()" class="text-slate-400 hover:text-slate-600" aria-label="ปิด"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="px-6 py-5 max-h-[75vh] overflow-y-auto space-y-5" id="health-findings-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= Modal ฟอร์มอุปกรณ์ ================= -->
+<div id="device-form-modal" class="fixed inset-0 z-[70] hidden print-hidden" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeDeviceForm()"></div>
+        <form id="device-form" onsubmit="saveDeviceForm(event)" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl border border-slate-200 overflow-hidden text-left">
+            <div class="px-6 py-4 border-b border-slate-100 bg-brand-50 flex justify-between items-center">
+                <h3 id="device-form-title" class="text-lg font-bold text-brand-900"><i class="fa-solid fa-microchip mr-2"></i>เพิ่มอุปกรณ์ใหม่</h3>
+                <button type="button" onclick="closeDeviceForm()" class="text-slate-400 hover:text-slate-700" aria-label="ปิด"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <input type="hidden" id="df-original-id">
+
+                <div>
+                    <label class="text-xs font-bold text-slate-600" for="df-id">Device ID (จากแอป / Tuya IoT Platform) *</label>
+                    <div class="flex gap-2 mt-1">
+                        <input id="df-id" required pattern="[A-Za-z0-9_]{6,64}" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" placeholder="เช่น eb41e3610469de0771n3dm">
+                        <button type="button" onclick="testDeviceConnection()" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-plug-circle-check"></i> ทดสอบ</button>
+                    </div>
+                    <p id="df-test-result" class="text-xs mt-1.5"></p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-3">
+                        <label class="text-xs font-bold text-slate-600" for="df-name">ชื่ออุปกรณ์ *</label>
+                        <input id="df-name" required maxlength="100" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600" for="df-type">ประเภท</label>
+                        <input id="df-type" list="type-options" maxlength="50" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="text-xs font-bold text-slate-600" for="df-room">สถานที่ / ห้อง</label>
+                        <input id="df-room" list="room-options" maxlength="100" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100">
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold text-slate-600 mb-1.5">ค่าสำเร็จรูป</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="applyPreset('fridge')" class="px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-100 text-xs font-semibold">ตู้เย็นยา 2–8°C</button>
+                        <button type="button" onclick="applyPreset('room')" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 text-xs font-semibold">ห้องยา 20–30°C / 35–65%</button>
+                        <button type="button" onclick="applyPreset('freezer')" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-semibold">ตู้แช่แข็ง −30–0°C</button>
+                        <button type="button" onclick="applyPreset('smoke')" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">เครื่องตรวจควัน</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div><label class="text-xs font-bold text-slate-600" for="df-minTemp">อุณหภูมิต่ำสุด (°C)</label><input id="df-minTemp" type="number" step="0.1" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400"></div>
+                    <div><label class="text-xs font-bold text-slate-600" for="df-maxTemp">อุณหภูมิสูงสุด (°C)</label><input id="df-maxTemp" type="number" step="0.1" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400"></div>
+                    <div><label class="text-xs font-bold text-slate-600" for="df-minHumid">ความชื้นต่ำสุด (%)</label><input id="df-minHumid" type="number" step="1" min="0" max="100" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400"></div>
+                    <div><label class="text-xs font-bold text-slate-600" for="df-maxHumid">ความชื้นสูงสุด (%)</label><input id="df-maxHumid" type="number" step="1" min="0" max="100" class="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-brand-400"></div>
+                </div>
+                <p class="text-[11px] text-slate-400 -mt-2">เว้นช่องความชื้นว่างไว้ = ไม่ต้องตรวจความชื้น (เช่น ตู้เย็น)</p>
+
+                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                    <input id="df-active" type="checkbox" class="w-4 h-4 accent-indigo-600" checked> เปิดใช้งาน (ดึงข้อมูลและแสดงบนแดชบอร์ด)
+                </label>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center gap-2">
+                <button type="button" onclick="logoutAdmin()" class="text-xs text-slate-400 hover:text-red-500 font-semibold"><i class="fa-solid fa-right-from-bracket"></i> ล้างรหัสผู้ดูแล</button>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeDeviceForm()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200">ยกเลิก</button>
+                    <button type="submit" id="df-save-btn" class="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-md"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<datalist id="type-options"></datalist>
+<datalist id="room-options"></datalist>
+
+<!-- ================= Layout สำหรับพิมพ์ A4 ================= -->
+<div id="print-area" class="hidden print-block w-full bg-white font-sans text-black">
+    <div class="text-center mb-6 pb-4 border-b-2 border-slate-800">
+        <h1 class="text-2xl font-black">รายงานสรุปข้อมูลห่วงโซ่ความเย็น (Cold Chain)</h1>
+        <h2 class="text-lg mt-1 font-semibold text-slate-600">โรงพยาบาลสวี จังหวัดชุมพร</h2>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4 text-sm font-semibold">
+        <div><span class="text-slate-500">ชื่ออุปกรณ์:</span> <span id="print-name"></span></div>
+        <div class="text-right"><span class="text-slate-500">สถานที่:</span> <span id="print-room"></span></div>
+        <div><span class="text-slate-500">ช่วงเวลาดึงข้อมูล:</span> <span id="print-dates"></span></div>
+        <div class="text-right"><span class="text-slate-500">พิมพ์เมื่อ:</span> <span id="print-timestamp"></span></div>
+    </div>
+
+    <table class="w-full mb-6 border-collapse border border-slate-300 text-sm">
+        <tr class="bg-slate-100">
+            <th class="border border-slate-300 py-2 px-2 text-center">สูงสุด</th>
+            <th class="border border-slate-300 py-2 px-2 text-center">ต่ำสุด</th>
+            <th class="border border-slate-300 py-2 px-2 text-center">เฉลี่ย</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-amber-700">อุณหภูมิต่ำเกณฑ์</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-purple-700">อุณหภูมิสูงเกณฑ์</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-sky-700" id="print-th-hum-low">ความชื้นต่ำเกณฑ์</th>
+            <th class="border border-slate-300 py-2 px-2 text-center text-fuchsia-700" id="print-th-hum-high">ความชื้นสูงเกณฑ์</th>
+        </tr>
+        <tr>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold" id="print-max">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold" id="print-min">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold" id="print-avg">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-amber-600" id="print-low">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-purple-600" id="print-high">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-sky-600" id="print-hum-low">--</td>
+            <td class="border border-slate-300 py-3 px-2 text-center font-bold text-fuchsia-600" id="print-hum-high">--</td>
+        </tr>
+    </table>
+
+    <p class="text-xs text-slate-500 mb-2 font-bold" id="print-threshold-note"></p>
+
+    <div class="flex flex-row gap-4 items-stretch border border-slate-200 p-2 rounded-lg">
+        <div class="flex-1 text-center min-w-0">
+            <img id="print-chart-img" alt="" class="max-w-full h-auto mx-auto" style="max-height: 320px;">
+        </div>
+        <div id="print-drug-container" class="w-1/4 border-l border-slate-300 pl-4 flex-col overflow-hidden max-h-[320px]" style="display: none;">
+            <p class="text-[11px] font-bold text-slate-700 uppercase border-b border-slate-200 pb-1 mb-2">รายการยาในจุดเก็บ</p>
+            <div id="print-drug-list" class="flex-1 text-[9px] space-y-1 overflow-hidden" style="max-height: 290px;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" class="print-hidden"></div>
+
+<script>
+// =========================================================================
+// ค่าคงที่ & สถานะ
+// =========================================================================
+const API_URL = "https://script.google.com/macros/s/AKfycbw8cH12hxQ78miJ-zrHOp28mnP5E7C2bWnDeqnUqxOODOdVUAqmhTGB2Q-3IYfKIepNLQ/exec";
+const ADMIN_KEY_STORAGE = 'scc_admin_key';
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const VIEWS = ['grid', 'room', 'chart', 'manage'];
+const NAV_ACTIVE = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-brand-500 text-white shadow-md shadow-brand-500/20";
+const NAV_INACTIVE = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-transparent";
+const DRUG_BTN_SHOW = "bg-indigo-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5";
+const DRUG_BTN_HIDE = "bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5";
+const CHART_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1', '#4f46e5', '#e11d48'];
+const DEVICE_PRESETS = {
+    fridge:  { minTemp: 2,   maxTemp: 8,  minHumid: '', maxHumid: '', type: 'Temperature & Humidity' },
+    room:    { minTemp: 20,  maxTemp: 30, minHumid: 35, maxHumid: 65, type: 'Temperature & Humidity' },
+    freezer: { minTemp: -30, maxTemp: 0,  minHumid: '', maxHumid: '', type: 'Temperature & Humidity' },
+    smoke:   { minTemp: '',  maxTemp: '', minHumid: '', maxHumid: '', type: 'Smoke' }
+};
+
+let allDevices = [];
+let manageDevices = [];
+let currentFilter = { type: 'room', value: 'all' };
+let chartInstance = null;
+let masterChartInstance = null;
+let selectedDeviceId = null;
+let currentView = 'grid';
+let isDrugPanelOpen = false;
+let historySeq = 0;
+let isFetchingDashboard = false;
+let currentChartLogs = [];
+let currentDrugs = [];
+
+// =========================================================================
+// Helpers
+// =========================================================================
+const $ = id => document.getElementById(id);
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function showCustomAlert(message, kind = 'info') {
+    const icons = { info: 'fa-circle-info text-sky-400', success: 'fa-circle-check text-emerald-400', error: 'fa-circle-exclamation text-red-400' };
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fa-solid ${icons[kind] || icons.info}"></i> <span>${escapeHtml(message)}</span>`;
+    $('toast-container').appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(15px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// รองรับทั้ง "dd/MM/yyyy HH:mm:ss" และ ISO (กันการอ่านเป็นเดือน/วันแบบอเมริกัน)
+function parseDeviceDate(v) {
+    if (!v) return NaN;
+    const m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime();
+    return Date.parse(v);
+}
+
+function isOffline(dateString) {
+    if (!dateString) return true;
+    const ms = parseDeviceDate(dateString);
+    if (isNaN(ms)) return false;
+    return (Date.now() - ms) / 3600000 > 24;
+}
+
+function isSmokeDevice(device) {
+    const c = device.current || {};
+    return String(device.name || '').includes('ตรวจควัน') ||
+        String(device.type || '').toLowerCase().includes('smoke') ||
+        (c.smokeStatus !== undefined && c.smokeStatus !== null && c.smokeStatus !== '');
+}
+
+// อ่านเกณฑ์จากชีต ถ้ายังไม่ได้ตั้ง ใช้ค่าเดิม (ชื่อมี "ตู้" = 2–8 °C, อื่นๆ = 20–30 °C)
+function getLimits(device) {
+    const n = v => (v === null || v === undefined || v === '' || isNaN(v)) ? null : Number(v);
+    const coldByName = String(device.name || '').includes('ตู้') || String(device.room || '').includes('ตู้');
+    const minT = n(device.minTemp) ?? (coldByName ? 2 : 20);
+    const maxT = n(device.maxTemp) ?? (coldByName ? 8 : 30);
+    const minH = n(device.minHumid), maxH = n(device.maxHumid);
+    return { minT, maxT, minH, maxH, hasHum: minH !== null && maxH !== null, isCold: maxT <= 10 };
+}
+
+function hasValue(v) { return v !== undefined && v !== null && v !== ''; }
+
+function formatInputDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatChartLabel(dateValue, sameDay) {
+    const d = new Date(dateValue);
+    if (isNaN(d.getTime())) return String(dateValue || '--');
+    const hm = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    return sameDay ? hm : d.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }) + ' ' + hm;
+}
+
+async function apiGet(params) {
+    const res = await fetch(`${API_URL}?${new URLSearchParams(params)}`, { redirect: 'follow' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
+    return json.data;
+}
+
+function getAdminKey() {
+    let key = sessionStorage.getItem(ADMIN_KEY_STORAGE);
+    if (!key) {
+        key = prompt('กรอกรหัสผู้ดูแลระบบ (Admin Key)');
+        if (key) sessionStorage.setItem(ADMIN_KEY_STORAGE, key);
+    }
+    return key;
+}
+
+function logoutAdmin() {
+    sessionStorage.removeItem(ADMIN_KEY_STORAGE);
+    showCustomAlert('ล้างรหัสผู้ดูแลแล้ว', 'success');
+}
+
+async function apiPost(payload) {
+    const adminKey = getAdminKey();
+    if (!adminKey) throw new Error('ยกเลิกการยืนยันตัวตน');
+    const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // เลี่ยง CORS preflight ของ Apps Script
+        body: JSON.stringify({ ...payload, adminKey }),
+        redirect: 'follow'
+    });
+    const json = await res.json();
+    if (!json.success && json.code === 'AUTH') sessionStorage.removeItem(ADMIN_KEY_STORAGE);
+    return json;
+}
+
+// =========================================================================
+// เริ่มต้น
+// =========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    $('date-start').value = formatInputDate(new Date(now.getFullYear(), now.getMonth(), 1));
+    $('date-end').value = formatInputDate(now);
+    $('master-date-start').value = formatInputDate(now);
+    $('master-date-end').value = formatInputDate(now);
+
+    Chart.defaults.font.family = '"Prompt", sans-serif';
+    Chart.defaults.color = '#64748b';
+
+    VIEWS.forEach(v => $('nav-' + v).className = v === 'grid' ? NAV_ACTIVE : NAV_INACTIVE);
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTopModal(); });
+
+    // รีเฟรชอัตโนมัติเฉพาะตอนเปิดแท็บอยู่
+    setInterval(() => { if (!document.hidden) fetchDashboardData(true); }, AUTO_REFRESH_MS);
+
+    fetchDashboardData();
+});
+
+function closeTopModal() {
+    if (!$('device-form-modal').classList.contains('hidden')) return closeDeviceForm();
+    if (!$('health-modal').classList.contains('hidden')) return closeHealthModal();
+    if (!$('detail-modal').classList.contains('hidden')) return closeModal();
+}
+
+// =========================================================================
+// มุมมอง
+// =========================================================================
+function switchView(view) {
+    currentView = view;
+    VIEWS.forEach(v => {
+        $('nav-' + v).className = v === view ? NAV_ACTIVE : NAV_INACTIVE;
+        $('view-' + v).classList.toggle('hidden', v !== view);
+    });
+
+    const filterOn = view === 'grid' || view === 'room';
+    $('filter-section').style.opacity = filterOn ? '1' : '0.3';
+    $('filter-section').style.pointerEvents = filterOn ? 'auto' : 'none';
+
+    if (view === 'grid') renderCards();
+    else if (view === 'room') renderRoomView();
+    else if (view === 'chart') { if (!masterChartInstance) fetchMasterChart(); }
+    else if (view === 'manage') loadManageDevices();
+}
+
+// =========================================================================
+// แดชบอร์ด
+// =========================================================================
+async function fetchDashboardData(silent = false) {
+    if (isFetchingDashboard) return;
+    isFetchingDashboard = true;
+    const icon = $('refresh-icon');
+    icon.classList.add('animate-spin');
+    if (!allDevices.length) {
+        $('loading-state').style.display = 'flex';
+        $('device-grid').style.display = 'none';
+    }
+
+    try {
+        allDevices = await apiGet({ action: 'getDashboard' });
+        $('total-devices-count').innerText = allDevices.length;
+        updateSummaryCounts();
+        buildSidebarFilters();
+        if (currentView === 'grid') renderCards();
+        else if (currentView === 'room') renderRoomView();
+        $('last-sync').innerText = 'ซิงค์ล่าสุด ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        if (!silent) showCustomAlert('การเชื่อมต่อล้มเหลว: ' + e.message, 'error');
+    } finally {
+        $('loading-state').style.display = 'none';
+        $('device-grid').style.display = 'grid';
+        icon.classList.remove('animate-spin');
+        isFetchingDashboard = false;
+    }
+}
+
+function updateSummaryCounts() {
+    let alerts = 0, offline = 0;
+    allDevices.forEach(d => {
+        const p = getDevicePresentation(d);
+        if (p.triggerAlert) alerts++;
+        if (p.isOff) offline++;
+    });
+    $('alert-count').innerText = alerts;
+    $('offline-count').innerText = offline;
+}
+
+function buildSidebarFilters() {
+    const rooms = new Set(), types = new Set();
+    allDevices.forEach(d => { if (d.room) rooms.add(d.room); if (d.type) types.add(d.type); });
+
+    const li = (type, val, label) => {
+        const active = currentFilter.type === type && currentFilter.value === val;
+        const cls = active ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white";
+        return `<li data-type="${type}" data-val="${escapeHtml(val)}" onclick="setFilter(this.dataset.type, this.dataset.val)"
+                    class="cursor-pointer px-3 py-2 rounded-lg text-[11px] sm:text-xs font-semibold transition-all flex justify-between items-center ${cls}">
+                    <span class="truncate pr-2">${escapeHtml(label)}</span></li>`;
+    };
+
+    $('room-filter-list').innerHTML = li('room', 'all', 'สถานที่ทั้งหมด') + [...rooms].sort().map(r => li('room', r, r)).join('');
+    $('type-filter-list').innerHTML = li('type', 'all', 'เซ็นเซอร์ทั้งหมด') + [...types].sort().map(t => li('type', t, t)).join('');
+}
+
+function setFilter(type, value) {
+    currentFilter = { type, value };
+    buildSidebarFilters();
+    if (currentView === 'grid') renderCards();
+    else if (currentView === 'room') renderRoomView();
+}
+
+function getFilteredDevices() {
+    return currentFilter.value === 'all' ? allDevices : allDevices.filter(d => d[currentFilter.type] === currentFilter.value);
+}
+
+function getDevicePresentation(device) {
+    const current = device.current || {};
+    const L = getLimits(device);
+    const isSmoke = isSmokeDevice(device);
+    const isSmokeAlert = isSmoke && String(current.smokeStatus ?? '').trim().toLowerCase() === 'alarm';
+
+    const t = parseFloat(current.temp);
+    const hasTemp = !isNaN(t);
+    // ใช้เกณฑ์ปัจจุบันจากชีต (แก้เกณฑ์แล้วเห็นผลทันที) ถ้าไม่มีอุณหภูมิใช้ค่า alert ที่บันทึกไว้
+    const tempAlert = hasTemp ? (t < L.minT || t > L.maxT) : (current.alert === true || String(current.alert).toUpperCase() === 'TRUE');
+    const triggerAlert = (!isSmoke && tempAlert) || isSmokeAlert;
+
+    const deviceIcon = isSmoke ? 'fa-smog' : (L.isCold ? 'fa-snowflake' : 'fa-temperature-half');
+    const tempVal = hasTemp ? current.temp : '--';
+    const humVal = hasValue(current.humid) ? current.humid : '--';
+    let tempStr = hasTemp ? current.temp + '°C' : '--';
+    const humStr = hasValue(current.humid) ? current.humid + '%' : '--';
+    if (isSmoke) tempStr = isSmokeAlert ? 'พบกลุ่มควัน' : 'ปกติ';
+
+    return { current, L, triggerAlert, isOff: isOffline(current.lastUpdate), deviceIcon, isSmoke, tempVal, humVal, tempStr, humStr };
+}
+
+const EMPTY_HTML = `<div class="col-span-full py-16 text-center bg-white/60 backdrop-blur-md rounded-2xl border border-white"><i class="fa-solid fa-box-open text-3xl text-slate-400 mb-3"></i><h3 class="text-lg font-bold text-slate-800">ไม่พบอุปกรณ์</h3></div>`;
+
+function renderCards() {
+    const grid = $('device-grid');
+    const list = getFilteredDevices();
+    if (!list.length) { grid.innerHTML = EMPTY_HTML; return; }
+
+    grid.innerHTML = list.map(device => {
+        const p = getDevicePresentation(device);
+        const A = p.triggerAlert;
+        const cardClass = A ? "bg-red-500 alert-card-fx text-white border-red-600" : "bg-white/95 device-card border-white text-slate-900";
+        const textColor = A ? "text-white" : "text-slate-800";
+        const subText = A ? "text-red-100" : "text-slate-500";
+        const boxBg = A ? "bg-black/10 border-transparent" : "bg-slate-50/50 border-slate-100";
+
+        let badge = p.isOff
+            ? `<span class="absolute -top-2 -right-2 bg-slate-400 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-sm border border-white">OFFLINE</span>`
+            : `<span class="absolute top-4 right-4 flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>`;
+        if (A) badge = `<span class="absolute -top-3 -right-3 bg-red-700 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border border-red-400 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i> ALERT</span>`;
+
+        const metrics = p.isSmoke ? `
+            <div class="mt-4 flex items-center gap-3 p-3 rounded-xl ${boxBg} border">
+                <div class="w-8 h-8 rounded-lg ${A ? 'bg-white/20' : 'bg-white'} flex items-center justify-center shadow-sm"><i class="fa-solid ${A ? 'fa-biohazard text-white' : 'fa-wind text-slate-400'}"></i></div>
+                <div><p class="text-[9px] ${subText} font-bold uppercase">อากาศ</p><p class="text-sm font-bold ${textColor} mt-0.5">${escapeHtml(p.tempStr)}</p></div>
+            </div>` : `
+            <div class="mt-4 grid grid-cols-2 gap-2">
+                <div class="${boxBg} rounded-xl p-2.5 border"><p class="text-[9px] ${subText} font-bold uppercase mb-1"><i class="fa-solid fa-temperature-half ${A ? 'text-white' : 'text-brand-500'} mr-1"></i>อุณหภูมิ</p><p class="text-xl sm:text-2xl font-black ${textColor}">${escapeHtml(p.tempVal)}<span class="text-[10px] sm:text-xs font-bold ${subText} ml-0.5">°C</span></p></div>
+                <div class="${boxBg} rounded-xl p-2.5 border"><p class="text-[9px] ${subText} font-bold uppercase mb-1"><i class="fa-solid fa-droplet ${A ? 'text-white' : 'text-sky-500'} mr-1"></i>ความชื้น</p><p class="text-xl sm:text-2xl font-black ${textColor}">${escapeHtml(p.humVal)}<span class="text-[10px] sm:text-xs font-bold ${subText} ml-0.5">%</span></p></div>
+            </div>
+            <p class="text-[10px] ${subText} mt-2 font-semibold">เกณฑ์ ${p.L.minT}–${p.L.maxT}°C${p.L.hasHum ? ` · ${p.L.minH}–${p.L.maxH}%` : ''}</p>`;
+
+        const lu = p.current.lastUpdate ? String(p.current.lastUpdate) : '';
+        const shortUpdate = lu ? (lu.split(' ')[1] || lu) : '--';
+        const luClass = p.isOff ? "bg-red-50 text-red-600 font-bold border-red-200" : (A ? "text-white border-white/30" : "text-slate-500 bg-slate-50 border-slate-100");
+
+        return `
+            <div class="${cardClass} border p-4 sm:p-5 relative cursor-pointer flex flex-col justify-between h-full rounded-2xl" data-id="${escapeHtml(device.id)}" onclick="openModal(this.dataset.id)">
+                ${badge}
+                <div class="flex-1">
+                    <div class="flex gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl ${A ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'} flex items-center justify-center shrink-0"><i class="fa-solid ${p.deviceIcon} text-lg"></i></div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold ${textColor} text-sm leading-tight line-clamp-2 min-h-[2.5rem]" title="${escapeHtml(device.name)}">${escapeHtml(device.name)}</h3>
+                            <p class="text-[10px] ${subText} mt-1 truncate"><i class="fa-solid fa-location-arrow opacity-70 mr-1"></i>${escapeHtml(device.room || 'ไม่ระบุ')}</p>
+                        </div>
+                    </div>
+                    ${metrics}
+                </div>
+                <div class="mt-4 pt-3 border-t ${A ? 'border-white/20' : 'border-slate-100'} flex justify-between items-center text-[10px]">
+                    <span class="flex items-center gap-1 ${A ? 'text-white' : 'text-slate-500 font-semibold'}"><i class="fa-solid fa-bolt text-amber-400"></i> ${escapeHtml(hasValue(p.current.battery) ? p.current.battery : '--')}%</span>
+                    <span class="flex items-center gap-1 px-2 py-1 rounded border ${luClass}" title="${escapeHtml(lu || 'No Data')}"><i class="${p.isOff ? 'fa-solid fa-triangle-exclamation text-red-500' : 'fa-regular fa-clock'}"></i> ${p.isOff ? 'OFFLINE' : escapeHtml(shortUpdate)}</span>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function renderRoomView() {
+    const grid = $('room-grid');
+    const list = getFilteredDevices();
+    if (!list.length) { grid.innerHTML = EMPTY_HTML; return; }
+
+    const grouped = {};
+    list.forEach(d => {
+        const r = d.room || 'ระบุไม่ได้ (No Room)';
+        (grouped[r] = grouped[r] || []).push(d);
+    });
+
+    grid.innerHTML = Object.keys(grouped).sort().map(roomName => {
+        const devs = grouped[roomName];
+        const cards = devs.map(device => {
+            const p = getDevicePresentation(device);
+            const A = p.triggerAlert;
+            const bg = A ? 'bg-red-500 border-red-600 alert-card-fx text-white' : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-white hover:border-brand-300';
+            const muted = A ? 'text-red-100' : 'text-slate-500';
+            const reading = p.isSmoke
+                ? `<span>${escapeHtml(p.tempStr)}</span>`
+                : `<span><i class="fa-solid fa-temperature-half"></i> ${escapeHtml(p.tempStr)}</span> <span class="opacity-70">| ${escapeHtml(p.humStr)}</span>`;
+            return `
+                <div data-id="${escapeHtml(device.id)}" onclick="openModal(this.dataset.id)" class="${bg} border rounded-xl p-3 cursor-pointer mini-card transition-all flex items-center justify-between shadow-sm relative overflow-hidden">
+                    ${p.isOff ? '<div class="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-l-[20px] border-t-slate-400 border-l-transparent" title="OFFLINE"></div>' : ''}
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <div class="w-8 h-8 rounded-full ${A ? 'bg-white/20' : 'bg-white shadow-sm'} flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${p.deviceIcon} ${A ? 'text-white' : 'text-brand-500'} text-xs"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-bold text-[11px] truncate leading-tight" title="${escapeHtml(device.name)}">${escapeHtml(device.name)}</h4>
+                            <div class="flex gap-2 text-[10px] mt-0.5 font-semibold ${muted}">${reading}</div>
+                        </div>
+                    </div>
+                    ${A ? '<i class="fa-solid fa-circle-exclamation text-white animate-pulse absolute right-3"></i>' : ''}
+                </div>`;
+        }).join('');
+
+        return `
+            <div class="bg-white/80 backdrop-blur-md rounded-[20px] p-5 border border-slate-200 shadow-sm">
+                <h2 class="text-base font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center">
+                    <i class="fa-solid fa-door-open mr-2 text-brand-500 bg-brand-50 w-7 h-7 flex items-center justify-center rounded-lg"></i>
+                    ${escapeHtml(roomName)} <span class="ml-2 text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">${devs.length} เครื่อง</span>
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">${cards}</div>
+            </div>`;
+    }).join('');
+}
+
+// =========================================================================
+// Modal รายละเอียด
+// =========================================================================
+function setDrugButton(open) {
+    const btn = $('btn-view-drugs');
+    btn.innerHTML = open ? `<i class="fa-solid fa-eye-slash"></i> ซ่อนรายการยา` : `<i class="fa-solid fa-pills"></i> ดูรายการยา`;
+    btn.className = open ? DRUG_BTN_HIDE : DRUG_BTN_SHOW;
+}
+
+function setDrugPanel(open) {
+    isDrugPanelOpen = open;
+    $('drug-panel').classList.toggle('hidden', !open);
+    $('drug-panel').classList.toggle('flex', open);
+    setDrugButton(open);
+}
+
+function openModal(deviceId) {
+    const device = allDevices.find(d => d.id === deviceId);
+    if (!device) return;
+    selectedDeviceId = deviceId;
+    currentChartLogs = [];
+    currentDrugs = [];
+    setDrugPanel(false);
+
+    const L = getLimits(device);
+    const current = device.current || {};
+    $('modal-title').innerText = device.name;
+    $('modal-room').innerText = device.room || 'ไม่ระบุ';
+    $('modal-type').innerText = device.type || 'ทั่วไป';
+    $('modal-limits').innerText = isSmokeDevice(device) ? '' : `เกณฑ์ ${L.minT}–${L.maxT}°C${L.hasHum ? ` / ${L.minH}–${L.maxH}%` : ''}`;
+    $('modal-battery').innerText = hasValue(current.battery) ? current.battery + '%' : 'N/A';
+
+    const upd = $('modal-lastupdate');
+    upd.innerText = current.lastUpdate || 'ไม่มีข้อมูล';
+    upd.className = isOffline(current.lastUpdate) ? 'font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded animate-pulse text-sm' : 'font-bold text-slate-800 text-sm';
+
+    if (isSmokeDevice(device)) {
+        $('chart-section').classList.add('hidden');
+        $('smoke-message').classList.remove('hidden');
+    } else {
+        $('chart-section').classList.remove('hidden');
+        $('smoke-message').classList.add('hidden');
+        ['stat-max', 'stat-min', 'stat-avg', 'stat-out-low', 'stat-out-high', 'stat-hum-low', 'stat-hum-high'].forEach(id => $(id).innerText = '--');
+        $('card-hum-low').classList.toggle('hidden', !L.hasHum);
+        $('card-hum-high').classList.toggle('hidden', !L.hasHum);
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+        fetchHistory();
+    }
+
+    const modal = $('detail-modal');
+    const panel = modal.querySelector('.modal-panel');
+    modal.classList.remove('hidden');
+    document.body.classList.add('modal-active');
+    requestAnimationFrame(() => {
+        panel.classList.add('scale-100', 'opacity-100');
+        panel.classList.remove('scale-95', 'opacity-0');
+    });
+}
+
+function closeModal() {
+    const modal = $('detail-modal');
+    const panel = modal.querySelector('.modal-panel');
+    panel.classList.remove('scale-100', 'opacity-100');
+    panel.classList.add('scale-95', 'opacity-0');
+    historySeq++; // ยกเลิกผลลัพธ์ที่กำลังโหลดอยู่
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.classList.remove('modal-active');
+    }, 200);
+}
+
+async function fetchHistory() {
+    if (!selectedDeviceId) return;
+    const start = $('date-start').value, end = $('date-end').value;
+    if (!start || !end) return showCustomAlert('กรุณาเลือกวันที่');
+    if (start > end) return showCustomAlert('วันเริ่มต้องไม่เกินวันสิ้นสุด');
+
+    const seq = ++historySeq;
+    const deviceId = selectedDeviceId;
+    $('chart-loading').classList.remove('hidden');
+
+    try {
+        const data = await apiGet({ action: 'getHistory', deviceId, startDate: start, endDate: end });
+        if (seq !== historySeq) return; // ผู้ใช้เปลี่ยนเครื่อง/ปิดหน้าต่างไปแล้ว
+
+        const device = allDevices.find(d => d.id === deviceId);
+        const L = getLimits(device);
+        data.logs.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+        currentChartLogs = data.logs;
+
+        let low = 0, high = 0, hLow = 0, hHigh = 0;
+        data.logs.forEach(log => {
+            const t = parseFloat(log.temp), h = parseFloat(log.humid);
+            if (!isNaN(t)) { if (t < L.minT) low++; if (t > L.maxT) high++; }
+            if (L.hasHum && !isNaN(h)) { if (h < L.minH) hLow++; if (h > L.maxH) hHigh++; }
+        });
+
+        const fmtStat = v => v !== 'N/A' ? v + '°' : 'N/A';
+        const fmtCount = c => c > 0 ? c + ' ครั้ง' : '-';
+        $('stat-max').innerText = fmtStat(data.stats.max);
+        $('stat-min').innerText = fmtStat(data.stats.min);
+        $('stat-avg').innerText = fmtStat(data.stats.avg);
+        $('stat-out-low').innerText = fmtCount(low);
+        $('stat-out-high').innerText = fmtCount(high);
+        $('card-hum-low').classList.toggle('hidden', !L.hasHum);
+        $('card-hum-high').classList.toggle('hidden', !L.hasHum);
+        if (L.hasHum) {
+            $('stat-hum-low').innerText = fmtCount(hLow);
+            $('stat-hum-high').innerText = fmtCount(hHigh);
+        }
+
+        drawSingleChart(data.logs, start, end, L);
+        if (!data.logs.length) showCustomAlert('ไม่พบข้อมูลในช่วงวันที่เลือก');
+    } catch (e) {
+        if (seq === historySeq) showCustomAlert('ดึงข้อมูลย้อนหลังล้มเหลว: ' + e.message, 'error');
+    } finally {
+        if (seq === historySeq) $('chart-loading').classList.add('hidden');
+    }
+}
+
+// =========================================================================
+// กราฟ
+// =========================================================================
+function getTempGradient(ctx, chartArea, scales, maxT, minT, isFill) {
+    const fallback = isFill ? 'rgba(139, 92, 246, 0.1)' : '#4338ca';
+    if (!chartArea || !scales || !scales.y) return fallback;
+    const top = chartArea.top, height = chartArea.bottom - chartArea.top;
+    if (height <= 0) return fallback;
+
+    const clamp = v => Math.max(0.01, Math.min(0.99, v));
+    const sMax = clamp((scales.y.getPixelForValue(maxT) - top) / height);
+    const sMin = clamp((scales.y.getPixelForValue(minT) - top) / height);
+    const g = ctx.createLinearGradient(0, top, 0, chartArea.bottom);
+
+    if (isFill) {
+        g.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
+        g.addColorStop(Math.max(0, sMax - 0.01), 'rgba(255, 255, 255, 0)');
+        g.addColorStop(sMax, 'rgba(139, 92, 246, 0.45)');
+        g.addColorStop(Math.max(0, sMin - 0.01), 'rgba(255, 255, 255, 0)');
+        g.addColorStop(sMin, 'rgba(239, 68, 68, 0.45)');
+        g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    } else {
+        g.addColorStop(0, '#b91c1c');
+        g.addColorStop(Math.max(0, sMax - 0.01), '#b91c1c');
+        g.addColorStop(sMax, '#4c1d95');
+        g.addColorStop(Math.max(0, sMin - 0.01), '#4c1d95');
+        g.addColorStop(sMin, '#b91c1c');
+        g.addColorStop(1, '#b91c1c');
+    }
+    return g;
+}
+
+function getHumGradient(ctx, chartArea, scales, L) {
+    if (!L || !L.hasHum || !chartArea || !scales || !scales.y1) return '#94a3b8';
+    const top = chartArea.top, height = chartArea.bottom - chartArea.top;
+    if (height <= 0) return '#94a3b8';
+
+    const clamp = v => Math.max(0.01, Math.min(0.99, v));
+    const sMax = clamp((scales.y1.getPixelForValue(L.maxH) - top) / height);
+    const sMin = clamp((scales.y1.getPixelForValue(L.minH) - top) / height);
+    const g = ctx.createLinearGradient(0, top, 0, chartArea.bottom);
+    g.addColorStop(0, '#ef4444');
+    g.addColorStop(Math.max(0, sMax - 0.01), '#ef4444');
+    g.addColorStop(sMax, '#94a3b8');
+    g.addColorStop(Math.max(0, sMin - 0.01), '#94a3b8');
+    g.addColorStop(sMin, '#ef4444');
+    g.addColorStop(1, '#ef4444');
+    return g;
+}
+
+function drawSingleChart(logs, start, end, L) {
+    const ctx = $('historyChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    const sameDay = start === end;
+    const labels = logs.map(l => formatChartLabel(l.dateTime, sameDay));
+    const hasHumData = logs.some(l => hasValue(l.humid));
+
+    const datasets = [{
+        label: 'อุณหภูมิ (°C)',
+        data: logs.map(l => l.temp),
+        borderColor: c => getTempGradient(c.chart.ctx, c.chart.chartArea, c.chart.scales, L.maxT, L.minT, false),
+        backgroundColor: c => getTempGradient(c.chart.ctx, c.chart.chartArea, c.chart.scales, L.maxT, L.minT, true),
+        borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, fill: 'start', tension: 0.3, spanGaps: true, yAxisID: 'y'
+    }];
+    if (hasHumData) {
+        datasets.push({
+            label: 'ความชื้น (%)',
+            data: logs.map(l => l.humid),
+            borderColor: c => getHumGradient(c.chart.ctx, c.chart.chartArea, c.chart.scales, L),
+            borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0, fill: false, tension: 0.3, spanGaps: true, yAxisID: 'y1'
+        });
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+                y: { type: 'linear', position: 'left', title: { display: true, text: 'อุณหภูมิ (°C)' } },
+                y1: { type: 'linear', position: 'right', display: hasHumData, grid: { drawOnChartArea: false }, title: { display: true, text: 'ความชื้น (%)' } }
+            }
+        }
+    });
+}
+
+// =========================================================================
+// วิเคราะห์สุขภาพตู้เย็น
+// =========================================================================
+function analyzeHealth() {
+    if (!currentChartLogs.length) return showCustomAlert('กรุณาดึงข้อมูลประวัติเพื่อวิเคราะห์ก่อนครับ');
+
+    const device = allDevices.find(d => d.id === selectedDeviceId);
+    const L = getLimits(device);
+    const isFridge = L.isCold, maxT = L.maxT, minT = L.minT;
+
+    const pts = currentChartLogs
+        .map(l => ({ t: parseFloat(l.temp), ms: new Date(l.dateTime).getTime() }))
+        .filter(p => !isNaN(p.t) && !isNaN(p.ms));
+    if (pts.length < 3) return showCustomAlert('ข้อมูลน้อยเกินไปสำหรับการวิเคราะห์');
+
+    let maxWarmUpRate = 0, minPullDownRate = 0;
+    for (let i = 1; i < pts.length; i++) {
+        const dt = (pts[i].ms - pts[i - 1].ms) / 60000;
+        if (dt > 0 && dt < 120) {
+            const rate = (pts[i].t - pts[i - 1].t) / dt;
+            if (rate > maxWarmUpRate) maxWarmUpRate = rate;
+            if (rate < minPullDownRate) minPullDownRate = rate;
+        }
+    }
+
+    const temps = pts.map(p => p.t);
+    const maxVal = Math.max(...temps), minVal = Math.min(...temps);
+    const avgVal = temps.reduce((a, b) => a + b, 0) / temps.length;
+    const flatGraph = (maxVal - minVal) < 1.0 && avgVal > maxT;
+    const defrostSpikes = temps.filter(t => t > maxT + 2).length;
+
+    // 1) รอบละลายน้ำแข็ง
+    let defrostCount = 0, inDefrost = false;
+    for (let i = 2; i < pts.length; i++) {
+        const t1 = pts[i - 2].t, t2 = pts[i].t;
+        if (t2 - t1 > 2.5 && t2 > minT + 4 && !inDefrost) { defrostCount++; inDefrost = true; }
+        if (t2 < minT + 2) inDefrost = false;
+    }
+
+    // 2) Duty cycle โดยประมาณ
+    let cooling = 0;
+    for (let i = 1; i < pts.length; i++) if (pts[i].t - pts[i - 1].t < 0) cooling++;
+    const dutyCycle = Math.round(cooling / (pts.length - 1) * 100);
+
+    // 3) Recovery time
+    const recoveries = [];
+    let spikeStart = -1;
+    for (let i = 0; i < pts.length; i++) {
+        if (pts[i].t > maxT && spikeStart === -1) spikeStart = i;
+        else if (pts[i].t <= maxT && spikeStart !== -1) {
+            const dur = (pts[i].ms - pts[spikeStart].ms) / 60000;
+            if (dur > 0 && dur < 240) recoveries.push(dur);
+            spikeStart = -1;
+        }
+    }
+    const avgRecovery = recoveries.length ? Math.round(recoveries.reduce((a, b) => a + b, 0) / recoveries.length) : 0;
+
+    let isHealthy = true, findings = '';
+
+    const perf = `
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-lg mb-4">
+            <h4 class="font-bold text-sm tracking-wider uppercase text-slate-400 mb-3"><i class="fa-solid fa-chart-line mr-2 text-teal-400"></i>ข้อมูลสมรรถนะการทำงานหลัก (Performance Summary)</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">การรัน Compressor (Duty Cycle)</p>
+                    <p class="text-2xl font-black text-teal-400">${dutyCycle}% <span class="text-xs font-normal text-slate-300">ของช่วงเวลา</span></p>
+                    <p class="text-[10px] text-slate-500 mt-1">ประเมินจากสัดส่วนช่วงที่อุณหภูมิลดลง</p>
+                </div>
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">รอบละลายน้ำแข็ง (Auto-Defrost)</p>
+                    <p class="text-2xl font-black text-emerald-400">${isFridge ? defrostCount + ' รอบ' : 'ไม่รองรับ'}</p>
+                    <p class="text-[10px] text-slate-500 mt-1">ตรวจจากสไปก์ของวงจรทำความร้อนละลายน้ำแข็ง</p>
+                </div>
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">เวลากู้คืนความเย็น (Recovery Time)</p>
+                    <p class="text-2xl font-black text-amber-400">${avgRecovery > 0 ? avgRecovery + ' นาที' : 'ปกติ'}</p>
+                    <p class="text-[10px] text-slate-500 mt-1">เวลาเฉลี่ยที่ใช้กลับเข้าเกณฑ์หลังหลุดสูงเกิน</p>
+                </div>
+            </div>
+        </div>`;
+
+    if (maxWarmUpRate > 0.15) {
+        isHealthy = false;
+        findings += buildIssueHtml('Warm-up Rate สูงมาก', 'อุณหภูมิพุ่งขึ้นไวมากเวลาคอมเพรสเซอร์ตัด',
+            ['ขอบยางเสื่อม/ปิดไม่สนิท', 'ผนังฉนวนกันความร้อนเสื่อมสภาพ'],
+            ['ตรวจสอบขอบยางประตูด้วยการหนีบกระดาษ', 'พิจารณาเปลี่ยนตู้หากใช้มานานกว่า 10 ปี']);
+    }
+    if (minPullDownRate > -0.02 && avgVal > (minT + maxT) / 2) {
+        isHealthy = false;
+        findings += buildIssueHtml('Pull-down Rate ต่ำมาก', 'ใช้เวลานานมากในการทำความเย็นให้ลดลง',
+            ['น้ำยาทำความเย็นน้อย (Leak)', 'ลิ้นวาล์วคอมเพรสเซอร์เริ่มหลวม'],
+            ['ให้ช่างเทคนิคตรวจเช็ครอยรั่วและเติมน้ำยา', 'ตรวจสอบแรงดันคอมเพรสเซอร์']);
+    }
+    if (flatGraph) {
+        isHealthy = false;
+        findings += buildIssueHtml('กราฟเรียบเป็นเส้นตรง', 'ไม่เป็นฟันปลา และอุณหภูมิสูงเรื่อยๆ',
+            ['คอมเพรสเซอร์ไม่ทำงานเลย', 'ฟิวส์ขาด หรือไฟไม่เข้าคอมเพรสเซอร์'],
+            ['ตรวจสอบระบบไฟฟ้าเบื้องต้น', 'เช็คตัว Relay และ Overload Protector']);
+    }
+    if (isFridge && defrostSpikes > pts.length * 0.1) {
+        isHealthy = false;
+        findings += buildIssueHtml('รอบ Defrost ถี่ขึ้น หรืออุณหภูมิค้างสูง', 'สไปก์ทะลุเกณฑ์รุนแรงเป็นรอบๆ หรือพบการแช่อุณหภูมิสูง',
+            ['เซ็นเซอร์ละลายน้ำแข็งเสีย', 'ท่อระบายน้ำทิ้งตัน ทำให้น้ำแข็งเกาะหนา'],
+            ['ล้างช่องแช่แข็งและเคลียร์น้ำแข็งเกาะหนา', 'ตรวจสอบและเปลี่ยน Defrost Timer/Sensor']);
+    }
+    if (isHealthy) {
+        findings = `<div class="text-center py-10 bg-emerald-50 rounded-2xl border border-emerald-100"><i class="fa-solid fa-shield-halved text-6xl text-emerald-500 mb-4"></i><h3 class="text-xl font-bold text-emerald-800">ระบบทำความเย็นสุขภาพดีเยี่ยม</h3><p class="text-emerald-600 font-medium mt-1">กราฟอยู่ในเกณฑ์มาตรฐาน ไม่พบพฤติกรรมผิดปกติเชิงกล</p></div>`;
+    }
+
+    $('health-findings-container').innerHTML = perf + findings;
+    $('health-modal').classList.remove('hidden');
+}
+
+function closeHealthModal() {
+    $('health-modal').classList.add('hidden');
+}
+
+function buildIssueHtml(title, desc, causes, solutions) {
+    return `
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-5 mb-4">
+            <h4 class="font-bold text-red-700 text-lg leading-tight mb-1"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${title}</h4>
+            <p class="text-sm text-red-600 font-medium mb-4">${desc}</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-white/70 p-4 rounded-xl border border-red-100">
+                    <p class="text-[11px] font-bold text-slate-800 mb-2 uppercase tracking-wide border-b border-red-200 pb-1.5"><i class="fa-solid fa-magnifying-glass text-red-500 mr-1"></i> สาเหตุที่เป็นไปได้:</p>
+                    <ul class="list-disc pl-4 text-xs font-semibold text-slate-600 space-y-1.5">${causes.map(c => `<li>${c}</li>`).join('')}</ul>
+                </div>
+                <div class="bg-white/70 p-4 rounded-xl border border-red-100">
+                    <p class="text-[11px] font-bold text-slate-800 mb-2 uppercase tracking-wide border-b border-red-200 pb-1.5"><i class="fa-solid fa-screwdriver-wrench text-brand-500 mr-1"></i> แนวทางแก้ไข/บำรุงรักษา:</p>
+                    <ul class="list-decimal pl-4 text-xs font-semibold text-slate-600 space-y-1.5">${solutions.map(s => `<li>${s}</li>`).join('')}</ul>
+                </div>
+            </div>
+        </div>`;
+}
+
+// =========================================================================
+// รายการยา
+// =========================================================================
+async function toggleDrugList() {
+    if (isDrugPanelOpen) {
+        setDrugPanel(false);
+    } else {
+        setDrugPanel(true);
+        await loadDrugs();
+    }
+    if (chartInstance) chartInstance.resize();
+}
+
+async function loadDrugs() {
+    const box = $('drug-list-container');
+    const deviceId = selectedDeviceId;
+    box.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full py-12">
+            <div class="w-7 h-7 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mb-2"></div>
+            <p class="text-[10px] text-slate-400 font-bold">กำลังสแกนตู้จัดเก็บ...</p>
+        </div>`;
+    try {
+        const drugs = await apiGet({ action: 'getDrugs', deviceId });
+        if (deviceId !== selectedDeviceId) return;
+        currentDrugs = Array.isArray(drugs) ? drugs : [];
+        box.innerHTML = currentDrugs.length ? currentDrugs.map(d => `
+            <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-100 hover:bg-slate-100/50 transition-colors min-w-max" title="${escapeHtml(d.drugName)} (${escapeHtml(d.boxName)})">
+                <span class="font-medium text-slate-700 pr-4">${escapeHtml(d.drugName)}</span>
+                <span class="text-[9px] text-indigo-500 font-extrabold shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-box text-[8px]"></i> ${escapeHtml(d.boxName)}</span>
+            </div>`).join('')
+            : `<div class="text-center py-16 text-slate-400"><i class="fa-solid fa-box-open text-2xl mb-2 text-slate-300"></i><p class="text-[10px] font-bold">ไม่พบสต็อกยาในตู้/ห้องนี้</p></div>`;
+    } catch (e) {
+        currentDrugs = [];
+        box.innerHTML = `<div class="text-center py-16 text-red-400"><i class="fa-solid fa-circle-exclamation text-2xl mb-2 text-red-200"></i><p class="text-[10px] font-bold">ดึงข้อมูลสต็อกล้มเหลว</p></div>`;
+    }
+}
+
+// =========================================================================
+// พิมพ์ PDF
+// =========================================================================
+function openPdfReport() {
+    if (!chartInstance) return showCustomAlert('กรุณารอดึงข้อมูลกราฟให้เสร็จสิ้นก่อนออกรายงาน');
+    const device = allDevices.find(d => d.id === selectedDeviceId);
+    const L = getLimits(device);
+
+    $('print-name').innerText = device.name;
+    $('print-room').innerText = device.room || 'ไม่ระบุ';
+    $('print-dates').innerText = $('date-start').value + ' ถึง ' + $('date-end').value;
+    $('print-timestamp').innerText = new Date().toLocaleString('th-TH');
+    $('print-max').innerText = $('stat-max').innerText;
+    $('print-min').innerText = $('stat-min').innerText;
+    $('print-avg').innerText = $('stat-avg').innerText;
+    $('print-low').innerText = $('stat-out-low').innerText;
+    $('print-high').innerText = $('stat-out-high').innerText;
+
+    ['print-th-hum-low', 'print-th-hum-high', 'print-hum-low', 'print-hum-high'].forEach(id => $(id).style.display = L.hasHum ? 'table-cell' : 'none');
+    if (L.hasHum) {
+        $('print-hum-low').innerText = $('stat-hum-low').innerText;
+        $('print-hum-high').innerText = $('stat-hum-high').innerText;
+    }
+
+    $('print-threshold-note').innerText = `*เกณฑ์อุณหภูมิ: ${L.minT}°C ถึง ${L.maxT}°C` + (L.hasHum ? ` / ความชื้น: ${L.minH}% ถึง ${L.maxH}%` : '');
+
+    const pc = $('print-drug-container');
+    if (isDrugPanelOpen) {
+        pc.style.display = 'flex';
+        $('print-drug-list').innerHTML = currentDrugs.length ? currentDrugs.map(d => `
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:2px;margin-bottom:2px;font-size:9px;line-height:1.2;overflow:hidden;">
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;padding-right:4px;">${escapeHtml(d.drugName)}</span>
+                <span class="print-box-hide" style="font-weight:bold;color:#4f46e5;flex-shrink:0;background-color:#e0e7ff;padding:1px 4px;border-radius:4px;">${escapeHtml(d.boxName)}</span>
+            </div>`).join('')
+            : '<p style="color:#94a3b8;font-style:italic;">ไม่มีรายการยาในจุดเก็บ</p>';
+    } else {
+        pc.style.display = 'none';
+    }
+
+    // รอให้รูปกราฟโหลดเสร็จก่อนสั่งพิมพ์
+    const img = $('print-chart-img');
+    img.onload = () => { img.onload = null; window.print(); };
+    img.src = $('historyChart').toDataURL('image/png');
+}
+
+// =========================================================================
+// กราฟรวม (เรียก API ครั้งเดียว)
+// =========================================================================
+async function fetchMasterChart() {
+    const start = $('master-date-start').value, end = $('master-date-end').value;
+    if (!start || !end) return showCustomAlert('กรุณาเลือกวันที่');
+    if (start > end) return showCustomAlert('วันเริ่มต้องไม่เกินวันสิ้นสุด');
+    if (!allDevices.length) await fetchDashboardData(true);
+
+    const loading = $('master-chart-loading');
+    loading.classList.remove('hidden');
+    try {
+        const data = await apiGet({ action: 'getHistory', deviceId: 'all', startDate: start, endDate: end });
+        const sensors = allDevices.filter(d => !isSmokeDevice(d));
+        const byDevice = new Map(sensors.map(d => [d.id, new Map()]));
+        const timeSet = new Set();
+
+        data.logs.forEach(log => {
+            const m = byDevice.get(log.deviceId);
+            if (!m || log.temp === null) return;
+            const t = new Date(log.dateTime).getTime();
+            if (isNaN(t)) return;
+            timeSet.add(t);
+            m.set(t, log.temp);
+        });
+
+        const times = [...timeSet].sort((a, b) => a - b);
+        const labels = times.map(t => formatChartLabel(t, start === end));
+        const datasets = sensors.map((s, i) => {
+            const m = byDevice.get(s.id);
+            const color = CHART_COLORS[i % CHART_COLORS.length];
+            return {
+                label: s.name, data: times.map(t => m.has(t) ? m.get(t) : null),
+                borderColor: color, backgroundColor: color,
+                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6, fill: false, spanGaps: true, tension: 0.3
+            };
+        }).filter(ds => ds.data.some(v => v !== null));
+
+        drawMasterChart(labels, datasets);
+        if (!datasets.length) showCustomAlert('ไม่พบข้อมูลในช่วงวันที่เลือก');
+    } catch (e) {
+        console.error(e);
+        showCustomAlert('เกิดข้อผิดพลาดในการโหลดกราฟรวม: ' + e.message, 'error');
+    } finally {
+        loading.classList.add('hidden');
+    }
+}
+
+function drawMasterChart(labels, datasets) {
+    const ctx = $('masterChartCanvas').getContext('2d');
+    if (masterChartInstance) masterChartInstance.destroy();
+    masterChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'nearest', axis: 'x', intersect: false },
+            plugins: {
+                legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true, font: { size: 11 } } },
+                tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 10, cornerRadius: 8 }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { maxTicksLimit: 16 } },
+                y: { title: { display: true, text: 'อุณหภูมิ (°C)' }, grid: { color: '#f1f5f9' } }
+            }
+        }
+    });
+}
+
+// =========================================================================
+// จัดการอุปกรณ์
+// =========================================================================
+async function loadManageDevices() {
+    const body = $('manage-table-body');
+    body.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>กำลังโหลด...</td></tr>`;
+    try {
+        manageDevices = await apiGet({ action: 'getDevices' });
+        fillDatalists();
+        renderManageTable();
+    } catch (e) {
+        body.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-red-500">โหลดรายชื่ออุปกรณ์ไม่สำเร็จ: ${escapeHtml(e.message)}</td></tr>`;
+    }
+}
+
+function fillDatalists() {
+    const types = new Set(['Temperature & Humidity', 'Smoke']), rooms = new Set();
+    manageDevices.forEach(d => { if (d.type) types.add(d.type); if (d.room) rooms.add(d.room); });
+    $('type-options').innerHTML = [...types].sort().map(t => `<option value="${escapeHtml(t)}">`).join('');
+    $('room-options').innerHTML = [...rooms].sort().map(r => `<option value="${escapeHtml(r)}">`).join('');
+}
+
+function renderManageTable() {
+    const q = ($('manage-search').value || '').trim().toLowerCase();
+    const rows = manageDevices.filter(d => !q || [d.id, d.name, d.room, d.type].join(' ').toLowerCase().includes(q));
+    const range = (a, b, unit) => (a === null && b === null)
+        ? '<span class="text-slate-300">—</span>'
+        : `<span class="font-semibold">${escapeHtml(a ?? '?')} ถึง ${escapeHtml(b ?? '?')}${unit}</span>`;
+
+    $('manage-table-body').innerHTML = rows.length ? rows.map(d => `
+        <tr class="border-t border-slate-100 hover:bg-brand-50/40 ${d.active ? '' : 'opacity-50'}">
+            <td class="px-4 py-3">${d.active
+                ? '<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">ใช้งาน</span>'
+                : '<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200">ปิดอยู่</span>'}</td>
+            <td class="px-4 py-3"><div class="font-bold text-slate-800">${escapeHtml(d.name)}</div><div class="text-[10px] text-slate-400 font-mono">${escapeHtml(d.id)}</div></td>
+            <td class="px-4 py-3 text-slate-600">${escapeHtml(d.type || '-')}</td>
+            <td class="px-4 py-3 text-slate-600">${escapeHtml(d.room || '-')}</td>
+            <td class="px-4 py-3">${range(d.minTemp, d.maxTemp, '°C')}</td>
+            <td class="px-4 py-3">${range(d.minHumid, d.maxHumid, '%')}</td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+                <button data-id="${escapeHtml(d.id)}" onclick="openDeviceForm(this.dataset.id)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-brand-500 hover:text-white text-slate-500 transition-colors" title="แก้ไข"><i class="fa-solid fa-pen text-xs"></i></button>
+                <button data-id="${escapeHtml(d.id)}" onclick="deleteDevice(this.dataset.id)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-500 hover:text-white text-slate-500 transition-colors ml-1" title="ลบ"><i class="fa-solid fa-trash text-xs"></i></button>
+            </td>
+        </tr>`).join('')
+        : `<tr><td colspan="7" class="py-12 text-center text-slate-400">ไม่พบอุปกรณ์</td></tr>`;
+}
+
+function openDeviceForm(id) {
+    const d = id ? manageDevices.find(x => x.id === id) : null;
+    const set = (k, v) => $('df-' + k).value = (v === null || v === undefined) ? '' : v;
+    $('device-form-title').innerHTML = `<i class="fa-solid fa-microchip mr-2"></i>${d ? 'แก้ไขอุปกรณ์' : 'เพิ่มอุปกรณ์ใหม่'}`;
+    set('original-id', d?.id); set('id', d?.id); set('name', d?.name); set('type', d?.type); set('room', d?.room);
+    set('minTemp', d?.minTemp); set('maxTemp', d?.maxTemp); set('minHumid', d?.minHumid); set('maxHumid', d?.maxHumid);
+    $('df-active').checked = d ? d.active : true;
+    $('df-test-result').innerHTML = '';
+    $('device-form-modal').classList.remove('hidden');
+    setTimeout(() => $(d ? 'df-name' : 'df-id').focus(), 50);
+}
+
+function closeDeviceForm() {
+    $('device-form-modal').classList.add('hidden');
+}
+
+function applyPreset(key) {
+    const p = DEVICE_PRESETS[key];
+    if (p) Object.keys(p).forEach(k => $('df-' + k).value = p[k]);
+}
+
+async function testDeviceConnection() {
+    const id = $('df-id').value.trim();
+    const out = $('df-test-result');
+    if (!/^[A-Za-z0-9_]{6,64}$/.test(id)) { out.innerHTML = '<span class="text-red-500 font-semibold">รูปแบบ Device ID ไม่ถูกต้อง</span>'; return; }
+    out.innerHTML = '<span class="text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบกับ Tuya...</span>';
+    try {
+        const res = await apiPost({ action: 'testDevice', id });
+        if (!res.success) { out.innerHTML = `<span class="text-red-500 font-semibold">${escapeHtml(res.message)}</span>`; return; }
+        const d = res.data;
+        if (!$('df-name').value.trim() && d.name) $('df-name').value = d.name;
+        const extra = [hasValue(d.temp) ? `${d.temp}°C` : '', hasValue(d.humid) ? `${d.humid}%` : '', hasValue(d.battery) ? `แบต ${d.battery}%` : ''].filter(Boolean).join(' · ');
+        out.innerHTML = `<span class="${d.online ? 'text-emerald-600' : 'text-amber-600'} font-semibold">
+            <i class="fa-solid ${d.online ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i>
+            พบอุปกรณ์ "${escapeHtml(d.name)}" (${d.online ? 'ออนไลน์' : 'ออฟไลน์'})${extra ? ' · ' + escapeHtml(extra) : ''}</span>`;
+    } catch (e) {
+        out.innerHTML = `<span class="text-red-500 font-semibold">${escapeHtml(e.message)}</span>`;
+    }
+}
+
+async function saveDeviceForm(e) {
+    e.preventDefault();
+    const v = k => $('df-' + k).value.trim();
+    const num = k => v(k) === '' ? null : Number(v(k));
+    const device = {
+        id: v('id'), name: v('name'), type: v('type'), room: v('room'),
+        minTemp: num('minTemp'), maxTemp: num('maxTemp'), minHumid: num('minHumid'), maxHumid: num('maxHumid'),
+        active: $('df-active').checked
+    };
+    if (device.minTemp !== null && device.maxTemp !== null && device.minTemp >= device.maxTemp) return showCustomAlert('อุณหภูมิต่ำสุดต้องน้อยกว่าสูงสุด', 'error');
+    if ((device.minHumid === null) !== (device.maxHumid === null)) return showCustomAlert('กรุณากรอกความชื้นให้ครบทั้งต่ำสุดและสูงสุด หรือเว้นว่างทั้งคู่', 'error');
+    if (device.minHumid !== null && device.minHumid >= device.maxHumid) return showCustomAlert('ความชื้นต่ำสุดต้องน้อยกว่าสูงสุด', 'error');
+
+    const btn = $('df-save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+    try {
+        const res = await apiPost({ action: 'saveDevice', device, originalId: v('original-id') });
+        if (!res.success) return showCustomAlert(res.message, 'error');
+        showCustomAlert('บันทึกอุปกรณ์เรียบร้อย', 'success');
+        closeDeviceForm();
+        await loadManageDevices();
+        fetchDashboardData(true);
+    } catch (err) {
+        showCustomAlert(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึก';
+    }
+}
+
+async function deleteDevice(id) {
+    const d = manageDevices.find(x => x.id === id);
+    if (!d) return;
+    if (!confirm(`ลบ "${d.name}" ออกจากระบบ?\n\nประวัติอุณหภูมิเดิมยังอยู่ในชีต\nถ้าแค่หยุดชั่วคราว แนะนำให้ "ปิดใช้งาน" แทน`)) return;
+    try {
+        const res = await apiPost({ action: 'deleteDevice', id });
+        if (!res.success) return showCustomAlert(res.message, 'error');
+        showCustomAlert('ลบอุปกรณ์แล้ว', 'success');
+        await loadManageDevices();
+        fetchDashboardData(true);
+    } catch (err) {
+        showCustomAlert(err.message, 'error');
+    }
+}
+</script>
+
+</body>
+</html>
