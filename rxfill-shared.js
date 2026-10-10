@@ -322,19 +322,37 @@
   window.addEventListener('appinstalled', () => { deferredInstall = null; syncBtns(); });
   document.addEventListener('DOMContentLoaded', syncBtns);
   RX.canInstall = () => !isStandalone();
+  // ตัวติดตั้งสำรองสำหรับ Windows: ดาวน์โหลด .bat → ดับเบิลคลิก → ได้ไอคอนบน Desktop (เปิดแบบหน้าต่างแอปของ Edge/Chrome)
+  const APPS = { admin: { name: 'Rxfill Admin', page: 'kitbox-admin.html', ico: 'icons/admin.ico' }, rx: { name: 'Rxfill เบิกยา', page: 'drug-inventory.html', ico: 'icons/rx.ico' } };
+  const thisApp = () => /kitbox-admin/i.test(location.pathname) ? 'admin' : 'rx';
+  RX.winInstaller = function (key) {
+    const a = APPS[key || thisApp()], base = new URL('.', location.href).href;
+    const nm = key === 'admin' || (!key && thisApp() === 'admin') ? 'Rxfill Admin' : 'Rxfill';
+    const bat = ['@echo off', 'chcp 65001 >nul', 'title Install ' + nm, 'set "D=%LOCALAPPDATA%\\SaweeRxfill"', 'if not exist "%D%" mkdir "%D%"',
+      `powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest '${base + a.ico}' -OutFile '%D%\\${key || thisApp()}.ico'; ` +
+      `$b=@('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe','C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe')|Where-Object{Test-Path $_}|Select-Object -First 1; ` +
+      `if(-not $b){throw 'ไม่พบ Chrome หรือ Edge'}; $s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\\${nm}.lnk'); ` +
+      `$s.TargetPath=$b; $s.Arguments='--app=${base + a.page}'; $s.IconLocation='%D%\\${key || thisApp()}.ico'; $s.Save()"`,
+      'if errorlevel 1 (echo ติดตั้งไม่สำเร็จ & pause & exit /b 1)', 'echo.', 'echo ติดตั้งเรียบร้อย - ดับเบิลคลิกไอคอน ' + nm + ' บน Desktop', 'timeout /t 4 >nul'].join('\r\n');
+    const u = URL.createObjectURL(new Blob([bat], { type: 'application/octet-stream' }));
+    const x = document.createElement('a'); x.href = u; x.download = 'install-' + nm.replace(/ /g, '-') + '.bat'; document.body.appendChild(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 3000);
+  };
+  const waitPrompt = ms => new Promise(ok => { if (deferredInstall) return ok(); const t = setTimeout(ok, ms); window.addEventListener('beforeinstallprompt', () => { clearTimeout(t); setTimeout(ok, 0); }, { once: true }); });
   RX.install = async function () {
     if (isStandalone()) return alert('เปิดเป็นแอปอยู่แล้ว');
+    if (!deferredInstall && !isIOS()) await waitPrompt(2500);       // รอเบราว์เซอร์พร้อม (เปิดหน้าครั้งแรก service worker ยังไม่เสร็จ)
     if (deferredInstall) { deferredInstall.prompt(); const r = await deferredInstall.userChoice.catch(() => ({})); deferredInstall = null; return r.outcome === 'accepted'; }
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);color:#fff;font-family:Sarabun,sans-serif;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:24px 20px 90px;text-align:center';
-    const inApp = /line\/|fban|fbav|instagram/i.test(navigator.userAgent);
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);color:#fff;font-family:Sarabun,sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px 20px;text-align:center';
+    const inApp = /line\/|fban|fbav|instagram/i.test(navigator.userAgent), win = /windows/i.test(navigator.userAgent);
     ov.innerHTML = inApp
       ? '<div style="font-size:1.25rem;font-weight:700;margin-bottom:8px">เปิดในเบราว์เซอร์ก่อน</div><div>กดเมนู ⋯ / ⋮ แล้วเลือก "เปิดในเบราว์เซอร์" (Safari / Chrome)<br>จากนั้นกดปุ่มติดตั้งอีกครั้ง</div>'
       : isIOS()
         ? '<div style="font-size:1.25rem;font-weight:700;margin-bottom:10px">เพิ่มเป็นแอปบน iPhone/iPad</div><div style="font-size:1.05rem;line-height:1.9">① กดปุ่ม <b style="background:#fff;color:#007aff;border-radius:6px;padding:0 8px">แชร์ ⬆︎</b> ด้านล่าง<br>② เลือก <b style="background:#fff;color:#111;border-radius:6px;padding:0 8px">เพิ่มไปยังหน้าจอโฮม ➕</b></div><div style="font-size:3rem;margin-top:10px;animation:rxb 1s infinite">⬇</div>'
-        : '<div style="font-size:1.25rem;font-weight:700;margin-bottom:8px">ติดตั้งจากเมนูเบราว์เซอร์</div><div>กด ⋮ มุมขวาบน → "ติดตั้งแอป" / "เพิ่มลงในหน้าจอหลัก"<br>(ถ้าไม่มี ให้รีเฟรชหน้า 1 ครั้งแล้วกดปุ่มนี้ใหม่)</div>';
-    ov.insertAdjacentHTML('beforeend', '<style>@keyframes rxb{50%{transform:translateY(12px)}}</style><div style="margin-top:18px;opacity:.7;font-size:.9rem">แตะที่ใดก็ได้เพื่อปิด</div>');
-    ov.onclick = () => ov.remove(); document.body.appendChild(ov);
+        : '<div style="font-size:1.25rem;font-weight:700;margin-bottom:6px">เบราว์เซอร์นี้ยังไม่เปิดหน้าต่างติดตั้งให้</div><div style="opacity:.85;margin-bottom:14px">(อาจเคยติดตั้งไว้แล้ว หรือใช้โหมดไม่ระบุตัวตน)</div>' +
+          (win ? '<button id="rxWinBtn" style="border:0;border-radius:30px;padding:14px 26px;font:700 1.1rem Sarabun,sans-serif;background:#f97316;color:#fff">⬇ ดาวน์โหลดตัวติดตั้งไอคอน Desktop (Windows)</button><div style="margin-top:10px;font-size:.95rem">ดาวน์โหลดแล้ว <b>ดับเบิลคลิกไฟล์ .bat</b> → ได้ไอคอนบน Desktop ทันที</div>' : '<div>กดไอคอนติดตั้ง ⊕ ที่ช่อง URL ด้านขวา หรือเมนู ⋮ → "ติดตั้งแอป"</div>');
+    ov.insertAdjacentHTML('beforeend', '<style>@keyframes rxb{50%{transform:translateY(12px)}}</style><div style="margin-top:22px;opacity:.7;font-size:.9rem">แตะที่ว่างเพื่อปิด</div>');
+    ov.onclick = e => { if (e.target.id === 'rxWinBtn') { RX.winInstaller(); return; } ov.remove(); }; document.body.appendChild(ov);
     return false;
   };
   RX.previewInto = function (iframe, html) { iframe.srcdoc = html; return waitReady(iframe); };
