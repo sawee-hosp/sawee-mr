@@ -286,13 +286,56 @@
       if (f.contentWindow && f.contentWindow.document.readyState === 'complete') done(); else f.onload = done;
     });
   }
+  // v5.6: แก้หน้าจอค้างหลังพิมพ์
+  //  1) ไม่เรียก w.focus() — ตอนเปิด modal ของ Bootstrap อยู่ focus-trap จะดึง focus กลับ แย่ง focus กับ iframe วนไปมาจนค้าง
+  //  2) ไม่ลบ iframe ทิ้งขณะหน้าต่างพิมพ์ยังเปิด (กดพิมพ์ซ้ำเร็วๆ เคยทำให้ค้าง) — กันกดซ้ำด้วย busy flag, ลบหลัง afterprint
+  //  3) iframe มีขนาดจริงแต่อยู่นอกจอ (width:0/visibility:hidden ทำให้ Chrome บางรุ่นพิมพ์หน้าว่าง/ค้าง)
+  let printBusy = false;
   RX.printHtml = function (html) {
-    let f = document.getElementById('rx-print-frame'); if (f) f.remove();
-    f = document.createElement('iframe'); f.id = 'rx-print-frame';
-    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    if (printBusy) return Promise.resolve(false);
+    printBusy = true;
+    const old = document.getElementById('rx-print-frame'); if (old) old.remove();
+    const f = document.createElement('iframe'); f.id = 'rx-print-frame'; f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:900px;height:1200px;border:0;opacity:0;pointer-events:none';
     document.body.appendChild(f);
     f.srcdoc = html;
-    return waitReady(f).then(w => { try { w.focus(); w.print(); } catch (x) { const n = window.open('', '_blank'); n.document.write(html); n.document.close(); setTimeout(() => n.print(), 600); } });
+    const release = () => { printBusy = false; setTimeout(() => { try { f.remove(); } catch (x) {} }, 1500); };
+    return waitReady(f).then(w => new Promise(ok => {
+      let fin = false; const end = () => { if (fin) return; fin = true; release(); ok(true); };
+      try { w.addEventListener('afterprint', end); } catch (x) {}
+      setTimeout(() => {
+        try { w.print(); } catch (x) { const n = window.open('', '_blank'); if (n) { n.document.write(html); n.document.close(); setTimeout(() => n.print(), 600); } }
+        setTimeout(end, 800);   // มือถือบางรุ่น print() ไม่ block และไม่ยิง afterprint
+      }, 50);
+    })).catch(() => { printBusy = false; return false; });
+  };
+
+  // ---------------- ติดตั้งเป็นแอป (กดปุ่มเดียว) ----------------
+  // Android/Chrome/Edge/desktop: ใช้หน้าต่างติดตั้งของเบราว์เซอร์ทันที
+  // iPhone/iPad: Apple ไม่อนุญาตให้เว็บติดตั้งเอง — แสดงลูกศรชี้ปุ่มแชร์ 2 ขั้น
+  let deferredInstall = null;
+  const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (/macintosh/i.test(navigator.userAgent) && 'ontouchend' in document);
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  const syncBtns = () => document.querySelectorAll('[data-rx-install]').forEach(b => { b.style.display = isStandalone() ? 'none' : ''; });
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; syncBtns(); });
+  window.addEventListener('appinstalled', () => { deferredInstall = null; syncBtns(); });
+  document.addEventListener('DOMContentLoaded', syncBtns);
+  RX.canInstall = () => !isStandalone();
+  RX.install = async function () {
+    if (isStandalone()) return alert('เปิดเป็นแอปอยู่แล้ว');
+    if (deferredInstall) { deferredInstall.prompt(); const r = await deferredInstall.userChoice.catch(() => ({})); deferredInstall = null; return r.outcome === 'accepted'; }
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);color:#fff;font-family:Sarabun,sans-serif;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:24px 20px 90px;text-align:center';
+    const inApp = /line\/|fban|fbav|instagram/i.test(navigator.userAgent);
+    ov.innerHTML = inApp
+      ? '<div style="font-size:1.25rem;font-weight:700;margin-bottom:8px">เปิดในเบราว์เซอร์ก่อน</div><div>กดเมนู ⋯ / ⋮ แล้วเลือก "เปิดในเบราว์เซอร์" (Safari / Chrome)<br>จากนั้นกดปุ่มติดตั้งอีกครั้ง</div>'
+      : isIOS()
+        ? '<div style="font-size:1.25rem;font-weight:700;margin-bottom:10px">เพิ่มเป็นแอปบน iPhone/iPad</div><div style="font-size:1.05rem;line-height:1.9">① กดปุ่ม <b style="background:#fff;color:#007aff;border-radius:6px;padding:0 8px">แชร์ ⬆︎</b> ด้านล่าง<br>② เลือก <b style="background:#fff;color:#111;border-radius:6px;padding:0 8px">เพิ่มไปยังหน้าจอโฮม ➕</b></div><div style="font-size:3rem;margin-top:10px;animation:rxb 1s infinite">⬇</div>'
+        : '<div style="font-size:1.25rem;font-weight:700;margin-bottom:8px">ติดตั้งจากเมนูเบราว์เซอร์</div><div>กด ⋮ มุมขวาบน → "ติดตั้งแอป" / "เพิ่มลงในหน้าจอหลัก"<br>(ถ้าไม่มี ให้รีเฟรชหน้า 1 ครั้งแล้วกดปุ่มนี้ใหม่)</div>';
+    ov.insertAdjacentHTML('beforeend', '<style>@keyframes rxb{50%{transform:translateY(12px)}}</style><div style="margin-top:18px;opacity:.7;font-size:.9rem">แตะที่ใดก็ได้เพื่อปิด</div>');
+    ov.onclick = () => ov.remove(); document.body.appendChild(ov);
+    return false;
   };
   RX.previewInto = function (iframe, html) { iframe.srcdoc = html; return waitReady(iframe); };
   RX.printSlip = (o, opt) => RX.printHtml(RX.slipHtml(o, opt));
