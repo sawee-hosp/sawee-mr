@@ -5,6 +5,8 @@
  *   RX.slipHtml(order, {sign, checker})    ใบเบิก 60x80 mm
  *   RX.labelHtml(items)                    ฉลากยา 80x60 mm + แถบตัดเก็บแนวตั้ง 5 มม.
  *   RX.docHtml({title,meta,body,sign})     เอกสาร A4 มีขอบทุกหน้า (TH Sarabun New)
+ *   RX.miniLabelHtml(items)                ฉลากจิ๋ว 4x4 ช่องบนกระดาษ 80x60 mm
+ *   RX.autoLabel(drug)                     ร่างฉลากอัตโนมัติจากชื่อ/หน่วย/คุณสมบัติ
  *   RX.shelfHtml(items)                    ป้ายติดล็อกยา 50x30 mm + QR (Inventory ID)
  *   RX.doubleHtml(name)                    สติกเกอร์คู่ใช้ 50x30 mm
  *   RX.boxLabelHtml(data, sign)            ใบแปะกล่อง 60x80 mm
@@ -155,6 +157,37 @@
       ${it.ind ? `<div class="ind" data-fit="11">${e(it.ind)}</div>` : ''}
       <div class="ft" data-fit="10">วันที่จัด ${dLong}${it.store || opt.store ? ` <span class="s">| ${e(it.store || opt.store)}</span>` : ''}</div>
     </div><div class="stub"><div class="vn" data-fit="9">${e(it.name)} จัด ${dShort}</div></div></div>`).join('') + '</body></html>';
+  };
+
+  // ---------------- ฉลากจิ๋ว: กระดาษ 80x60 แบ่ง 4x4 ช่อง (20x15 มม.) มีรอยประสำหรับตัด ----------------
+  // item: {name, loc|store, qty} · ชื่อยาขนาดคงที่ เกินช่องให้ "…" · บรรทัด 2 จุดเก็บยาตัวเล็ก
+  RX.miniLabelHtml = function (items) {
+    const cells = []; (items || []).forEach(it => { for (let k = 0; k < (Number(it.qty) || 1); k++) cells.push(it); });
+    const pages = []; for (let i = 0; i < cells.length; i += 16) pages.push(cells.slice(i, i + 16));
+    return HEAD('ฉลากจิ๋ว', `@page{size:80mm 60mm;margin:0}
+  .page{width:80mm;height:60mm;display:grid;grid-template-columns:repeat(4,20mm);grid-template-rows:repeat(4,15mm)}
+  .c{border-right:.3mm dashed #888;border-bottom:.3mm dashed #888;padding:1.2mm 1.1mm .6mm;display:flex;flex-direction:column;justify-content:center;min-width:0;overflow:hidden}
+  .c:nth-child(4n){border-right:0}.c:nth-child(n+13){border-bottom:0}
+  .n{font-size:17px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:.4mm}
+  .w{font-size:12.5px;line-height:1.1;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`) +
+      pages.map(pg => `<div class="page">${Array.from({ length: 16 }, (_, i) => { const it = pg[i];
+        return it ? `<div class="c"><div class="n">${e(it.name)}</div><div class="w">${e(it.loc || it.store || '')}</div></div>` : '<div class="c"></div>'; }).join('')}</div>`).join('') + '</body></html>';
+  };
+
+  // ---------------- สร้างฉลากอัตโนมัติจากชื่อ/หน่วย/คุณสมบัติยา (แก้ต่อได้) ----------------
+  // d: {n ชื่อ, u หน่วย, ha, c (2-8°C), l (กันแสง)}
+  RX.autoLabel = function (d) {
+    const n = String(d.n || ''), s = (n + ' ' + (d.u || '')).toLowerCase(), has = re => re.test(s);
+    let L = { l1: '', l2: '', l3: '' }, unit = d.u || '';
+    if (has(/inj|amp|vial|แอมป์|ไวแอล|ฉีด/)) L = { l1: 'ยาฉีด', l2: 'ใช้ตามแพทย์สั่ง', l3: '' };
+    else if (has(/eye|ตา\b|ear drop|หยอด/)) L = { l1: 'หยอดครั้งละ 1–2 หยด', l2: 'วันละ 4 ครั้ง', l3: 'เช้า กลางวัน เย็น ก่อนนอน' };
+    else if (has(/cream|oint|gel|lotion|ครีม|ขี้ผึ้ง|เจล/)) L = { l1: 'ทาบางๆ บริเวณที่เป็น', l2: 'วันละ 2 ครั้ง', l3: 'เช้า – เย็น' };
+    else if (has(/inhal|mdi|evohaler|accuhaler|turbuhaler|พ่น/)) L = { l1: 'พ่นสูดครั้งละ 2 กด', l2: 'เมื่อมีอาการ', l3: 'ห่างกันอย่างน้อย 4 ชั่วโมง' };
+    else if (has(/syr|susp|mixt|elixir|solution|น้ำ|ml\b|ขวด/)) L = { l1: 'รับประทานครั้งละ 1 ช้อนชา', l2: 'วันละ 3 ครั้ง', l3: 'หลังอาหาร เช้า กลางวัน เย็น' };
+    else if (has(/supp|เหน็บ/)) L = { l1: 'เหน็บทวารครั้งละ 1 เม็ด', l2: 'เมื่อมีอาการ', l3: '' };
+    else if (has(/tab|cap|เม็ด|แคปซูล|mg\b/)) L = { l1: 'รับประทานครั้งละ 1 เม็ด', l2: 'วันละ 3 ครั้ง', l3: 'หลังอาหาร เช้า กลางวัน เย็น' };
+    const ind = [d.ha && 'ยาที่ต้องระมัดระวังสูง (High Alert)', d.c && 'เก็บในตู้เย็น 2–8 °C ห้ามแช่แข็ง', d.l && 'เก็บให้พ้นแสง'].filter(Boolean).join(' · ');
+    return { name: n, amount: '', unit, l1: L.l1, l2: L.l2, l3: L.l3, ind };
   };
 
   // ---------------- ป้ายติดล็อกยา 50x30 + QR (Inventory ID) ----------------
