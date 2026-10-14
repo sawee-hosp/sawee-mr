@@ -57,10 +57,44 @@ a{color:var(--pri-dark);text-decoration:none}
 /* ═══ Login ═══ */
 #screen-login{
   position:fixed;inset:0;z-index:1000;
-  display:flex;align-items:center;justify-content:center;padding:20px;
+  display:flex;padding:20px;
   background:linear-gradient(135deg,#e0f7fe 0%,#c9f0f7 35%,#d4f7e7 100%);
-  overflow:hidden;
+  overflow-x:hidden;overflow-y:auto;
 }
+/* พื้นหลังตกแต่งอยู่ในชั้น fixed แยก เพื่อให้หน้า login เลื่อนอ่านประกาศได้โดยไม่ดัน scroll */
+.login-bg{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+.login-wrap{margin:auto;width:100%;max-width:420px;position:relative;z-index:1;display:flex;flex-direction:column;gap:18px;padding:6px 0}
+.login-wrap .login-card{max-width:none}
+@media(min-width:980px){
+  .login-wrap.has-pub{max-width:960px;flex-direction:row;align-items:flex-start;gap:26px}
+  .login-wrap.has-pub .login-card{flex:0 0 420px}
+  .login-wrap.has-pub .pub-box{flex:1;min-width:0}
+}
+/* ประกาศแบบย่อ (ไม่ต้อง login) */
+.pub-box{background:rgba(255,255,255,.86);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.9);border-radius:var(--radius-lg);padding:20px 22px;box-shadow:var(--shadow-xl)}
+.pub-box h2{font-size:17px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.pub-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;cursor:pointer;transition:border-color .15s}
+.pub-item:hover{border-color:var(--pri-light)}
+.pub-item.pinned{border-left:4px solid var(--warn);background:#fffdf5}
+.pub-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pub-title{font-weight:600;font-size:14.5px}
+.pub-text{font-size:13px;color:var(--text2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.pub-item.open .pub-text{display:block;-webkit-line-clamp:unset}
+.pub-meta{font-size:11.5px;color:var(--text3);margin-top:5px;display:flex;justify-content:space-between;gap:8px}
+.pub-note{font-size:12px;color:var(--text3);margin-top:4px;text-align:center}
+/* รายชื่อผู้ใช้ที่เคย login (คลิกเลือก) */
+.un-wrap{position:relative}
+.recent-dd{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:5;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-xl);overflow:hidden;max-height:260px;overflow-y:auto;text-align:left}
+.recent-hd{font-size:11.5px;color:var(--text3);padding:8px 14px 4px}
+.recent-it{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer}
+.recent-it:hover{background:#f0f9ff}
+.recent-it .av{width:30px;height:30px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.recent-it .nm{flex:1;min-width:0;font-size:13.5px;line-height:1.3}
+.recent-it .nm b{display:block;font-size:14px;color:var(--text)}
+.recent-it .nm span{color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.recent-it .rm{background:none;color:var(--text3);font-size:16px;padding:2px 7px;border-radius:7px}
+.recent-it .rm:hover{background:#fee2e2;color:#b91c1c}
+
 .blob{position:absolute;border-radius:50%;filter:blur(2px);pointer-events:none;will-change:transform}
 .blob.b1{width:460px;height:460px;top:-140px;right:-120px;background:radial-gradient(circle at 30% 30%,rgba(56,189,248,.55),rgba(56,189,248,0) 70%);animation:fa 18s ease-in-out infinite}
 .blob.b2{width:400px;height:400px;bottom:-130px;left:-110px;background:radial-gradient(circle at 60% 40%,rgba(52,211,153,.5),rgba(52,211,153,0) 70%);animation:fb 22s ease-in-out infinite}
@@ -466,10 +500,13 @@ body.zen #peek-tab{display:flex}
 
 <!-- ═══════════════ LOGIN ═══════════════ -->
 <div id="screen-login">
-  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
-  <div class="login-mol"></div>
-  <div class="login-caps" id="login-caps"></div>
+  <div class="login-bg">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+    <div class="login-mol"></div>
+    <div class="login-caps" id="login-caps"></div>
+  </div>
 
+  <div class="login-wrap" id="login-wrap">
   <div class="login-card">
     <div class="login-logo">
       <svg class="rx-mark" width="74" height="74" viewBox="0 0 48 48" aria-label="Rx">
@@ -486,11 +523,14 @@ body.zen #peek-tab{display:flex}
     <form id="step-login" onsubmit="return A.auth(event)">
       <div class="form-group">
         <label>ชื่อผู้ใช้ (HOSxP Login)</label>
-        <input type="text" id="inp-un" placeholder="เช่น dent65" autocomplete="username" autofocus>
+        <div class="un-wrap">
+          <input type="text" id="inp-un" placeholder="พิมพ์ หรือคลิกเพื่อเลือกชื่อที่เคยใช้" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" name="pharma_login_name">
+          <div class="recent-dd" id="recent-dd" hidden></div>
+        </div>
       </div>
       <div class="form-group">
         <label>รหัสผ่าน</label>
-        <input type="password" id="inp-pw" placeholder="ใส่รหัสผ่าน" autocomplete="current-password">
+        <input type="password" id="inp-pw" placeholder="ใส่รหัสผ่าน" autocomplete="new-password" name="pharma_login_pw">
       </div>
       <button type="submit" class="btn-primary" id="btn-auth">เข้าสู่ระบบ</button>
       <div class="login-hint">เข้าใช้ครั้งแรก — รหัสที่กรอกจะถูกตั้งเป็นรหัสประจำตัวของคุณทันที</div>
@@ -498,6 +538,14 @@ body.zen #peek-tab{display:flex}
 
     <div id="login-err" hidden class="login-error"></div>
   </div>
+
+  <!-- ประกาศแบบย่อ — อ่านได้โดยไม่ต้อง login (เฉพาะประกาศที่ไม่จำกัดสิทธิ์) -->
+  <div class="pub-box" id="pub-box" hidden>
+    <h2 class="gt">ประกาศล่าสุด</h2>
+    <div id="pub-list"></div>
+    <div class="pub-note">แสดงแบบย่อ — เข้าสู่ระบบเพื่ออ่านฉบับเต็มและเอกสารแนบ</div>
+  </div>
+  </div><!-- /login-wrap -->
 </div>
 
 <!-- ═══════════════ MAIN ═══════════════ -->
@@ -721,11 +769,13 @@ const F = {
 
   url(app){
     const sep = app.url.indexOf('?')>-1 ? '&' : '?';
+    let same = false;
+    try{ same = new URL(app.url, location.href).origin === location.origin; }catch(e){}
     return app.url + sep +
       'portal_user='  + encodeURIComponent(S.user.username) +
       '&portal_role=' + encodeURIComponent(S.user.role) +
       '&portal_name=' + encodeURIComponent(S.user.fullname||'') +
-      '&portal_token='+ encodeURIComponent(S.token||'');
+      (same ? '' : '&portal_token='+ encodeURIComponent(S.token||''));   // หน้าโดเมนเดียวกันขอ token ผ่าน postMessage / localStorage แทน (ไม่ให้ token ติดใน URL)
   },
 
   ensure(app){
@@ -832,6 +882,124 @@ const Z = {
   },
 };
 
+/* ═══ SSO ให้หน้าย่อยบนโดเมนเดียวกัน (Rxfill) — ส่ง token ผ่าน postMessage ไม่ต้องวางใน URL ═══ */
+window.addEventListener('message', function(ev){
+  if(ev.origin !== location.origin) return;                    // รับเฉพาะโดเมนเดียวกับ Portal
+  const d = ev.data;
+  if(!d || d.type !== 'rx-ready' || !S.token || !S.user) return;
+  let mine = false;                                            // ตอบเฉพาะ iframe ที่ Portal เปิดเอง
+  F.map.forEach(function(f){ if(f.el && f.el.contentWindow === ev.source) mine = true; });
+  if(!mine) return;
+  ev.source.postMessage({type:'portal-session', token:S.token, user:S.user.username,
+                         role:S.user.role, name:S.user.fullname||''}, location.origin);
+});
+
+/* ═══ ออกจากระบบอัตโนมัติเมื่อ "เปิดเครื่อง/เปิดเบราว์เซอร์ใหม่" ═══
+ * เบราว์เซอร์รู้เวลาบูตเครื่องไม่ได้ จึงใช้ชีพจร: ตอนล็อกอินอยู่หน้าเว็บบันทึกเวลาทุก 20 วินาที
+ * ถ้าเปิดหน้าใหม่แล้วชีพจรเก่ากว่า IDLE_LOGOUT_MS = ปิดเครื่อง/ปิดเบราว์เซอร์ไปแล้ว → ให้ล็อกอินใหม่
+ * (รีเฟรชหน้า / tab ถูกพักความจำ / เครื่อง sleep แล้วตื่นโดยไม่รีโหลด = ยังล็อกอินอยู่) */
+const ALIVE_KEY = 'pharma_alive';
+const IDLE_LOGOUT_MS = 120000;
+const RX_KEYS = ['rx4_session','rxadm_session'];               // session ของหน้าเบิกยา/ห้องยา (โดเมนเดียวกัน)
+function beat(){ try{ localStorage.setItem(ALIVE_KEY, String(Date.now())); }catch(e){} }
+function sessionStale(){
+  try{
+    if(document.wasDiscarded) return false;                    // tab ถูก Chrome พักแล้วโหลดกลับ ไม่ใช่การเปิดเครื่อง
+    const t = Number(localStorage.getItem(ALIVE_KEY)||0);
+    return !t || (Date.now() - t) > IDLE_LOGOUT_MS;
+  }catch(e){ return false; }
+}
+function clearAllSessions(){
+  try{
+    localStorage.removeItem(SESS_KEY); localStorage.removeItem(CACHE_KEY); localStorage.removeItem(ALIVE_KEY);
+    RX_KEYS.forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+}
+let _beatOn = false;
+function startBeat(){
+  beat(); if(_beatOn) return; _beatOn = true;
+  setInterval(beat, 20000);
+  document.addEventListener('visibilitychange', beat);
+  window.addEventListener('focus', beat);
+  window.addEventListener('pagehide', beat);
+}
+
+/* ═══ ชื่อผู้ใช้ที่เคยเข้าสู่ระบบ — เก็บเฉพาะ username + ชื่อ (ไม่เก็บรหัสผ่าน) ให้คลิกเลือกได้ ═══ */
+const RECENT_KEY = 'pharma_recent_users';
+function recentGet(){ try{ const a = JSON.parse(localStorage.getItem(RECENT_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function recentSave(u, n){
+  try{
+    const a = recentGet().filter(x=>x.u!==u);
+    a.unshift({u:u, n:n||''}); localStorage.setItem(RECENT_KEY, JSON.stringify(a.slice(0,8)));
+  }catch(e){}
+}
+function recentRemove(u){ try{ localStorage.setItem(RECENT_KEY, JSON.stringify(recentGet().filter(x=>x.u!==u))); }catch(e){} }
+const RC = {
+  render(){
+    const inp = $('inp-un'), dd = $('recent-dd'); if(!inp||!dd) return;
+    const q = inp.value.trim().toLowerCase();
+    const list = recentGet().filter(x=>!q || x.u.toLowerCase().indexOf(q)===0);
+    if(!list.length){ dd.hidden = true; return; }
+    dd.innerHTML = '<div class="recent-hd">เคยเข้าสู่ระบบด้วย — คลิกเพื่อเลือก</div>' + list.map(x=>
+      '<div class="recent-it" data-u="'+esc(x.u)+'">'+
+        '<span class="av">'+esc((x.n||x.u).charAt(0).toUpperCase())+'</span>'+
+        '<span class="nm"><b>'+esc(x.u)+'</b><span>'+esc(x.n||'')+'</span></span>'+
+        '<button type="button" class="rm" data-rm="'+esc(x.u)+'" title="ลบออกจากรายการ">×</button>'+
+      '</div>').join('');
+    dd.hidden = false;
+  },
+  hide(){ const dd = $('recent-dd'); if(dd) dd.hidden = true; },
+  init(){
+    const inp = $('inp-un'), dd = $('recent-dd'); if(!inp||!dd) return;
+    inp.addEventListener('focus', RC.render);
+    inp.addEventListener('click', RC.render);
+    inp.addEventListener('input', RC.render);
+    inp.addEventListener('blur', ()=>setTimeout(RC.hide, 150));
+    dd.addEventListener('mousedown', e=>e.preventDefault());       // ไม่ให้ช่อง blur ก่อนคลิก
+    dd.addEventListener('click', e=>{
+      const rm = e.target.closest('[data-rm]');
+      if(rm){ recentRemove(rm.getAttribute('data-rm')); RC.render(); return; }
+      const it = e.target.closest('.recent-it');
+      if(it){ inp.value = it.getAttribute('data-u'); RC.hide(); const pw = $('inp-pw'); if(pw) pw.focus(); }
+    });
+  },
+  /* เบราว์เซอร์/ตัวจัดการรหัสผ่านอาจเติมค่าเองหลังโหลด → ล้างช่องที่ผู้ใช้ยังไม่ได้พิมพ์ */
+  clearAutofill(){
+    [0,250,800,1800].forEach(ms=>setTimeout(()=>{
+      const u = $('inp-un'), p = $('inp-pw'); if(!u||!p) return;
+      if(document.activeElement !== u && document.activeElement !== p){ u.value=''; p.value=''; }
+    }, ms));
+  }
+};
+
+/* ═══ ประกาศแบบย่อก่อน login — ไม่ต้องใช้ token (action public_posts ฝั่ง Portal GAS) ═══ */
+const PUB_KEY = 'pharma_pub_cache';
+const PUB = {
+  render(list){
+    const box = $('pub-box'), wrap = $('login-wrap'), el = $('pub-list');
+    if(!box||!el) return;
+    if(!list || !list.length){ box.hidden = true; if(wrap) wrap.classList.remove('has-pub'); return; }
+    el.innerHTML = list.map(p=>
+      '<div class="pub-item '+(p.pin?'pinned':'')+'" onclick="this.classList.toggle(\'open\')">'+
+        '<div class="pub-head">'+
+          (p.type?'<span class="post-type" data-type="'+esc(p.type)+'">'+esc(p.type)+'</span>':'')+
+          (p.pin?'<span style="color:var(--warn);font-size:11.5px;display:inline-flex;align-items:center;gap:3px">'+ic('pin',12)+' ปักหมุด</span>':'')+
+          '<span class="pub-title">'+esc(p.title)+'</span>'+
+        '</div>'+
+        '<div class="pub-text">'+esc(p.excerpt||'')+'</div>'+
+        '<div class="pub-meta"><span>'+esc(p.category||'')+'</span><span>'+fmtDate(p.created_at)+'</span></div>'+
+      '</div>').join('');
+    box.hidden = false; if(wrap) wrap.classList.add('has-pub');
+  },
+  async load(){
+    try{ const c = JSON.parse(localStorage.getItem(PUB_KEY)||'null'); if(c && c.posts) PUB.render(c.posts); }catch(e){}   // วาดจากแคชก่อน
+    try{
+      const r = await withTimeout(API_URL + '?action=public_posts', 10000);
+      if(r && r.ok){ PUB.render(r.posts||[]); try{ localStorage.setItem(PUB_KEY, JSON.stringify({posts:r.posts||[]})); }catch(e){} }
+    }catch(e){}                                                // ล้มเหลว = ไม่แสดงอะไร ไม่กระทบการ login
+  }
+};
+
 /* ═══ preconnect to sub-app origins (ลด handshake ตอนเปิดครั้งแรก) ═══ */
 const _pc = new Set();
 function preconnect(u){
@@ -885,12 +1053,14 @@ const A = {
     S.token = r.token;
     S.user = {username:S._un, fullname:r.fullname, role:r.role, position:r.position};
     try{ localStorage.setItem(SESS_KEY, JSON.stringify({token:S.token, user:S.user})); }catch(e){}
+    recentSave(S.user.username, S.user.fullname);
+    startBeat();
     hide('screen-login'); show('screen-app');
     Z.init(); A.initApp();
   },
 
   logout(){
-    try{ localStorage.removeItem(SESS_KEY); localStorage.removeItem(CACHE_KEY); }catch(e){}
+    clearAllSessions();                       // Portal + Rxfill (เบิกยา / ห้องยา) ออกพร้อมกัน
     location.reload();
   },
 
@@ -1579,17 +1749,24 @@ document.addEventListener('keydown', e=>{
 /* ═══ Init ═══ */
 (function(){
   preconnect(API_URL);
+  RC.init();
   try{
     const saved = JSON.parse(localStorage.getItem(SESS_KEY)||'null');
     if(saved && saved.token && saved.user){
-      S.token = saved.token; S.user = saved.user;
-      hide('screen-login'); show('screen-app');
-      Z.init(); A.initApp();
-      return;
+      if(sessionStale()){
+        clearAllSessions();                   // เปิดเครื่อง/เปิดเบราว์เซอร์ใหม่ → ต้อง login ใหม่
+      }else{
+        S.token = saved.token; S.user = saved.user;
+        startBeat();
+        hide('screen-login'); show('screen-app');
+        Z.init(); A.initApp();
+        return;
+      }
     }
   }catch(e){}
   show('screen-login');
-  const el = $('inp-un'); if(el) el.focus();
+  RC.clearAutofill();
+  PUB.load();
 })();
 </script>
 </body>
