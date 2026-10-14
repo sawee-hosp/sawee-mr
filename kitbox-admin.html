@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-  <script src="rxfill-shared.js?v=20261011"></script>
+  <script src="rxfill-shared.js?v=20261014"></script>
   <style>
     :root{--g0:#064e2b;--g1:#0f7a3d;--g2:#16a34a;--g3:#dcfce7;--o1:#f97316;--o2:#fb923c;--o3:#fff1e6;--red:#dc2626;--bg:#f3f6f4;--ink:#1f2d27;--mut:#6b7c73;--card:#fff;--r:16px}
     *{font-family:'Sarabun',sans-serif}
@@ -240,6 +240,10 @@
       <h5 class="fw-bold mb-2" style="color:#0f766e"><i class="fas fa-users-cog"></i> จัดการผู้ใช้</h5>
       <input id="usrKw" class="form-control rounded-pill mb-2" placeholder="ค้นหาชื่อ / username / หน่วยงาน…" oninput="renderUsers()">
       <div class="d-flex gap-2 mb-2 flex-wrap"><span class="chip on" data-u="all" onclick="setUsrFilter('all',this)">ทั้งหมด</span><span class="chip" data-u="admin" onclick="setUsrFilter('admin',this)">Admin</span><span class="chip" data-u="nopw" onclick="setUsrFilter('nopw',this)">ยังไม่ตั้งรหัสผ่าน</span></div>
+      <div class="card-x p-2 mb-2 d-flex align-items-center gap-2 flex-wrap" style="background:#f0fdf4">
+        <button id="btnSyncUsers" class="btn btn-sm btn-g rounded-pill" onclick="syncUsers()"><i class="fas fa-sync-alt"></i> ซิงค์ผู้ใช้จาก HOSxP</button>
+        <span class="small mut" id="syncInfo"></span>
+      </div>
       <div class="small mut mb-2" id="usrInfo"></div>
       <div id="usrList"></div>
       <div class="small mut mt-2">ผู้ใช้ใหม่ลงทะเบียนเองที่หน้าเบิกยา (ต้องมีชื่อใน HOSxP) · "ล้างรหัสผ่าน" = ให้ผู้ใช้ตั้งรหัสใหม่เองที่หน้าเบิกยา</div>
@@ -474,7 +478,10 @@
   }
   async function api(action, payload = {}) {
     const r = await post(ADMIN_URL, { action, payload: { ...payload, token: SES && SES.token } });
-    if (r.code === 'SESSION_EXPIRED') { logout(r.message); }
+    if (r.code === 'SESSION_EXPIRED') {
+      if (SES && SES.sso && !payload._retry && await ssoRefresh()) return api(action, { ...payload, _retry: 1 });   // เข้าจาก Portal → ขอ token ใหม่เงียบๆ
+      logout(r.message);
+    }
     return r;
   }
   const toast = (t, icon = 'success') => Swal.fire({ toast: true, position: 'top', icon, title: t, showConfirmButton: false, timer: 1400 });
@@ -542,9 +549,26 @@
     document.querySelectorAll('.lbf').forEach(i => i.addEventListener('input', debounce(previewLabel, 250)));
     $('mScan').addEventListener('hidden.bs.modal', () => { try { scanner && scanner.clear(); } catch (e) {} });
     badges();
+    RX.onPortalLogout(() => logout('ออกจากระบบ Portal แล้ว'));
     if (SES && SES.token) showApp(); else { loadPublic(); loadVersions(); }
+    bootSSO();
     setInterval(() => { if (SES) refreshOrders(true); else loadPublic(); }, 60000);
   };
+  // เข้าสู่ระบบอัตโนมัติจาก Portal (sawee-mr.vercel.app): ไม่ต้องกรอกรหัสผ่านซ้ำ · ไม่ใช่ admin/ไม่มี Portal → ใช้หน้า login เดิม
+  async function ssoRefresh() {
+    const ps = await RX.portalSession(900); if (!ps) return false;
+    const r = await post(ADMIN_URL, { action: 'ssoAdminLogin', payload: { portalToken: ps.token } });
+    if (!r.status) return false;
+    SES = { token: r.token, user: r.user, sso: true }; LS.set('rxadm_session', SES); return true;
+  }
+  async function bootSSO() {
+    const ps = await RX.portalSession(); if (!ps) return;
+    const same = SES && SES.user && ps.user && String(SES.user.username).toLowerCase() === String(ps.user).toLowerCase();
+    if (same) { if (SES.sso) ssoRefresh(); return; }
+    const r = await post(ADMIN_URL, { action: 'ssoAdminLogin', payload: { portalToken: ps.token } });
+    if (r.status) { if (SES) logout(); SES = { token: r.token, user: r.user, sso: true }; LS.set('rxadm_session', SES); return showApp(); }
+    if (!SES) { const le = $('loginErr'); le.textContent = '⚠ ' + (r.message || 'เข้าสู่ระบบจาก Portal ไม่สำเร็จ') + ' — หรือกรอก Username/รหัสผ่านผู้ดูแลด้านบน'; le.style.display = 'block'; }
+  }
   function showApp() {
     $('auth').classList.add('hidden'); $('app').classList.remove('hidden');
     $('who').textContent = (SES.user.name || SES.user.username).split(' ')[0];
@@ -1078,7 +1102,24 @@
   async function loadUsers() {
     $('usrList').innerHTML = '<div class="text-center my-4"><div class="spinner-border text-success"></div></div>';
     const r = await api('listUsers'); if (!r.status) { $('usrList').innerHTML = `<div class="text-danger text-center">${esc(r.message)}</div>`; return; }
-    USERS = r.data; renderUsers();
+    USERS = r.data; renderUsers(); syncInfo();
+  }
+  // ---- ซิงค์ผู้ใช้จาก HOSxP: ตั้งธง → PHP ในวง LAN ถามธงทุก 5 นาทีแล้วส่งให้ ----
+  let syncTimer = null;
+  async function syncInfo(r) {
+    r = r || await api('userSyncInfo'); if (!r.status) return null;
+    const l = r.last, t = l ? new Date(l.at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    $('syncInfo').textContent = r.pending ? '⏳ รอ PHP รับคำสั่ง (ภายใน ~5 นาที)…' : l ? `ซิงค์ล่าสุด ${t} · ${l.n} คน${l.renamed ? ' · เปลี่ยนชื่อ ' + l.renamed : ''}${l.disabled ? ' · ปิดบัญชี ' + l.disabled : ''}` : 'ยังไม่เคยซิงค์ (รอรอบอัตโนมัติของ PHP)';
+    return r;
+  }
+  async function syncUsers() {
+    const b0 = await api('userSyncInfo'), was = b0.last ? b0.last.at : 0;
+    const r = await api('requestUserSync'); if (!r.status) return Swal.fire('สั่งซิงค์ไม่สำเร็จ', r.message || '', 'error');
+    syncInfo(r); toast('ส่งคำสั่งแล้ว — PHP จะซิงค์ภายใน ~5 นาที'); clearInterval(syncTimer);
+    let n = 0; syncTimer = setInterval(async () => {
+      const i = await syncInfo(); if (!i || ++n > 20) return clearInterval(syncTimer);
+      if (i.last && i.last.at !== was) { clearInterval(syncTimer); toast('ซิงค์ผู้ใช้เรียบร้อย'); loadUsers(); }
+    }, 20000);
   }
   function renderUsers() {
     if (!USERS) return; const kw = $('usrKw').value.trim().toLowerCase();

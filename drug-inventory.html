@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="rxfill-shared.js?v=20261011"></script>
+  <script src="rxfill-shared.js?v=20261014"></script>
 
   <style>
     :root { --font-main: "Sarabun", sans-serif; --primary: #003d82; --primary2: #2563eb; --bg: #f4f6f9; --text: #2c3e50; --ha-color: #ffebee; --cool-color: #e3f2fd; }
@@ -179,10 +179,10 @@
             <div class="col-5"><label class="small text-muted">Username</label><input id="r-user" class="form-control" readonly></div>
             <div class="col-7"><label class="small text-muted">ชื่อ (จาก HOSxP)</label><input id="r-name" class="form-control" readonly></div>
           </div>
-          <label class="small text-muted">อีเมล <span class="text-danger">*</span></label>
-          <input id="r-email" type="email" class="form-control" placeholder="name@example.com">
-          <div class="hint mb-2">ใช้สำหรับรับรหัส OTP เวลาลืมรหัสผ่าน</div>
-          <div class="row g-2 mb-2">
+          <label class="small text-muted r-cred">อีเมล <span class="text-danger">*</span></label>
+          <input id="r-email" type="email" class="form-control r-cred" placeholder="name@example.com">
+          <div class="hint mb-2 r-cred">ใช้สำหรับรับรหัส OTP เวลาลืมรหัสผ่าน</div>
+          <div class="row g-2 mb-2 r-cred">
             <div class="col-6"><label class="small text-muted">รหัสผ่าน <span class="text-danger">*</span></label><input id="r-pass" type="password" class="form-control" autocomplete="new-password" placeholder="≥ 4 ตัว"></div>
             <div class="col-6"><label class="small text-muted">ยืนยันรหัสผ่าน</label><input id="r-pass2" type="password" class="form-control" autocomplete="new-password"></div>
           </div>
@@ -458,7 +458,8 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
     del(k) { try { localStorage.removeItem(k); } catch (e) {} }
   };
-  let SESSION = LS.get('rx4_session');          // { token, user }
+  let SESSION = LS.get('rx4_session');          // { token, user, sso }  sso = เข้าจาก Portal (ไม่มีรหัสผ่านของ Rxfill)
+  let SSO_PENDING = null;                        // token ของ Portal ระหว่างลงทะเบียนครั้งแรก
   let CAT = null, BOXES = [], INV_BY = {}, BOX_BY = {};
   let cart = [];                                // [{ invId, qty }]
   let curBox = '', curStockBox = '', reqQty = {};
@@ -474,13 +475,16 @@
   const thD = iso => { if (!iso) return '-'; const p = String(iso).split('-'); return p.length === 3 ? `${+p[2]}/${+p[1]}/${p[0]}` : iso; };
   const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
-  async function api(action, payload = {}) {
+  async function api(action, payload = {}, _retry) {
     try {
       const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action, token: SESSION && SESSION.token, ...payload }) });
       const text = await res.text();
       let j; try { j = JSON.parse(text); } catch (e) { throw new Error(text.includes('Service') ? 'Web App ยังไม่ได้ Deploy แบบ Anyone' : text.slice(0, 80)); }
-      if (j.code === 'SESSION_EXPIRED') { forceLogin('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'); }
+      if (j.code === 'SESSION_EXPIRED') {
+        if (SESSION && SESSION.sso && !_retry && await ssoRefresh()) return api(action, payload, true);   // เข้าจาก Portal → ขอ token ใหม่เงียบๆ
+        forceLogin('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+      }
       return j;
     } catch (e) { return { status: false, message: 'เชื่อมต่อไม่ได้: ' + e.message }; }
   }
@@ -519,7 +523,7 @@
   const THINK = 'ไม่พบ Username นี้ในระบบ HOSxP<br><b>ลองนึกดูดีๆ ว่า HosXP User ของเราคืออะไร</b><br><span class="hint">(ชื่อที่ใช้ login เข้า HOSxP เช่น mr12)</span>';
 
   function onAuthed(r) {
-    SESSION = { token: r.token, user: r.user };
+    SESSION = { token: r.token, user: r.user, sso: !!r.sso }; SSO_PENDING = null;
     LS.set('rx4_session', SESSION);
     $('a-pass').value = '';
     showApp();
@@ -569,6 +573,7 @@
   async function openRegister(u, name, note) {
     $('r-user').value = u; $('r-name').value = name || '';
     ['r-email', 'r-pass', 'r-pass2'].forEach(i => $(i).value = '');
+    document.querySelectorAll('.r-cred').forEach(e => e.classList.toggle('hidden', !!SSO_PENDING));   // เข้าจาก Portal: ไม่ต้องตั้งอีเมล/รหัสผ่าน
     showAuth('reg'); if (note) setMsg(note, true);
     $('r-groups').innerHTML = $('r-subs').innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
     const o = await api('getRegOptions');
@@ -579,6 +584,13 @@
   const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   function pwCheck(a, b) { if (a.length < 4) return 'รหัสผ่านอย่างน้อย 4 ตัวอักษร'; if (a !== b) return 'ยืนยันรหัสผ่านไม่ตรงกัน'; return ''; }
   async function doRegister() {
+    if (SSO_PENDING) {
+      const groups = [...document.querySelectorAll('.r-grp:checked')].map(c => c.value), subs = [...document.querySelectorAll('.r-sub:checked')].map(c => c.value);
+      if (!groups.length && !subs.length) return setMsg('เลือกตึกหรือสิทธิ์การเบิกอย่างน้อย 1 รายการ');
+      busy(true); const r = await api('ssoRegister', { portalToken: SSO_PENDING, boxGroup: groups, substock: subs }); busy(false);
+      if (r.status) { Swal.fire({ icon: 'success', title: 'ลงทะเบียนสำเร็จ', timer: 1300, showConfirmButton: false }); return onAuthed(r); }
+      return setMsg(r.message || 'ลงทะเบียนไม่สำเร็จ');
+    }
     const email = $('r-email').value.trim();
     if (!emailOk(email)) return setMsg('กรุณากรอกอีเมลให้ถูกต้อง (ใช้สำหรับรีเซ็ตรหัสผ่าน)');
     const pe = pwCheck($('r-pass').value, $('r-pass2').value); if (pe) return setMsg(pe);
@@ -620,7 +632,7 @@
     setMsg(r.message || 'ไม่สำเร็จ');
   }
   function forceLogin(msg) {
-    SESSION = null; LS.del('rx4_session');
+    SESSION = null; SSO_PENDING = null; LS.del('rx4_session');
     $('app-main').classList.add('hidden'); $('btm-nav').classList.add('hidden'); $('oncall-fab').classList.add('hidden');
     $('auth').classList.remove('hidden'); showAuth('login'); if (msg) setMsg(msg);
   }
@@ -640,8 +652,31 @@
     const d = new Date(); $('stat-end').value = isoD(d); d.setMonth(d.getMonth() - 1); $('stat-start').value = isoD(d);
     $('order-search').addEventListener('input', debounce(renderOrder, 180));
     $('ah-search').addEventListener('input', debounce(renderAfter, 180));
-    if (SESSION && SESSION.token) showApp(); else { $('auth').classList.remove('hidden'); showAuth('login'); }
+    RX.onPortalLogout(() => forceLogin('ออกจากระบบ Portal แล้ว'));
+    bootAuth();
   };
+
+  // เข้าสู่ระบบอัตโนมัติจาก Portal (sawee-mr.vercel.app): ไม่ต้องกรอกรหัสผ่านซ้ำ · ไม่มี Portal → ใช้หน้า login เดิม
+  async function ssoRefresh() {
+    const ps = await RX.portalSession(900); if (!ps) return false;
+    const r = await api('ssoLogin', { portalToken: ps.token }, true);
+    if (!r.status) return false;
+    SESSION = { token: r.token, user: r.user, sso: true }; LS.set('rx4_session', SESSION); return true;
+  }
+  async function bootAuth() {
+    const had = !!(SESSION && SESSION.token);
+    if (had) showApp();
+    const ps = await RX.portalSession();
+    if (!ps) { if (!had) { $('auth').classList.remove('hidden'); showAuth('login'); } return; }
+    const same = had && ps.user && String(me().username).toLowerCase() === String(ps.user).toLowerCase();
+    if (same) { if (SESSION.sso) ssoRefresh(); return; }                    // คนเดิม: เปิดต่อได้เลย (ถ้าเป็น token Portal ก็ต่ออายุเงียบๆ)
+    if (had) forceLogin(''); else { $('auth').classList.remove('hidden'); showAuth('login'); }    // Portal เปลี่ยนคน → ล้างของเดิม
+    busy(true);
+    const r = await api('ssoLogin', { portalToken: ps.token }); busy(false);
+    if (r.status) { r.sso = true; return onAuthed(r); }
+    if (r.code === 'NEED_REGISTER') { SSO_PENDING = ps.token; return openRegister(r.username, r.name, 'เข้าใช้ครั้งแรก: เลือกตึก/สิทธิ์การเบิก 1 ครั้งเท่านั้น (ไม่ต้องตั้งรหัสผ่าน)'); }
+    setMsg((r.message || 'เข้าสู่ระบบจาก Portal ไม่สำเร็จ') + '<br><span class="text-muted">กรอกรหัสผ่านของระบบเบิกยาเพื่อเข้าด้วยตนเอง</span>');
+  }
 
   function showApp() {
     $('auth').classList.add('hidden');

@@ -310,6 +310,39 @@
     })).catch(() => { printBusy = false; return false; });
   };
 
+  // ---------------- Portal SSO (sawee-mr.vercel.app) ----------------
+  // ฝัง Rxfill ใน iframe ของ Portal → ขอ token จาก Portal (postMessage ตรวจ origin) แล้วนำไปแลก token Rxfill ผ่าน ssoLogin
+  // ลำดับ: ① ?portal_token= ใน URL (ล้างทิ้งทันที) ② postMessage จาก Portal ③ localStorage 'pharma_session' (เปิดหน้าตรงๆ บนโดเมนเดียวกัน)
+  RX.portalLocal = function () {
+    try {
+      const s = JSON.parse(localStorage.getItem('pharma_session') || 'null');
+      if (s && s.token) {
+        const pl = JSON.parse(decodeURIComponent(escape(atob(String(s.token).split('.')[0]))));   // token หมดอายุแล้ว = ไม่ใช้ (กันเตะคนที่ login Rxfill ไว้เอง)
+        if (pl && Number(pl.e) > Date.now()) return { token: s.token, user: (s.user && s.user.username) || pl.u || '', via: 'local' };
+      }
+    } catch (x) {}
+    return null;
+  };
+  RX.portalSession = function (timeoutMs) {
+    return new Promise(ok => {
+      const q = new URLSearchParams(location.search), qt = q.get('portal_token');
+      if (qt) {
+        const u = q.get('portal_user') || '';
+        ['portal_token', 'portal_user', 'portal_role', 'portal_name'].forEach(k => q.delete(k));
+        try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (x) {}
+        return ok({ token: qt, user: u, via: 'url' });
+      }
+      if (window.parent === window) return ok(RX.portalLocal());
+      let done = false, t;
+      const fin = v => { if (done) return; done = true; clearTimeout(t); removeEventListener('message', on); ok(v); };
+      const on = ev => { const d = ev.data; if (ev.origin !== location.origin || !d || d.type !== 'portal-session') return; fin(d.token ? { token: d.token, user: d.user || '', via: 'post' } : null); };
+      addEventListener('message', on);
+      t = setTimeout(() => fin(RX.portalLocal()), timeoutMs || 1500);       // Portal ยังไม่รองรับ handshake → ใช้ที่เก็บในเครื่อง
+      try { parent.postMessage({ type: 'rx-ready' }, location.origin); } catch (x) {}
+    });
+  };
+  RX.onPortalLogout = cb => addEventListener('message', ev => { if (ev.origin === location.origin && ev.data && ev.data.type === 'portal-logout') cb(); });
+
   // ---------------- ติดตั้งเป็นแอป (กดปุ่มเดียว) ----------------
   // Android/Chrome/Edge/desktop: ใช้หน้าต่างติดตั้งของเบราว์เซอร์ทันที
   // iPhone/iPad: Apple ไม่อนุญาตให้เว็บติดตั้งเอง — แสดงลูกศรชี้ปุ่มแชร์ 2 ขั้น
