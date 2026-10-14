@@ -707,6 +707,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzd7AyDe-ChL4K-RZBGiffX
 
 const CACHE_KEY  = 'pharma_cache_v2';
 const SESS_KEY   = 'pharma_session';
+/* ห้องยา: role เหล่านี้ได้ (1) เปิดหน้า kitbox-admin เป็นหน้าแรก (2) แจ้งเตือนใบเบิกใหม่แบบเด้ง+เสียง */
+const NOTIFY_ROLES = ['admin','pharmacist'];
+const DEFAULT_APP_FILE = 'kitbox-admin.html';
+const DEFAULT_DONE_KEY = 'pharma_default_done';   // sessionStorage: เปิดหน้าแรกอัตโนมัติครั้งเดียวต่อแท็บ
 const PRELOAD_MAX = 6;    // จำนวนแอปที่ preload อัตโนมัติ
 const FRAME_MAX   = 8;    // จำนวน iframe ที่เก็บไว้ในหน่วยความจำ
 
@@ -929,6 +933,7 @@ function clearAllSessions(){
     localStorage.removeItem(SESS_KEY); localStorage.removeItem(CACHE_KEY); localStorage.removeItem(ALIVE_KEY);
     RX_KEYS.forEach(k=>localStorage.removeItem(k));
   }catch(e){}
+  try{ sessionStorage.removeItem(DEFAULT_DONE_KEY); }catch(e){}
 }
 let _beatOn = false;
 function startBeat(){
@@ -1094,6 +1099,7 @@ const A = {
       A.renderDashboard();
       A.updateBadge();
       A.schedulePreload();
+      A.maybeOpenDefault();
     }else{
       A.showSkeleton();
     }
@@ -1131,6 +1137,7 @@ const A = {
     }
 
     S.booted = true;
+    A.maybeOpenDefault();
     netIdle();
     if(ok) cacheSave();
     else if(!S.apps.length){
@@ -1330,17 +1337,35 @@ const A = {
   },
 
   startPolling(){
-    setInterval(async ()=>{
-      if(document.hidden) return;                 // ไม่ยิงตอนแท็บถูกซ่อน
+    const fast = NOTIFY_ROLES.indexOf(String(S.user.role||'').toLowerCase()) > -1;   // ห้องยา: ตรวจถี่ขึ้น + ตรวจต่อแม้แท็บถูกซ่อน
+    const tick = async ()=>{
       try{
         const r = await api('noti_count');
-        if(r && r.ok){
-          const b = $('noti-badge');
-          if(r.count>0){ b.textContent = r.count>99?'99+':r.count; show('noti-badge'); }
-          else hide('noti-badge');
-        }
+        if(!r || !r.ok) return;
+        const prev = S._cnt;                                  // จำนวนที่ยังไม่อ่านจากเซิร์ฟเวอร์ครั้งก่อน (ครั้งแรก = baseline ไม่เด้ง)
+        S._cnt = r.count;
+        const b = $('noti-badge');
+        if(r.count>0){ b.textContent = r.count>99?'99+':r.count; show('noti-badge'); } else hide('noti-badge');
+        if(prev !== undefined && r.count > prev) await A.pullNewNoti();   // เพิ่มขึ้น = มีแจ้งเตือนใหม่ → ดึงรายการ + เด้ง + เสียง
       }catch(e){}
-    }, 60000);
+    };
+    tick();
+    setInterval(()=>{ if(document.hidden && !fast) return; tick(); }, fast ? 30000 : 60000);
+  },
+
+  async pullNewNoti(){
+    const r = await api('noti');
+    if(!r || !r.ok) return;
+    const old = new Set(S.notis.map(n=>n.id));
+    const fresh = (r.notis||[]).filter(n=>!n.read && !old.has(n.id));
+    S.notis = r.notis || [];
+    A.renderNoti(); if(S.notiOpen) A.renderNotiPanel(); cacheSave();
+    if(!fresh.length) return;
+    fresh.slice(0,3).forEach(n=>{
+      const el = toast('🔔 '+n.title+(n.message?' — '+n.message:''), n.level==='crit'?'err':'info', 9000);
+      if(el){ el.style.cursor='pointer'; el.onclick = ()=>{ el.remove(); A.readNoti(n.id); }; }
+    });
+    beep();
   },
 
   /* ─── Router ─── */
@@ -1408,12 +1433,33 @@ const A = {
     $('noti-list').innerHTML = S.notis.length ? S.notis.map(n=>notiHtml(n)).join('')
       : '<div class="noti-empty">ไม่มีการแจ้งเตือน</div>';
   },
+  /* role ห้องยา (admin / pharmacist) → เปิด kitbox-admin อัตโนมัติ 1 ครั้งต่อแท็บ · role อื่นเห็นหน้าหลักปกติ */
+  maybeOpenDefault(){
+    try{
+      if(!S.user || NOTIFY_ROLES.indexOf(String(S.user.role||'').toLowerCase()) < 0) return;
+      if(sessionStorage.getItem(DEFAULT_DONE_KEY)) return;
+      const app = S.apps.find(a=>a.target!=='blank' && String(a.url||'').indexOf(DEFAULT_APP_FILE) > -1);
+      if(!app) return;                                   // ยังไม่มีแอปนี้ในรายการ (กำลังโหลด / ไม่มีสิทธิ์) → ไม่ทำอะไร
+      sessionStorage.setItem(DEFAULT_DONE_KEY, '1');
+      A.openApp(app.id);
+    }catch(e){}
+  },
+
+  /* แจ้งเตือนที่ app_id เป็นชื่อไฟล์ (เช่น kitbox-admin.html) → กดแล้วเปิดแอปนั้น */
+  appOfNoti(n){
+    const k = String(n && n.app_id || '');
+    if(!k) return null;
+    return S.apps.find(a=>a.id===k) || (/\.html?$/i.test(k) ? S.apps.find(a=>a.target!=='blank' && String(a.url||'').indexOf(k) > -1) : null) || null;
+  },
+
   async readNoti(id){
     const n = S.notis.find(x=>x.id===id);
     if(n && !n.read){
       n.read = true; A.updateBadge(); A.renderNotiPanel(); A.renderNoti(); cacheSave();
       try{ await apiPost({action:'mark_noti_read', noti_id:id}); }catch(e){}
     }
+    const app = A.appOfNoti(n);
+    if(app){ if(S.notiOpen) A.toggleNoti(); A.openApp(app.id); }
   },
 
   /* ─── Posts ─── */
@@ -1680,12 +1726,23 @@ function notiHtml(n){
     '<div class="noti-msg">'+esc(n.message||'')+'</div>'+
     '<div class="noti-time">'+timeAgo(n.created_at)+'</div></div>';
 }
-function toast(msg,type){
+function toast(msg,type,ms){
   const el = document.createElement('div');
   el.className = 'toast ' + (type||'info');
   el.textContent = msg;
+  if(ms){ el.style.animation = 'toastIn .25s ease, toastOut .3s ease '+((ms-300)/1000)+'s forwards'; }
   $('toast-box').appendChild(el);
-  setTimeout(()=>el.remove(), 3200);
+  setTimeout(()=>el.remove(), ms||3200);
+  return el;
+}
+/* เสียงเตือนสั้นๆ (ถ้าเบราว์เซอร์ยังไม่อนุญาตเสียงจะเงียบ ไม่ error) */
+function beep(){
+  try{
+    const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+    const c = new C(), o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = 880; g.gain.value = .07; o.connect(g); g.connect(c.destination);
+    o.start(); setTimeout(()=>{ try{ o.stop(); c.close(); }catch(e){} }, 220);
+  }catch(e){}
 }
 function thaiDate(d){
   const m=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
