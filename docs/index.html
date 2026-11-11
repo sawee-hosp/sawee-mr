@@ -1384,7 +1384,17 @@ function shortName(s){ return String(s).replace(/^คลินิก\s*/,'').tri
 /*========== ระบบยา รพ.สวี ==========
   หน้านี้อยู่บน GitHub (https) ส่วนระบบยาอยู่บนเครื่อง XAMPP ในเครือข่าย รพ. (http)
   กดแถบ → เช็กว่าต่อเครื่องระบบยาได้ไหม → ได้ = เปิด portal.php แทนในหน้าต่างเดิม (portal มีปุ่มกลับสู่หน้าตารางนัด) */
-const RX_PORTAL='http://XAMPP_IP/sawee/portal.php';   // ★ แก้เป็น IP/โฟลเดอร์จริงของเครื่อง XAMPP
+const RX_PORTAL_DEFAULT='http://XAMPP_IP/sawee/portal.php';   // ★ แก้เป็น IP/โฟลเดอร์จริงของเครื่อง XAMPP
+/* ทดสอบกับเครื่องอื่น/ localhost ได้โดยไม่ต้องแก้ไฟล์: เปิดหน้านี้ด้วย ?portal=http://localhost/sawee/portal.php
+   (จำไว้ในเครื่องนั้น · ล้างด้วย ?portal=default) */
+const RX_PORTAL=(function(){
+  try{
+    const q=new URLSearchParams(location.search).get('portal');
+    if(q==='default'){ localStorage.removeItem('rx_portal'); }
+    else if(q && /^https?:\/\/[^\s]+$/i.test(q)){ localStorage.setItem('rx_portal',q); }
+    return localStorage.getItem('rx_portal')||RX_PORTAL_DEFAULT;
+  }catch(e){ return RX_PORTAL_DEFAULT; }
+})();
 let rxBusy=false;
 function toggleRx(force){
   const on = (typeof force==='boolean') ? force : !document.body.classList.contains('rx');
@@ -1402,7 +1412,8 @@ function rxShow(kind,extra){
   m.innerHTML='<div class="rxcard"><img src="logo-sawee.png" alt="" style="height:70px;display:block;margin:0 auto 4px">'+
     '<h3 style="color:#d61f45">ใช้งานได้เฉพาะในเครือข่าย รพ.สวี</h3>'+
     '<p>เชื่อมต่อเซิร์ฟเวอร์ระบบยาไม่ได้<br>ตรวจสอบว่าเครื่องนี้ต่อเครือข่ายของโรงพยาบาลอยู่'+
-    (extra?'<br><small style="opacity:.7">'+esc(extra)+'</small>':'')+'</p>'+
+    (extra?'<br><small style="opacity:.7">'+esc(extra)+'</small>':'')+
+    '<br><small style="opacity:.6;word-break:break-all">'+esc(RX_PORTAL)+'</small></p>'+
     '<button class="btn-p" onclick="rxCheck()">↻ ลองเชื่อมต่ออีกครั้ง</button>'+
     '<button onclick="rxGo()">อยู่ใน รพ. แล้ว — เปิดระบบยาเลย ›</button>'+
     '<button onclick="toggleRx(false)">‹ กลับสู่หน้าตารางนัด</button>'+
@@ -1416,7 +1427,8 @@ async function rxCheck(){
     // targetAddressSpace: ให้ Chrome อนุญาตหน้า https เรียกเครื่องในเครือข่าย รพ. (http) ได้ — Chrome จะถามสิทธิ์ครั้งแรก
     const url=RX_PORTAL+'?action=ping&_='+Date.now(), opt={cache:'no-store',mode:'cors',signal:ac?ac.signal:undefined};
     let r;
-    try{ r=await fetch(url,Object.assign({targetAddressSpace:'local'},opt)); }
+    const host=(new URL(RX_PORTAL)).hostname, space=/^(localhost|127\.|\[::1\])/.test(host)?'loopback':'local';
+    try{ r=await fetch(url,Object.assign({targetAddressSpace:space},opt)); }
     catch(e1){ if(e1.name==='AbortError') throw e1; r=await fetch(url,opt); }   // เบราว์เซอร์รุ่นเก่า/ที่อยู่แบบอื่น
     const j=await r.json();
     if(!j||!j.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง');
