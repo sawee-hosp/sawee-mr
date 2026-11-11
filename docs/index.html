@@ -1,1 +1,1434 @@
-/---/
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eef1f7">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-64.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>ระบบยา รพ.สวี</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b18; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.13);
+  --txt:#eef2fa; --dim:#9aa7c4; --acc:#4dd6ff;
+  --head:#0e1527; --stick:#0b1120; --today:#14224d;
+  --bk1:#ffffff; --bk2:#c9d1e3; --shadow:rgba(0,0,0,.75);
+  --hover:rgba(255,255,255,.035); --chip:rgba(255,255,255,.06);
+  --fnt:'IBM Plex Sans Thai','Leelawadee UI','Noto Sans Thai',Tahoma,sans-serif;
+  --num:'Inter','IBM Plex Sans Thai','Leelawadee UI',Tahoma,sans-serif;
+  --wDate:88px; --wDay:30px; --wSum:72px;
+}
+body.light{
+  --bg:#eef1f7; --card:rgba(0,0,0,.045); --line:rgba(20,30,60,.16);
+  --txt:#16203a; --dim:#5d6b8a; --acc:#0a84c9;
+  --head:#dfe5f0; --stick:#f5f7fb; --today:#cfe6ff;
+  --bk1:#16203a; --bk2:#3f4f70; --shadow:rgba(255,255,255,.7);
+  --hover:rgba(0,0,0,.04); --chip:rgba(0,0,0,.05);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--fnt);font-size:13.5px;
+  line-height:1.45;overflow:hidden;-webkit-font-smoothing:antialiased;
+  transition:background .3s,color .3s}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+
+#bg{position:fixed;inset:-30%;z-index:-2;filter:blur(64px);opacity:.72;
+  will-change:transform;transform:translateZ(0);
+  background:
+    radial-gradient(36% 36% at 20% 25%,#1b5cff 0,transparent 62%),
+    radial-gradient(32% 32% at 80% 18%,#a855f7 0,transparent 62%),
+    radial-gradient(40% 40% at 65% 85%,#06b6d4 0,transparent 62%),
+    radial-gradient(28% 28% at 12% 82%,#f43f5e 0,transparent 62%);
+  animation:drift 34s cubic-bezier(.45,0,.55,1) infinite alternate}
+body.light #bg{opacity:.38;filter:blur(80px);
+  background:
+    radial-gradient(40% 40% at 18% 22%,#9cc4ff 0,transparent 64%),
+    radial-gradient(36% 36% at 82% 16%,#d5c4ff 0,transparent 64%),
+    radial-gradient(44% 44% at 64% 86%,#a9ecf6 0,transparent 64%),
+    radial-gradient(30% 30% at 10% 84%,#ffd0d8 0,transparent 64%)}
+@keyframes drift{0%{transform:translate3d(0,0,0) scale(1) rotate(0)}
+  100%{transform:translate3d(-3%,3%,0) scale(1.12) rotate(-7deg)}}
+#grid{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.3;
+  background:linear-gradient(rgba(255,255,255,.033) 1px,transparent 1px) 0 0/100% 34px,
+             linear-gradient(90deg,rgba(255,255,255,.033) 1px,transparent 1px) 0 0/34px 100%}
+body.light #grid{opacity:.5;
+  background:linear-gradient(rgba(20,40,90,.05) 1px,transparent 1px) 0 0/100% 34px,
+             linear-gradient(90deg,rgba(20,40,90,.05) 1px,transparent 1px) 0 0/34px 100%}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){#bg{animation:none}}
+
+/* ===== Responsive / Ultra-compact =====
+   ไม่บังคับ min-width ของ layout เพื่อให้หน้าต่าง Chrome แคบได้มากที่สุด
+   เมื่อแคบมากจะลดขนาด element แทน โดยตารางยังเลื่อนแนวนอนได้ตามความจำเป็น
+*/
+html,body,#app,.wrap,header,.hrow,.tabs,.bar,.legend,main,footer{min-width:0}
+.hrow h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab,.bar>* ,footer button{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pick{min-width:0}
+footer button{white-space:nowrap}
+table{min-width:max-content}
+
+@media(max-width:600px){
+  :root{--wDate:72px;--wDay:26px;--wSum:58px}
+  body{font-size:12px}
+  header{padding:7px 8px 5px}
+  .hlogo{width:23px;height:23px;flex-basis:23px}
+  h1{font-size:15px}
+  .hbtn{font-size:13px;padding:2px 4px}
+  .sub{font-size:10px}
+  .tabs{gap:3px;padding:5px 7px 0}
+  .tab{padding:6px 4px;font-size:11px}
+  .bar{gap:4px;padding:6px 7px}
+  select,input,button{font-size:11px;padding:6px 7px}
+  .pick{font-size:11px;padding:7px 8px}
+  .wk-filters{gap:2px}
+  .wkw{font-size:9.5px;padding:2px 5px}
+  .legend{font-size:9px;padding:4px 7px 2px;gap:3px}
+  .dw{font-size:9.5px;padding:2px 5px;min-width:20px}
+  .cell{min-width:46px;padding:5px 3px}
+  .dcell{padding:5px 3px}
+  .dnum{font-size:12.5px}
+  .rem{font-size:10px}
+  .bk{font-size:15px}
+  .plus{font-size:9px;padding:1px 4px}
+  th{padding:6px 4px;font-size:10px}
+  footer{padding:7px 6px;gap:3px}
+  footer button{padding:8px 2px;font-size:10px}
+}
+
+@media(max-width:420px){
+  :root{--wDate:64px;--wDay:23px;--wSum:50px}
+  body{font-size:11px}
+  header{padding:6px 6px 4px}
+  .hlogo{width:21px;height:21px;flex-basis:21px}
+  h1{font-size:13px}
+  .hbtn{font-size:12px;padding:1px 3px}
+  .sub{font-size:9px}
+  .tabs{padding:4px 5px 0;gap:2px}
+  .tab{font-size:10px;padding:5px 3px}
+  .bar{padding:4px 5px;gap:3px}
+  select,input,button{font-size:10px;padding:5px 6px}
+  .pick{font-size:10px;padding:6px 6px}
+  .wk-filters{gap:2px;padding:2px 0}
+  .wkw{font-size:8.5px;padding:2px 4px;min-width:21px}
+  .legend{font-size:8px;padding:3px 5px 1px;gap:2px}
+  .dw{font-size:8.5px;padding:2px 4px;min-width:18px}
+  .sw{width:11px;height:7px}
+  .cell{min-width:38px;padding:4px 2px;margin:1px}
+  .dcell{padding:4px 2px}
+  .dnum{font-size:11.5px}
+  .rem{font-size:9px}
+  .bk{font-size:13px}
+  .plus{font-size:8px;padding:1px 3px}
+  th{padding:5px 3px;font-size:9px}
+  .c-day{font-size:10px}
+  footer{padding:5px 5px;gap:2px}
+  footer button{padding:6px 1px;font-size:9px}
+}
+
+@media(max-width:320px){
+  :root{--wDate:57px;--wDay:20px;--wSum:44px}
+  body{font-size:10px}
+  header{padding:5px 4px 3px}
+  .hlogo{width:19px;height:19px;flex-basis:19px}
+  h1{font-size:11.5px}
+  .hbtn{font-size:11px;padding:1px 2px}
+  .sub{font-size:8px}
+  .tabs{padding:3px 4px 0}
+  .tab{font-size:9px;padding:4px 2px}
+  .bar{padding:3px 4px;gap:2px}
+  select,input,button{font-size:9px;padding:4px 5px}
+  .pick{font-size:9px;padding:5px 5px}
+  .wkw{font-size:8px;padding:1px 3px;min-width:19px}
+  .legend{font-size:7px;padding:2px 4px}
+  .dw{font-size:8px;padding:1px 3px;min-width:17px}
+  .cell{min-width:34px;padding:3px 1px}
+  .dcell{padding:3px 1px}
+  .dnum{font-size:10.5px}
+  .rem{font-size:8px}
+  .bk{font-size:12px}
+  .plus{font-size:7px;padding:1px 2px}
+  th{padding:4px 2px;font-size:8px}
+  footer{padding:4px 3px}
+  footer button{padding:5px 1px;font-size:8px}
+}
+
+.wrap{height:100%;display:flex;flex-direction:column;width:100%;max-width:100%;margin:0;position:relative}
+
+header{padding:9px 12px 7px;backdrop-filter:blur(14px);z-index:20;
+  background:linear-gradient(180deg,rgba(10,14,28,.93),rgba(10,14,28,.6));
+  border-bottom:1px solid var(--line)}
+body.light header{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(255,255,255,.66))}
+.hrow{display:flex;align-items:center;gap:8px}
+.hlogo{width:27px;height:27px;flex:0 0 27px}
+h1{margin:0;font-size:17.5px;font-weight:700;letter-spacing:-.2px;line-height:1.2;
+  background:linear-gradient(92deg,#fff,#7fdcff 48%,#bdb0ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+body.light h1{background:linear-gradient(92deg,#0f2f6b,#0a84c9 55%,#6d4fd0);
+  -webkit-background-clip:text;background-clip:text}
+.hbtn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:3px 5px;
+  border-radius:8px;line-height:1}
+.hbtn:hover{background:var(--chip);color:var(--txt)}
+.hbtn.on{background:rgba(16,185,129,.18);box-shadow:inset 0 0 0 1px rgba(16,185,129,.55)}
+.sub{font-size:11px;color:var(--dim);margin-top:3px;display:flex;gap:6px;align-items:center}
+.dot{width:6px;height:6px;border-radius:50%;background:#22e38a;box-shadow:0 0 8px #22e38a;flex:0 0 6px}
+.stale{color:#ff6070!important;font-weight:600;animation:pulse 1.6s ease-in-out infinite}
+.stale .dot{background:#ff6070;box-shadow:0 0 10px #ff6070}
+
+.tabs{display:flex;gap:5px;padding:7px 12px 0}
+.tab{flex:1;padding:7px;text-align:center;border-radius:10px 10px 0 0;cursor:pointer;
+  font-size:12.5px;font-weight:600;color:var(--dim);background:var(--chip);
+  border:1px solid transparent;border-bottom:none;transition:.16s}
+.tab.on{color:var(--txt);background:linear-gradient(180deg,rgba(77,214,255,.22),rgba(77,214,255,.05));
+  border-color:var(--line);box-shadow:inset 0 2px 0 var(--acc)}
+.bar{display:flex;gap:6px;padding:8px 12px;align-items:center; flex-wrap:wrap;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:var(--chip);backdrop-filter:blur(12px)}
+select,input,button{font-family:inherit;font-size:13px;color:var(--txt);background:var(--card);
+  border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none}
+option{background:var(--head);color:var(--txt)}
+button{cursor:pointer;transition:.16s;white-space:nowrap}
+button:hover{border-color:var(--acc)}
+.btn-p{background:linear-gradient(95deg,#2563eb,#7c3aed);border:none;font-weight:600;color:#fff}
+.pick{flex:1;min-width:130px;text-align:left;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+
+.wk-filters{display:flex;gap:3px;width:100%;overflow-x:auto;padding:3px 0 2px;align-items:center}
+.wk-filters::-webkit-scrollbar{display:none;}
+.wkw{font-size:10.5px;font-weight:600;padding:3px 7px;border-radius:6px;cursor:pointer;
+  background:var(--chip);color:var(--dim);border:1px solid transparent;
+  transition:.13s;user-select:none;min-width:24px;text-align:center;white-space:nowrap;flex:0 0 auto}
+.wkw:hover{border-color:rgba(236,72,153,.4)}
+.wkw.on{background:linear-gradient(180deg,rgba(236,72,153,.34),rgba(244,63,94,.16));
+  color:var(--txt);border-color:#ec4899;box-shadow:0 0 8px rgba(236,72,153,.28)}
+
+.legend{display:flex;gap:4px;font-size:10px;color:var(--dim);align-items:center;
+  flex-wrap:wrap;padding:6px 12px 2px}
+.sw{width:14px;height:9px;border-radius:2px}
+.dows{display:flex;gap:3px;margin-left:auto;align-items:center}
+.dw{font-size:10.5px;font-weight:600;padding:3px 6px;border-radius:6px;cursor:pointer;
+  background:var(--chip);color:var(--dim);border:1px solid transparent;
+  transition:.13s;user-select:none;min-width:22px;text-align:center}
+.dw.on{background:linear-gradient(180deg,rgba(77,214,255,.3),rgba(77,214,255,.12));
+  color:var(--txt);border-color:var(--acc)}
+.dw.hol.on{background:linear-gradient(180deg,rgba(244,63,94,.32),rgba(244,63,94,.12));border-color:#f43f5e}
+
+main{flex:1;overflow:auto;padding:0 0 66px;-webkit-overflow-scrolling:touch;position:relative;z-index:1}
+main::-webkit-scrollbar{width:8px;height:8px}
+main::-webkit-scrollbar-thumb{background:rgba(128,145,180,.45);border-radius:4px}
+
+@keyframes shim{0%{background-position:-420px 0}100%{background-position:420px 0}}
+.sk{height:34px;border-radius:9px;margin:6px 12px;
+  background:linear-gradient(90deg,var(--chip) 8%,rgba(128,150,200,.22) 18%,var(--chip) 33%);
+  background-size:840px 100%;animation:shim 1.15s linear infinite}
+.skwrap{padding-top:10px}
+.spin{width:34px;height:34px;margin:18px auto 8px;border-radius:50%;
+  border:3px solid var(--chip);border-top-color:var(--acc);animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loadtxt{text-align:center;color:var(--dim);font-size:12px;padding-bottom:4px}
+
+table{border-collapse:separate;border-spacing:0;width:100%}
+th{position:sticky;top:0;z-index:6;background:var(--head);color:var(--dim);font-weight:600;
+  padding:8px 6px;font-size:11px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:0;border-bottom:1px solid var(--line);text-align:center}
+.c-date,.c-day,.c-sum{position:sticky;background:var(--stick);z-index:4}
+th.c-date,th.c-day,th.c-sum{z-index:7;background:var(--head)}
+.c-date{left:0;width:var(--wDate);min-width:var(--wDate)}
+.c-day{left:var(--wDate);width:var(--wDay);min-width:var(--wDay);color:var(--dim);
+  font-size:12.5px;font-weight:600}
+.c-sum{left:calc(var(--wDate) + var(--wDay));width:var(--wSum);min-width:var(--wSum);
+  box-shadow:6px 0 12px -7px rgba(0,0,0,.7)}
+.dcell{padding:6px 5px;line-height:1.28}
+.dnum{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:14.5px;font-weight:600;
+  white-space:nowrap;letter-spacing:-.2px}
+.plus{display:inline-block;font-size:10px;font-weight:600;color:#3aa9d8;
+  background:rgba(77,214,255,.15);border-radius:5px;padding:1px 5px;margin-top:2px;white-space:nowrap}
+body:not(.light) .plus{color:#8ee3ff}
+.plus.t0{color:#a06a00;background:rgba(255,196,0,.28);animation:pulse 1.5s ease-in-out infinite}
+body:not(.light) .plus.t0{color:#ffe18a}
+.plus.pv{color:var(--dim);background:var(--chip)}
+.hol{display:inline-block;font-size:9.5px;color:#fff;background:#e11d48;border-radius:4px;
+  padding:0 4px;margin-left:3px}
+tr.today .c-date,tr.today .c-day,tr.today .c-sum{background:var(--today);box-shadow:inset 3px 0 0 var(--acc)}
+tr.wknd .dnum{color:#e5567a}
+tr.past{opacity:.4}
+tr:hover td{background-color:var(--hover)}
+
+.cell{display:flex;align-items:baseline;justify-content:center;gap:2px;padding:7px 5px;
+  min-width:62px;border-radius:8px;margin:2px;transition:background .18s}
+.rem{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:600}
+.sep{font-size:11px;opacity:.45}
+.bk{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:17px;font-weight:700;
+  background:linear-gradient(180deg,var(--bk1),var(--bk2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 1px var(--shadow))}
+.empty{color:var(--dim);opacity:.5;font-size:12px}
+.c-sum .cell{border:1px solid var(--line);min-width:0}
+
+.calnav{display:flex;align-items:center;gap:6px;padding:10px 12px 4px}
+.calnav .mt{flex:1;text-align:center;font-size:15.5px;font-weight:700}
+.calnav button{padding:6px 13px;font-size:15px}
+.calstat{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;font-size:11px;
+  color:var(--dim);padding:0 12px 8px}
+.calstat b{color:var(--txt);font-family:var(--num);font-variant-numeric:tabular-nums}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 9px 14px}
+.cal .hd{text-align:center;font-size:11px;color:var(--dim);padding:3px 0 5px;font-weight:600}
+.cd{position:relative;min-height:58px;border-radius:11px;border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--chip);transition:transform .14s,border-color .14s}
+.cd:hover{transform:translateY(-2px);border-color:var(--acc)}
+.cd .n{position:absolute;top:3px;left:6px;font-size:10.5px;color:var(--dim);
+  font-family:var(--num);font-weight:600}
+.cd .v{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;
+  background:linear-gradient(180deg,var(--bk1),var(--bk2));-webkit-background-clip:text;
+  background-clip:text;color:transparent;filter:drop-shadow(0 1px 1px var(--shadow))}
+.cd .u{font-size:9px;color:var(--dim);margin-top:-3px}
+.cd.mute{opacity:.26}
+.cd.zero .v{-webkit-text-fill-color:var(--dim);opacity:.45;filter:none}
+.cd.now{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 0 18px rgba(77,214,255,.35);
+  animation:pulse 1.8s ease-in-out infinite}
+.cd.wk .n{color:#e5567a}
+
+footer{position:fixed;bottom:0;left:0;right:0;width:100%;max-width:100%;margin:0 auto;display:flex;gap:5px;
+  padding:9px 10px;background:rgba(7,11,22,.97);backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);z-index:40;box-shadow:0 -6px 22px rgba(0,0,0,.5)}
+body.light footer{background:rgba(248,250,254,.97);box-shadow:0 -6px 22px rgba(60,80,130,.16)}
+footer button{flex:1;padding:10px 4px;font-weight:600;font-size:12.5px}
+
+#toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%) translateY(14px);
+  background:linear-gradient(95deg,#16a34a,#0d9488);color:#fff;padding:9px 18px;border-radius:11px;
+  font-size:12.5px;font-weight:600;z-index:90;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;box-shadow:0 8px 26px rgba(0,0,0,.4)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.mask{position:fixed;inset:0;background:rgba(4,7,16,.85);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
+body.light .mask{background:rgba(190,205,230,.75)}
+.mask.on{display:flex}
+.modal{width:100%;max-width:440px;max-height:86vh;display:flex;flex-direction:column;
+  border-radius:17px;padding:18px;
+  background:linear-gradient(160deg,rgba(25,33,60,.98),rgba(12,17,34,.99));
+  border:1px solid var(--line);box-shadow:0 26px 70px rgba(0,0,0,.7)}
+body.light .modal{background:linear-gradient(160deg,#ffffff,#eef2f9);
+  box-shadow:0 26px 70px rgba(40,60,110,.3)}
+.modal h2{margin:0 0 5px;font-size:16.5px;font-weight:700}
+.modal p{margin:0 0 13px;color:var(--dim);font-size:12px;line-height:1.6}
+.mbody{overflow:auto;flex:1;margin:-4px -4px 0;padding:4px}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.row label{flex:1;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row input[type=number]{width:82px;text-align:center}
+
+.slot-chip {
+  display: inline-block; padding: 5px 9px; font-size: 11px; font-weight: 600;
+  color: var(--dim); background: var(--chip); border: 1px solid var(--line);
+  border-radius: 7px; cursor: pointer; transition: 0.15s; user-select: none;
+}
+.slot-chip:hover { border-color: rgba(77,214,255,0.4); }
+.slot-chip.on {
+  color: var(--txt); background: linear-gradient(180deg,rgba(77,214,255,.2),rgba(77,214,255,.05));
+  border-color: var(--acc); box-shadow: 0 0 8px rgba(77,214,255,.15);
+}
+
+.ck{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;
+  background:var(--chip);margin-bottom:5px;font-size:13px;transition:.13s}
+.ck:hover{background:rgba(77,214,255,.14)}
+.ck input{width:17px;height:17px;accent-color:#2f9fd6;flex:0 0 17px}
+.ck .cnt{margin-left:auto;font-family:var(--num);font-size:11px;color:var(--dim)}
+.err{color:#e11d48;font-size:12px;min-height:17px;margin-top:6px}
+.lg{display:flex;flex-direction:column;gap:9px}
+.lg input{padding:13px;text-align:center;font-size:16px;letter-spacing:3px}
+.mfoot{display:flex;gap:8px;margin-top:13px;flex:0 0 auto}
+.mfoot button{flex:1;padding:10px}
+
+/* ===== Popover คำนวณยา — ปรับให้พอดี 1 บรรทัดเสมอ ===== */
+#medPop {
+  position: fixed; background: var(--head); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  z-index: 100; display: none; flex-direction: column; gap: 6px;
+  width: max-content; max-width: 260px; color: var(--txt); pointer-events: none;
+}
+body.light #medPop { box-shadow: 0 10px 25px rgba(40,60,110,0.25); border-color: rgba(0,0,0,0.08); }
+.med-top{display:flex;gap:6px;margin-bottom:4px;justify-content:center;flex-wrap:nowrap}
+.med-row { display: flex; justify-content: space-between; gap:14px; font-family: var(--num); font-size: 13px; align-items: center; white-space:nowrap; }
+.med-box { padding: 5px 9px; border-radius: 8px; font-weight: 700; text-align:center;
+  white-space:nowrap; flex:0 0 auto; display:inline-flex; align-items:baseline; gap:3px; font-size:11.5px; }
+.mb-day { background: rgba(244,63,94,0.15); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); }
+.mb-pill { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+body.light .mb-day { background: rgba(225,29,72,0.1); color: #e11d48; }
+body.light .mb-pill { background: rgba(5,150,105,0.1); color: #059669; }
+
+/* ===== แถบ "ระบบยา รพ.สวี" ด้านบนสุด ===== */
+:root{--rxh:44px}
+#rxBar{position:fixed;top:0;left:0;right:0;height:var(--rxh);z-index:120;display:flex;align-items:center;gap:8px;
+  padding:0 10px;cursor:pointer;user-select:none;color:#fff;border:0;width:100%;font-family:var(--fnt);text-align:left;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 50%,rgba(0,0,0,.10)),linear-gradient(100deg,#2f7cf6,#1239a8 70%,#0c2a86);
+  box-shadow:0 3px 12px rgba(12,42,134,.35),inset 0 -1px 0 rgba(0,0,0,.2);border-radius:0}
+#rxBar:hover{filter:brightness(1.06)}
+#rxBar img{width:30px;height:30px;border-radius:8px;flex:0 0 30px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+#rxBar .t{flex:1;min-width:0;font-size:15px;font-weight:700;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rxBar .t small{display:block;font-size:10px;font-weight:500;opacity:.85}
+#rxBar .k{flex:0 0 auto;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);white-space:nowrap}
+body.rx #rxBar{background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,0) 50%,rgba(0,0,0,.08)),linear-gradient(100deg,#475569,#1e293b)}
+#app{height:calc(100% - var(--rxh));margin-top:var(--rxh)}
+.mask{top:var(--rxh)}
+#rxPanel{position:fixed;top:var(--rxh);left:0;right:0;bottom:0;z-index:110;display:none;flex-direction:column;background:#eef3fb}
+body.rx #rxPanel{display:flex}
+body.rx #app, body.rx .mask, body.rx #liteAsk, body.rx #medPop{display:none!important}
+#rxMsg{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;color:#16203a}
+.rxcard{max-width:360px;width:100%;text-align:center;background:#fff;border-radius:16px;padding:20px 16px;border:1px solid #dde5f2;box-shadow:0 14px 34px -16px rgba(15,30,61,.45)}
+.rxcard h3{margin:8px 0 6px;font-size:15.5px}
+.rxcard p{margin:0 0 12px;font-size:12px;color:#5d6b8a;line-height:1.65}
+.rxcard button{width:100%;margin-top:6px;padding:10px;font-weight:600;color:#16203a;background:#eef2f9;border:1px solid #d4dcec}
+.rxcard .btn-p{color:#fff;border:none;background:linear-gradient(95deg,#2563eb,#7c3aed)}
+@media(max-width:420px){:root{--rxh:40px} #rxBar .t{font-size:13.5px} #rxBar img{width:26px;height:26px;flex-basis:26px}}
+
+/* ===== แถบถามสลับโหมดประหยัด ===== */
+#liteAsk{position:fixed;left:50%;top:calc(var(--rxh) + 8px);transform:translateX(-50%);z-index:95;display:none;
+  align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;max-width:calc(100% - 20px);
+  padding:9px 12px;border-radius:12px;background:var(--head);color:var(--txt);
+  border:1px solid #f59e0b;font-size:12px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#liteAsk.on{display:flex}
+#liteAsk span{flex:1 1 220px}
+#liteAsk button{padding:6px 10px;font-size:12px}
+
+/* =================================================================
+   โหมดประหยัด RAM (body.lite) — ปิดเฉพาะเอฟเฟกต์ที่หนักต่อ GPU/RAM
+   โหมดเต็มด้านบนไม่ถูกแตะต้อง สลับกลับได้ทุกเมื่อ
+================================================================= */
+body.lite #bg, body.lite #grid{display:none}
+body.lite header, body.lite .bar, body.lite footer, body.lite .mask{
+  backdrop-filter:none;-webkit-backdrop-filter:none}
+body.lite header{background:var(--head)}
+body.lite .bar{background:var(--stick)}
+body.lite footer{background:var(--head);box-shadow:none}
+body.lite .mask{background:rgba(4,7,16,.9)}
+body.lite.light .mask{background:rgba(190,205,230,.92)}
+body.lite .modal, body.lite #medPop, body.lite #toast, body.lite #liteAsk{box-shadow:none}
+body.lite .bk, body.lite .cd .v{background:none;-webkit-background-clip:border-box;background-clip:border-box;
+  color:var(--txt);-webkit-text-fill-color:currentColor;filter:none}
+body.lite .cd.zero .v{-webkit-text-fill-color:var(--dim)}
+body.lite .c-sum{box-shadow:none;border-right:1px solid var(--line)}
+body.lite .cd.now{box-shadow:0 0 0 1px var(--acc)}
+body.lite .plus.t0, body.lite .stale, body.lite .cd.now, body.lite .sk{animation:none}
+body.lite .cd:hover{transform:none}
+body.lite .wkw.on, body.lite .slot-chip.on{box-shadow:none}
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     IE11 GUARD — ตรวจจับ IE และบังคับแสดงคำเตือน (เขียนด้วย ES5 ล้วน)
+================================================================= -->
+<div id="ieBlockOverlay" style="display:none;position:fixed;inset:0;z-index:999999;
+  background:linear-gradient(135deg,#0f172a,#1e1b4b);color:#fff;
+  font-family:'Segoe UI',Tahoma,Arial,sans-serif;align-items:center;justify-content:center;padding:24px;">
+  <div style="max-width:420px;width:100%;background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:28px 22px;
+    text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="font-size:46px;margin-bottom:10px;">&#9888;&#65039;</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px;color:#fca5a5;">
+      ไม่สามารถแสดงผลหน้านี้ได้
+    </div>
+    <div style="font-size:13px;line-height:1.75;color:#d1d5db;margin-bottom:18px;">
+      ตรวจพบว่าเปิดด้วย <b>Internet Explorer (IE)</b> ซึ่งตกรุ่นและไม่รองรับเทคโนโลยีของระบบนี้<br>
+      กรุณาเปิดด้วย <b style="color:#7fdcff">Google Chrome</b> แทน
+    </div>
+    <button onclick="ieOpenChromeBrowser()" style="width:100%;padding:13px;margin-bottom:9px;
+      border:none;border-radius:10px;background:linear-gradient(95deg,#2563eb,#7c3aed);
+      color:#fff;font-weight:700;font-size:13.5px;cursor:pointer;">
+      &#127760; เปิดด้วย Chrome ทันที
+    </button>
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input id="ieUrlBox" readonly style="flex:1;padding:10px;border-radius:8px;
+        border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.25);
+        color:#7fdcff;font-size:10.5px;" value="">
+      <button onclick="ieCopyLink()" style="padding:10px 14px;border:none;border-radius:8px;
+        background:rgba(255,255,255,0.14);color:#fff;font-weight:600;font-size:12px;cursor:pointer;">
+        คัดลอกลิงก์
+      </button>
+    </div>
+    <div id="ieCopyMsg" style="font-size:11px;color:#4ade80;height:14px;"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var ua = navigator.userAgent || '';
+  var isIE = (ua.indexOf('MSIE ') > -1) || (ua.indexOf('Trident/') > -1);
+  if(!isIE) return;
+
+  var overlay = document.getElementById('ieBlockOverlay');
+  if(overlay){ overlay.style.display = 'flex'; }
+
+  var curUrl = window.location.href.split('#')[0];
+  var box = document.getElementById('ieUrlBox');
+  if(box){ box.value = curUrl; }
+
+  window.ieOpenChromeBrowser = function(){
+    var chromeUri = 'googlechrome://navigate?url=' + encodeURIComponent(curUrl);
+    var fallback = function(){
+      var m = document.getElementById('ieCopyMsg');
+      if(m) m.innerHTML = 'ไม่สามารถสั่งเปิด Chrome อัตโนมัติได้ — กด “คัดลอกลิงก์” แล้วเปิดด้วย Chrome';
+    };
+
+    /* 1) ถ้า IE อนุญาต ActiveX ให้เปิด chrome.exe โดยตรง */
+    try {
+      var shell = new ActiveXObject('WScript.Shell');
+      var paths = [
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+      ];
+      for(var i=0;i<paths.length;i++){
+        try {
+          shell.Run('\"' + paths[i] + '\" --app=\"' + curUrl + '\"',0,false);
+          return;
+        } catch(ignore) {}
+      }
+    } catch(e0) {}
+
+    /* 2) IE11 รองรับ msLaunchUri สำหรับเปิด protocol ที่ Windows ลงทะเบียนไว้ */
+    try {
+      if (navigator.msLaunchUri) {
+        navigator.msLaunchUri(chromeUri, function(){}, function(){
+          fallback();
+        });
+        return;
+      }
+    } catch(e1) {}
+
+    /* 3) ลองเรียก custom protocol โดยตรง */
+    try {
+      window.location.href = chromeUri;
+      setTimeout(fallback, 1600);
+      return;
+    } catch(e2) {}
+
+    fallback();
+  };
+
+  window.ieCopyLink = function(){
+    var msg = document.getElementById('ieCopyMsg');
+    var ok = false;
+    try{
+      box.focus();
+      box.select();
+      if(document.selection){
+        var r = document.body.createTextRange();
+        r.moveToElementText(box);
+        r.select();
+      }
+      ok = document.execCommand('copy');
+    }catch(e){ ok = false; }
+    if(!ok){
+      try{ window.clipboardData.setData('Text', curUrl); ok = true; }catch(e2){}
+    }
+    if(msg){ msg.innerHTML = ok ? '&#10003; คัดลอกลิงก์แล้ว นำไปวางใน Chrome' : 'กรุณาคัดลอกด้วยตนเอง (Ctrl+C)'; }
+  };
+})();
+</script>
+
+<div id="bg"></div><div id="grid"></div>
+
+<!-- ================= ระบบยา รพ.สวี (แถบบนสุด) ================= -->
+<button id="rxBar" type="button" onclick="toggleRx()">
+  <img src="icon-192.png" alt="">
+  <span class="t" id="rxTitle">ระบบยา รพ.สวี<small>Reconcile · DUE · ย.ส. · HAD · ยานอก รพ. และอื่น ๆ</small></span>
+  <span class="k" id="rxKey">เปิด ›</span>
+</button>
+<div id="rxPanel">
+  <div id="rxMsg"></div>
+</div>
+<div id="toast"></div>
+<div id="medPop"></div>
+<div id="liteAsk">
+  <span id="liteAskMsg"></span>
+  <button class="btn-p" onclick="answerLite(true)">🍃 สลับโหมดประหยัด</button>
+  <button onclick="answerLite(false)">ไม่ตอนนี้</button>
+</div>
+
+<!-- ================= LOGIN ================= -->
+<div class="mask on" id="mLogin"><div class="modal" style="text-align:center">
+  <img src="logo-sawee.png" alt="โรงพยาบาลสวี" style="display:block;height:112px;width:auto;margin:0 auto 8px">
+  <h2>ตารางนัด รพ.สวี</h2>
+  <p>กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+  <div class="lg">
+    <input id="pw" type="password" placeholder="••••••" autocomplete="current-password">
+    <label style="display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none;margin-top:-2px">
+      <input type="checkbox" id="chkRememberPw" style="width:16px;height:16px;accent-color:#2563eb" checked>
+      จำรหัสผ่านในเครื่องนี้
+    </label>
+    <button class="btn-p" style="padding:13px" onclick="doLogin()">เข้าสู่ระบบ</button>
+  </div>
+  <div class="err" id="loginErr"></div>
+</div></div>
+
+<!-- ================= APP ================= -->
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div class="hrow">
+      <svg class="hlogo" viewBox="0 0 512 512">
+        <defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+        <rect width="512" height="512" rx="112" fill="url(#lg2)"/>
+        <rect x="92" y="136" width="328" height="284" rx="34" fill="none" stroke="#fff" stroke-width="26"/>
+        <path d="M92 218h328" stroke="#fff" stroke-width="24"/>
+        <path d="M176 96v66M336 96v66" stroke="#fff" stroke-width="28" stroke-linecap="round"/>
+        <path d="M256 258v112M200 314h112" stroke="#fff" stroke-width="38" stroke-linecap="round"/>
+      </svg>
+      <h1>ตารางนัด รพ.สวี</h1>
+      <button class="hbtn" id="btnLite" onclick="toggleLite()" title="โหมดประหยัด RAM">✨</button>
+      <button class="hbtn" id="btnTheme" onclick="toggleTheme()" title="สลับโหมดสว่าง/มืด">🌙</button>
+      <button class="hbtn" onclick="logout()" title="ออกจากระบบ">⏻</button>
+    </div>
+    <div class="sub" id="status"><span class="dot"></span><span id="upd">กำลังโหลด…</span></div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab on" id="tabT" onclick="setView('t')">📋 ตารางนัด</div>
+    <div class="tab"    id="tabC" onclick="setView('c')">🗓 ปฏิทินภาพรวม</div>
+  </div>
+
+  <div class="bar">
+    <button class="pick" id="btnPick" onclick="openPick()">🏥 รวมทุกคลินิก</button>
+    
+    <button id="btnAvail" onclick="toggleAvail()" style="flex:0 0 auto; padding:8px 9px; border-radius:9px; border:1px solid var(--line); background:var(--chip); font-weight:600; font-size:12px; cursor:pointer;" title="ตัวกรองวัน"></button>
+
+    <select id="selRange" onchange="onRangeChange()" style="flex:0 0 auto; padding:8px 6px; font-weight:600; font-size:12px;">
+      <option value="30">30 วัน</option>
+      <option value="90">90 วัน</option>
+      <option value="150">150 วันข้างหน้า</option>
+    </select>
+
+    <div class="wk-filters" id="wkFilters" style="display:flex;"></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+  <main id="out"></main>
+
+  <footer>
+    <button onclick="loadData(1)">↻ รีเฟรช</button>
+    <button onclick="saveView()">💾 บันทึกมุมมอง</button>
+    <button id="btnSlot" onclick="openSlot()" style="display:none">⚙ Slot</button>
+  </footer>
+</div>
+
+<!-- ================= PICK ================= -->
+<div class="mask" id="mPick"><div class="modal">
+  <h2>🏥 เลือกคลินิกที่ต้องการแสดง</h2>
+  <p>เลือกได้หลายคลินิก · เมื่อเลือกเฉพาะคลินิก ระบบจะซ่อนวันที่ไม่มีนัด (ยกเว้นวันที่ตั้งเปิดคลินิกไว้ใน ⚙ Slot จะแสดงเสมอแม้ยังเป็น 0) เสาร์–อาทิตย์ และวันหยุดราชการ</p>
+  <div style="display:flex;gap:6px;margin-bottom:9px">
+    <button style="flex:1" onclick="pickMode('sum')">📊 รวมทุกคลินิก</button>
+    <button style="flex:1" onclick="pickMode('all')">🗂 แสดงทั้งหมด</button>
+  </div>
+  <input id="pkSearch" placeholder="🔍 ค้นหาคลินิก…" style="width:100%;margin-bottom:8px" oninput="fillPick()">
+  <div class="mbody" id="pickRows"></div>
+  <div class="mfoot">
+    <button onclick="pickAll(false)">ล้าง</button>
+    <button onclick="closeM('mPick')">ปิด</button>
+    <button class="btn-p" onclick="applyPick()">ตกลง</button>
+  </div>
+</div></div>
+
+<!-- ================= SLOT ================= -->
+<div class="mask" id="mSlot"><div class="modal">
+  <h2>⚙ ตั้งค่าคลินิก (Slot, วัน, สัปดาห์)</h2>
+  <p>กดเลือกวัน/สัปดาห์ที่รับคิวเพื่อตั้งค่า หากไม่เลือกเลยแปลว่า "รับทุกวัน/สัปดาห์"</p>
+  <div class="mbody" id="slotRows"></div>
+  <div class="err" id="slotErr"></div>
+  <div class="mfoot">
+    <button onclick="closeM('mSlot')">ยกเลิก</button>
+    <button class="btn-p" onclick="saveSlot()">บันทึก</button>
+  </div>
+</div></div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbxTI_2167EzQ1GO_eCJtq7BHXuxr8hNUjZ_IWkjefySDkyouU42yjLf5HrswDJHONxY4g/exec';
+const REFRESH=60000, STALE_MIN=5;
+
+const HOLIDAYS={
+ '2025-01-01':'ปีใหม่','2025-02-12':'มาฆบูชา','2025-04-06':'จักรี','2025-04-13':'สงกรานต์',
+ '2025-04-14':'สงกรานต์','2025-04-15':'สงกรานต์','2025-05-01':'แรงงาน','2025-05-04':'ฉัตรมงคล',
+ '2025-05-05':'ชดเชยฉัตรมงคล','2025-05-11':'วิสาขบูชา','2025-05-12':'ชดเชยวิสาขบูชา',
+ '2025-06-03':'วันเฉลิมฯ พระราชินี','2025-07-10':'อาสาฬหบูชา','2025-07-11':'เข้าพรรษา',
+ '2025-07-28':'วันเฉลิมฯ ร.10','2025-08-12':'วันแม่','2025-10-13':'วันนวมินทรมหาราช',
+ '2025-10-23':'ปิยมหาราช','2025-12-05':'วันพ่อ','2025-12-10':'รัฐธรรมนูญ','2025-12-31':'สิ้นปี',
+ '2026-01-01':'ปีใหม่','2026-01-02':'ชดเชยปีใหม่','2026-03-03':'มาฆบูชา','2026-04-06':'จักรี',
+ '2026-04-13':'สงกรานต์','2026-04-14':'สงกรานต์','2026-04-15':'สงกรานต์','2026-05-01':'แรงงาน',
+ '2026-05-04':'ฉัตรมงคล','2026-05-31':'วิสาขบูชา','2026-06-01':'ชดเชยวิสาขบูชา',
+ '2026-06-03':'วันเฉลิมฯ พระราชินี','2026-07-28':'วันเฉลิมฯ ร.10','2026-07-29':'อาสาฬหบูชา',
+ '2026-07-30':'เข้าพรรษา','2026-08-12':'วันแม่','2026-10-13':'วันนวมินทรมหาราช',
+ '2026-10-23':'ปิยมหาราช','2026-12-05':'วันพ่อ','2026-12-10':'รัฐธรรมนูญ','2026-12-31':'สิ้นปี'
+};
+
+let TOKEN=localStorage.getItem('tk')||'', ROLE=localStorage.getItem('rl')||'';
+let DATA=null,timer=null,VIEW='t',loading=false;
+let VER='', lastDay='', visBound=false;
+let MODE=localStorage.getItem('md')||'sum';
+let SEL=new Set(JSON.parse(localStorage.getItem('sel')||'[]'));
+let DOW=new Set(JSON.parse(localStorage.getItem('dow2')||JSON.stringify([new Date().getDay()])));  // ค่าเริ่ม = วันเดียวกับวันนี้ ทุกสัปดาห์ (จนกว่าจะแก้เอง)
+let SHOWHOL=localStorage.getItem('hol')==='1';
+let FILTER_MODE=parseInt(localStorage.getItem('fm')||'1',10); 
+let FORWARD_DAYS=parseInt(localStorage.getItem('forwardDays')||'150',10);
+let WK_SEL=new Set(JSON.parse(localStorage.getItem('wk_sel')||'[]'));
+let TMP=new Set(),calY=0,calM=0;
+
+const TH_DAY=['อา','จ','อ','พ','พฤ','ศ','ส'];
+const TH_MS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_ML=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+             'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function applyTheme(){
+  let savedTheme = localStorage.getItem('th');
+  if(!savedTheme){ savedTheme = 'light'; localStorage.setItem('th', 'light'); }
+  const light = savedTheme === 'light';
+  document.body.classList.toggle('light',light);
+  const b=document.getElementById('btnTheme');
+  if(b) b.textContent=light?'☀️':'🌙';
+  const m=document.querySelector('meta[name=theme-color]');
+  if(m) m.setAttribute('content',light?'#eef1f7':'#070b18');
+}
+function toggleTheme(){
+  localStorage.setItem('th',localStorage.getItem('th')==='dark'?'light':'dark');
+  applyTheme();
+}
+applyTheme();
+
+/*========== โหมดประหยัด RAM (Lite) ==========
+  - เปิด/ปิดเองได้ที่ปุ่ม ✨/🍃 มุมขวาบน (จำค่าไว้ในเครื่อง)
+  - ระบบจะ "ถาม" ให้สลับเมื่อ:
+    1) เปิดครั้งแรกบนเครื่องที่ RAM ≤ LOW_RAM_GB (navigator.deviceMemory)
+    2) หน่วยความจำ JS ของหน้านี้เกิน MEM_LIMIT ของ RAM เครื่อง (Chrome)
+    3) เฟรมแสดงผลช้าต่อเนื่อง 2 รอบ (อาการเครื่องกำลังหนักจากเอฟเฟกต์)
+  - กด "ไม่ตอนนี้" จะไม่ถามซ้ำ SNOOZE_H ชั่วโมง
+*/
+const MEM_LIMIT=0.30, LOW_RAM_GB=4, SLOW_FRAME_MS=50, SNOOZE_H=8, CHECK_MS=30000;
+let LITE=false, liteTimer=null, slowCount=0;
+
+function applyLite(on){
+  LITE=!!on;
+  document.body.classList.toggle('lite',LITE);
+  const b=document.getElementById('btnLite');
+  if(b){
+    b.textContent=LITE?'🍃':'✨';
+    b.title=LITE?'โหมดประหยัด RAM: เปิดอยู่ (กดเพื่อกลับเป็นแบบเต็ม)':'โหมดเต็ม (กดเพื่อสลับเป็นโหมดประหยัด RAM)';
+    b.classList.toggle('on',LITE);
+  }
+  if(DATA) render();
+}
+function toggleLite(){
+  const on=!LITE;
+  localStorage.setItem('lite',on?'1':'0');
+  if(!on) localStorage.setItem('liteSnooze',String(Date.now()+SNOOZE_H*3600000));
+  hideLiteAsk(); applyLite(on);
+  toast(on?'🍃 เปิดโหมดประหยัด RAM แล้ว':'✨ กลับเป็นโหมดเต็มแล้ว');
+}
+function askLite(msg){
+  if(LITE) return;
+  if(Date.now()<Number(localStorage.getItem('liteSnooze')||0)) return;
+  document.getElementById('liteAskMsg').textContent=msg;
+  document.getElementById('liteAsk').classList.add('on');
+}
+function hideLiteAsk(){ document.getElementById('liteAsk').classList.remove('on'); }
+function answerLite(yes){
+  hideLiteAsk();
+  if(yes){ localStorage.setItem('lite','1'); applyLite(true); toast('🍃 เปิดโหมดประหยัด RAM แล้ว'); }
+  else localStorage.setItem('liteSnooze',String(Date.now()+SNOOZE_H*3600000));
+}
+function memRatio(){
+  const pm=performance.memory, gb=navigator.deviceMemory;
+  if(!pm||!pm.usedJSHeapSize) return 0;
+  const total=gb?gb*1073741824:pm.jsHeapSizeLimit;
+  return total?pm.usedJSHeapSize/total:0;
+}
+function frameMs(ms){
+  return new Promise(res=>{
+    let n=0,t0=0;
+    function f(t){ if(!t0) t0=t; n++;
+      if(t-t0<ms) requestAnimationFrame(f); else res((t-t0)/Math.max(1,n-1)); }
+    requestAnimationFrame(f);
+  });
+}
+async function checkPressure(){
+  if(LITE||document.hidden) return;
+  const r=memRatio();
+  if(r>MEM_LIMIT){
+    askLite('⚠ หน้านี้ใช้หน่วยความจำประมาณ '+Math.round(r*100)+'% ของเครื่อง — สลับเป็นโหมดประหยัด RAM ไหม?');
+    return;
+  }
+  const fm=await frameMs(2000);
+  if(document.hidden) return;
+  slowCount=(fm>SLOW_FRAME_MS)?slowCount+1:0;
+  if(slowCount>=2){
+    slowCount=0;
+    askLite('⚠ เครื่องแสดงผลช้า (~'+Math.max(1,Math.round(1000/fm))+' fps) อาจกำลังหนัก — สลับเป็นโหมดประหยัด RAM ไหม?');
+  }
+}
+function initLite(){
+  const saved=localStorage.getItem('lite');
+  applyLite(saved==='1');
+  const gb=navigator.deviceMemory;
+  if(saved===null && gb && gb<=LOW_RAM_GB)
+    askLite('💻 เครื่องนี้มี RAM ประมาณ '+gb+' GB แนะนำโหมดประหยัด เพื่อไม่ให้เครื่องค้างขณะเปิดคู่ HOSxP — สลับไหม?');
+  clearInterval(liteTimer); liteTimer=setInterval(checkPressure,CHECK_MS);
+  setTimeout(checkPressure,8000);
+}
+initLite();
+
+function toggleAvail(){
+  FILTER_MODE = (FILTER_MODE + 1) % 3; 
+  localStorage.setItem('fm', String(FILTER_MODE));
+  updAvailBtn();
+  render();
+}
+function updAvailBtn(){
+  const b = document.getElementById('btnAvail');
+  if(!b) return;
+  if(FILTER_MODE === 1) {
+    b.innerHTML = '📅 เฉพาะวันที่มีคลินิก';
+    b.style.borderColor = '#c084fc';
+    b.style.color = '#c084fc';
+  } else if(FILTER_MODE === 2) {
+    b.innerHTML = '🟢 เฉพาะวันว่าง';
+    b.style.borderColor = 'var(--acc)';
+    b.style.color = 'var(--acc)';
+  } else {
+    b.innerHTML = '✅ แสดงทุกวัน';
+    b.style.borderColor = 'var(--line)';
+    b.style.color = 'var(--txt)';
+  }
+}
+function onRangeChange(){
+  const sel = document.getElementById('selRange');
+  if(sel) {
+    FORWARD_DAYS = parseInt(sel.value, 10) || 150;
+    localStorage.setItem('forwardDays', String(FORWARD_DAYS));
+    render();
+  }
+}
+function toggleWk(wk){
+  if(wk === 'all') {
+    WK_SEL.clear();
+  } else {
+    const num = parseInt(wk, 10);
+    WK_SEL.has(num) ? WK_SEL.delete(num) : WK_SEL.add(num);
+  }
+  localStorage.setItem('wk_sel', JSON.stringify([...WK_SEL]));
+  renderWkChips();
+  render();
+}
+function renderWkChips(){
+  const box = document.getElementById('wkFilters');
+  if(!box) return;
+  let h = '';
+  for(let i=1; i<=16; i++){
+    const active = WK_SEL.has(i) ? ' on' : '';
+    h += '<span class="wkw'+active+'" onclick="toggleWk('+i+')">'+i+'wk</span>';
+  }
+  const allActive = WK_SEL.size === 0 ? ' on' : '';
+  h += '<span class="wkw'+allActive+'" onclick="toggleWk(\'all\')">All</span>';
+  box.innerHTML = h;
+}
+
+function initRememberedPw(){
+  const saved = localStorage.getItem('saved_pw') || '';
+  const pwInput = document.getElementById('pw');
+  const chk = document.getElementById('chkRememberPw');
+  if(saved && pwInput){
+    pwInput.value = saved;
+    if(chk) chk.checked = true;
+    if(!TOKEN) {
+      setTimeout(() => doLogin(), 150);
+    }
+  }
+}
+async function doLogin(){
+  const pwEl=document.getElementById('pw');
+  const pw=(pwEl?pwEl.value:'').trim(), e=document.getElementById('loginErr');
+  const remember = document.getElementById('chkRememberPw')?.checked;
+  if(!pw){ e.textContent='กรุณาใส่รหัสผ่าน'; return; }
+  e.textContent='กำลังตรวจสอบ…';
+  try{
+    const j=await call({action:'login',pass:pw});
+    if(!j.ok){ e.textContent=j.err||'เข้าสู่ระบบไม่สำเร็จ'; return; }
+    TOKEN=j.token; ROLE=j.role;
+    localStorage.setItem('tk',TOKEN); localStorage.setItem('rl',ROLE);
+    if(remember){
+      localStorage.setItem('saved_pw', pw);
+    } else {
+      localStorage.removeItem('saved_pw');
+    }
+    e.textContent=''; startApp();
+  }catch(x){ e.textContent='เชื่อมต่อไม่ได้: '+x.message; }
+}
+document.getElementById('pw').addEventListener('keydown',ev=>{ if(ev.key==='Enter') doLogin(); });
+function logout(){ 
+  localStorage.removeItem('tk'); 
+  localStorage.removeItem('rl'); 
+  localStorage.removeItem('saved_pw');
+  location.reload(); 
+}
+
+function startApp(){
+  document.getElementById('mLogin').classList.remove('on');
+  document.getElementById('app').style.display='flex';
+  document.getElementById('btnSlot').style.display=(ROLE==='nurse')?'':'none';
+  
+  const selR = document.getElementById('selRange');
+  if(selR) selR.value = String(FORWARD_DAYS);
+
+  const n=new Date(); calY=n.getFullYear(); calM=n.getMonth();
+  updAvailBtn(); renderWkChips(); updPickLabel(); drawLegend();
+  
+  loadData(1);
+  clearInterval(timer); timer=setInterval(()=>loadData(0),REFRESH);
+  if(!visBound){
+    visBound=true;
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden && !document.body.classList.contains('rx')) loadData(0); });
+  }
+}
+
+/*========== JSONP แทน Fetch ป้องกันปัญหา CORS/Auth บนมือถือ ==========*/
+function jsonp(params,ms){
+  ms=ms||25000;
+  return new Promise((resolve,reject)=>{
+    const cb='__jp'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
+    const s=document.createElement('script'); let done=false;
+    const t=setTimeout(()=>{fin();reject(new Error('หมดเวลาเชื่อมต่อ'));},ms);
+    function fin(){ if(done)return; done=true; clearTimeout(t);
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb]=d=>{fin();resolve(d);};
+    s.onerror=()=>{fin();reject(new Error('เซิร์ฟเวอร์ตอบกลับผิดพลาด'));};
+    s.async=true;
+    s.crossOrigin="anonymous";
+    s.src=API+'?'+new URLSearchParams(Object.assign({},params,{callback:cb,_:Date.now()}));
+    (document.head||document.documentElement).appendChild(s);
+  });
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function call(params,tries){
+  tries=tries||3; let last;
+  for(let i=0;i<tries;i++){
+    try{
+      const r=await jsonp(params);
+      if(r&&typeof r==='object') return r;
+      throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
+    }catch(e){ last=e; if(i<tries-1) await sleep(700*Math.pow(2,i)); }
+  }
+  throw last;
+}
+
+function skeleton(){
+  let h='<div class="skwrap"><div class="spin"></div>'+
+        '<div class="loadtxt">กำลังดึงข้อมูลจาก HOSxP…</div>';
+  for(let i=0;i<14;i++) h+='<div class="sk" style="animation-delay:'+(i*0.045).toFixed(2)+'s"></div>';
+  document.getElementById('out').innerHTML=h+'</div>';
+}
+
+/* ดึงข้อมูลแบบประหยัด:
+   - หน้าต่างถูกซ่อน/ย่อ → ไม่ดึง (ดึงทันทีเมื่อกลับมาเปิด)
+   - ถามเวอร์ชันก่อน (ข้อมูลไม่กี่ไบต์) ถ้าไม่เปลี่ยน ไม่โหลดทั้งก้อนและไม่วาดตารางใหม่
+   - ถ้า Apps Script ยังเป็นเวอร์ชันเก่า (ไม่มี action=ver) จะกลับไปโหลดทั้งก้อนเหมือนเดิม */
+async function loadData(forceReload){
+  if(loading) return;
+  if(!forceReload && (document.hidden || document.body.classList.contains('rx'))) return;
+  loading=true;
+  if(forceReload) {
+    DATA = null; 
+    document.getElementById('out').innerHTML = ''; 
+    skeleton(); 
+  }
+  try{
+    if(!forceReload && DATA && VER){
+      const v=await call({action:'ver',token:TOKEN},1);
+      if(v && v.ok && v.ver){
+        if(v.updated) DATA.updated=v.updated;
+        if(v.ver===VER){
+          if(iso(new Date())!==lastDay) render(); else updStatus();
+          return;
+        }
+      } else if(v && v.err==='unauthorized'){ logout(); return; }
+    }
+    const j=await call({action:'data',token:TOKEN});
+    if(!j.ok){ if(j.err==='unauthorized'){ logout(); return; } throw new Error(j.err||'ไม่ทราบสาเหตุ'); }
+    DATA=j; VER=j.ver||''; updPickLabel(); render();
+  }catch(x){
+    if(!DATA) document.getElementById('out').innerHTML=
+      '<div style="padding:36px;text-align:center;color:#e11d48">เชื่อมต่อไม่ได้<br>'+
+      '<small style="color:var(--dim)">'+esc(x.message)+'</small><br><br>'+
+      '<button onclick="loadData(1)">ลองอีกครั้ง</button></div>';
+    else{ const u=document.getElementById('upd');
+      u.textContent=u.textContent.replace(/ ⚠.*$/,'')+' ⚠ รอบล่าสุดไม่สำเร็จ'; }
+  }finally{ loading=false; }
+}
+
+function setView(v){
+  VIEW=v;
+  document.getElementById('tabT').classList.toggle('on',v==='t');
+  document.getElementById('tabC').classList.toggle('on',v==='c');
+  const wkEl = document.getElementById('wkFilters');
+  if(wkEl) wkEl.style.display=(v==='t')?'flex':'none';
+  const selREl = document.getElementById('selRange');
+  if(selREl) selREl.style.display=(v==='t')?'inline-block':'none';
+  drawLegend(); render();
+}
+function render(){ if(!DATA) return; lastDay=iso(new Date()); (VIEW==='t')?renderTable():renderCal(); updStatus(); }
+
+function drawLegend(){
+  const chips=[1,2,3,4,5,6,0].map(d=>
+    '<span class="dw'+(DOW.has(d)?' on':'')+'" onclick="tgDow('+d+')">'+TH_DAY[d]+'</span>').join('')+
+    '<span class="dw hol'+(SHOWHOL?' on':'')+'" onclick="tgHol()" title="แสดง/ซ่อนวันหยุดราชการ">หยุด</span>';
+  const left = (VIEW==='t')
+    ? '<span class="sw" style="background:#10b981"></span>ว่าง'+
+      '<span class="sw" style="background:#eab308"></span>ปานกลาง'+
+      '<span class="sw" style="background:#f97316"></span>ใกล้เต็ม'+
+      '<span class="sw" style="background:#ef4444"></span>เต็ม/เกิน'+
+      '<span>· <b>รับได้อีก / นัดแล้ว</b></span>'
+    : '<span class="sw" style="background:rgba(16,185,129,.28)"></span>น้อย'+
+      '<span class="sw" style="background:rgba(16,185,129,.78)"></span>ใกล้เฉลี่ย'+
+      '<span class="sw" style="background:rgba(239,68,68,.6)"></span>เกินเฉลี่ย'+
+      '<span class="sw" style="background:rgba(239,68,68,.98)"></span>เกินมาก';
+  document.getElementById('legend').innerHTML=left+'<span class="dows">'+chips+'</span>';
+}
+function tgDow(d){
+  DOW.has(d)?DOW.delete(d):DOW.add(d);
+  if(DOW.size===0) DOW.add(d);
+  localStorage.setItem('dow2',JSON.stringify([...DOW]));
+  drawLegend(); render();
+}
+function tgHol(){ SHOWHOL=!SHOWHOL; localStorage.setItem('hol',SHOWHOL?'1':'0'); drawLegend(); render(); }
+
+function openPick(){ TMP=new Set(SEL); document.getElementById('pkSearch').value='';
+  fillPick(); document.getElementById('mPick').classList.add('on'); }
+function fillPick(){
+  const q=(document.getElementById('pkSearch').value||'').trim().toLowerCase();
+  const tot=clinicTotals();
+  document.getElementById('pickRows').innerHTML=(DATA?DATA.clinics:[])
+    .filter(c=>!q||c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q))
+    .map(c=>'<label class="ck"><input type="checkbox" value="'+esc(c.code)+'"'+
+      (TMP.has(c.code)?' checked':'')+' onchange="tgPick(this)">'+
+      '<span>'+esc(c.name)+(c.max!=null?' <small style="color:var(--dim)">('+c.max+')</small>':'')+
+      '</span><span class="cnt num">'+(tot[c.code]||0)+'</span></label>').join('')
+    ||'<div style="padding:16px;text-align:center;color:var(--dim)">ไม่พบคลินิก</div>';
+}
+function tgPick(el){ el.checked?TMP.add(el.value):TMP.delete(el.value); }
+function pickAll(on){ TMP=on?new Set(DATA.clinics.map(c=>c.code)):new Set(); fillPick(); }
+function pickMode(m){ MODE=m; SEL=new Set(); save(); closeM('mPick'); updPickLabel(); render(); }
+function applyPick(){
+  SEL=new Set(TMP);
+  MODE=SEL.size===0?'sum':(SEL.size===DATA.clinics.length?'all':'sel');
+  save(); closeM('mPick'); updPickLabel(); render();
+}
+function save(){ localStorage.setItem('md',MODE); localStorage.setItem('sel',JSON.stringify([...SEL])); }
+function updPickLabel(){
+  const b=document.getElementById('btnPick');
+  if(MODE==='sum') b.textContent='🏥 รวมทุกคลินิก';
+  else if(MODE==='all') b.textContent='🗂 แสดงทั้งหมด ('+(DATA?DATA.clinics.length:0)+')';
+  else b.textContent='🏥 เลือกไว้ '+SEL.size+' คลินิก';
+}
+function clinicTotals(){
+  const t={}; if(!DATA) return t;
+  const {start,n}=rangeInfo();
+  for(let i=0;i<n;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const o=DATA.counts[iso(d)]; if(!o) continue;
+    for(const k in o) t[k]=(t[k]||0)+o[k];
+  }
+  return t;
+}
+
+function rangeInfo(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const start = new Date(today);
+  const n = FORWARD_DAYS;
+  return {start, n, today};
+}
+
+function renderTable(){
+  const {start,n,today}=rangeInfo();
+  const tot=clinicTotals();
+  let cols=[];
+  if(MODE==='all') cols=DATA.clinics.slice()
+    .sort((a,b)=>(tot[b.code]||0)-(tot[a.code]||0)||a.name.localeCompare(b.name,'th'));
+  else if(MODE==='sel') cols=DATA.clinics.filter(c=>SEL.has(c.code));
+  const codes=cols.length?cols.map(c=>c.code):null;
+  const maxMap={}; DATA.clinics.forEach(c=>{ maxMap[c.code]=c.max; });
+
+  const peak={}; let peakSum=0;
+  for(let i=0;i<n;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const row=DATA.counts[iso(d)]||{};
+    let s=0;
+    (codes||Object.keys(row)).forEach(c=>{ const v=row[c]||0; s+=v; if(v>(peak[c]||0)) peak[c]=v; });
+    if(s>peakSum) peakSum=s;
+  }
+
+  let h='<table><thead><tr><th class="c-date">วันที่</th><th class="c-day">วัน</th>'+
+    '<th class="c-sum">รวม</th>'+
+    cols.map(c=>'<th title="'+esc(c.name)+' · รวม '+(tot[c.code]||0)+' ราย'+
+      (c.max!=null?(' · slot '+c.max):' · ไม่จำกัด')+'">'+esc(shortName(c.name))+'</th>').join('')+
+    '</tr></thead><tbody>';
+
+  let shown=0;
+  
+  for(let i=0;i<n;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const key=iso(d), dw=d.getDay(), hol=HOLIDAYS[key];
+    const diff=Math.round((d-today)/86400000);
+    const row=DATA.counts[key]||{};
+    let sum=0;
+    if(codes) codes.forEach(c=>{ sum+=row[c]||0; });
+    else for(const k in row) sum+=row[k];
+
+    if(WK_SEL.size > 0){
+      if(diff <= 0) continue;
+      const targetWk = Math.ceil(diff / 7);
+      if(!WK_SEL.has(targetWk)) continue;
+    }
+
+    if(!DOW.has(dw)) continue;                       
+    if(hol&&!SHOWHOL) continue;                      
+    if(MODE!=='sum'&&diff<0) continue;
+
+    let isAvailable = false;
+    let isScheduled = false;
+    const openSet = new Set();   // คลินิกที่ "ตั้งวันเปิดไว้" ใน Slot และตรงกับวันนี้
+
+    const weekOfMonth = Math.ceil(d.getDate() / 7);
+    const dayOfWeek = d.getDay();
+    const clinicsToCheck = codes ? DATA.clinics.filter(c=>codes.includes(c.code)) : DATA.clinics;
+
+    for(let c of clinicsToCheck) {
+      let dowMatch = true;
+      let womMatch = true;
+      if(c.dow) {
+        const dows = c.dow.split(',').map(Number);
+        if(!dows.includes(dayOfWeek)) dowMatch = false;
+      }
+      if(c.wom) {
+        const woms = c.wom.split(',').map(Number);
+        if(!woms.includes(weekOfMonth)) womMatch = false;
+      }
+
+      if(dowMatch && womMatch) {
+        isScheduled = true;
+        if(c.dow || c.wom) openSet.add(c.code);
+        const bk = row[c.code] || 0;
+        const mx = maxMap[c.code];
+        if (mx == null || bk < mx) {
+          isAvailable = true;
+        }
+      }
+    }
+    
+    if (FILTER_MODE >= 1) {
+      if (diff < 0) continue; 
+      if (!isScheduled) continue; 
+      if (FILTER_MODE === 2 && !isAvailable) continue;
+    }
+
+    // เลือกเฉพาะคลินิก: ซ่อนวันที่ไม่มีนัด ยกเว้นวันที่ตั้งเปิดคลินิกไว้ (แสดงแม้นัดยังเป็น 0)
+    if(MODE!=='sum' && sum===0 && openSet.size===0) continue;
+
+    shown++;
+
+    const cls=[diff===0?'today':'',(dw===0||dw===6)?'wknd':'',diff<0?'past':''].join(' ');
+    h+='<tr class="'+cls+'"><td class="c-date" onmouseenter="showMed(event,'+diff+')" onmouseleave="hideMed()"><div class="dcell">'+
+      '<div class="dnum">'+d.getDate()+' '+TH_MS[d.getMonth()]+' '+((d.getFullYear()+543)%100)+
+      (hol?'<span class="hol" title="'+esc(hol)+'">หยุด</span>':'')+'</div>'+
+      (diff>0?'<div class="plus num">+'+diff+' วัน</div>'
+            :(diff===0?'<div class="plus t0">วันนี้</div>'
+                      :'<div class="plus pv num">'+diff+' วัน</div>'))+
+      '</div></td><td class="c-day">'+TH_DAY[dw]+'</td>'+
+      '<td class="c-sum">'+sumCell(sum,peakSum,openSet.size>0)+'</td>';
+    cols.forEach(c=>{ h+='<td>'+cellHtml(row[c.code]||0,maxMap[c.code],peak[c.code]||0,
+      (c.dow||c.wom)?openSet.has(c.code):null)+'</td>'; });
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  if(!shown) h='<div style="padding:44px;text-align:center;color:var(--dim)">'+
+    'ไม่มีวันนัดที่ตรงเงื่อนไข<br><small>ลองขยายช่วงสัปดาห์ เปิดวันเพิ่ม หรือเลือกคลินิกอื่น</small></div>';
+  document.getElementById('out').innerHTML=h;
+}
+
+function sumCell(v,peak,open){
+  if(v===0) return open
+    ? '<div class="cell" style="background:rgba(99,140,225,.10)"><span class="bk">0</span></div>'
+    : '<div class="cell"><span class="empty">–</span></div>';
+  const r=peak>0?(v/peak):0;
+  const a=(0.14+0.42*r).toFixed(3);
+  return '<div class="cell" style="background:rgba(99,140,225,'+a+')"><span class="bk">'+v+'</span></div>';
+}
+
+/* open: true = วันเปิดคลินิกตามที่ตั้งไว้, false = ตั้งวันไว้แต่ไม่ใช่วันนี้, null = ไม่ได้ตั้งวัน */
+function cellHtml(bk,max,peak,open){
+  if(bk===0&&open===false) return '<div class="cell"><span class="empty">–</span></div>';
+  if(bk===0&&max==null&&open)   // วันเปิดคลินิก ยังไม่มีนัด ไม่จำกัด slot
+    return '<div class="cell" style="background:rgba(94,166,225,.14)">'+
+      '<span class="rem" style="color:var(--dim)">∞</span><span class="sep">/</span><span class="bk">0</span></div>';
+  if(bk===0&&(max==null||max===0)) return '<div class="cell"><span class="empty">–</span></div>';
+  if(max==null){
+    const r=peak>0?(bk/peak):0;
+    const a=(0.16+0.46*r).toFixed(3);
+    return '<div class="cell" style="background:rgba(94,166,225,'+a+')">'+
+      '<span class="rem" style="color:var(--dim)">∞</span><span class="sep">/</span>'+
+      '<span class="bk">'+bk+'</span></div>';
+  }
+  const rem=max-bk, pct=(max>0)?(bk/max):2, full=rem<=0;
+  return '<div class="cell" style="background:'+heat(pct)+'">'+
+    '<span class="rem" style="color:'+(full?'#fff':'var(--txt)')+'">'+(full?'Full':rem)+'</span>'+
+    '<span class="sep">/</span><span class="bk">'+bk+'</span></div>';
+}
+function heat(p){
+  if(LITE){   // โหมดประหยัด: สีทึบ ไม่ใช้ gradient
+    if(p>=1)  return 'rgba(220,38,38,.9)';
+    if(p>=.8) return 'rgba(234,88,12,.82)';
+    if(p>=.5) return 'rgba(202,138,4,.7)';
+    if(p>0)   return 'rgba(16,160,110,.68)';
+    return 'rgba(16,185,129,.22)';
+  }
+  if(p>=1)  return 'linear-gradient(180deg,rgba(239,68,68,.92),rgba(176,26,36,.92))';
+  if(p>=.8) return 'linear-gradient(180deg,rgba(249,115,22,.84),rgba(199,79,10,.84))';
+  if(p>=.5) return 'linear-gradient(180deg,rgba(234,179,8,.72),rgba(179,132,6,.72))';
+  if(p>0)   return 'linear-gradient(180deg,rgba(16,185,129,.70),rgba(5,130,91,.70))';
+  return 'linear-gradient(180deg,rgba(16,185,129,.24),rgba(5,130,91,.24))';
+}
+
+function renderCal(){
+  const label=MODE==='sel'?('เลือก '+SEL.size+' คลินิก'):'ทุกคลินิก';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dim=new Date(calY,calM+1,0).getDate(), pad=new Date(calY,calM,1).getDay();
+  const vals=[]; let sum=0,mx=0;
+  for(let i=1;i<=dim;i++){
+    const v=dayTotal(iso(new Date(calY,calM,i)));
+    vals.push(v); sum+=v; if(v>mx) mx=v;
+  }
+  const nz=vals.filter(v=>v>0).length, avg=nz?(sum/nz):0;
+  const canPrev=!DATA.minDate||iso(new Date(calY,calM,1))>DATA.minDate;
+  const canNext=!DATA.maxDate||iso(new Date(calY,calM,dim))<DATA.maxDate;
+
+  let h='<div class="calnav"><button onclick="moveMonth(-1)"'+(canPrev?'':' disabled style="opacity:.28"')+'>‹</button>'+
+    '<div class="mt">'+TH_ML[calM]+' '+(calY+543)+'</div>'+
+    '<button onclick="moveMonth(1)"'+(canNext?'':' disabled style="opacity:.28"')+'>›</button></div>'+
+    '<div class="calstat"><span>'+esc(label)+'</span><span>รวม <b>'+sum+'</b> ราย</span>'+
+    '<span>เฉลี่ย <b>'+avg.toFixed(1)+'</b> ราย/วัน</span><span>สูงสุด <b>'+mx+'</b></span></div>'+
+    '<div class="cal">'+TH_DAY.map(d=>'<div class="hd">'+d+'</div>').join('');
+  for(let i=0;i<pad;i++) h+='<div></div>';
+  for(let i=1;i<=dim;i++){
+    const d=new Date(calY,calM,i), key=iso(d), dw=d.getDay(), v=vals[i-1];
+    const diff=Math.round((d-today)/86400000), hol=HOLIDAYS[key];
+    const cls=['cd',v===0?'zero':'',(dw===0||dw===6||hol)?'wk':'',diff===0?'now':'',diff<0?'mute':''].join(' ');
+    const tip=i+' '+TH_ML[calM]+' '+(calY+543)+' · '+v+' ราย'+
+      (hol?(' · '+hol):'')+(diff>0?(' · อีก '+diff+' วัน'):(diff===0?' · วันนี้':''));
+    h+='<div class="'+cls+'" style="background:'+calHeat(v,avg)+'" title="'+esc(tip)+'">'+
+      '<span class="n">'+i+'</span><span class="v">'+v+'</span><span class="u">ราย</span></div>';
+  }
+  document.getElementById('out').innerHTML=h+'</div>';
+}
+function dayTotal(key){
+  const o=DATA.counts[key]; if(!o) return 0;
+  let s=0;
+  if(MODE==='sel') SEL.forEach(c=>{ s+=o[c]||0; });
+  else for(const k in o) s+=o[k];
+  return s;
+}
+function calHeat(v,avg){
+  if(v===0) return 'var(--chip)';
+  if(avg<=0) return 'rgba(16,185,129,.45)';
+  const r=v/avg;
+  if(r<=1) return 'rgba(16,185,129,'+(0.16+0.6*Math.min(1,r)).toFixed(3)+')';
+  return 'rgba(239,68,68,'+(0.42+0.56*Math.min(1,(r-1)/0.8)).toFixed(3)+')';
+}
+function moveMonth(k){ const d=new Date(calY,calM+k,1); calY=d.getFullYear(); calM=d.getMonth(); renderCal(); }
+
+function updStatus(){
+  const s=document.getElementById('status'), u=document.getElementById('upd'), t=DATA.updated;
+  if(!t){ u.textContent='ยังไม่มีข้อมูลจาก HOSxP'; s.classList.add('stale'); return; }
+  const dt=new Date(t.replace(' ','T')+'+07:00');
+  const m=Math.floor((Date.now()-dt.getTime())/60000);
+  u.textContent='last update '+t.slice(11,16)+' น. · '+
+    (m<1?'เมื่อสักครู่':(m<60?m+' นาทีที่แล้ว':Math.floor(m/60)+' ชม.ที่แล้ว'));
+  s.classList.toggle('stale',m>=STALE_MIN);
+}
+function saveView(){
+  save();
+  localStorage.setItem('forwardDays', String(FORWARD_DAYS));
+  localStorage.setItem('wk_sel', JSON.stringify([...WK_SEL]));
+  localStorage.setItem('dow2',JSON.stringify([...DOW]));
+  localStorage.setItem('hol',SHOWHOL?'1':'0');
+  localStorage.setItem('fm',String(FILTER_MODE));
+  toast('💾 บันทึกมุมมองนี้เป็นค่าเริ่มต้นแล้ว');
+}
+let tmT=null;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(tmT); tmT=setTimeout(()=>t.classList.remove('on'),2200);
+}
+
+function fitNum(n){
+  const s = String(n);
+  const fs = s.length>=4 ? 12 : (s.length===3 ? 13 : 14.5);
+  return '<span class="num" style="font-size:'+fs+'px">'+s+'</span>';
+}
+
+function showMed(e, diff) {
+  if(diff <= 0) return; 
+  
+  const n = Math.ceil(diff / 10) * 10;
+  
+  let h = '<div class="med-top">'+
+          '<div class="med-box mb-day">นัด '+fitNum(diff)+' วัน</div>'+
+          '<div class="med-box mb-pill">สั่งยา '+fitNum(n)+'</div>'+
+          '</div>';
+          
+  for(let i=1; i<=6; i++) {
+    h += '<div class="med-row"><span style="color:var(--dim)">ตัวคูณ '+i+'</span><b style="font-size:14.5px">'+(i*n)+'</b></div>';
+  }
+  
+  const pop = document.getElementById('medPop');
+  pop.innerHTML = h;
+  pop.style.display = 'flex';
+  
+  let top = e.clientY - 40;
+  let left = e.clientX + 30;
+  if(left + 250 > window.innerWidth) left = window.innerWidth - 260;
+  if(top + 260 > window.innerHeight) top = window.innerHeight - 270;
+  if(top < 10) top = 10;
+  
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+}
+function hideMed() {
+  const pop = document.getElementById('medPop');
+  if (pop) pop.style.display = 'none';
+}
+
+function openSlot(){
+  if(!DATA || !DATA.clinics) return toast('⚠ ข้อมูลยังไม่พร้อม กรุณารอสักครู่');
+  const dowArr = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  
+  document.getElementById('slotRows').innerHTML=DATA.clinics.map(c=>{
+    const cdow = c.dow ? String(c.dow).split(',') : [];
+    const cwom = c.wom ? String(c.wom).split(',') : [];
+    
+    let dowHtml = '';
+    for(let i=0; i<7; i++){
+      let on = cdow.includes(String(i)) ? ' on' : '';
+      dowHtml += `<span class="slot-chip${on}" data-val="${i}" onclick="tgSlot(this,'dow','${esc(c.code)}')">${dowArr[i]}</span>`;
+    }
+    
+    let womHtml = '';
+    for(let i=1; i<=5; i++){
+      let on = cwom.includes(String(i)) ? ' on' : '';
+      womHtml += `<span class="slot-chip${on}" data-val="${i}" onclick="tgSlot(this,'wom','${esc(c.code)}')">wk${i}</span>`;
+    }
+
+    return `
+    <div class="row" style="flex-direction:column; align-items:flex-start; background:var(--chip); padding:12px; border-radius:10px; margin-bottom:10px; border:1px solid var(--line);">
+      <div style="display:flex; width:100%; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong style="color:var(--acc); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:8px;" title="${esc(c.name)}">${esc(c.name)}</strong>
+        <input data-code="${esc(c.code)}" type="number" min="0" placeholder="Max Slot (เว้น=∞)" value="${c.max==null?'':c.max}" style="width:135px; flex:0 0 auto;">
+      </div>
+      
+      <div style="font-size:11px; color:var(--dim); margin-bottom:6px;">วันเปิดรับนัด (ไม่เลือก = รับทุกวัน)</div>
+      <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">
+        ${dowHtml}
+        <input type="hidden" data-dow="${esc(c.code)}" value="${esc(c.dow||'')}">
+      </div>
+      
+      <div style="font-size:11px; color:var(--dim); margin-bottom:6px;">สัปดาห์ของเดือน (ไม่เลือก = รับทุกสัปดาห์)</div>
+      <div style="display:flex; flex-wrap:wrap; gap:5px;">
+        ${womHtml}
+        <input type="hidden" data-wom="${esc(c.code)}" value="${esc(c.wom||'')}">
+      </div>
+    </div>`;
+  }).join('');
+  
+  document.getElementById('slotErr').textContent='';
+  document.getElementById('mSlot').classList.add('on');
+}
+
+function tgSlot(btn, type, code){
+  btn.classList.toggle('on');
+  const box = btn.parentElement;
+  const vals = Array.from(box.querySelectorAll('.on')).map(el=>el.dataset.val);
+  box.querySelector(`input[data-${type}="${code}"]`).value = vals.join(',');
+}
+
+async function saveSlot(){
+  const rows = [...document.querySelectorAll('#slotRows .row')];
+  const items = rows.map(r => ({
+    code: r.querySelector('input[data-code]').dataset.code,
+    max: r.querySelector('input[data-code]').value.trim(),
+    dow: r.querySelector('input[data-dow]').value.trim(),
+    wom: r.querySelector('input[data-wom]').value.trim()
+  }));
+
+  const e=document.getElementById('slotErr'); e.textContent='กำลังบันทึก…';
+  try{
+    const j=await call({action:'setslot',token:TOKEN,items:JSON.stringify(items)});
+    if(!j.ok){ e.textContent=j.err||'บันทึกไม่สำเร็จ'; return; }
+    closeM('mSlot'); toast('✓ บันทึก Slot แล้ว'); loadData(1);
+  }catch(x){ e.textContent='เชื่อมต่อไม่ได้: '+x.message; }
+}
+function closeM(id){ document.getElementById(id).classList.remove('on'); }
+
+/*========== Utils ==========*/
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function shortName(s){ return String(s).replace(/^คลินิก\s*/,'').trim().slice(0,14); }
+
+/*========== ระบบยา รพ.สวี ==========
+  หน้านี้อยู่บน GitHub (https) ส่วนระบบยาอยู่บนเครื่อง XAMPP ในเครือข่าย รพ. (http)
+  กดแถบ → เช็กว่าต่อเครื่องระบบยาได้ไหม → ได้ = เปิด portal.php แทนในหน้าต่างเดิม (portal มีปุ่มกลับสู่หน้าตารางนัด) */
+const RX_PORTAL='http://XAMPP_IP/sawee/portal.php';   // ★ แก้เป็น IP/โฟลเดอร์จริงของเครื่อง XAMPP
+let rxBusy=false;
+function toggleRx(force){
+  const on = (typeof force==='boolean') ? force : !document.body.classList.contains('rx');
+  document.body.classList.toggle('rx',on);
+  document.getElementById('rxTitle').innerHTML = on
+    ? '‹ กลับสู่หน้าตารางนัด<small>ระบบยา รพ.สวี</small>'
+    : 'ระบบยา รพ.สวี<small>Reconcile · DUE · ย.ส. · HAD · ยานอก รพ. และอื่น ๆ</small>';
+  document.getElementById('rxKey').textContent = on ? 'ตารางนัด' : 'เปิด ›';
+  if(on) rxCheck(); else if(TOKEN && DATA) loadData(0);
+}
+function rxShow(kind,extra){
+  const m=document.getElementById('rxMsg');
+  if(kind==='wait'){ m.innerHTML='<div class="rxcard"><div class="spin"></div><h3>กำลังเชื่อมต่อระบบยา</h3><p>ตรวจสอบเซิร์ฟเวอร์ระบบยาในเครือข่าย รพ.สวี…</p></div>'; return; }
+  if(kind==='go'){ m.innerHTML='<div class="rxcard"><div class="spin"></div><h3>กำลังเปิดระบบยา…</h3></div>'; return; }
+  m.innerHTML='<div class="rxcard"><img src="logo-sawee.png" alt="" style="height:70px;display:block;margin:0 auto 4px">'+
+    '<h3 style="color:#d61f45">ใช้งานได้เฉพาะในเครือข่าย รพ.สวี</h3>'+
+    '<p>เชื่อมต่อเซิร์ฟเวอร์ระบบยาไม่ได้<br>ตรวจสอบว่าเครื่องนี้ต่อเครือข่ายของโรงพยาบาลอยู่'+
+    (extra?'<br><small style="opacity:.7">'+esc(extra)+'</small>':'')+'</p>'+
+    '<button class="btn-p" onclick="rxCheck()">↻ ลองเชื่อมต่ออีกครั้ง</button>'+
+    '<button onclick="rxGo()">อยู่ใน รพ. แล้ว — เปิดระบบยาเลย ›</button>'+
+    '<button onclick="toggleRx(false)">‹ กลับสู่หน้าตารางนัด</button>'+
+    '<p style="margin:10px 0 0;font-size:10.5px">ถ้า Chrome ถามสิทธิ์ “เข้าถึงอุปกรณ์ในเครือข่าย” ให้กดอนุญาต</p></div>';
+}
+function rxGo(){ rxShow('go'); location.href=RX_PORTAL; }
+async function rxCheck(){
+  if(rxBusy) return; rxBusy=true; rxShow('wait');
+  const ac=('AbortController' in window)?new AbortController():null, tm=setTimeout(()=>ac&&ac.abort(),5000);
+  try{
+    // targetAddressSpace: ให้ Chrome อนุญาตหน้า https เรียกเครื่องในเครือข่าย รพ. (http) ได้ — Chrome จะถามสิทธิ์ครั้งแรก
+    const url=RX_PORTAL+'?action=ping&_='+Date.now(), opt={cache:'no-store',mode:'cors',signal:ac?ac.signal:undefined};
+    let r;
+    try{ r=await fetch(url,Object.assign({targetAddressSpace:'local'},opt)); }
+    catch(e1){ if(e1.name==='AbortError') throw e1; r=await fetch(url,opt); }   // เบราว์เซอร์รุ่นเก่า/ที่อยู่แบบอื่น
+    const j=await r.json();
+    if(!j||!j.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง');
+    rxGo();
+  }catch(e){
+    rxShow('fail', e.name==='AbortError'?'หมดเวลาเชื่อมต่อ':'');
+  }finally{ clearTimeout(tm); rxBusy=false; }
+}
+
+initRememberedPw();
+if(TOKEN) startApp();
+window.addEventListener('pageshow',e=>{ if(e.persisted && document.body.classList.contains('rx')) toggleRx(false); });   // กด Back กลับมาจากระบบยา
+</script>
+</body>
+</html>
