@@ -1,1 +1,176 @@
-test
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>ข้อมูลยา · ห้องยา รพ.สวี</title>
+<link rel="icon" href="../favicon-rx.svg">
+<style>
+@font-face{font-family:Sarabun;src:url(../THSarabunNew.ttf) format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:Sarabun;src:url(../THSarabunNew-Bold.ttf) format("truetype");font-weight:700;font-display:swap}
+:root{--fs:22px;--ink:#1d2433;--mute:#5b6475;--line:#e3e7ee;--bg:#f4f6f9;--card:#fff;--pri:#0b6e4f;--pri-bg:#e3f4ec;--warn:#9a3412;--warn-bg:#fff1e6;--dang:#b42318;--dang-bg:#fdecea}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Sarabun,"Noto Sans Thai",Tahoma,sans-serif;font-size:var(--fs);line-height:1.45}
+.wrap{max-width:640px;margin:0 auto;padding:12px 12px 90px}
+header.top{background:var(--pri);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
+header.top b{font-size:1.05em;flex:1}
+.tbtn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;font:inherit;font-size:.8em;padding:2px 10px;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0}
+h1{font-size:1.55em;line-height:1.15;margin:0}
+.sub{color:var(--mute);font-size:.9em}
+.th{font-size:1.15em;font-weight:700;color:var(--pri)}
+.use{background:var(--pri-bg);border:2px solid var(--pri);border-radius:14px;padding:12px 14px;text-align:center}
+.use .lb{font-size:.8em;color:var(--pri);font-weight:700}
+.use .ln{font-size:1.3em;font-weight:700;line-height:1.25}
+h2{font-size:1.1em;margin:0 0 4px;display:flex;align-items:center;gap:6px}
+h2 .ic{width:1.3em;height:1.3em;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8em;background:var(--pri-bg);color:var(--pri)}
+.warn{background:var(--warn-bg);border-color:#f5c9a8}.warn h2 .ic{background:#fde0c8;color:var(--warn)}
+.dang{background:var(--dang-bg);border-color:#f3b8b2}.dang h2 .ic{background:#f9d2cd;color:var(--dang)}
+.txt{white-space:pre-line}
+.brands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.brand{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.brand img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eef1f5;display:block}
+.brand .bi{padding:6px 8px;font-size:.8em;line-height:1.3}
+.brand .now{display:inline-block;background:var(--pri);color:#fff;border-radius:6px;padding:0 6px;font-size:.85em}
+.vid{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;margin-top:8px;background:#000}
+.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.foot{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:5}
+.btn{flex:1;max-width:300px;text-align:center;text-decoration:none;font:inherit;font-size:.9em;font-weight:700;border-radius:12px;padding:8px;border:2px solid var(--pri);color:var(--pri);background:#fff;cursor:pointer}
+.btn.pri{background:var(--pri);color:#fff}
+.note{font-size:.75em;color:var(--mute);text-align:center;margin-top:16px}
+.skel{color:var(--mute);text-align:center;padding:40px 0}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header class="top">
+  <b>ข้อมูลยา · ห้องยา รพ.สวี</b>
+  <button class="tbtn" id="fsDn" aria-label="ลดขนาดตัวอักษร">ก-</button>
+  <button class="tbtn" id="fsUp" aria-label="เพิ่มขนาดตัวอักษร">ก+</button>
+</header>
+<main class="wrap" id="app"><div class="skel">กำลังโหลดข้อมูลยา…</div></main>
+<nav class="foot">
+  <button class="btn" id="speak">ฟังเสียงอ่าน</button>
+  <a class="btn pri" id="call" href="#">โทรถามเภสัชกร</a>
+</nav>
+<script>
+(function(){
+'use strict';
+/* ===== ตั้งค่า ===== */
+var PHARMACY_TEL = '';           // เบอร์ห้องยา เช่น '077xxxxxx' (ว่าง = ซ่อนปุ่มโทร)
+var DATA = 'data/';              // data/d/<icode>.json · data/u/<drugusage>.json
+
+var q = new URLSearchParams(location.search);
+var icode = (q.get('i') || '').replace(/[^0-9A-Za-z]/g, '');
+var ucode = (q.get('u') || '').trim();
+var app = document.getElementById('app');
+
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function getJSON(u){ return fetch(u, {cache:'no-cache'}).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }); }
+function safeFile(s){ return encodeURIComponent(String(s).replace(/[\/\\]/g, '_')); }
+
+/* รูปจาก Google Drive: รับได้ทั้ง file id และลิงก์แชร์ (ไฟล์ต้องแชร์แบบ "ทุกคนที่มีลิงก์") */
+function driveImg(v){
+  if (!v) return '';
+  var m = String(v).match(/[-\w]{25,}/);
+  return m ? 'https://drive.google.com/thumbnail?id=' + m[0] + '&sz=w800' : String(v);
+}
+function ytId(u){
+  var m = String(u || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+  return m ? m[1] : '';
+}
+function sec(title, icon, body, cls){
+  if (!body || !String(body).trim()) return '';
+  return '<section class="card ' + (cls || '') + '"><h2><span class="ic">' + icon + '</span>' + esc(title) +
+         '</h2><div class="txt">' + esc(body) + '</div></section>';
+}
+
+/* ขนาดตัวอักษร (จำไว้ในเครื่อง) */
+var fs = 22;
+try { fs = parseInt(localStorage.getItem('dl_fs'), 10) || 22; } catch(e){}
+function setFs(v){ fs = Math.max(18, Math.min(34, v)); document.documentElement.style.setProperty('--fs', fs + 'px');
+  try { localStorage.setItem('dl_fs', fs); } catch(e){} }
+setFs(fs);
+document.getElementById('fsUp').onclick = function(){ setFs(fs + 2); };
+document.getElementById('fsDn').onclick = function(){ setFs(fs - 2); };
+
+var call = document.getElementById('call');
+if (PHARMACY_TEL) call.href = 'tel:' + PHARMACY_TEL; else call.classList.add('hide');
+
+if (!icode) {
+  app.innerHTML = '<div class="card"><h1>ไม่พบรหัสยา</h1><p>กรุณาสแกน QR code บนฉลากยาอีกครั้ง</p></div>';
+  return;
+}
+
+Promise.all([
+  getJSON(DATA + 'd/' + safeFile(icode) + '.json'),
+  ucode ? getJSON(DATA + 'u/' + safeFile(ucode) + '.json') : Promise.resolve(null)
+]).then(function(res){ render(res[0], res[1]); });
+
+function render(d, u){
+  var h = '';
+  if (!d) {
+    h += '<section class="card"><h1>ยังไม่มีข้อมูลยานี้</h1>' +
+         '<p class="sub">รหัสยา ' + esc(icode) + '</p>' +
+         '<p>ห้องยากำลังจัดทำข้อมูล หากมีข้อสงสัยเรื่องการใช้ยา กรุณาสอบถามเภสัชกร</p></section>';
+  } else {
+    document.title = (d.name || 'ข้อมูลยา') + ' · รพ.สวี';
+    h += '<section class="card"><h1>' + esc(d.name) + '</h1>' +
+         (d.th_name ? '<div class="th">' + esc(d.th_name) + '</div>' : '') +
+         (d.simple ? '<div>' + esc(d.simple) + '</div>' : '') +
+         '<div class="sub">' + esc([d.strength, d.dosageform].filter(Boolean).join(' · ')) + '</div></section>';
+  }
+  if (u && u.lines && u.lines.length) {
+    h += '<section class="use"><div class="lb">วิธีใช้ตามฉลากของท่าน</div>' +
+         u.lines.filter(Boolean).map(function(l){ return '<div class="ln">' + esc(l) + '</div>'; }).join('') + '</section>';
+  }
+  if (d) {
+    h += sec('ยานี้ใช้รักษา', 'i', d.indication);
+    h += sec('วิธีใช้ยา', '✓', d.how_to_use);
+    var vids = (d.youtube || []).map(ytId).filter(Boolean);
+    if (vids.length) {
+      h += '<section class="card"><h2><span class="ic">▶</span>คลิปแนะนำการใช้ยา</h2>' +
+           vids.map(function(id){ return '<div class="vid"><iframe loading="lazy" allowfullscreen ' +
+             'allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" ' +
+             'src="https://www.youtube-nocookie.com/embed/' + id + '?rel=0"></iframe></div>'; }).join('') + '</section>';
+    }
+    h += sec('ถ้าลืมใช้ยา', '?', d.missed_dose);
+    h += sec('อาการข้างเคียงที่อาจพบ', '!', d.side_effects, 'warn');
+    h += sec('หยุดยาและรีบมาพบแพทย์ทันที ถ้ามีอาการ', '!', d.warning_return, 'dang');
+    h += sec('ข้อควรระวัง', '!', d.avoid, 'warn');
+    h += sec('หญิงตั้งครรภ์', '♀', d.pregnancy);
+    h += sec('หญิงให้นมบุตร', '♀', d.lactation);
+    h += sec('การเก็บรักษา', '❄', d.storage);
+    var br = (d.brands || []).filter(function(b){ return b && (b.trade || b.img); });
+    if (br.length) {
+      h += '<section class="card"><h2><span class="ic">◉</span>ลักษณะยา</h2>' +
+           '<div class="sub" style="margin-bottom:8px">ยาที่ได้รับอาจเป็นบริษัทใดบริษัทหนึ่ง ตัวยาสำคัญเหมือนกัน</div><div class="brands">' +
+           br.map(function(b){
+             return '<div class="brand">' + (b.img ? '<img loading="lazy" alt="' + esc(b.trade) + '" src="' + esc(driveImg(b.img)) + '">' : '') +
+               '<div class="bi">' + (b.current ? '<span class="now">ล็อตปัจจุบัน</span><br>' : '') +
+               '<b>' + esc(b.trade) + '</b>' + (b.maker ? '<br>' + esc(b.maker) : '') +
+               (b.look ? '<br>' + esc(b.look) : '') + '</div></div>';
+           }).join('') + '</div></section>';
+    }
+    if (d.updated) h += '<p class="note">ข้อมูลตรวจสอบโดยเภสัชกร · ปรับปรุง ' + esc(d.updated) + '</p>';
+  }
+  h += '<p class="note">ข้อมูลนี้ใช้ประกอบคำแนะนำของแพทย์และเภสัชกรเท่านั้น<br>ห้ามเปลี่ยนขนาดหรือหยุดยาเองโดยไม่ปรึกษา</p>';
+  app.innerHTML = h;
+}
+
+/* อ่านออกเสียงภาษาไทย */
+var sp = document.getElementById('speak');
+if (!('speechSynthesis' in window)) sp.classList.add('hide');
+sp.onclick = function(){
+  var s = window.speechSynthesis;
+  if (s.speaking) { s.cancel(); sp.textContent = 'ฟังเสียงอ่าน'; return; }
+  var t = Array.prototype.map.call(app.querySelectorAll('h1,.th,.use .ln,section h2,.txt'), function(e){ return e.textContent; }).join('. ');
+  var m = new SpeechSynthesisUtterance(t); m.lang = 'th-TH'; m.rate = 0.9;
+  m.onend = function(){ sp.textContent = 'ฟังเสียงอ่าน'; };
+  s.speak(m); sp.textContent = 'หยุดอ่าน';
+};
+})();
+</script>
+</body>
+</html>
