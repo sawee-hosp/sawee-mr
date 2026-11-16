@@ -67,6 +67,9 @@ h2{font-size:1.06em;font-weight:700;margin:0 0 6px;display:flex;align-items:cent
 .gal img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:linear-gradient(90deg,#eef2f7,#f7f9fc,#eef2f7);background-size:200% 100%;animation:sh 1.4s linear infinite}
 .gal img.ok{animation:none;background:#fff}
 @keyframes sh{to{background-position:-200% 0}}
+.gen{margin-left:auto;font-size:.62em;font-weight:500;color:var(--mute);background:#eef1f6;border-radius:999px;padding:1px 9px}
+.br{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--line)}.br:first-of-type{border-top:0}
+.br b{font-weight:600}.br .when{margin-left:auto;white-space:nowrap;font-size:.78em;color:var(--mute);text-align:right;font-weight:400}
 .gal figcaption{padding:6px 10px;font-size:.78em;line-height:1.35;font-weight:400}
 .gal figcaption b{font-weight:600}
 .now{display:inline-block;background:var(--pri);color:#fff;border-radius:6px;padding:0 6px;font-size:.85em;font-weight:600}
@@ -144,10 +147,43 @@ function imgUrl(v){
 function ytId(u){ var m = String(u || '').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/); return m ? m[1] : ''; }
 var n = 0;
 function card(cls, inner){ return '<section class="card ' + (cls || '') + '" style="animation-delay:' + (0.05 * n++) + 's">' + inner + '</section>'; }
-function sec(title, icon, body, cls){
+function sec(title, icon, body, cls, generic){
   if (!body || !String(body).trim()) return '';
-  return card(cls, '<h2>' + ic(icon) + esc(title) + '</h2><div class="txt">' + esc(body) + '</div>');
+  return card(cls, '<h2>' + ic(icon) + esc(title) + (generic ? '<span class="gen">คำแนะนำทั่วไป</span>' : '') +
+              '</h2><div class="txt">' + esc(body) + '</div>');
 }
+/* ข้อความกลาง ใช้เมื่อเภสัชกรยังไม่ได้เขียนเฉพาะยา */
+var GENERIC = {
+  how_to_use: 'ใช้ยาตามขนาดและเวลาที่ระบุบนฉลากอย่างเคร่งครัด\nห้ามเพิ่ม ลดขนาดยา หรือหยุดยาเอง',
+  missed_dose: 'ถ้าลืม ให้ใช้ทันทีที่นึกได้ แต่ถ้าใกล้เวลามื้อถัดไป ให้ข้ามมื้อที่ลืมไป\nห้ามเพิ่มยาเป็น 2 เท่า\nยาที่ใช้เฉพาะเวลามีอาการ ไม่ต้องใช้ชดเชย',
+  side_effects: 'ยาทุกชนิดอาจมีอาการข้างเคียงได้\nหากพบอาการผิดปกติหลังใช้ยา โทรปรึกษาเภสัชกรได้',
+  warning_return: 'ผื่นคัน ลมพิษ ปากบวม ตาบวม หายใจลำบาก แน่นหน้าอก\nผื่นพุพอง ผิวหนังลอก มีแผลในปาก\n(อาจเป็นอาการแพ้ยา)',
+  avoid: 'แจ้งแพทย์และเภสัชกรทุกครั้งว่าใช้ยา สมุนไพร หรืออาหารเสริมอะไรอยู่\nห้ามแบ่งยาให้ผู้อื่นใช้ แม้มีอาการเหมือนกัน',
+  storage: 'เก็บในที่แห้ง พ้นแสงแดด อุณหภูมิห้อง และพ้นมือเด็ก\n(ยกเว้นฉลากระบุให้เก็บในตู้เย็น)'
+};
+function gsec(d, key, title, icon, cls){
+  var own = d[key] && String(d[key]).trim();
+  return sec(title, icon, own ? d[key] : GENERIC[key], cls, !own);
+}
+/* หญิงตั้งครรภ์: drugitems อาจเก็บเป็นกลุ่ม A B C D X */
+function pregText(v){
+  v = String(v || '').trim(); if (!v || v === '-') return '';
+  var L = (v.toUpperCase().match(/\b[ABCDX]\b/g) || []);
+  if (!L.length) return v;
+  var w = L.sort().pop(), t = {
+    A: 'มีข้อมูลว่าค่อนข้างปลอดภัย ใช้ตามที่แพทย์สั่ง',
+    B: 'มีข้อมูลว่าค่อนข้างปลอดภัย ใช้ตามที่แพทย์สั่ง',
+    C: 'ใช้เมื่อแพทย์พิจารณาแล้วว่าจำเป็นเท่านั้น',
+    D: 'อาจมีผลต่อทารกในครรภ์ แจ้งแพทย์ทันทีถ้าตั้งครรภ์หรือวางแผนจะตั้งครรภ์',
+    X: 'ห้ามใช้ในหญิงตั้งครรภ์ แจ้งแพทย์ทันทีถ้าตั้งครรภ์หรือวางแผนจะตั้งครรภ์'}[w];
+  return 'กลุ่ม ' + v + ' · ' + t;
+}
+function lactText(v){
+  v = String(v || '').trim(); if (!v || v === '-') return '';
+  return /^ok$/i.test(v) ? 'ใช้ได้ระหว่างให้นมบุตร' : v;
+}
+var TM = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function thDate(s){ var m = String(s || '').match(/^(\d{4})-(\d{2})/); return m ? TM[+m[2] - 1] + ' ' + (+m[1] + 543) : ''; }
 
 /* ขนาดตัวอักษร */
 var fs = 19;
@@ -190,13 +226,10 @@ function render(d, u){
   }
   if (d) {
     /* รูปยา: จากชื่อการค้า (brands) + รูปจากคลัง (images) */
-    var pics = [];
-    (d.brands || []).forEach(function(b){ if (b && (b.img || b.trade)) pics.push(b); });
-    (d.images || []).forEach(function(im){ if (im) pics.push({img: im}); });
-    pics.sort(function(a, b){ return (b.current ? 1 : 0) - (a.current ? 1 : 0); });
+    var pics = (d.images || []).filter(Boolean).map(function(im){ return {img: im}; });
     if (pics.length) {
       h += card('', '<h2>' + ic('img') + 'หน้าตายา</h2>' +
-        (pics.length > 1 ? '<div class="vt" style="margin:-4px 0 8px">ยาที่ได้รับอาจเป็นบริษัทใดบริษัทหนึ่ง ตัวยาสำคัญเหมือนกัน · เลื่อนดูได้</div>' : '') +
+        (pics.length > 1 ? '<div class="vt" style="margin:-4px 0 8px">เลื่อนดูได้ · ยาที่ได้รับอาจหน้าตาต่างจากรูปถ้าเปลี่ยนบริษัท</div>' : '') +
         '<div class="gal">' + pics.map(function(b){
           var src = imgUrl(b.img);
           var cap = [b.current ? '<span class="now">ที่ใช้อยู่ตอนนี้</span>' : '', b.trade ? '<b>' + esc(b.trade) + '</b>' : '',
@@ -206,7 +239,7 @@ function render(d, u){
         }).join('') + '</div>');
     }
     h += sec('ยานี้ใช้สำหรับ', 'info', d.indication);
-    h += sec('วิธีใช้ยา', 'pill', d.how_to_use);
+    h += gsec(d, 'how_to_use', 'วิธีใช้ยา', 'pill');
     var vids = (d.videos || d.youtube || []).map(function(v){ return typeof v === 'string' ? {url: v} : v; })
                .filter(function(v){ return v && ytId(v.url); });
     if (vids.length) {
@@ -217,14 +250,22 @@ function render(d, u){
                (v.title ? '<div class="vt">' + esc(v.title) + '</div>' : '');
       }).join(''));
     }
-    h += sec('ถ้าลืมใช้ยา', 'clock', d.missed_dose);
-    h += sec('อาการข้างเคียงที่อาจพบ', 'alert', d.side_effects, 'warn');
-    h += sec('หยุดยาและรีบมาพบแพทย์ทันที ถ้ามีอาการ', 'siren', d.warning_return, 'dang');
-    h += sec('ข้อควรระวัง', 'shield', d.avoid, 'warn');
-    h += sec('หญิงตั้งครรภ์', 'baby', d.pregnancy);
-    h += sec('หญิงให้นมบุตร', 'baby', d.lactation);
-    h += sec('การเก็บรักษา', 'box', d.storage);
-    if (d.updated) h += '<p class="note">ข้อมูลตรวจสอบโดยเภสัชกร · ปรับปรุง ' + esc(d.updated) + '</p>';
+    h += gsec(d, 'missed_dose', 'ถ้าลืมใช้ยา', 'clock');
+    h += gsec(d, 'side_effects', 'อาการข้างเคียงที่อาจพบ', 'alert', 'warn');
+    h += gsec(d, 'warning_return', 'หยุดยาและรีบมาพบแพทย์ทันที ถ้ามีอาการ', 'siren', 'dang');
+    h += gsec(d, 'avoid', 'ข้อควรระวัง', 'shield', 'warn');
+    h += sec('หญิงตั้งครรภ์', 'baby', pregText(d.pregnancy));
+    h += sec('หญิงให้นมบุตร', 'baby', lactText(d.lactation));
+    h += gsec(d, 'storage', 'การเก็บรักษา', 'box');
+    var br = (d.brands || []).filter(function(b){ return b && b.trade; });
+    if (br.length) {
+      h += card('', '<h2>' + ic('box') + 'ชื่อการค้าที่โรงพยาบาลใช้</h2>' + br.map(function(b){
+        var w = [b.since ? 'ตั้งแต่ ' + thDate(b.since) : '', b.last ? 'ล่าสุด ' + thDate(b.last) : ''].filter(Boolean).join('<br>');
+        return '<div class="br"><div>' + (b.current ? '<span class="now">ที่ใช้อยู่ตอนนี้</span> ' : '') + '<b>' + esc(b.trade) + '</b></div>' +
+               (w ? '<div class="when">' + w + '</div>' : '') + '</div>';
+      }).join(''));
+    }
+    if (d.reviewed && d.updated) h += '<p class="note">ข้อมูลตรวจสอบโดยเภสัชกร · ปรับปรุง ' + esc(d.updated) + '</p>';
   }
   h += '<p class="note">ข้อมูลนี้ใช้ประกอบคำแนะนำของแพทย์และเภสัชกรเท่านั้น<br>ห้ามเปลี่ยนขนาดหรือหยุดยาเองโดยไม่ปรึกษา</p>';
   app.innerHTML = h;
