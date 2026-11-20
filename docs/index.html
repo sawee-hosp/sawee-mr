@@ -467,6 +467,9 @@ footer{padding:4px 5px;gap:3px}footer button{padding:5px 2px;font-size:10.5px}
   th{font-size:8.5px}
   footer button{font-size:9.5px}
 }
+/* ปุ่มขยาย/ลดตัวอักษร */
+.hbtn.fz{font-weight:700;font-family:inherit;letter-spacing:-.5px;min-width:24px}
+#out{zoom:var(--fz,1)}
 </style>
 </head>
 <body>
@@ -626,6 +629,8 @@ footer{padding:4px 5px;gap:3px}footer button{padding:5px 2px;font-size:10.5px}
         <path d="M256 258v112M200 314h112" stroke="#fff" stroke-width="38" stroke-linecap="round"/>
       </svg>
       <h1>ตารางนัด รพ.สวี</h1>
+      <button class="hbtn fz" onclick="fontZoom(-1)" title="ลดขนาดตัวอักษร">A−</button>
+      <button class="hbtn fz" onclick="fontZoom(1)" title="ขยายขนาดตัวอักษร">A+</button>
       <button class="hbtn" id="btnLite" onclick="toggleLite()" title="โหมดประหยัด RAM">✨</button>
       <button class="hbtn" id="btnTheme" onclick="toggleTheme()" title="สลับโหมดสว่าง/มืด">🌙</button>
       <button class="hbtn" onclick="logout()" title="ออกจากระบบ">⏻</button>
@@ -923,6 +928,14 @@ async function doLogin(){
   }catch(x){ e.textContent='เชื่อมต่อไม่ได้: '+x.message; }
 }
 document.getElementById('pw').addEventListener('keydown',ev=>{ if(ev.key==='Enter') doLogin(); });
+/* ขยาย/ลดตัวอักษรของตารางและปฏิทิน (จำไว้ในเครื่อง) 80%–170% */
+function fontZoom(d){
+  let z = parseFloat(localStorage.getItem('fz')||'1') || 1;
+  z = d===0 ? 1 : Math.round(Math.min(1.7, Math.max(0.8, z + d*0.1))*10)/10;
+  localStorage.setItem('fz', String(z)); document.documentElement.style.setProperty('--fz', z);
+  if(d) toast('ขนาดตัวอักษร '+Math.round(z*100)+'%');
+}
+try{ document.documentElement.style.setProperty('--fz', parseFloat(localStorage.getItem('fz')||'1')||1); }catch(e){}
 function relogin(){ localStorage.removeItem('tk'); localStorage.removeItem('rl'); location.reload(); }
 function logout(){ 
   localStorage.removeItem('tk'); 
