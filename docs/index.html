@@ -467,6 +467,13 @@ footer{padding:4px 5px;gap:3px}footer button{padding:5px 2px;font-size:10.5px}
   th{font-size:8.5px}
   footer button{font-size:9.5px}
 }
+/* admin: ปฏิทินตั้งวันเปิด */
+.scal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.scal .hd{font-size:10px;text-align:center;color:var(--dim)}
+.sd{border:1px solid var(--line);border-radius:7px;padding:3px 1px;text-align:center;cursor:pointer;min-height:38px;user-select:none}
+.sd b{display:block;font-size:12px}.sd small{font-size:8.5px;color:var(--dim)}
+.sd.o{background:rgba(34,197,94,.12)}.sd.y{background:#22c55e;color:#fff}.sd.y small{color:#fff}.sd.n{background:#ef4444;color:#fff}.sd.n small{color:#fff}
+.sd.shol{box-shadow:inset 0 -3px 0 #f59e0b}.sd.past{opacity:.4}
+.sk{font-size:10px;padding:1px 5px;border-radius:5px}.sk.o{background:rgba(34,197,94,.15)}.sk.y{background:#22c55e;color:#fff}.sk.n{background:#ef4444;color:#fff}
 /* ปุ่มขยาย/ลดตัวอักษร */
 .hbtn.fz{font-weight:700;font-family:inherit;letter-spacing:-.5px;min-width:24px}
 #out{zoom:var(--fz,1)}
@@ -665,6 +672,8 @@ footer{padding:4px 5px;gap:3px}footer button{padding:5px 2px;font-size:10.5px}
     <button onclick="loadData(1)">↻ รีเฟรช</button>
     <button onclick="saveView()">💾 บันทึกมุมมอง</button>
     <button id="btnSlot" onclick="openSlot()" style="display:none">⚙ Slot</button>
+    <button id="btnSched" onclick="openSched()" style="display:none">📅 วันเปิด</button>
+    <button id="btnHol" onclick="openHol()" style="display:none">🏖 วันหยุด</button>
   </footer>
 </div>
 
@@ -697,6 +706,39 @@ footer{padding:4px 5px;gap:3px}footer button{padding:5px 2px;font-size:10.5px}
   </div>
 </div></div>
 
+<!-- ================= ADMIN: วันเปิดคลินิกรายวัน ================= -->
+<div class="mask" id="mSched"><div class="modal">
+  <h2>📅 วันเปิดคลินิก (ตั้งล่วงหน้า)</h2>
+  <p>แตะวันเพื่อสลับ: <span class="sk o">กฎ Slot</span> → <span class="sk y">✓ เปิด</span> → <span class="sk n">✕ ปิด</span> → กลับไปใช้กฎ · วันที่ตั้งไว้ทับกฎ วัน/wk เฉพาะวันนั้น</p>
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+    <select id="scClinic" style="flex:1;min-width:0" onchange="drawSched()"></select>
+  </div>
+  <div class="calnav" style="padding:2px 0 4px"><button onclick="schedMonth(-1)">‹</button><div class="mt" id="scMonth"></div><button onclick="schedMonth(1)">›</button></div>
+  <div class="mbody"><div class="scal" id="scCal"></div></div>
+  <div class="err" id="scErr"></div>
+  <div class="mfoot">
+    <button onclick="closeM('mSched')">ยกเลิก</button>
+    <button class="btn-p" onclick="saveSched()">บันทึก</button>
+  </div>
+</div></div>
+
+<!-- ================= ADMIN: วันหยุด รพ. ================= -->
+<div class="mask" id="mHol"><div class="modal">
+  <h2>🏖 วันหยุด รพ.</h2>
+  <p>วันหยุดจะถูกซ่อนในตารางเป็นค่าเริ่มต้น (กดปุ่ม "หยุด" เพื่อแสดง)</p>
+  <div style="display:flex;gap:5px;margin-bottom:8px">
+    <input id="hoD" type="date" style="flex:0 0 auto">
+    <input id="hoN" placeholder="ชื่อวันหยุด" style="flex:1;min-width:0">
+    <button class="btn-p" onclick="addHol()">＋</button>
+  </div>
+  <div class="mbody" id="holRows"></div>
+  <div class="err" id="hoErr"></div>
+  <div class="mfoot">
+    <button onclick="closeM('mHol')">ยกเลิก</button>
+    <button class="btn-p" onclick="saveHol()">บันทึก</button>
+  </div>
+</div></div>
+
 <script>
 const API='https://script.google.com/macros/s/AKfycbxTI_2167EzQ1GO_eCJtq7BHXuxr8hNUjZ_IWkjefySDkyouU42yjLf5HrswDJHONxY4g/exec';
 const REFRESH=60000, STALE_MIN=5;
@@ -722,6 +764,7 @@ let VER='', lastDay='', visBound=false;
 let MODE=localStorage.getItem('md')||'sum';
 let SEL=new Set(JSON.parse(localStorage.getItem('sel')||'[]'));
 let DOW=new Set(JSON.parse(localStorage.getItem('dow2')||JSON.stringify([new Date().getDay()])));  // ค่าเริ่ม = วันเดียวกับวันนี้ ทุกสัปดาห์ (จนกว่าจะแก้เอง)
+let HOL=HOLIDAYS;   // วันหยุดที่ใช้จริง: admin แก้ได้ (ถ้าเคยบันทึก) ไม่งั้นใช้ชุดในไฟล์
 let SHOWHOL=localStorage.getItem('hol')==='1';
 let FILTER_MODE=parseInt(localStorage.getItem('fm')||'1',10); 
 let FORWARD_DAYS=parseInt(localStorage.getItem('forwardDays')||'150',10);
@@ -947,7 +990,9 @@ function logout(){
 function startApp(){
   document.getElementById('mLogin').classList.remove('on');
   document.getElementById('app').style.display='flex';
-  document.getElementById('btnSlot').style.display=(ROLE==='nurse')?'':'none';
+  document.getElementById('btnSlot').style.display=(ROLE==='nurse'||ROLE==='admin')?'':'none';
+  document.getElementById('btnSched').style.display=(ROLE==='admin')?'':'none';
+  document.getElementById('btnHol').style.display=(ROLE==='admin')?'':'none';
   
   const selR = document.getElementById('selRange');
   if(selR) selR.value = String(FORWARD_DAYS);
@@ -1027,7 +1072,7 @@ async function loadData(forceReload){
     }
     const j=await call({action:'data',token:TOKEN});
     if(!j.ok){ if(j.err==='unauthorized'){ relogin(); return; } throw new Error(j.err||'ไม่ทราบสาเหตุ'); }
-    DATA=j; VER=j.ver||''; autoSelectToday(); updPickLabel(); render();
+    DATA=j; VER=j.ver||''; HOL=j.hol_set?(j.holidays||{}):Object.assign({},HOLIDAYS,j.holidays||{}); autoSelectToday(); updPickLabel(); render();
   }catch(x){
     if(!DATA) document.getElementById('out').innerHTML=
       '<div style="padding:36px;text-align:center;color:#e11d48">เชื่อมต่อไม่ได้<br>'+
@@ -1111,13 +1156,21 @@ function unSel(code){
   save(); updPickLabel(); render();
 }
 /* ค่าเริ่มต้น: เลือกทุกคลินิกที่เปิดในวันนี้ (ตามวัน/สัปดาห์ที่ตั้งไว้ใน Slot) — เลือกใหม่ทุกวัน เว้นแต่กด "บันทึกมุมมอง" */
+/* คลินิกเปิดวันนี้ไหม: ตารางที่ admin ตั้งเป็นรายวันมาก่อน → ไม่มีค่อยใช้กฎ วัน/wk ใน Slot
+   คืน {open, set}: set=true แปลว่า "ตั้งวันเปิดไว้" (แสดงวันนั้นเสมอแม้ยังไม่มีนัด) */
+function clinicOpen(c, d){
+  const sv = DATA && DATA.sched && DATA.sched[iso(d)] ? DATA.sched[iso(d)][c.code] : undefined;
+  if(sv===1) return {open:true,set:true};
+  if(sv===0) return {open:false,set:true};
+  const dw=d.getDay(), wom=Math.ceil(d.getDate()/7);
+  const ok=(!c.dow || String(c.dow).split(',').map(Number).includes(dw)) && (!c.wom || String(c.wom).split(',').map(Number).includes(wom));
+  return {open:ok, set:ok && !!(c.dow||c.wom)};
+}
 function autoSelectToday(){
   if(!DATA || localStorage.getItem('view_saved')==='1') return;
   const d=new Date(), key=iso(d); if(localStorage.getItem('auto_day')===key) return;
   localStorage.setItem('auto_day',key);
-  const dw=d.getDay(), wom=Math.ceil(d.getDate()/7);
-  const open=DATA.clinics.filter(c=>c.dow && String(c.dow).split(',').map(Number).includes(dw) &&
-    (!c.wom || String(c.wom).split(',').map(Number).includes(wom))).map(c=>c.code);
+  const open=DATA.clinics.filter(c=>{ const o=clinicOpen(c,d); return o.open&&o.set; }).map(c=>c.code);
   if(open.length){ SEL=new Set(open); MODE='sel'; } else { SEL=new Set(); MODE='sum'; }
   save();
 }
@@ -1168,7 +1221,7 @@ function renderTable(){
   
   for(let i=0;i<n;i++){
     const d=new Date(start); d.setDate(start.getDate()+i);
-    const key=iso(d), dw=d.getDay(), hol=HOLIDAYS[key];
+    const key=iso(d), dw=d.getDay(), hol=HOL[key];
     const diff=Math.round((d-today)/86400000);
     const row=DATA.counts[key]||{};
     let sum=0;
@@ -1194,20 +1247,10 @@ function renderTable(){
     const clinicsToCheck = codes ? DATA.clinics.filter(c=>codes.includes(c.code)) : DATA.clinics;
 
     for(let c of clinicsToCheck) {
-      let dowMatch = true;
-      let womMatch = true;
-      if(c.dow) {
-        const dows = c.dow.split(',').map(Number);
-        if(!dows.includes(dayOfWeek)) dowMatch = false;
-      }
-      if(c.wom) {
-        const woms = c.wom.split(',').map(Number);
-        if(!woms.includes(weekOfMonth)) womMatch = false;
-      }
-
-      if(dowMatch && womMatch) {
+      const co = clinicOpen(c, d);
+      if(co.open) {
         isScheduled = true;
-        if(c.dow || c.wom) openSet.add(c.code);
+        if(co.set) openSet.add(c.code);
         const bk = row[c.code] || 0;
         const mx = maxMap[c.code];
         if (mx == null || bk < mx) {
@@ -1237,7 +1280,7 @@ function renderTable(){
       '</div></td><td class="c-day">'+TH_DAY[dw]+'</td>'+
       '<td class="c-sum">'+sumCell(sum,peakSum,openSet.size>0)+'</td>';
     cols.forEach(c=>{ h+='<td>'+cellHtml(row[c.code]||0,maxMap[c.code],peak[c.code]||0,
-      (c.dow||c.wom)?openSet.has(c.code):null)+'</td>'; });
+      (c.dow||c.wom||(DATA.sched&&DATA.sched[key]&&DATA.sched[key][c.code]!==undefined))?openSet.has(c.code):null)+'</td>'; });
     h+='</tr>';
   }
   h+='</tbody></table>';
@@ -1311,7 +1354,7 @@ function renderCal(){
   for(let i=0;i<pad;i++) h+='<div></div>';
   for(let i=1;i<=dim;i++){
     const d=new Date(calY,calM,i), key=iso(d), dw=d.getDay(), v=vals[i-1];
-    const diff=Math.round((d-today)/86400000), hol=HOLIDAYS[key];
+    const diff=Math.round((d-today)/86400000), hol=HOL[key];
     const cls=['cd',v===0?'zero':'',(dw===0||dw===6||hol)?'wk':'',diff===0?'now':'',diff<0?'mute':''].join(' ');
     const tip=i+' '+TH_ML[calM]+' '+(calY+543)+' · '+v+' ราย'+
       (hol?(' · '+hol):'')+(diff>0?(' · อีก '+diff+' วัน'):(diff===0?' · วันนี้':''));
@@ -1466,6 +1509,56 @@ async function saveSlot(){
     const j=await call({action:'setslot',token:TOKEN,items:JSON.stringify(items)});
     if(!j.ok){ e.textContent=j.err||'บันทึกไม่สำเร็จ'; return; }
     closeM('mSlot'); toast('✓ บันทึก Slot แล้ว'); loadData(1);
+  }catch(x){ e.textContent='เชื่อมต่อไม่ได้: '+x.message; }
+}
+/* ===== admin: วันเปิดคลินิกรายวัน ===== */
+let SC={y:0,m:0,ch:{}};   // ch[date|code] = 1 | 0 | null (null = ลบค่าที่ตั้ง กลับไปใช้กฎ)
+function openSched(){
+  if(!DATA) return; const t=new Date(); SC={y:t.getFullYear(),m:t.getMonth(),ch:{}};
+  const sel=document.getElementById('scClinic');
+  sel.innerHTML=DATA.clinics.map(c=>'<option value="'+esc(c.code)+'">'+esc(c.name)+'</option>').join('');
+  if(SEL.size) sel.value=[...SEL][0];
+  document.getElementById('scErr').textContent=''; drawSched(); document.getElementById('mSched').classList.add('on');
+}
+function schedMonth(d){ SC.m+=d; if(SC.m<0){SC.m=11;SC.y--;} if(SC.m>11){SC.m=0;SC.y++;} drawSched(); }
+function schedVal(key,code){ const k=key+'|'+code; if(k in SC.ch) return SC.ch[k]; const r=DATA.sched&&DATA.sched[key]; return r&&r[code]!==undefined?r[code]:null; }
+function drawSched(){
+  const code=document.getElementById('scClinic').value, c=DATA.clinics.find(x=>x.code===code); if(!c) return;
+  document.getElementById('scMonth').textContent=TH_ML[SC.m]+' '+(SC.y+543);
+  const first=new Date(SC.y,SC.m,1), pad=first.getDay(), dim=new Date(SC.y,SC.m+1,0).getDate(), today=iso(new Date());
+  let h=TH_DAY.map(d=>'<div class="hd">'+d+'</div>').join(''); for(let i=0;i<pad;i++) h+='<div></div>';
+  for(let i=1;i<=dim;i++){
+    const d=new Date(SC.y,SC.m,i), key=iso(d), v=schedVal(key,code);
+    const rule=(!c.dow||String(c.dow).split(',').map(Number).includes(d.getDay()))&&(!c.wom||String(c.wom).split(',').map(Number).includes(Math.ceil(i/7)))&&!!(c.dow||c.wom);
+    const cls=v===1?'y':v===0?'n':(rule?'o':''), hol=HOL[key];
+    h+='<div class="sd '+cls+(key<today?' past':'')+(hol?' shol':'')+'" onclick="tgSched(\''+key+'\')" title="'+esc(hol||'')+'"><b>'+i+'</b><small>'+(v===1?'✓ เปิด':v===0?'✕ ปิด':rule?'กฎ':(hol?'หยุด':''))+'</small></div>';
+  }
+  document.getElementById('scCal').innerHTML=h;
+}
+function tgSched(key){ const code=document.getElementById('scClinic').value, v=schedVal(key,code);
+  SC.ch[key+'|'+code]= v===null?1 : v===1?0 : null; drawSched(); }
+async function saveSched(){
+  const items=Object.keys(SC.ch).map(k=>({d:k.slice(0,10),c:k.slice(11),o:SC.ch[k]}));
+  const e=document.getElementById('scErr'); if(!items.length){ closeM('mSched'); return; }
+  e.textContent='กำลังบันทึก…';
+  try{ const j=await call({action:'setsched',token:TOKEN,items:JSON.stringify(items)});
+    if(!j.ok){ e.textContent=j.err||'บันทึกไม่สำเร็จ'; return; }
+    closeM('mSched'); toast('✓ บันทึกวันเปิดคลินิกแล้ว'); loadData(1);
+  }catch(x){ e.textContent='เชื่อมต่อไม่ได้: '+x.message; }
+}
+/* ===== admin: วันหยุด รพ. ===== */
+let HL=[];
+function openHol(){ HL=Object.keys(HOL).sort().map(d=>({d,n:HOL[d]})); document.getElementById('hoErr').textContent=''; drawHol(); document.getElementById('mHol').classList.add('on'); }
+function drawHol(){ const y=iso(new Date()).slice(0,4);
+  document.getElementById('holRows').innerHTML=HL.map((h,i)=>h.d.slice(0,4)<y?'':'<div class="row" style="display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)"><span style="flex:0 0 96px;font-variant-numeric:tabular-nums">'+esc(fmtTH(h.d))+'</span><span style="flex:1;min-width:0">'+esc(h.n)+'</span><button onclick="HL.splice('+i+',1);drawHol()" title="ลบ">✕</button></div>').join('')||'<div style="color:var(--dim)">ยังไม่มีวันหยุด</div>'; }
+function fmtTH(k){ const d=new Date(k+'T00:00'); return d.getDate()+' '+TH_MS[d.getMonth()]+' '+String(d.getFullYear()+543).slice(2); }
+function addHol(){ const d=document.getElementById('hoD').value, n=document.getElementById('hoN').value.trim()||'วันหยุด รพ.';
+  if(!d) return; HL=HL.filter(x=>x.d!==d); HL.push({d,n}); HL.sort((a,b)=>a.d<b.d?-1:1); document.getElementById('hoN').value=''; drawHol(); }
+async function saveHol(){
+  const e=document.getElementById('hoErr'); e.textContent='กำลังบันทึก…';
+  try{ const j=await call({action:'setholiday',token:TOKEN,items:JSON.stringify(HL)});
+    if(!j.ok){ e.textContent=j.err||'บันทึกไม่สำเร็จ'; return; }
+    closeM('mHol'); toast('✓ บันทึกวันหยุดแล้ว'); loadData(1);
   }catch(x){ e.textContent='เชื่อมต่อไม่ได้: '+x.message; }
 }
 function closeM(id){ document.getElementById(id).classList.remove('on'); }
