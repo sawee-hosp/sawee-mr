@@ -209,6 +209,9 @@
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <input id="manage-search" oninput="renderManageTable()" placeholder="ค้นหาชื่อ / ID / สถานที่..." class="px-3 py-2 bg-white rounded-xl text-sm font-semibold outline-none border border-slate-200 w-60">
+                        <button onclick="openGuide()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-book-open"></i> คู่มือเพิ่มอุปกรณ์
+                        </button>
                         <button onclick="openDeviceForm()" class="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i> เพิ่มอุปกรณ์
                         </button>
@@ -384,6 +387,7 @@
                         <button type="button" onclick="testDeviceConnection()" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-plug-circle-check"></i> ทดสอบ</button>
                     </div>
                     <p id="df-test-result" class="text-xs mt-1.5"></p>
+                    <button type="button" onclick="openGuide()" class="text-xs text-amber-700 font-semibold underline mt-1"><i class="fa-solid fa-circle-question"></i> หา Device ID ได้จากไหน? ดูคู่มือ</button>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -646,6 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function closeTopModal() {
+    if (!$('guide-modal').classList.contains('hidden')) return closeGuide();
     if (!$('device-form-modal').classList.contains('hidden')) return closeDeviceForm();
     if (!$('health-modal').classList.contains('hidden')) return closeHealthModal();
     if (!$('detail-modal').classList.contains('hidden')) return closeModal();
@@ -1499,5 +1504,83 @@ async function deleteDevice(id) {
 }
 </script>
 
+
+<!-- ================= Modal คู่มือ ================= -->
+<div id="guide-modal" class="fixed inset-0 z-[80] hidden print-hidden" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeGuide()"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-3xl border border-slate-200 overflow-hidden text-left">
+      <div class="px-6 py-4 border-b border-amber-100 bg-amber-50 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-amber-900"><i class="fa-solid fa-book-open mr-2"></i>คู่มือ: เพิ่มอุปกรณ์ Tuya และดูแลระบบ</h3>
+        <button type="button" onclick="closeGuide()" class="text-slate-400 hover:text-slate-700" aria-label="ปิด"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div class="p-6 max-h-[75vh] overflow-y-auto text-sm text-slate-700 space-y-5 leading-relaxed guide-body">
+        <section>
+          <h4 class="font-bold text-brand-800 text-base mb-2">① เพิ่มเซ็นเซอร์ในแอป Smart Life ก่อน</h4>
+          <ol class="list-decimal ml-5 space-y-1">
+            <li>เปิดแอป <b>Smart Life</b> (หรือ Tuya Smart) ด้วย<b>บัญชีเดียวกับที่ลิงก์ไว้กับ Tuya IoT Platform</b> ของระบบนี้</li>
+            <li>กด <b>+</b> มุมขวาบน → เพิ่มอุปกรณ์ → ทำตามขั้นตอนเชื่อม Wi‑Fi (ต้องเป็น Wi‑Fi 2.4 GHz)</li>
+            <li>ตั้งชื่อในแอปให้จำง่าย เช่น “ตู้เย็นยา ER” และเพิ่มไว้ใน Home เดียวกับเครื่องเดิม</li>
+            <li>รอให้แอปแสดงค่าอุณหภูมิได้ก่อน แล้วค่อยทำขั้นต่อไป</li>
+          </ol>
+        </section>
+        <section>
+          <h4 class="font-bold text-brand-800 text-base mb-2">② หา Device ID (เลือกวิธีใดก็ได้)</h4>
+          <p class="font-semibold">วิธี A — จากแอป (ง่ายสุด)</p>
+          <ol class="list-decimal ml-5 space-y-1 mb-3">
+            <li>ในแอปกดเข้าอุปกรณ์ตัวนั้น</li>
+            <li>กดไอคอน <b>ดินสอ ✎</b> หรือ <b>…</b> มุมขวาบน</li>
+            <li>เลือก <b>Device Information</b> (ข้อมูลอุปกรณ์)</li>
+            <li>ค่า <b>Virtual ID</b> คือ Device ID → กดคัดลอก (ยาวประมาณ 20–22 ตัว เช่น <code class="bg-slate-100 px-1 rounded">eb41e3610469de0771n3dm</code>)</li>
+          </ol>
+          <p class="font-semibold">วิธี B — จากเว็บ Tuya IoT Platform</p>
+          <ol class="list-decimal ml-5 space-y-1">
+            <li>เข้า <a href="https://platform.tuya.com/cloud" target="_blank" rel="noopener" class="text-brand-600 underline">platform.tuya.com/cloud</a> → เมนูซ้าย <b>Cloud → Development</b></li>
+            <li>กด <b>Open Project</b> ที่โปรเจกต์ของระบบนี้</li>
+            <li>แท็บ <b>Devices</b> → แท็บย่อย <b>All Devices</b> หรือ <b>Link App Account</b></li>
+            <li>ดูว่าตัวเลือก <b>Data Center</b> ด้านบนตรงกับที่ตั้งโปรเจกต์ไว้ (ถ้าเลือกผิด รายการจะว่าง)</li>
+            <li>คอลัมน์ <b>Device ID</b> → คัดลอกของเครื่องใหม่ (ดูจากชื่อที่ตั้งในแอป)</li>
+          </ol>
+          <p class="mt-2 text-xs bg-slate-50 border rounded-xl p-2">💡 อุปกรณ์ที่เพิ่มในบัญชีแอปที่ลิงก์ไว้แล้ว จะเข้าโปรเจกต์ให้อัตโนมัติ ไม่ต้องลิงก์ใหม่ ถ้าไม่เห็น ให้เช็กว่าใช้บัญชีแอปถูกตัว</p>
+        </section>
+        <section>
+          <h4 class="font-bold text-brand-800 text-base mb-2">③ ลงทะเบียนในเว็บนี้</h4>
+          <ol class="list-decimal ml-5 space-y-1">
+            <li>แท็บจัดการอุปกรณ์ → กด <b>+ เพิ่มอุปกรณ์</b></li>
+            <li>วาง Device ID → กด <b>ทดสอบ</b> ต้องขึ้นค่าอุณหภูมิ/สถานะได้</li>
+            <li>เลือกพรีเซ็ต (ตู้เย็นยา 2–8°C / ห้องยา 20–30°C / ช่องแช่แข็ง) → ใส่ชื่อ, ประเภท, ห้อง</li>
+            <li>เปิดสวิตช์ <b>เปิดใช้งาน</b> → บันทึก → กดซิงค์ข้อมูล เครื่องจะขึ้นบนแดชบอร์ด</li>
+          </ol>
+        </section>
+        <section>
+          <h4 class="font-bold text-red-700 text-base mb-2">④ ต่ออายุ IoT Core (ฟรี) — ทุก ~6 เดือน</h4>
+          <ol class="list-decimal ml-5 space-y-1">
+            <li>platform.tuya.com → <b>Cloud → Cloud Services → IoT Core</b></li>
+            <li>กด <b>Extend Trial Period</b> → กรอกฟอร์ม (ขอ 6 เดือน) → รออนุมัติ 1–2 วัน</li>
+            <li><b>ห้าม</b>กด “Subscribe to Resource Pack” (เสียเงิน)</li>
+            <li>อนุมัติแล้ว: Apps Script → แก้วันที่ใน <code class="bg-slate-100 px-1 rounded">setTuyaExpiry()</code> → Run (ระบบจะอีเมลเตือนล่วงหน้า 14 วัน)</li>
+          </ol>
+        </section>
+        <section>
+          <h4 class="font-bold text-brand-800 text-base mb-2">⑤ แก้ปัญหาที่พบบ่อย</h4>
+          <table class="w-full text-xs border rounded-xl overflow-hidden">
+            <thead class="bg-slate-100"><tr><th class="p-2 text-left">อาการ / code</th><th class="p-2 text-left">สาเหตุ → วิธีแก้</th></tr></thead>
+            <tbody class="divide-y">
+              <tr><td class="p-2 font-mono">28841002</td><td class="p-2">IoT Core หมดอายุ → ทำข้อ ④</td></tr>
+              <tr><td class="p-2 font-mono">1106 permission deny</td><td class="p-2">อุปกรณ์ไม่อยู่ในบัญชีแอปที่ลิงก์ → เพิ่มด้วยบัญชีที่ถูกต้อง</td></tr>
+              <tr><td class="p-2 font-mono">1010 / 1011 token</td><td class="p-2">token หมดอายุ → รัน script ใหม่ ถ้ายังไม่หายเช็ก Client ID/Secret</td></tr>
+              <tr><td class="p-2">ออฟไลน์ตัวเดียว</td><td class="p-2">ไฟดับ / ถ่านหมด / Wi‑Fi หลุด → ดูในแอป Smart Life</td></tr>
+              <tr><td class="p-2">ออฟไลน์ทุกตัวพร้อมกัน</td><td class="p-2">ดู Apps Script → Executions หา error code ด้านบน</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function openGuide(){ $('guide-modal').classList.remove('hidden'); }
+function closeGuide(){ $('guide-modal').classList.add('hidden'); }
+</script>
 </body>
 </html>
