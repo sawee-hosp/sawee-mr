@@ -1069,12 +1069,12 @@ body{font-family:SR,'TH SarabunPSK',Tahoma,sans-serif;color:#000;background:#fff
   //  รายการสแกนใช้ยาจากกล่อง (afterhours.php → ชีต PrepackUse) · สรุปตามช่วงเวลา/กล่อง
   // =====================================================================
   let PPU = { rows: [], box: '' };
-  async function loadScanUse(from, to) {
+  /** รายการสแกนใช้ยามากับผล getAfterHours (data.scan · shared.gs v5.9 ขึ้นไป) */
+  function loadScanUse() {
     const el = $('ah-scan'); if (!el) return;
-    el.innerHTML = '<div class="small text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายการสแกนใช้ยา…</div>';
-    const r = await api('getPrepackUse', { from, to });
-    if (!r.status) { el.innerHTML = `<div class="small text-danger">โหลดรายการสแกนใช้ยาไม่ได้: ${esc(r.message || '')}</div>`; return; }
-    PPU.rows = r.rows || (r.data && r.data.rows) || []; renderScanUse();
+    const sc = window.AH && window.AH.scan;
+    if (!Array.isArray(sc)) { el.innerHTML = '<div class="small text-muted"><i class="fas fa-barcode"></i> สรุปสแกนใช้ยาจากกล่อง: รอห้องยาอัปเดต shared.gs (v5.9)</div>'; return; }
+    PPU.rows = sc; renderScanUse();
   }
   function renderScanUse() {
     const el = $('ah-scan'); if (!el) return;
