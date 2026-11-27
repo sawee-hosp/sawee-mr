@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="rxfill-shared.js?v=20261014"></script>
 
   <style>
@@ -318,6 +319,7 @@
           <input type="date" id="ah-from" class="form-control form-control-sm"><span class="small">ถึง</span><input type="date" id="ah-to" class="form-control form-control-sm">
           <button class="btn btn-sm btn-primary" onclick="loadAfter()">ดู</button>
         </div>
+        <div id="ah-scan" class="mb-3"></div>
         <div id="ah-info" class="small text-muted mb-2"></div>
         <div id="ah-list"></div>
       </div>
@@ -887,7 +889,7 @@
     const el = $('stock-content'), b = BOX_BY[id]; if (!b || !CAT) return;
     const rows = CAT.inv.filter(r => r[1] === id);
     const total = rows.reduce((s, r) => s + (r[7] || 0), 0);
-    let h = `<div class="h5 fw-bold text-dark mb-1 w-100 d-flex align-items-center gap-2 mt-2">${getBoxIcon(b.type)} ${esc(b.name)} <span class="badge bg-info rounded-pill" style="font-size:.7rem">${rows.length} ยา</span></div>
+    let h = `<div class="h5 fw-bold text-dark mb-1 w-100 d-flex align-items-center gap-2 mt-2">${getBoxIcon(b.type)} ${esc(b.name)} <span class="badge bg-info rounded-pill" style="font-size:.7rem">${rows.length} ยา</span>${me().isAdmin && rows.length ? `<button class="btn btn-sm btn-outline-primary rounded-pill ms-auto" onclick="openLabelDlg('${b.id}')"><i class="fas fa-tags"></i> พิมพ์ฉลาก 60×25</button>` : ''}</div>
              <div class="small text-muted mb-2 border-bottom pb-2 w-100">จำนวนครั้งที่เปลี่ยน: ${total} | ตรวจล่าสุด: ${esc(b.lastCheck || '-')}</div>`;
     const shelf = {}; rows.forEach(r => { const k = String(r[6] || '').split('/')[1] || 'Other'; (shelf[k] = shelf[k] || []).push(r); });
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -922,6 +924,7 @@
     if (!r.status) { $('ah-list').innerHTML = `<div class="alert alert-danger">${esc(r.message)}</div>`; return; }
     AH = { from, to, ...r.data, agg: aggAfter(r.data.rows) };
     renderAfter();
+    loadScanUse(from, to);
   }
   /** แยกที่มา: OPD → ER · IPD ดูชื่อตึกก่อน (หญิง/ชาย) ถ้าไม่ชัดดูเพศ */
   function srcKey(row) {
@@ -991,6 +994,108 @@
           <table class="table table-sm table-loc mb-0 mt-1"><thead><tr><th>กล่อง</th><th class="text-end">คงเหลือ</th><th>Exp</th></tr></thead><tbody>${locRows}</tbody></table></details>` : '<div class="small text-muted mt-2">ไม่มีเก็บสำรองในกล่อง</div>'}
       </div>`;
   }
+  // =====================================================================
+  //  ฉลาก 60×25 มม. (บาร์โค้ด icode.กล่อง) — ให้พยาบาลสแกนใน afterhours.php
+  // =====================================================================
+  function openLabelDlg(boxId) {
+    const b = BOX_BY[boxId]; if (!b || !CAT) return;
+    const rows = CAT.inv.filter(r => r[1] === boxId).sort((x, y) => nameOf(x[2]).localeCompare(nameOf(y[2])));
+    const tr = rows.map((r, i) => { const d = CAT.drugs[r[2]] || {};
+      return `<tr><td><input type="checkbox" class="form-check-input lb-ck" data-i="${i}" checked></td>
+        <td class="small"><b>${esc(d.n || r[2])}</b><div class="text-muted" style="font-size:.7rem">${esc(r[2])} · คงเหลือ ${fmtN(r[4])} · Exp ${thD(r[5])}</div></td>
+        <td><input type="number" min="0.5" step="0.5" class="form-control form-control-sm text-center lb-q" data-i="${i}" value="1" style="width:62px"></td>
+        <td><input type="number" min="0" max="200" class="form-control form-control-sm text-center lb-n" data-i="${i}" value="1" style="width:62px"></td></tr>`; }).join('');
+    Swal.fire({ title: 'พิมพ์ฉลาก 60×25 มม.', width: 640, showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> พิมพ์', cancelButtonText: 'ปิด',
+      html: `<div class="text-start small mb-2">${getBoxIcon(b.type)} <b>${esc(b.name)}</b> · วันที่เติม <input type="date" id="lb-date" class="form-control form-control-sm d-inline-block" style="width:150px" value="${isoD(new Date())}"></div>
+        <div class="d-flex gap-2 mb-2 small"><a href="#" onclick="document.querySelectorAll('.lb-ck').forEach(x=>x.checked=true);return false">เลือกทั้งหมด</a>
+          <a href="#" onclick="document.querySelectorAll('.lb-ck').forEach(x=>x.checked=false);return false">ไม่เลือก</a>
+          <a href="#" class="ms-auto" onclick="document.querySelectorAll('.lb-n').forEach(x=>{const r=window._lbRows[x.dataset.i];x.value=Math.max(1,Math.ceil(r[4]||1))});return false">จำนวนดวง = คงเหลือ</a></div>
+        <div style="max-height:50vh;overflow:auto"><table class="table table-sm align-middle mb-0"><thead><tr><th></th><th>ยา</th><th class="small">จำนวน/ซอง</th><th class="small">ดวง</th></tr></thead><tbody>${tr}</tbody></table></div>
+        <div class="small text-muted text-start mt-2">ตั้งเครื่องพิมพ์: กระดาษ 60×25 มม. · Margin = None · Scale 100%</div>`,
+      didOpen: () => { window._lbRows = rows; },
+      preConfirm: () => {
+        const items = [];
+        document.querySelectorAll('.lb-ck').forEach(ck => { if (!ck.checked) return; const i = ck.dataset.i, r = rows[i];
+          const q = parseFloat(document.querySelector(`.lb-q[data-i="${i}"]`).value) || 1, n = parseInt(document.querySelector(`.lb-n[data-i="${i}"]`).value) || 0;
+          for (let k = 0; k < n; k++) items.push({ r, q }); });
+        if (!items.length) { Swal.showValidationMessage('ยังไม่ได้เลือกยา'); return false; }
+        if (items.length > 400) { Swal.showValidationMessage('พิมพ์ได้ครั้งละไม่เกิน 400 ดวง'); return false; }
+        return { items, date: $('lb-date').value };
+      } }).then(res => { if (res.isConfirmed) printLabels(b, res.value.items, res.value.date); });
+  }
+  /** บาร์โค้ด Code128 เป็น SVG (JsBarcode โหลดในหน้านี้) — 0.25 มม./module = 2 จุดพอดีบนหัวพิมพ์ 203 dpi */
+  const _bcCache = {};
+  function barSvg(code) {
+    if (_bcCache[code]) return _bcCache[code];
+    if (typeof JsBarcode !== 'function') return `<div class="cd" style="font-size:9pt;margin-top:auto">[${esc(code)}]</div>`;
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    JsBarcode(s, code, { format: 'CODE128', width: 1, height: 40, margin: 0, displayValue: false, background: '#ffffff' });
+    const m = +s.getAttribute('width') || 200;
+    s.setAttribute('viewBox', `0 0 ${m} 40`); s.setAttribute('preserveAspectRatio', 'none'); s.setAttribute('class', 'bc');
+    s.removeAttribute('width'); s.removeAttribute('height'); s.removeAttribute('style');
+    s.setAttribute('style', `width:${Math.min(m * 0.25, 56)}mm;height:7mm`);
+    return (_bcCache[code] = s.outerHTML);
+  }
+  function printLabels(b, items, refill) {
+    const font = new URL('THSarabunNew.ttf', location.href).href, fontB = new URL('THSarabunNew-Bold.ttf', location.href).href;
+    const lab = items.map(({ r, q }) => { const d = CAT.drugs[r[2]] || {}, code = r[2] + '.' + r[1];
+      return `<div class="lb"><div class="nm">${esc(d.n || r[2])}</div>
+        <div class="ln"><span>📦 ${esc(b.name)}</span><span class="q">${fmtN(q)} ${esc(d.u || '')}</span></div>
+        <div class="ln sm"><span>เติม ${thD(refill)}</span><span>Exp ${thD(r[5])}</span></div>
+        ${barSvg(code)}<div class="cd">${esc(code)}</div></div>`; }).join('');
+    const w = window.open('', '_blank');
+    if (!w) { Swal.fire('เปิดหน้าพิมพ์ไม่ได้', 'อนุญาต Pop-up ของเว็บนี้ก่อน', 'warning'); return; }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>ฉลาก ${esc(b.name)}</title>
+<style>
+@font-face{font-family:SR;src:url('${font}')} @font-face{font-family:SR;font-weight:bold;src:url('${fontB}')}
+@page{size:60mm 25mm;margin:0} *{box-sizing:border-box} html,body{margin:0;padding:0}
+body{font-family:SR,'TH SarabunPSK',Tahoma,sans-serif;color:#000;background:#fff}
+.lb{width:60mm;height:25mm;padding:1mm 2mm 0.6mm;overflow:hidden;page-break-after:always;break-after:page;display:flex;flex-direction:column}
+.lb:last-child{page-break-after:auto;break-after:auto}
+.nm{font-weight:bold;font-size:13pt;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln{display:flex;justify-content:space-between;gap:2mm;font-size:10pt;line-height:1.05;white-space:nowrap;overflow:hidden}
+.ln.sm{font-size:9pt}.q{font-weight:bold}
+.bc{display:block;margin-top:auto;align-self:flex-end;shape-rendering:crispEdges}
+.cd{font-family:'Courier New',monospace;font-size:6pt;line-height:1;text-align:right}
+@media screen{body{background:#ddd;padding:8px}.lb{background:#fff;margin:0 0 6px;outline:1px dashed #999}}
+</style></head><body>${lab}
+<script>
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(function(){ setTimeout(function(){ window.print(); }, 300); });
+<\/script></body></html>`);
+    w.document.close();
+  }
+
+  // =====================================================================
+  //  รายการสแกนใช้ยาจากกล่อง (afterhours.php → ชีต PrepackUse) · สรุปตามช่วงเวลา/กล่อง
+  // =====================================================================
+  let PPU = { rows: [], box: '' };
+  async function loadScanUse(from, to) {
+    const el = $('ah-scan'); if (!el) return;
+    el.innerHTML = '<div class="small text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายการสแกนใช้ยา…</div>';
+    const r = await api('getPrepackUse', { from, to });
+    if (!r.status) { el.innerHTML = `<div class="small text-danger">โหลดรายการสแกนใช้ยาไม่ได้: ${esc(r.message || '')}</div>`; return; }
+    PPU.rows = r.rows || (r.data && r.data.rows) || []; renderScanUse();
+  }
+  function renderScanUse() {
+    const el = $('ah-scan'); if (!el) return;
+    const all = PPU.rows; // [id, ts, icode, drug, qty, unit, box_id, box_name, an, hn, ward, staff, void]
+    if (!all.length) { el.innerHTML = '<div class="small text-muted"><i class="fas fa-barcode"></i> ไม่มีรายการสแกนใช้ยาจากกล่องในช่วงนี้</div>'; return; }
+    const boxes = {}; all.forEach(x => { const k = x[6] || ''; boxes[k] = x[7] || (BOX_BY[k] || {}).name || (k ? k : 'ไม่ระบุกล่อง'); });
+    const rows = PPU.box === '' ? all : all.filter(x => (x[6] || '') === (PPU.box === '-' ? '' : PPU.box));
+    const agg = {}; rows.forEach(x => { const k = (x[6] || '') + '|' + x[2]; const o = agg[k] || (agg[k] = { box: boxes[x[6] || ''], ic: x[2], drug: x[3], unit: x[5], qty: 0, n: 0 }); o.qty += +x[4] || 0; o.n++; });
+    const list = Object.values(agg).sort((a, c) => a.box.localeCompare(c.box) || String(a.drug).localeCompare(String(c.drug)));
+    const opt = `<option value="">ทุกกล่อง</option>` + Object.keys(boxes).map(k => `<option value="${k === '' ? '-' : esc(k)}" ${PPU.box === (k === '' ? '-' : k) ? 'selected' : ''}>${esc(boxes[k])}</option>`).join('');
+    el.innerHTML = `<div class="ah-card"><div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div class="fw-bold text-primary"><i class="fas fa-barcode"></i> สแกนใช้ยาจากกล่อง ${rows.length} ครั้ง</div>
+        <select class="form-select form-select-sm ms-auto" style="width:auto" onchange="PPU.box=this.value;renderScanUse()">${opt}</select></div>
+      <div style="overflow-x:auto"><table class="table table-sm table-loc mb-1"><thead><tr><th>กล่อง</th><th>ยา</th><th class="text-end">รวม</th><th class="text-end">ครั้ง</th></tr></thead><tbody>
+      ${list.map(o => `<tr><td>${esc(o.box)}</td><td>${esc(o.drug || o.ic)}</td><td class="text-end fw-bold">${fmtN(o.qty)} ${esc(o.unit || '')}</td><td class="text-end">${o.n}</td></tr>`).join('')}</tbody></table></div>
+      <details><summary class="small fw-bold text-secondary">รายละเอียดทีละครั้ง</summary>
+      <div style="overflow-x:auto"><table class="table table-sm table-loc mb-0 mt-1"><thead><tr><th>เวลา</th><th>กล่อง</th><th>ยา</th><th class="text-end">จำนวน</th><th>ผู้ป่วย</th><th>ผู้บันทึก</th></tr></thead><tbody>
+      ${rows.map(x => `<tr><td class="text-nowrap">${esc(String(x[1]).slice(5, 16))}</td><td>${esc(boxes[x[6] || ''])}</td><td>${esc(x[3])}</td><td class="text-end">${fmtN(x[4])}</td><td>${esc(x[8] ? 'AN ' + x[8] : 'HN ' + x[9])}${x[10] ? ' · ' + esc(x[10]) : ''}</td><td>${esc(x[11])}</td></tr>`).join('')}
+      </tbody></table></div></details></div>`;
+  }
+
   function showExpired() {
     if (!CAT) return;
     const today = new Date(); today.setHours(0, 0, 0, 0);
